@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Server.Db;
 using Server.Model;
 
@@ -10,18 +11,18 @@ public class Admin : IEndpoint
     {
         var admin = routes.MapGroup("/admin").RequireAuthorization("admin");
 
-        admin.MapPost("/modifyRoles", async (User user, RefNotesContext db) =>
+        admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user, RefNotesContext db) =>
         {
             var existingUser = await db.Users.FindAsync(user.Id);
             if (existingUser is null)
             {
-                return Results.NotFound();
+                return TypedResults.NotFound();
             }
 
             existingUser.Roles = user.Roles;
             await db.SaveChangesAsync();
 
-            return Results.Ok();
+            return TypedResults.Ok(existingUser);
         });
 
         admin.MapGet("/listUsers", async (RefNotesContext db)

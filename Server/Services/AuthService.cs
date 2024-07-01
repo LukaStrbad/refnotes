@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Server.Model;
 
@@ -8,13 +7,14 @@ namespace Server.Services;
 
 public class AuthService
 {
+    private readonly byte[] _privateKey = Configuration.AppConfig.JwtPrivateKeyBytes;
+    
     public string CreateToken(User user)
     {
         var handler = new JwtSecurityTokenHandler();
 
-        var privateKey = "bAafd@A7d9#@F4*V!LHZs#ebKQrkE6pad2f3kj34c3dXy@"u8.ToArray();
         var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(privateKey),
+            new SymmetricSecurityKey(_privateKey),
             SecurityAlgorithms.HmacSha256);
 
         var tokenDescriptor = new SecurityTokenDescriptor

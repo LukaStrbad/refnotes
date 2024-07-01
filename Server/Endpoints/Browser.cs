@@ -15,7 +15,7 @@ public class Browser : IEndpoint
             var directories = directoryInfo.GetDirectories().Select(directory => directory.FullName).ToList();
 
             var userDirectory = new UserDirectory(path, files, directories);
-            return Results.Ok(userDirectory);
+            return TypedResults.Ok(userDirectory);
         });
     }
 }

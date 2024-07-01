@@ -28,7 +28,7 @@ public class User(
 
     [StringLength(4096)]
     [JsonPropertyName("password")]
-    public string Password { get; init; } = password;
+    public string Password { get; set; } = password;
 
     [JsonPropertyName("roles")] public string[]? Roles { get; set; } = roles;
 }

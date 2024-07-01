@@ -1,6 +1,8 @@
 using Server;
 using Server.Db;
 
+Configuration.LoadAppConfig();
+
 var builder = WebApplication.CreateBuilder(args);
 using var db = new RefNotesContext();
 db.Database.EnsureCreated();
