@@ -7,9 +7,9 @@ namespace Server.Endpoints;
 
 public class Admin : IEndpoint
 {
-    public static void RegisterEndpoints(IEndpointRouteBuilder routes)
+    public static void RegisterEndpoints(WebApplication app)
     {
-        var admin = routes.MapGroup("/admin").RequireAuthorization("admin");
+        var admin = app.MapGroup("/admin").RequireAuthorization("admin");
 
         admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user, RefNotesContext db) =>
         {

@@ -6,6 +6,7 @@ namespace Server.Db;
 public class RefNotesContext : DbContext
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
     public string DbPath { get; } = Path.Join(Configuration.RefnotesPath, "refnotes.db");
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)

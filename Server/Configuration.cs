@@ -1,9 +1,12 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Server.Db;
 using Server.Endpoints;
+using Server.Middlewares;
 using Server.Model;
 using Server.Services;
 
@@ -15,6 +18,7 @@ public static class Configuration
     private static AppConfiguration? _appConfig;
     private const string RootDir = "RefNotes";
     private const string ConfigFile = "config.json";
+    private const string DefaultDataDir = "data";
 
     public static string RefnotesPath
     {
@@ -39,8 +43,11 @@ public static class Configuration
     public static void RegisterServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddControllersWithViews();
+        // TODO: Refactor controllers to save singletons to fields, and Scoped to methods
         builder.Services.AddDbContext<RefNotesContext>();
         builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddSingleton<EncryptionService>();
+        builder.Services.AddScoped<UserServiceRepository>();
 
         builder.Services
             .ConfigureHttpJsonOptions(options =>
@@ -75,6 +82,15 @@ public static class Configuration
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+
+        app.UseCors(builder => builder
+            .AllowCredentials()
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+        );
+        
+        app.UseExceptionHandlerMiddleware();
     }
 
     public static void RegisterEndpoints(this WebApplication app)
@@ -117,13 +133,20 @@ public static class Configuration
             Console.WriteLine("Invalid JWT private key. Exiting.");
             Environment.Exit(1);
         }
-        
+
+        // Set default data directory and create it if it doesn't exist
+        config.DataDir ??= Path.Join(RefnotesPath, DefaultDataDir);
+        Directory.CreateDirectory(config.DataDir);
+
         AppConfig = config;
     }
 
     public class AppConfiguration
     {
         public string JwtPrivateKey { get; set; } = "";
+        [JsonIgnore]
         public byte[] JwtPrivateKeyBytes => Encoding.UTF8.GetBytes(JwtPrivateKey);
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? DataDir { get; set; }
     }
 }
