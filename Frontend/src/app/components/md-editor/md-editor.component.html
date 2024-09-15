@@ -1,0 +1,16 @@
+<div class="md-editor flex gap-4 w-100 justify-stretch">
+  <div class="editor w-1/2">
+    <textarea
+      class="editor-textarea w-full bg-base-300 min-h-96 p-2 rounded-md"
+      placeholder="Write something..."
+      [(ngModel)]="editorContent"
+      (ngModelChange)="onEditorChange($event)"
+    ></textarea>
+  </div>
+  <div class="preview bg-base-300 w-1/2 rounded-md">
+    <div
+      class="preview-content w-full h-full p-2"
+      [innerHTML]="previewContnet"
+    ></div>
+  </div>
+</div>

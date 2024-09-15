@@ -1,0 +1,117 @@
+<header>
+  <div class="navbar bg-base-100 container mx-auto">
+    <div class="navbar-start w-auto">
+      <div class="dropdown">
+        <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h8m-8 6h16"
+            />
+          </svg>
+        </div>
+        <ul
+          tabindex="0"
+          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+        >
+          @for (route of headerRoutes; track route) {
+            <li>
+              <a [routerLink]="route.path" (click)="handleClick()">{{
+                getRouteTitle(route)
+              }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+      <a class="btn btn-ghost text-xl" routerLink="">RefNotes</a>
+    </div>
+
+    @if (auth.isUserLoggedIn()) {
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+          @for (route of headerRoutes; track route) {
+            <li>
+              <a [routerLink]="route.path">{{ getRouteTitle(route) }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="navbar-end w-full">
+      @if (auth.isUserLoggedIn()) {
+        <button
+          class="btn btn-secondary btn-outline btn-sm mr-4"
+          (click)="logout()"
+        >
+          Logout
+        </button>
+      }
+
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-circle">
+          @switch (theme) {
+            @case ("dark") {
+              <i class="bi bi-moon-fill"></i>
+            }
+            @case ("light") {
+              <i class="bi bi-sun-fill"></i>
+            }
+            @default {
+              <i class="bi bi-circle-half"></i>
+            }
+          }
+        </div>
+
+        <ul
+          tabindex="0"
+          class="dropdown-content bg-base-300 rounded-box z-[1] w-52 p-2 shadow-2xl"
+        >
+          <li class="flex items-center">
+            <button
+              type="radio"
+              name="theme-dropdown"
+              class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
+              (click)="setTheme('auto')"
+              [ngClass]="{ selected: theme === 'auto' }"
+            >
+              <i class="bi bi-circle-half"></i> Auto
+            </button>
+          </li>
+
+          <li class="flex items-center">
+            <button
+              type="radio"
+              name="theme-dropdown"
+              class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
+              (click)="setTheme('light')"
+              [ngClass]="{ selected: theme === 'light' }"
+            >
+              <i class="bi bi-sun-fill"></i> Light mode
+            </button>
+          </li>
+
+          <li class="flex items-center">
+            <button
+              type="radio"
+              name="theme-dropdown"
+              class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
+              (click)="setTheme('dark')"
+              [ngClass]="{ selected: theme === 'dark' }"
+            >
+              <i class="bi bi-moon-fill"></i> Dark mode
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>

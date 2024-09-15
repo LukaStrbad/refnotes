@@ -1,0 +1,54 @@
+<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl mx-auto">
+  <form class="card-body" #loginForm="ngForm">
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Username</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-person-fill"></i>
+        <input
+          type="text"
+          class="grow"
+          placeholder="username"
+          name="username"
+          [(ngModel)]="username"
+          #usernameInput="ngModel"
+        />
+      </label>
+    </div>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Password</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-key-fill"></i>
+        <input
+          type="password"
+          class="grow"
+          placeholder="password"
+          name="password"
+          [(ngModel)]="password"
+          #passwordInput="ngModel"
+        />
+      </label>
+    </div>
+
+    @if (message) {
+      <div role="alert" class="alert alert-info mt-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ message }}</span>
+      </div>
+    }
+
+    @if (error) {
+      <div role="alert" class="alert alert-error mt-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ error }}</span>
+      </div>
+    }
+
+    <div class="form-control mt-4">
+      <button class="btn btn-primary" (click)="login()">Login</button>
+    </div>
+  </form>
+</div>
