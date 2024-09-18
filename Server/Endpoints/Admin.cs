@@ -5,22 +5,24 @@ using Server.Model;
 
 namespace Server.Endpoints;
 
-public class Admin : IEndpoint
+public class Admin(IServiceProvider services) : IEndpoint
 {
-    public static void RegisterEndpoints(WebApplication app)
+    private readonly RefNotesContext _db = services.GetRequiredService<RefNotesContext>();
+
+    public void RegisterEndpoints(WebApplication app)
     {
         var admin = app.MapGroup("/admin").RequireAuthorization("admin");
 
-        admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user, RefNotesContext db) =>
+        admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user) =>
         {
-            var existingUser = await db.Users.FindAsync(user.Id);
+            var existingUser = await _db.Users.FindAsync(user.Id);
             if (existingUser is null)
             {
                 return TypedResults.NotFound();
             }
 
             existingUser.Roles = user.Roles;
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
             return TypedResults.Ok(existingUser);
         });

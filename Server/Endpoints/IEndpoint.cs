@@ -2,5 +2,5 @@
 
 public interface IEndpoint
 {
-    public static abstract void RegisterEndpoints(WebApplication app);
+    public void RegisterEndpoints(WebApplication app);
 }

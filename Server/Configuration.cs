@@ -43,7 +43,6 @@ public static class Configuration
     public static void RegisterServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddControllersWithViews();
-        // TODO: Refactor controllers to save singletons to fields, and Scoped to methods
         builder.Services.AddDbContext<RefNotesContext>();
         builder.Services.AddSingleton<AuthService>();
         builder.Services.AddSingleton<EncryptionService>();
@@ -95,9 +94,11 @@ public static class Configuration
 
     public static void RegisterEndpoints(this WebApplication app)
     {
-        Admin.RegisterEndpoints(app);
-        Auth.RegisterEndpoints(app);
-        Browser.RegisterEndpoints(app);
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider;
+        new Admin(services).RegisterEndpoints(app);
+        new Auth(services).RegisterEndpoints(app);
+        new Browser(services).RegisterEndpoints(app);
     }
 
     public static void LoadAppConfig()
