@@ -1,5 +1,4 @@
 ﻿using Server.Exceptions;
-using Server.Extensions;
 
 namespace Server.Middlewares;
 

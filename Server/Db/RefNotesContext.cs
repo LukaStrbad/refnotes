@@ -3,11 +3,13 @@ using Server.Model;
 
 namespace Server.Db;
 
-public class RefNotesContext : DbContext
+public class RefNotesContext(AppConfiguration appConfig) : DbContext
 {
     public DbSet<User> Users { get; set; }
     public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
-    public string DbPath { get; } = Path.Join(Configuration.RefnotesPath, "refnotes.db");
+    public DbSet<EncryptedDirectory> Directories { get; set; }
+    
+    public string DbPath { get; } = Path.Join(appConfig.BaseDir, "refnotes.db");
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");

@@ -3,37 +3,46 @@ using System.Text;
 
 namespace Server.Services;
 
-public class EncryptionService
+public class EncryptionService : IEncryptionService
 {
-    private readonly byte[] _aesKey;
-    private readonly byte[] _aesIv;
+    public byte[] AesKey { get; }
+    public byte[] AesIv { get; }
+    
+    public const string AesKeyFileName = "aes_key.bin";
+    public const string AesIvFileName = "aes_iv.bin";
 
-    public EncryptionService()
+    public EncryptionService(AppConfiguration appConfig)
     {
-        var keyPath = Path.Combine(Configuration.RefnotesPath, "aes_key.bin");
-        var ivPath = Path.Combine(Configuration.RefnotesPath, "aes_iv.bin");
+        var keyPath = Path.Combine(appConfig.BaseDir, AesKeyFileName);
+        var ivPath = Path.Combine(appConfig.BaseDir, AesIvFileName);
         if (File.Exists(keyPath) && File.Exists(ivPath))
         {
-            _aesKey = File.ReadAllBytes(keyPath);
-            _aesIv = File.ReadAllBytes(ivPath);
+            AesKey = File.ReadAllBytes(keyPath);
+            AesIv = File.ReadAllBytes(ivPath);
         }
         else
         {
             using var aes = Aes.Create();
             aes.GenerateKey();
             aes.GenerateIV();
-            _aesKey = aes.Key;
-            _aesIv = aes.IV;
-            File.WriteAllBytes(keyPath, _aesKey);
-            File.WriteAllBytes(ivPath, _aesIv);
+            AesKey = aes.Key;
+            AesIv = aes.IV;
+            File.WriteAllBytes(keyPath, AesKey);
+            File.WriteAllBytes(ivPath, AesIv);
         }
+    }
+    
+    public EncryptionService(byte[] aesKey, byte[] aesIv)
+    {
+        AesKey = aesKey;
+        AesIv = aesIv;
     }
 
     public byte[] EncryptAes(byte[] bytes)
     {
         using var aesAlg = Aes.Create();
-        aesAlg.Key = _aesKey;
-        aesAlg.IV = _aesIv;
+        aesAlg.Key = AesKey;
+        aesAlg.IV = AesIv;
 
         // Create an encryptor to perform the stream transform.
         var encryptor = aesAlg.CreateEncryptor();
@@ -52,6 +61,20 @@ public class EncryptionService
         return encrypted;
     }
 
+    public void EncryptAesToStream(Stream inputStream, Stream outputStream)
+    {
+        using var aesAlg = Aes.Create();
+        aesAlg.Key = AesKey;
+        aesAlg.IV = AesIv;
+
+        // Create an encryptor to perform the stream transform.
+        var encryptor = aesAlg.CreateEncryptor();
+
+        // Create the streams used for encryption.
+        using var csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
+        inputStream.CopyTo(csEncrypt);
+    }
+
     public byte[] EncryptAes(string text) => EncryptAes(Encoding.UTF8.GetBytes(text));
     
     public string EncryptAesStringBase64(string text) =>
@@ -60,8 +83,8 @@ public class EncryptionService
     public IEnumerable<byte> DecryptAes(byte[] encryptedBytes)
     {
         using var aesAlg = Aes.Create();
-        aesAlg.Key = _aesKey;
-        aesAlg.IV = _aesIv;
+        aesAlg.Key = AesKey;
+        aesAlg.IV = AesIv;
 
         // Create a decryptor to perform the stream transform.
         var decryptor = aesAlg.CreateDecryptor();
@@ -88,7 +111,28 @@ public class EncryptionService
             }
         }
     }
+    
+    public void DecryptAesToStream(Stream encryptedInputStream, Stream decryptedOutputStream)
+    {
+        using var aesAlg = Aes.Create();
+        aesAlg.Key = AesKey;
+        aesAlg.IV = AesIv;
+
+        // Create a decryptor to perform the stream transform.
+        var decryptor = aesAlg.CreateDecryptor();
+
+        // Create the streams used for decryption.
+        using var csDecrypt = new CryptoStream(encryptedInputStream, decryptor, CryptoStreamMode.Read);
+        
+        csDecrypt.CopyTo(decryptedOutputStream);
+    }
 
     public string DecryptAesString(byte[] encryptedBytes) =>
         Encoding.UTF8.GetString(DecryptAes(encryptedBytes).ToArray());
+
+    public string DecryptAesStringBase64(string encryptedText)
+    {
+        var bytes = Convert.FromBase64String(encryptedText);
+        return DecryptAesString(bytes);
+    }
 }
