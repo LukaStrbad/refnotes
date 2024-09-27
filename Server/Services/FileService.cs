@@ -4,6 +4,10 @@ public class FileService(IEncryptionService encryptionService, AppConfiguration 
 {
     public async Task SaveFile(string fileName, Stream inputStream)
     {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            throw new ArgumentException("File name cannot be empty.");
+        }
         var filePath = Path.Combine(appConfig.DataDir, fileName);
         await using var stream = new FileStream(filePath, FileMode.Create);
         encryptionService.EncryptAesToStream(inputStream, stream);

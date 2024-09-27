@@ -7,18 +7,13 @@ namespace ServerTests.ServiceTests;
 using System.Text;
 using Xunit;
 
-public class EncryptionServiceTests
+public class EncryptionServiceTests : BaseTests
 {
     private readonly EncryptionService _encryptionService;
-    private readonly byte[] _aesKey;
-    private readonly byte[] _aesIv;
 
     public EncryptionServiceTests()
     {
-        // This key and IV are for testing purposes only and should not be used in production.
-        _aesKey = "12345678901234567890123456789012"u8.ToArray();
-        _aesIv = "1234567890123456"u8.ToArray();
-        _encryptionService = new EncryptionService(_aesKey, _aesIv);
+        _encryptionService = new EncryptionService(AesKey, AesIv);
     }
     
     [Fact] 
@@ -30,14 +25,14 @@ public class EncryptionServiceTests
         // Create files in the base directory to simulate existing key and IV files.
         var keyPath = Path.Combine(baseDir, EncryptionService.AesKeyFileName);
         var ivPath = Path.Combine(baseDir, EncryptionService.AesIvFileName);
-        File.WriteAllBytes(keyPath, _aesKey);
-        File.WriteAllBytes(ivPath, _aesIv);
+        File.WriteAllBytes(keyPath, AesKey);
+        File.WriteAllBytes(ivPath, AesIv);
         
         var encryptionService = new EncryptionService(appConfig);
         
         Assert.NotNull(encryptionService);
-        Assert.Equal(_aesKey, encryptionService.AesKey);
-        Assert.Equal(_aesIv, encryptionService.AesIv);
+        Assert.Equal(AesKey, encryptionService.AesKey);
+        Assert.Equal(AesIv, encryptionService.AesIv);
         
         // Clean up the files created for this test.
         File.Delete(keyPath);
@@ -53,8 +48,8 @@ public class EncryptionServiceTests
         var encryptionService = new EncryptionService(appConfig);
         
         Assert.NotNull(encryptionService);
-        Assert.NotEqual(_aesKey, encryptionService.AesKey);
-        Assert.NotEqual(_aesIv, encryptionService.AesIv);
+        Assert.NotEqual(AesKey, encryptionService.AesKey);
+        Assert.NotEqual(AesIv, encryptionService.AesIv);
     }
 
     [Fact]

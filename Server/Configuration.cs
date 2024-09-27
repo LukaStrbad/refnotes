@@ -22,6 +22,7 @@ public static class Configuration
         
         builder.Services.AddSingleton<AuthService>();
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+        builder.Services.AddSingleton<IFileService, FileService>();
         builder.Services.AddSingleton(appConfig);
 
         builder.Services.AddScoped<UserServiceRepository>();
@@ -128,8 +129,17 @@ public static class Configuration
         }
 
         // Set default data directory and create it if it doesn't exist
-        config.DataDir ??= Path.Join(baseDir, DefaultDataDir);
-        Directory.CreateDirectory(config.DataDir);
+        if (string.IsNullOrWhiteSpace(config.DataDir)) 
+            config.DataDir = Path.Join(baseDir, DefaultDataDir);
+        try
+        {
+            Directory.CreateDirectory(config.DataDir);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to create data directory: {e.Message}");
+            Environment.Exit(1);
+        }
 
         return config;
     }

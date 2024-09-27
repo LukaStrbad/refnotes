@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Server;
 using Server.Controllers;
@@ -10,7 +11,7 @@ using Server.Services;
 
 namespace ServerTests.ControllerTests;
 
-public class BrowserControllerTests
+public class BrowserControllerTests : BaseTests
 {
     private readonly BrowserController _controller;
     private readonly IBrowserServiceRepository _browserServiceRepository;
@@ -23,7 +24,8 @@ public class BrowserControllerTests
     public BrowserControllerTests()
     {
         _appConfig = new AppConfiguration { DataDir = "test_data_dir" };
-        _db = Substitute.For<RefNotesContext>(_appConfig);
+        var options = new DbContextOptionsBuilder<RefNotesContext>().UseInMemoryDatabase("test_db").Options;
+        _db = Substitute.For<RefNotesContext>(options);
         _encryptionService = Substitute.For<IEncryptionService>();
         _browserServiceRepository = Substitute.For<IBrowserServiceRepository>();
         _fileService = Substitute.For<IFileService>();
@@ -100,5 +102,17 @@ public class BrowserControllerTests
         Assert.Equal(stream, okResult.FileStream);
     }
     
+    [Fact]
+    public async Task GetFile_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        _browserServiceRepository.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+
+        var result = await _controller.GetFile(directoryPath, name);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
+    }
     
 }
