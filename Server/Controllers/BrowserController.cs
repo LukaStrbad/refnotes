@@ -23,7 +23,6 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<string>> List(string path)
     {
-        Console.WriteLine($"Listing path: {path}");
         var directory = await _browserServiceRepository.List(User, path);
         if (directory is null)
         {
@@ -38,7 +37,6 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> AddFile(string directoryPath, string name, [FromBody] IFormFile file)
     {
-        Console.WriteLine($"Adding file to directory: {directoryPath}");
         var fileName = await _browserServiceRepository.AddFile(User, directoryPath, name);
         await _fileService.SaveFile(fileName, file.OpenReadStream());
 
@@ -50,7 +48,6 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name)
     {
-        Console.WriteLine($"Getting file from directory: {directoryPath}");
         var fileName = await _browserServiceRepository.GetFilesystemFilePath(User, directoryPath, name);
         if (fileName is null)
         {

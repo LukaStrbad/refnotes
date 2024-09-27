@@ -1,13 +1,10 @@
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Db;
 using Server.Endpoints;
 using Server.Middlewares;
-using Server.Model;
 using Server.Services;
 
 namespace Server;
@@ -21,12 +18,12 @@ public static class Configuration
     public static void RegisterServices(this WebApplicationBuilder builder, AppConfiguration appConfig)
     {
         builder.Services.AddControllersWithViews();
-        builder.Services.AddDbContext<RefNotesContext>();
+        builder.AddDatabase(appConfig);
         
         builder.Services.AddSingleton<AuthService>();
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton(appConfig);
-        
+
         builder.Services.AddScoped<UserServiceRepository>();
         builder.Services.AddScoped<BrowserServiceRepository>();
 
@@ -51,6 +48,17 @@ public static class Configuration
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
     }
+    
+    private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)
+    {
+        var dbPath = Path.Join(appConfig.BaseDir, "refnotes.db");
+        builder.Services.AddDbContext<RefNotesContext>(options =>
+            options.UseSqlite($"Data Source={dbPath}")
+        );
+        using var scope = builder.Services.BuildServiceProvider().CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<RefNotesContext>();
+        db.Database.Migrate();
+    }
 
     public static void RegisterMiddlewares(this WebApplication app)
     {
@@ -59,7 +67,7 @@ public static class Configuration
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        
+
         app.UseCors(builder => builder
             .AllowCredentials()
             // TODO: Add a way to configure allowed origins
@@ -67,9 +75,9 @@ public static class Configuration
             .AllowAnyMethod()
             .AllowAnyHeader()
         );
-        
+
         app.UseExceptionHandlerMiddleware();
-        
+
         app.MapControllers();
     }
 
@@ -93,7 +101,7 @@ public static class Configuration
         {
             BaseDir = baseDir
         };
-        
+
         if (File.Exists(configFile))
         {
             var json = File.ReadAllText(configFile);
