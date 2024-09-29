@@ -1,58 +1,31 @@
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Db;
 using Server.Endpoints;
 using Server.Middlewares;
-using Server.Model;
 using Server.Services;
 
 namespace Server;
 
 public static class Configuration
 {
-    private static string? _refnotesPath;
-    private static AppConfiguration? _appConfig;
     private const string RootDir = "RefNotes";
     private const string ConfigFile = "config.json";
     private const string DefaultDataDir = "data";
 
-    public static string RefnotesPath
-    {
-        get
-        {
-            ArgumentNullException.ThrowIfNull(_refnotesPath);
-            return _refnotesPath;
-        }
-        private set => _refnotesPath = value;
-    }
-
-    public static AppConfiguration AppConfig
-    {
-        get
-        {
-            if (_appConfig is not null) return _appConfig;
-            throw new InvalidOperationException($"AppConfig not loaded. Call {nameof(LoadAppConfig)} method first.");
-        }
-        private set => _appConfig = value;
-    }
-
-    public static void RegisterServices(this WebApplicationBuilder builder)
+    public static void RegisterServices(this WebApplicationBuilder builder, AppConfiguration appConfig)
     {
         builder.Services.AddControllersWithViews();
-        builder.Services.AddDbContext<RefNotesContext>();
-        builder.Services.AddSingleton<AuthService>();
-        builder.Services.AddSingleton<EncryptionService>();
-        builder.Services.AddScoped<UserServiceRepository>();
+        builder.AddDatabase(appConfig);
+        builder.Services.AddSingleton(appConfig);
 
-        builder.Services
-            .ConfigureHttpJsonOptions(options =>
-            {
-                options.SerializerOptions.TypeInfoResolverChain.Insert(0, ModelJsonSerializerContext.Default);
-            });
+        builder.Services.AddScoped<IBrowserService, BrowserService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+        builder.Services.AddScoped<IFileService, FileService>();
+        builder.Services.AddScoped<AuthService>();
 
         builder.Services.AddAuthentication(x =>
         {
@@ -62,7 +35,7 @@ public static class Configuration
         {
             x.TokenValidationParameters = new TokenValidationParameters
             {
-                IssuerSigningKey = new SymmetricSecurityKey(AppConfig.JwtPrivateKeyBytes),
+                IssuerSigningKey = new SymmetricSecurityKey(appConfig.JwtPrivateKeyBytes),
                 ValidateIssuer = false,
                 ValidateAudience = false
             };
@@ -70,8 +43,21 @@ public static class Configuration
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("admin", p => p.RequireRole("administrator"));
 
+        builder.Services.AddControllersWithViews();
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+    }
+
+    private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)
+    {
+        var dbPath = Path.Join(appConfig.BaseDir, "refnotes.db");
+        builder.Services.AddDbContext<RefNotesContext>(options =>
+            options.UseSqlite($"Data Source={dbPath}")
+        );
+        using var scope = builder.Services.BuildServiceProvider().CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<RefNotesContext>();
+        db.Database.Migrate();
     }
 
     public static void RegisterMiddlewares(this WebApplication app)
@@ -84,12 +70,15 @@ public static class Configuration
 
         app.UseCors(builder => builder
             .AllowCredentials()
+            // TODO: Add a way to configure allowed origins
             .WithOrigins("http://localhost:4200")
             .AllowAnyMethod()
             .AllowAnyHeader()
         );
-        
+
         app.UseExceptionHandlerMiddleware();
+
+        app.MapControllers();
     }
 
     public static void RegisterEndpoints(this WebApplication app)
@@ -97,19 +86,23 @@ public static class Configuration
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         new Admin(services).RegisterEndpoints(app);
-        new Auth(services).RegisterEndpoints(app);
-        new Browser(services).RegisterEndpoints(app);
+        new Auth(services.GetRequiredService<IUserService>(), services.GetRequiredService<AuthService>())
+            .RegisterEndpoints(app);
     }
 
-    public static void LoadAppConfig()
+    public static AppConfiguration LoadAppConfig()
     {
         const Environment.SpecialFolder folder = Environment.SpecialFolder.LocalApplicationData;
         var path = Environment.GetFolderPath(folder);
-        RefnotesPath = Path.Join(path, RootDir);
-        Directory.CreateDirectory(RefnotesPath);
+        var baseDir = Path.Join(path, RootDir);
+        Directory.CreateDirectory(baseDir);
 
-        var configFile = Path.Join(RefnotesPath, ConfigFile);
-        var config = new AppConfiguration();
+        var configFile = Path.Join(baseDir, ConfigFile);
+        var config = new AppConfiguration
+        {
+            BaseDir = baseDir
+        };
+
         if (File.Exists(configFile))
         {
             var json = File.ReadAllText(configFile);
@@ -136,18 +129,18 @@ public static class Configuration
         }
 
         // Set default data directory and create it if it doesn't exist
-        config.DataDir ??= Path.Join(RefnotesPath, DefaultDataDir);
-        Directory.CreateDirectory(config.DataDir);
+        if (string.IsNullOrWhiteSpace(config.DataDir))
+            config.DataDir = Path.Join(baseDir, DefaultDataDir);
+        try
+        {
+            Directory.CreateDirectory(config.DataDir);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to create data directory: {e.Message}");
+            Environment.Exit(1);
+        }
 
-        AppConfig = config;
-    }
-
-    public class AppConfiguration
-    {
-        public string JwtPrivateKey { get; set; } = "";
-        [JsonIgnore]
-        public byte[] JwtPrivateKeyBytes => Encoding.UTF8.GetBytes(JwtPrivateKey);
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? DataDir { get; set; }
+        return config;
     }
 }

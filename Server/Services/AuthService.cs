@@ -6,11 +6,11 @@ using Server.Model;
 
 namespace Server.Services;
 
-public class AuthService
+public class AuthService(AppConfiguration appConfig)
 {
     public const int RefreshTokenExpirationDays = 7;
-    private readonly byte[] _privateKey = Configuration.AppConfig.JwtPrivateKeyBytes;
-    
+    private readonly byte[] _privateKey = appConfig.JwtPrivateKeyBytes;
+
     public Tokens CreateTokens(User user)
     {
         var handler = new JwtSecurityTokenHandler();

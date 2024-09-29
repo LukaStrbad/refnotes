@@ -8,8 +8,7 @@ public class User(
     string username,
     string name,
     string email,
-    string password,
-    string[]? roles
+    string password
 )
 {
     [JsonPropertyName("id")] public int Id { get; init; } = id;
@@ -30,5 +29,5 @@ public class User(
     [JsonPropertyName("password")]
     public string Password { get; set; } = password;
 
-    [JsonPropertyName("roles")] public string[]? Roles { get; set; } = roles;
+    [JsonPropertyName("roles")] public string[] Roles { get; set; } = [];
 }

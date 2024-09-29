@@ -13,16 +13,16 @@ public class Admin(IServiceProvider services) : IEndpoint
     {
         var admin = app.MapGroup("/admin").RequireAuthorization("admin");
 
-        admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user) =>
+        admin.MapPost("/modifyRoles", async Task<Results<Ok<User>, NotFound>> (User user, RefNotesContext db) =>
         {
-            var existingUser = await _db.Users.FindAsync(user.Id);
+            var existingUser = await db.Users.FindAsync(user.Id);
             if (existingUser is null)
             {
                 return TypedResults.NotFound();
             }
 
             existingUser.Roles = user.Roles;
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
             return TypedResults.Ok(existingUser);
         });
