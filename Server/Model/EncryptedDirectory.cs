@@ -4,24 +4,36 @@ namespace Server.Model;
 
 public class EncryptedDirectory
 {
+    public EncryptedDirectory(string path, User owner)
+    {
+        Id = 0;
+        Path = path;
+        Files = [];
+        Directories = [];
+        Owner = owner;
+    }
+    
+    public EncryptedDirectory()
+    {
+        Id = 0;
+        Path = "";
+        Files = [];
+        Directories = [];
+        Owner = null!;
+    }
+
     public int Id { get; init; }
-    public required string FilesystemName { get; init; }
-    public required string Path { get; init; }
-    public required List<EncryptedFile> Files { get; init; }
-    public required List<EncryptedDirectory> Directories { get; init; }
-    public required User Owner { get; init; }
+    public string Path { get; init; }
+    public List<EncryptedFile> Files { get; init; }
+    public List<EncryptedDirectory> Directories { get; init; }
+    public User Owner { get; init; }
 
     public ResponseDirectory Decrypt(IEncryptionService encryptionService)
     {
         var name = DecryptedName(encryptionService);
         var files = Files.Select(file => file.DecryptedName(encryptionService)).ToList();
         var directories = Directories.Select(directory => directory.Decrypt(encryptionService).Name).ToList();
-        return new ResponseDirectory
-        {
-            Name = name,
-            Files = files,
-            Directories = directories
-        };
+        return new ResponseDirectory(name, files, directories);
     }
     
     public string DecryptedPath(IEncryptionService encryptionService)
@@ -32,6 +44,6 @@ public class EncryptedDirectory
     public string DecryptedName(IEncryptionService encryptionService)
     {
         var path = DecryptedPath(encryptionService);
-        return System.IO.Path.GetDirectoryName(path) ?? path;
+        return path == "/" ? "/" : System.IO.Path.GetFileName(path);
     }
 }

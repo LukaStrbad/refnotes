@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ namespace ServerTests.ControllerTests;
 public class BrowserControllerTests : BaseTests
 {
     private readonly BrowserController _controller;
-    private readonly IBrowserServiceRepository _browserServiceRepository;
+    private readonly IBrowserService _browserService;
     private readonly IEncryptionService _encryptionService;
     private readonly AppConfiguration _appConfig;
     private readonly RefNotesContext _db;
@@ -27,12 +28,12 @@ public class BrowserControllerTests : BaseTests
         var options = new DbContextOptionsBuilder<RefNotesContext>().UseInMemoryDatabase("test_db").Options;
         _db = Substitute.For<RefNotesContext>(options);
         _encryptionService = Substitute.For<IEncryptionService>();
-        _browserServiceRepository = Substitute.For<IBrowserServiceRepository>();
+        _browserService = Substitute.For<IBrowserService>();
         _fileService = Substitute.For<IFileService>();
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.Name, "test_user")
         ]));
-        _controller = new BrowserController(_browserServiceRepository, _fileService)
+        _controller = new BrowserController(_browserService, _fileService)
         {
             ControllerContext = new ControllerContext
                 { HttpContext = new DefaultHttpContext { User = _claimsPrincipal } }
@@ -43,14 +44,9 @@ public class BrowserControllerTests : BaseTests
     public async Task List_ReturnsOk_WhenDirectoryExists()
     {
         const string path = "test_path";
-        var responseDirectory = new ResponseDirectory
-        {
-            Name = "test_dir",
-            Files = [],
-            Directories = []
-        };
+        var responseDirectory = new ResponseDirectory("test_dir", [], []);
         
-        _browserServiceRepository.List(_claimsPrincipal, path).Returns(responseDirectory);
+        _browserService.List(_claimsPrincipal, path).Returns(responseDirectory);
 
         var result = await _controller.List(path);
 
@@ -62,7 +58,7 @@ public class BrowserControllerTests : BaseTests
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "test_path";
-        _browserServiceRepository.List(_claimsPrincipal, path).Returns((ResponseDirectory?)null);
+        _browserService.List(_claimsPrincipal, path).Returns((ResponseDirectory?)null);
 
         var result = await _controller.List(path);
 
@@ -77,12 +73,20 @@ public class BrowserControllerTests : BaseTests
         const string name = "test_file_name";
         const string fileName = "test_file_name";
         var file = Substitute.For<IFormFile>();
-        
-        _browserServiceRepository.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        var fileStream = new MemoryStream("file content"u8.ToArray());
+        file.OpenReadStream().Returns(fileStream);
+        file.FileName.Returns(name);
 
-        var result = await _controller.AddFile(directoryPath, name, file);
+        _browserService.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
+
+        var formFileCollection = new FormFileCollection { file };
+        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(), formFileCollection);
+        _controller.ControllerContext.HttpContext.Request.Form = formCollection;
+
+        var result = await _controller.AddFile(directoryPath, name);
 
         Assert.IsType<OkResult>(result);
+        await _fileService.Received(1).SaveFile(fileName, fileStream);
     }
     
     [Fact]
@@ -93,7 +97,7 @@ public class BrowserControllerTests : BaseTests
         const string fileName = "test_file_name";
         var stream = Substitute.For<Stream>();
         
-        _browserServiceRepository.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
         _fileService.GetFile(fileName).Returns(stream);
 
         var result = await _controller.GetFile(directoryPath, name);
@@ -107,7 +111,7 @@ public class BrowserControllerTests : BaseTests
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
-        _browserServiceRepository.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+        _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
 
         var result = await _controller.GetFile(directoryPath, name);
 

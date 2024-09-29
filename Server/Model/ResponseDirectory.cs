@@ -1,8 +1,5 @@
 ﻿namespace Server.Model;
 
-public class ResponseDirectory
+public record ResponseDirectory(string Name, List<string> Files, List<string> Directories)
 {
-    public required string Name { get; init; }
-    public required List<string> Files { get; init; }
-    public required List<string> Directories { get; init; }
 }

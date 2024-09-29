@@ -13,7 +13,7 @@ namespace Server.Endpoints;
 
 public class Auth : IEndpoint
 {
-    private readonly RefNotesContext _db;
+    private readonly IUserService _userService;
     private readonly AuthService _authService;
 
     /// <summary>
@@ -28,10 +28,10 @@ public class Auth : IEndpoint
         Secure = false
     };
 
-    public Auth(IServiceProvider services)
+    public Auth(IUserService userService, AuthService authService)
     {
-        _db = services.GetRequiredService<RefNotesContext>();
-        _authService = services.GetRequiredService<AuthService>();
+        _userService = userService;
+        _authService = authService;
     }
 
     public void RegisterEndpoints(WebApplication app)
@@ -40,9 +40,9 @@ public class Auth : IEndpoint
 
         group.MapPost("/login",
             async Task<Results<Ok<string>, NotFound, UnauthorizedHttpResult>>
-                (UserCredentials credentials, UserServiceRepository userServiceRepository, HttpContext httpContext) =>
+                (UserCredentials credentials, RefNotesContext db, HttpContext httpContext) =>
             {
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == credentials.Username);
+                var user = await db.Users.FirstOrDefaultAsync(u => u.Username == credentials.Username);
                 if (user is null)
                 {
                     return TypedResults.NotFound();
@@ -58,22 +58,22 @@ public class Auth : IEndpoint
                         return TypedResults.Unauthorized();
                     case PasswordVerificationResult.SuccessRehashNeeded:
                         user.Password = passwordHasher.HashPassword(credentials, credentials.Password);
-                        await _db.SaveChangesAsync();
+                        await db.SaveChangesAsync();
                         break;
                 }
 
-                var accessToken = CreateAccessToken(_authService, user, userServiceRepository, httpContext);
+                var accessToken = await CreateAccessToken(_authService, user, _userService, httpContext);
 
                 return TypedResults.Ok(accessToken);
             });
 
         group.MapPost("/refresh",
             async Task<Results<Ok<string>, BadRequest<string>, ProblemHttpResult>>
-                ([FromBody] string accessToken, UserServiceRepository userServiceRepository, HttpContext httpContext) =>
+                ([FromBody] string accessToken, RefNotesContext db, HttpContext httpContext) =>
             {
                 var principal = _authService.GetPrincipalFromExpiredToken(accessToken);
                 var name = principal.Identity?.Name;
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == name);
+                var user = await db.Users.FirstOrDefaultAsync(u => u.Username == name);
 
                 var refreshToken = httpContext.Request.Cookies["refreshToken"];
 
@@ -82,21 +82,21 @@ public class Auth : IEndpoint
                     return TypedResults.BadRequest("No user or refresh token found");
                 }
 
-                var savedRefreshToken = userServiceRepository.GetSavedRefreshToken(user.Username, refreshToken);
+                var savedRefreshToken = await _userService.GetRefreshToken(user.Username, refreshToken);
                 if (savedRefreshToken is null || savedRefreshToken.IsExpired)
                 {
                     // Unauthorized
                     return TypedResults.Problem("Refresh token is invalid or expired", statusCode: 401);
                 }
 
-                userServiceRepository.DeleteUserRefreshToken(user.Username, refreshToken);
-                var newAccessToken = CreateAccessToken(_authService, user, userServiceRepository, httpContext);
+                await _userService.DeleteRefreshToken(user.Username, refreshToken);
+                var newAccessToken = await CreateAccessToken(_authService, user, _userService, httpContext);
 
                 return TypedResults.Ok(newAccessToken);
             });
 
         group.MapPost("/register",
-            async (User newUser, UserServiceRepository userServiceRepository, HttpContext httpContext) =>
+            async (User newUser, RefNotesContext db, HttpContext httpContext) =>
             {
                 // Clear roles to prevent user from setting roles
                 newUser.Roles = [];
@@ -104,20 +104,20 @@ public class Auth : IEndpoint
                 var passwordHasher = new PasswordHasher<UserCredentials>();
                 newUser.Password = passwordHasher.HashPassword(new UserCredentials(newUser.Username, newUser.Password),
                     newUser.Password);
-                _db.Add(newUser);
-                await _db.SaveChangesAsync();
+                db.Add(newUser);
+                await db.SaveChangesAsync();
 
-                var accessToken = CreateAccessToken(_authService, newUser, userServiceRepository, httpContext);
+                var accessToken = await CreateAccessToken(_authService, newUser, _userService, httpContext);
 
                 return TypedResults.Ok(accessToken);
             });
     }
 
-    private static string CreateAccessToken(AuthService authService, User user,
-        UserServiceRepository userServiceRepository, HttpContext httpContext)
+    private static async Task<string> CreateAccessToken(AuthService authService, User user, IUserService userService,
+        HttpContext httpContext)
     {
         var tokens = authService.CreateTokens(user);
-        userServiceRepository.AddUserRefreshToken(new UserRefreshToken
+        await userService.AddRefreshToken(new UserRefreshToken
         {
             Username = user.Username,
             RefreshToken = tokens.RefreshToken.Token,

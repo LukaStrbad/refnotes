@@ -9,12 +9,12 @@ namespace Server.Controllers;
 [Route("[controller]")]
 public class BrowserController : ControllerBase
 {
-    private readonly IBrowserServiceRepository _browserServiceRepository;
+    private readonly IBrowserService _browserService;
     private readonly IFileService _fileService;
 
-    public BrowserController(IBrowserServiceRepository browserServiceRepository, IFileService fileService)
+    public BrowserController(IBrowserService browserService, IFileService fileService)
     {
-        _browserServiceRepository = browserServiceRepository;
+        _browserService = browserService;
         _fileService = fileService;
     }
 
@@ -23,7 +23,7 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<string>> List(string path)
     {
-        var directory = await _browserServiceRepository.List(User, path);
+        var directory = await _browserService.List(User, path);
         if (directory is null)
         {
             return NotFound("Directory not found.");
@@ -35,10 +35,14 @@ public class BrowserController : ControllerBase
     [HttpPost("addFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> AddFile(string directoryPath, string name, [FromBody] IFormFile file)
+    public async Task<ActionResult> AddFile(string directoryPath, string name)
     {
-        var fileName = await _browserServiceRepository.AddFile(User, directoryPath, name);
-        await _fileService.SaveFile(fileName, file.OpenReadStream());
+        var files = Request.Form.Files;
+        foreach (var file in files)
+        {
+            var fileName = await _browserService.AddFile(User, directoryPath, name);
+            await _fileService.SaveFile(fileName, file.OpenReadStream());
+        }
 
         return Ok();
     }
@@ -48,7 +52,7 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name)
     {
-        var fileName = await _browserServiceRepository.GetFilesystemFilePath(User, directoryPath, name);
+        var fileName = await _browserService.GetFilesystemFilePath(User, directoryPath, name);
         if (fileName is null)
         {
             return NotFound("File not found.");

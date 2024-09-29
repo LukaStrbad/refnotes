@@ -19,14 +19,13 @@ public static class Configuration
     {
         builder.Services.AddControllersWithViews();
         builder.AddDatabase(appConfig);
-        
-        builder.Services.AddSingleton<AuthService>();
-        builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-        builder.Services.AddSingleton<IFileService, FileService>();
         builder.Services.AddSingleton(appConfig);
 
-        builder.Services.AddScoped<UserServiceRepository>();
-        builder.Services.AddScoped<BrowserServiceRepository>();
+        builder.Services.AddScoped<IBrowserService, BrowserService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+        builder.Services.AddScoped<IFileService, FileService>();
+        builder.Services.AddScoped<AuthService>();
 
         builder.Services.AddAuthentication(x =>
         {
@@ -49,7 +48,7 @@ public static class Configuration
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
     }
-    
+
     private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)
     {
         var dbPath = Path.Join(appConfig.BaseDir, "refnotes.db");
@@ -87,7 +86,8 @@ public static class Configuration
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         new Admin(services).RegisterEndpoints(app);
-        new Auth(services).RegisterEndpoints(app);
+        new Auth(services.GetRequiredService<IUserService>(), services.GetRequiredService<AuthService>())
+            .RegisterEndpoints(app);
     }
 
     public static AppConfiguration LoadAppConfig()
@@ -129,7 +129,7 @@ public static class Configuration
         }
 
         // Set default data directory and create it if it doesn't exist
-        if (string.IsNullOrWhiteSpace(config.DataDir)) 
+        if (string.IsNullOrWhiteSpace(config.DataDir))
             config.DataDir = Path.Join(baseDir, DefaultDataDir);
         try
         {

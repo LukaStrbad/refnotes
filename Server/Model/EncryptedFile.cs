@@ -4,13 +4,13 @@ using Server.Services;
 
 namespace Server.Model;
 
-public class EncryptedFile
+public class EncryptedFile(string filesystemName, string name)
 {
     public int Id { get; set; }
     [MaxLength(255)]
-    public required string FilesystemName { get; init; }
+    public string FilesystemName { get; init; } = filesystemName;
     [MaxLength(255)]
-    public required string Name { get; init; }
+    public string Name { get; init; } = name;
 
     public string DecryptedName(IEncryptionService encryptionService)
     {
