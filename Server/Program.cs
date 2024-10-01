@@ -10,6 +10,5 @@ builder.RegisterServices(appConfig);
 var app = builder.Build();
 
 app.RegisterMiddlewares();
-app.RegisterEndpoints();
 
 app.Run();

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Db;
-using Server.Endpoints;
 using Server.Middlewares;
 using Server.Services;
 
@@ -25,7 +24,8 @@ public static class Configuration
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
         builder.Services.AddScoped<IFileService, FileService>();
-        builder.Services.AddScoped<AuthService>();
+        builder.Services.AddScoped<IAdminService, AdminService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
 
         builder.Services.AddAuthentication(x =>
         {
@@ -79,15 +79,6 @@ public static class Configuration
         app.UseExceptionHandlerMiddleware();
 
         app.MapControllers();
-    }
-
-    public static void RegisterEndpoints(this WebApplication app)
-    {
-        using var scope = app.Services.CreateScope();
-        var services = scope.ServiceProvider;
-        new Admin(services).RegisterEndpoints(app);
-        new Auth(services.GetRequiredService<IUserService>(), services.GetRequiredService<AuthService>())
-            .RegisterEndpoints(app);
     }
 
     public static AppConfiguration LoadAppConfig()

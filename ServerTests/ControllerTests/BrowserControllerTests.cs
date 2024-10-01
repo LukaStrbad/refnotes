@@ -36,7 +36,9 @@ public class BrowserControllerTests : BaseTests
         _controller = new BrowserController(_browserService, _fileService)
         {
             ControllerContext = new ControllerContext
-                { HttpContext = new DefaultHttpContext { User = _claimsPrincipal } }
+            {
+                HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
+            }
         };
     }
 
@@ -45,7 +47,7 @@ public class BrowserControllerTests : BaseTests
     {
         const string path = "test_path";
         var responseDirectory = new ResponseDirectory("test_dir", [], []);
-        
+
         _browserService.List(_claimsPrincipal, path).Returns(responseDirectory);
 
         var result = await _controller.List(path);
@@ -53,7 +55,7 @@ public class BrowserControllerTests : BaseTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         Assert.Equal(responseDirectory, okResult.Value);
     }
-    
+
     [Fact]
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
@@ -65,7 +67,7 @@ public class BrowserControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task AddFile_ReturnsOk_WhenFileAdded()
     {
@@ -80,7 +82,8 @@ public class BrowserControllerTests : BaseTests
         _browserService.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
 
         var formFileCollection = new FormFileCollection { file };
-        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(), formFileCollection);
+        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
+            formFileCollection);
         _controller.ControllerContext.HttpContext.Request.Form = formCollection;
 
         var result = await _controller.AddFile(directoryPath, name);
@@ -88,7 +91,7 @@ public class BrowserControllerTests : BaseTests
         Assert.IsType<OkResult>(result);
         await _fileService.Received(1).SaveFile(fileName, fileStream);
     }
-    
+
     [Fact]
     public async Task GetFile_ReturnsOk_WhenFileExists()
     {
@@ -96,7 +99,7 @@ public class BrowserControllerTests : BaseTests
         const string name = "test_file_name";
         const string fileName = "test_file_name";
         var stream = Substitute.For<Stream>();
-        
+
         _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
         _fileService.GetFile(fileName).Returns(stream);
 
@@ -105,7 +108,7 @@ public class BrowserControllerTests : BaseTests
         var okResult = Assert.IsType<FileStreamResult>(result);
         Assert.Equal(stream, okResult.FileStream);
     }
-    
+
     [Fact]
     public async Task GetFile_ReturnsNotFound_WhenFileDoesNotExist()
     {
@@ -118,5 +121,4 @@ public class BrowserControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
-    
 }
