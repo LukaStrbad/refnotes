@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Server.Db;
+using Server.Exceptions;
 using Server.Model;
 using Server.Services;
 
@@ -17,21 +18,8 @@ public class BrowserServiceTests : BaseTests
     public BrowserServiceTests()
     {
         _encryptionService = new EncryptionService(AesKey, AesIv);
-        
-        // Create test db
-        var dbOptions = new DbContextOptionsBuilder<RefNotesContext>().UseSqlite("Data Source=test.db").Options;
-        _context = new RefNotesContext(dbOptions);
-        _context.Database.EnsureDeleted();
-        _context.Database.EnsureCreated();
-        // Add test user to db
-        _testUser = new User(0, "test", "test", "test@test.com", "password");
-        _context.Users.Add(_testUser);
-        _context.SaveChanges();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, _testUser.Username),
-            new Claim(ClaimTypes.Email, _testUser.Email)
-        ]));
-        
+        _context = CreateDb();
+        (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
         _browserService = new BrowserService(_context, _encryptionService, AppConfig);
     }
     
@@ -42,6 +30,16 @@ public class BrowserServiceTests : BaseTests
         
         var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == _encryptionService.EncryptAesStringBase64("/"));
         Assert.NotNull(directory);
+    }
+
+    [Fact]
+    public async Task AddDirectory_ThrowsExceptionIfUserNotFound()
+    {
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim(ClaimTypes.Name, "nonexistent")
+        ]));
+        
+        await Assert.ThrowsAsync<UserNotFoundException>(() => _browserService.AddDirectory(claimsPrincipal, "/"));
     }
     
     [Fact]

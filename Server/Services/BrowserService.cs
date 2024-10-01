@@ -51,10 +51,6 @@ public class BrowserService(
 
         if (path is "/")
         {
-            // Special case for root directory
-            if (existingDir is not null)
-                return;
-            
             context.Directories.Add(new EncryptedDirectory(encryptedPath, user));
             await context.SaveChangesAsync();
             return;
