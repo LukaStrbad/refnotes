@@ -117,7 +117,6 @@ public class AuthServiceTests : BaseTests
             _authService.RefreshAccessToken(tokens.AccessToken, "invalidRefreshToken"));
     }
 
-    // TODO: Fix this test, currently it fails due to SecurityTokenMalformedException because of invalid access token
     [Fact]
     public async Task RefreshAccessToken_ThrowsAccessTokenInvalid()
     {
