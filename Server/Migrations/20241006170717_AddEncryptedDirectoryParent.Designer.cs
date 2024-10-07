@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Db;
 
@@ -10,9 +11,11 @@ using Server.Db;
 namespace Server.Migrations
 {
     [DbContext(typeof(RefNotesContext))]
-    partial class RefNotesContextModelSnapshot : ModelSnapshot
+    [Migration("20241006170717_AddEncryptedDirectoryParent")]
+    partial class AddEncryptedDirectoryParent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");

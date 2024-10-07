@@ -64,9 +64,18 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType<Ok<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<NotFound>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<string>> RefreshToken([FromBody] string accessToken)
+    public async Task<ActionResult<string>> RefreshToken()
     {
         var refreshToken = HttpContext.Request.Cookies["refreshToken"];
+        using var sr = new StreamReader(Request.Body);
+        string accessToken;
+        try
+        {
+            accessToken = await sr.ReadToEndAsync();
+        } catch
+        {
+            return BadRequest("Error reading access token from request body");
+        }
 
         if (refreshToken is null)
         {

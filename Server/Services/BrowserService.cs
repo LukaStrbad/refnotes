@@ -8,10 +8,53 @@ namespace Server.Services;
 
 public interface IBrowserService
 {
+    /// <summary>
+    /// List the contents of a directory.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="path">Path of the directory</param>
+    /// <returns>Name of the requested directory, together with its contents</returns>
     Task<ResponseDirectory?> List(ClaimsPrincipal claimsPrincipal, string path = "/");
+
+    /// <summary>
+    /// Add a new directory at the specified path.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="path">Path where the new directory will be added</param>
     Task AddDirectory(ClaimsPrincipal claimsPrincipal, string path);
+
+    /// <summary>
+    /// Delete the directory at the specified path.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="path">Path of the directory to be deleted</param>
+    Task DeleteDirectory(ClaimsPrincipal claimsPrincipal, string path);
+
+    /// <summary>
+    /// Add a new file to the specified directory.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="directoryPath">Path of the directory where the file will be added</param>
+    /// <param name="name">Name of the file to be added</param>
+    /// <returns>Filesystem name of the added file</returns>
     Task<string> AddFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+
+    /// <summary>
+    /// Get the filesystem path of a file in the specified directory.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="directoryPath">Path of the directory containing the file</param>
+    /// <param name="name">Name of the file</param>
+    /// <returns>Filesystem path of the file, or null if not found</returns>
     Task<string?> GetFilesystemFilePath(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+
+    /// <summary>
+    /// Delete a file from the specified directory.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the directory</param>
+    /// <param name="directoryPath">Path of the directory containing the file</param>
+    /// <param name="name">Name of the file to be deleted</param>
+    Task DeleteFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
 }
 
 public class BrowserService(
@@ -81,6 +124,45 @@ public class BrowserService(
         await context.SaveChangesAsync();
     }
 
+    public async Task DeleteDirectory(ClaimsPrincipal claimsPrincipal, string path)
+    {
+        var user = await GetUser(claimsPrincipal);
+        
+        path = NormalizePath(path);
+        
+        if (path is "/")
+        {
+            throw new ArgumentException("Cannot delete root directory");
+        }
+        
+        var encryptedPath = encryptionService.EncryptAesStringBase64(path);
+        var directory = await context.Directories
+            .Include(dir => dir.Parent)
+            .Include(dir => dir.Files)
+            .Include(dir => dir.Directories)
+            .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
+
+        if (directory is null)
+        {
+            throw new DirectoryNotFoundException($"Directory at path '{path}' not found");
+        }
+        
+        if (directory.Files.Count != 0 || directory.Directories.Count != 0)
+        {
+            throw new DirectoryNotEmptyException($"Directory at path '{path}' is not empty");
+        }
+
+        var parent = directory.Parent;
+        if (parent is null)
+        {
+            throw new DirectoryNotFoundException($"Parent directory for '{path}' not found");
+        }
+
+        parent.Directories.Remove(directory);
+        context.Entry(directory).State = EntityState.Deleted;
+        await context.SaveChangesAsync();
+    }
+
     public async Task<string> AddFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
     {
         var user = await GetUser(claimsPrincipal);
@@ -88,13 +170,13 @@ public class BrowserService(
 
         if (directory is null)
         {
-            throw new ArgumentException($"Directory at path '{directoryPath}' not found");
+            throw new DirectoryNotFoundException($"Directory at path '{directoryPath}' not found");
         }
 
         var encryptedName = encryptionService.EncryptAesStringBase64(name);
         if (directory.Files.Any(x => x.Name == encryptedName))
         {
-            throw new ArgumentException($"File with name '{name}' already exists in directory '{directoryPath}'");
+            throw new FileAlreadyExistsException($"File with name '{name}' already exists in directory '{directoryPath}'");
         }
 
         var encryptedFile = new EncryptedFile(GenerateFilesystemName(), encryptedName);
@@ -113,12 +195,38 @@ public class BrowserService(
 
         if (directory is null)
         {
-            throw new ArgumentException($"Directory at path ${directoryPath} not found.");
+            throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
         }
 
         var encryptedName = encryptionService.EncryptAesStringBase64(name);
         var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
         return file?.FilesystemName;
+    }
+
+    public async Task DeleteFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    {
+        var user = await GetUser(claimsPrincipal);
+        var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
+        var directory = context.Directories
+            .Include(dir => dir.Files)
+            .FirstOrDefault(x => x.Owner == user && x.Path == encryptedPath);
+
+        if (directory is null)
+        {
+            throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
+        }
+        
+        var encryptedName = encryptionService.EncryptAesStringBase64(name);
+        var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
+        
+        if (file is null)
+        {
+            throw new FileNotFoundException($"File with name ${name} not found in directory ${directoryPath}.");
+        }
+        
+        directory.Files.Remove(file);
+        context.Entry(file).State = EntityState.Deleted;
+        await context.SaveChangesAsync();
     }
 
     private record DirPathName(string ParentDir, string Name);

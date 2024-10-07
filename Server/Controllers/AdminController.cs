@@ -15,7 +15,7 @@ namespace Server.Controllers;
 [Authorize("admin")]
 public class AdminController(IAdminService adminService) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("modifyRoles")]
     [ProducesResponseType<Ok<List<string>>>(StatusCodes.Status200OK)]
     [ProducesResponseType<NotFound>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<string>>> ModifyRoles(ModifyRolesRequest modifyRolesRequest)
@@ -30,7 +30,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
         }
     }
     
-    [HttpGet]
+    [HttpGet("listUsers")]
     [ProducesResponseType<Ok<List<User>>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<List<User>>> ListUsers()
     {

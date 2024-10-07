@@ -27,6 +27,7 @@ public class EncryptedDirectory
     public List<EncryptedFile> Files { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
     public User Owner { get; init; }
+    public EncryptedDirectory? Parent { get; init; }
 
     public ResponseDirectory Decrypt(IEncryptionService encryptionService)
     {

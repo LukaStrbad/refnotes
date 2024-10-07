@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Text;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
@@ -46,6 +47,12 @@ public class AuthControllerTests : BaseTests
         Assert.Equal(refreshToken, cookiesArgs[1]);
         var thirdArg = Assert.IsType<CookieOptions>(cookiesArgs[2]);
         Assert.True(thirdArg.HttpOnly);
+    }
+
+    private void SetBody(string value)
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(value));
+        _httpContext.Request.Body.Returns(stream);
     }
 
     [Fact]
@@ -122,8 +129,9 @@ public class AuthControllerTests : BaseTests
         _requestCookies["refreshToken"].Returns(initialRefreshToken);
         var tokens = new Tokens(accessToken, new RefreshToken(refreshToken, DateTime.Now));
         _authService.RefreshAccessToken(initialAccessToken, initialRefreshToken).Returns(tokens);
-
-        var result = await _controller.RefreshToken(initialAccessToken);
+        
+        SetBody(initialAccessToken);
+        var result = await _controller.RefreshToken();
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
 
         Assert.Equal(accessToken, okResult.Value);
@@ -135,7 +143,8 @@ public class AuthControllerTests : BaseTests
     {
         _requestCookies["refreshToken"].Returns((string?)null);
 
-        var result = await _controller.RefreshToken("access");
+        SetBody("access");
+        var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("No refresh token provided", badRequestResult.Value);
     }
@@ -146,7 +155,8 @@ public class AuthControllerTests : BaseTests
         _requestCookies["refreshToken"].Returns("refresh");
         _authService.RefreshAccessToken("access", "refresh").ThrowsAsync(new UserNotFoundException("User not found"));
 
-        var result = await _controller.RefreshToken("access");
+        SetBody("access");
+        var result = await _controller.RefreshToken();
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("User not found", notFoundResult.Value);
     }
@@ -158,7 +168,8 @@ public class AuthControllerTests : BaseTests
         _authService.RefreshAccessToken("access", "refresh")
             .ThrowsAsync(new RefreshTokenInvalid("Invalid refresh token"));
 
-        var result = await _controller.RefreshToken("access");
+        SetBody("access");
+        var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Invalid refresh token", badRequestResult.Value);
     }
@@ -170,7 +181,8 @@ public class AuthControllerTests : BaseTests
         _authService.RefreshAccessToken("access", "refresh")
             .ThrowsAsync(new SecurityTokenMalformedException("Malformed access token"));
 
-        var result = await _controller.RefreshToken("access");
+        SetBody("access");
+        var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Malformed access token", badRequestResult.Value);
     }

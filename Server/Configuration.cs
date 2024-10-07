@@ -21,7 +21,6 @@ public static class Configuration
         builder.Services.AddSingleton(appConfig);
 
         builder.Services.AddScoped<IBrowserService, BrowserService>();
-        builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IEncryptionService, EncryptionService>();
         builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
