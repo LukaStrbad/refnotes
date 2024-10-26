@@ -8,11 +8,12 @@ public class FileService(IEncryptionService encryptionService, AppConfiguration 
         {
             throw new ArgumentException("File name cannot be empty.");
         }
+
         var filePath = Path.Combine(appConfig.DataDir, fileName);
         await using var stream = new FileStream(filePath, FileMode.Create);
         encryptionService.EncryptAesToStream(inputStream, stream);
     }
-    
+
     public Stream GetFile(string fileName)
     {
         var filePath = Path.Combine(appConfig.DataDir, fileName);
@@ -21,5 +22,12 @@ public class FileService(IEncryptionService encryptionService, AppConfiguration 
         encryptionService.DecryptAesToStream(stream, decryptedStream);
         decryptedStream.Position = 0;
         return decryptedStream;
+    }
+
+    public Task DeleteFile(string fileName)
+    {
+        var filePath = Path.Combine(appConfig.DataDir, fileName);
+        File.Delete(filePath);
+        return Task.CompletedTask;
     }
 }

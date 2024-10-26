@@ -82,6 +82,38 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    public async Task DeleteDirectory_RemovesDirectory()
+    {
+        const string path = "/test";
+        await _browserService.AddDirectory(_claimsPrincipal, path);
+        
+        await _browserService.DeleteDirectory(_claimsPrincipal, path);
+        
+        var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == _encryptionService.EncryptAesStringBase64(path));
+        Assert.Null(directory);
+    }
+    
+    [Fact]
+    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist()
+    {
+        const string path = "/test";
+        
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => _browserService.DeleteDirectory(_claimsPrincipal, path));
+    }
+    
+    [Fact]
+    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty()
+    {
+        const string path = "/test";
+        await _browserService.AddDirectory(_claimsPrincipal, path);
+        
+        const string subPath = "/test/sub";
+        await _browserService.AddDirectory(_claimsPrincipal, subPath);
+        
+        await Assert.ThrowsAsync<DirectoryNotEmptyException>(() => _browserService.DeleteDirectory(_claimsPrincipal, path));
+    }
+    
+    [Fact]
     public async Task AddFile_AddsFile()
     {
         const string path = "/test";
@@ -111,7 +143,7 @@ public class BrowserServiceTests : BaseTests
         const string fileName = "testfile.txt";
         await _browserService.AddFile(_claimsPrincipal, path, fileName);
         
-        await Assert.ThrowsAsync<ArgumentException>(() => _browserService.AddFile(_claimsPrincipal, path, fileName));
+        await Assert.ThrowsAsync<FileAlreadyExistsException>(() => _browserService.AddFile(_claimsPrincipal, path, fileName));
     }
     
     [Fact]
@@ -120,7 +152,39 @@ public class BrowserServiceTests : BaseTests
         const string path = "/test";
         const string fileName = "testfile.txt";
         
-        await Assert.ThrowsAsync<ArgumentException>(() => _browserService.AddFile(_claimsPrincipal, path, fileName));
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => _browserService.AddFile(_claimsPrincipal, path, fileName));
+    }
+    
+    [Fact]
+    public async Task DeleteFile_RemovesFile()
+    {
+        const string path = "/test";
+        await _browserService.AddDirectory(_claimsPrincipal, path);
+        
+        const string fileName = "testfile.txt";
+        await _browserService.AddFile(_claimsPrincipal, path, fileName);
+        
+        await _browserService.DeleteFile(_claimsPrincipal, path, fileName);
+        
+        var encryptedPath = _encryptionService.EncryptAesStringBase64(path);
+        
+        var directory = await _context.Directories
+            .Include(x => x.Files)
+            .FirstOrDefaultAsync(d => d.Path == encryptedPath);
+        
+        Assert.NotNull(directory);
+        Assert.Empty(directory.Files);
+    }
+    
+    [Fact]
+    public async Task DeleteFile_ThrowsIfFileDoesNotExist()
+    {
+        const string path = "/test";
+        await _browserService.AddDirectory(_claimsPrincipal, path);
+        
+        const string fileName = "testfile.txt";
+        
+        await Assert.ThrowsAsync<FileNotFoundException>(() => _browserService.DeleteFile(_claimsPrincipal, path, fileName));
     }
     
     [Fact]
@@ -213,7 +277,7 @@ public class BrowserServiceTests : BaseTests
     {
         const string path = "/test";
         
-        await Assert.ThrowsAsync<ArgumentException>(() => _browserService.GetFilesystemFilePath(_claimsPrincipal, path, "testfile.txt"));
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => _browserService.GetFilesystemFilePath(_claimsPrincipal, path, "testfile.txt"));
     }
     
 }

@@ -54,4 +54,25 @@ public class FileServiceTests : BaseTests
 
         await Assert.ThrowsAsync<FileNotFoundException>(() => Task.FromResult(_fileService.GetFile(fileName)));
     }
+    
+    [Fact]
+    public async Task DeleteFile_RemovesFile()
+    {
+        const string fileName = "testfile.txt";
+        var inputStream = new MemoryStream("test content"u8.ToArray());
+        await _fileService.SaveFile(fileName, inputStream);
+
+        await _fileService.DeleteFile(fileName);
+
+        var filePath = Path.Combine(AppConfig.DataDir, fileName);
+        Assert.False(File.Exists(filePath));
+    }
+    
+    [Fact]
+    public async Task DeleteFile_DoesNothingIfFileNotFound()
+    {
+        const string fileName = "nonexistent.txt";
+
+        await _fileService.DeleteFile(fileName);
+    }
 }
