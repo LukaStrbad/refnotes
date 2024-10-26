@@ -6,7 +6,7 @@ import {NgClass} from "@angular/common";
 import {CreateNewModalComponent} from "../components/create-new-modal/create-new-modal.component";
 import {HttpEventType} from "@angular/common/http";
 import {LoggerService} from "../../services/logger.service";
-import {firstValueFrom, forkJoin} from "rxjs";
+import {firstValueFrom, forkJoin, lastValueFrom, Observable, share, tap} from "rxjs";
 
 @Component({
   selector: 'app-browser',
@@ -122,10 +122,8 @@ export class BrowserComponent {
 
     for (let i = 0; i < files.length; i++) {
       this.logger.info(`Uploading file ${files[i].name}`);
-      const uploadObservable = this.browser.addFile(this.currentPath, files[i]);
-
-      this.logger.info('Subscribing to upload observable');
-      const subscription = uploadObservable.subscribe(async (event) => {
+      const uploadObservable = this.browser.addFile(this.currentPath, files[i])
+        .pipe(tap(event => {
           if (event.type === HttpEventType.UploadProgress) {
             this.uploadProgress[files[i].name] = event.total ? Math.round(100 * event.loaded / event.total) : null;
           } else if (event.type === HttpEventType.Response) {
@@ -135,15 +133,18 @@ export class BrowserComponent {
             } else {
               console.error('Error uploading file', event);
             }
-            subscription.unsubscribe();
           }
-        }
-      );
+        }))
 
       observables.push(uploadObservable);
     }
 
-    const result = await firstValueFrom(forkJoin(observables));
+    try {
+      await lastValueFrom(forkJoin(observables));
+    } catch (error) {
+      console.error('Error uploading files', error);
+    }
+
     this.fileModal.close();
   }
 }
