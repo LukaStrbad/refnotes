@@ -63,6 +63,7 @@ export class CreateNewModalComponent {
 
   close() {
     this.modal.nativeElement.close();
+    this.selectedFiles = null;
   }
 
   onFilesSelected(event: Event) {

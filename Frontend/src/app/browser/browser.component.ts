@@ -6,7 +6,7 @@ import {NgClass} from "@angular/common";
 import {CreateNewModalComponent} from "../components/create-new-modal/create-new-modal.component";
 import {HttpEventType} from "@angular/common/http";
 import {LoggerService} from "../../services/logger.service";
-import {firstValueFrom, forkJoin, lastValueFrom, Observable, share, tap} from "rxjs";
+import {forkJoin, lastValueFrom, tap} from "rxjs";
 
 @Component({
   selector: 'app-browser',
