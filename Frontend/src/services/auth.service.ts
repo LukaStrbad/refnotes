@@ -1,12 +1,12 @@
-import { Injectable, signal, Signal, WritableSignal } from '@angular/core';
-import { environment } from '../environments/environment';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { User } from '../model/user';
-import { Router } from '@angular/router';
-import { jwtDecode, JwtPayload } from "jwt-decode";
-import { LoginInfo } from "../app/login/login.component";
-import { getStatusCode } from '../utils/errorHandler';
+import {Injectable, signal, Signal, WritableSignal} from '@angular/core';
+import {environment} from '../environments/environment';
+import {HttpClient} from '@angular/common/http';
+import {firstValueFrom} from 'rxjs';
+import {User} from '../model/user';
+import {Router} from '@angular/router';
+import {jwtDecode, JwtPayload} from "jwt-decode";
+import {LoginInfo} from "../app/login/login.component";
+import {getStatusCode} from '../utils/errorHandler';
 
 const apiUrl = environment.apiUrl + '/auth';
 
@@ -73,7 +73,7 @@ export class AuthService {
 
   async login(username: string, password: string) {
     this.accessToken = await firstValueFrom(
-      this.http.post<string>(`${apiUrl}/login`, { username, password }, { withCredentials: true })
+      this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true, responseType: 'text' })
     );
     await this.router.navigate(['/homepage']);
   }
@@ -112,10 +112,10 @@ export class AuthService {
   }
 
   async refreshTokens() {
-    const newAccessToken = await firstValueFrom(
-      this.http.post<string>(`${apiUrl}/refresh`, JSON.stringify(this.accessToken), { headers: { 'Content-Type': 'application/json' }, withCredentials: true })
+    this.accessToken = await firstValueFrom(
+      this.http.post(`${apiUrl}/refreshAccessToken`, this.accessToken,
+        {withCredentials: true, responseType: 'text'})
     );
-    this.accessToken = newAccessToken;
   }
 
 }

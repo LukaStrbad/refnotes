@@ -1,0 +1,79 @@
+<dialog #modal class="modal backdrop-blur">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold mb-4">
+      @if (modalType === 'file') {
+        Create or upload a new file
+      } @else {
+        Create new folder
+      }
+    </h3>
+
+    @if (modalType === 'folder') {
+      <input
+        type="text"
+        placeholder="Enter folder name"
+        class="input input-bordered w-full max-w mt-4"
+        [(ngModel)]="newName"
+      />
+    } @else {
+      <input type="file" class="hidden" multiple #fileInput (change)="onFilesSelected($event)">
+      <div class="card border-base-300 border-2 flex flex-col items-center justify-center gap-3 p-2 pb-3"
+           [ngClass]="{'bg-base-300': isDragOver}"
+           (dragover)="onFileDragOver($event)"
+           (dragleave)="onFileDragLeave()"
+           (drop)="onFileDrop($event)">
+        Drag and drop a file here
+        <button class="btn btn-sm btn-primary" (click)="fileInput.click()">Browse file</button>
+      </div>
+
+      @if (selectedFiles === null) {
+        <div class="divider">OR</div>
+
+        <div class="flex w-full flex-col border-opacity-50">
+          <div class="card">
+            <input
+              type="text"
+              class="input input-bordered w-full max-w mt-4"
+              placeholder="Enter file name"
+              [(ngModel)]="newName"
+            />
+          </div>
+        </div>
+      } @else {
+        <div class="mt-4">
+          @for (file of selectedFilesArray; track file.name) {
+            <div class="badge badge-accent h-auto pr-0 m-1">{{ file.name }} (size: {{ file.size | byteSize }})
+              <button class="m-2" (click)="removeSelectedFile(file)">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="mt-4">
+          @for (file of selectedFilesArray; track file.name) {
+            @if (uploadProgress[file.name] !== undefined //noinspection IncompatibleTypesComparison) {
+              <div>
+                <div class="text">{{ file.name }} (size: {{ file.size | byteSize }})</div>
+                <progress class="progress progress-accent w-full" [attr.value]="uploadProgress[file.name]" max="100"></progress>
+              </div>
+            }
+          }
+        </div>
+      }
+    }
+
+
+    <div class="actions mt-4 flex justify-end gap-2">
+      <button class="btn btn-sm" (click)="modal.close()">Cancel</button>
+      @if (selectedFiles === null) {
+        <button class="btn btn-sm btn-primary" (click)="onCreateClick()">Create</button>
+      } @else {
+        <button class="btn btn-sm btn-primary" (click)="onUploadClick()">Upload</button>
+      }
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button class="cursor-default">close</button>
+  </form>
+</dialog>
