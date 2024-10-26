@@ -160,7 +160,7 @@ public class BrowserControllerTests : BaseTests
             formFileCollection);
         _controller.ControllerContext.HttpContext.Request.Form = formCollection;
 
-        var result = await _controller.AddFile(directoryPath, name);
+        var result = await _controller.AddFile(directoryPath);
 
         Assert.IsType<OkResult>(result);
         await _fileService.Received(1).SaveFile(fileName, fileStream);
@@ -184,7 +184,7 @@ public class BrowserControllerTests : BaseTests
             formFileCollection);
         _controller.ControllerContext.HttpContext.Request.Form = formCollection;
 
-        var result = await _controller.AddFile(directoryPath, name);
+        var result = await _controller.AddFile(directoryPath);
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
@@ -208,7 +208,7 @@ public class BrowserControllerTests : BaseTests
             formFileCollection);
         _controller.ControllerContext.HttpContext.Request.Form = formCollection;
 
-        var result = await _controller.AddFile(directoryPath, name);
+        var result = await _controller.AddFile(directoryPath);
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("File already exists.", badRequestResult.Value);

@@ -97,11 +97,12 @@ public class BrowserController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> AddFile(string directoryPath, string name)
+    public async Task<ActionResult> AddFile(string directoryPath)
     {
         var files = Request.Form.Files;
         foreach (var file in files)
         {
+            var name = file.FileName;
             var result = await AddFileResult(directoryPath, name, file.OpenReadStream());
             if (result is not null)
             {
