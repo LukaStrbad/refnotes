@@ -6,16 +6,15 @@ import {ByteSizePipe} from "../../../pipes/byte-size.pipe";
 type ModalType = 'file' | 'folder';
 
 @Component({
-  selector: 'app-create-new-modal',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ReactiveFormsModule,
-    NgClass,
-    ByteSizePipe
-  ],
-  templateUrl: './create-new-modal.component.html',
-  styleUrl: './create-new-modal.component.scss'
+    selector: 'app-create-new-modal',
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        NgClass,
+        ByteSizePipe
+    ],
+    templateUrl: './create-new-modal.component.html',
+    styleUrl: './create-new-modal.component.scss'
 })
 export class CreateNewModalComponent {
   @Input("modalType")

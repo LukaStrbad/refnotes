@@ -5,12 +5,11 @@ import hljs from 'highlight.js';
 import MarkdownIt from 'markdown-it/index.js';
 
 @Component({
-  selector: 'app-md-editor',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './md-editor.component.html',
-  styleUrl: './md-editor.component.scss',
-  encapsulation: ViewEncapsulation.None
+    selector: 'app-md-editor',
+    imports: [FormsModule],
+    templateUrl: './md-editor.component.html',
+    styleUrl: './md-editor.component.scss',
+    encapsulation: ViewEncapsulation.None
 })
 export class MdEditorComponent {
   editorContent: string = `# Hello

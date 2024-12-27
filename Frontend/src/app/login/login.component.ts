@@ -7,11 +7,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { getErrorMessage } from "../../utils/errorHandler";
 
 @Component({
-  selector: "app-login",
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: "./login.component.html",
-  styleUrl: "./login.component.scss",
+    selector: "app-login",
+    imports: [CommonModule, FormsModule],
+    templateUrl: "./login.component.html",
+    styleUrl: "./login.component.scss"
 })
 export class LoginComponent {
   username = "";
