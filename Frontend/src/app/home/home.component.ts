@@ -5,11 +5,10 @@ import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { BrowserComponent } from "../browser/browser.component";
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [MdEditorComponent, BrowserComponent],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+    selector: 'app-home',
+    imports: [MdEditorComponent, BrowserComponent],
+    templateUrl: './home.component.html',
+    styleUrl: './home.component.scss'
 })
 export class HomeComponent {
   constructor(

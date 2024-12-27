@@ -9,15 +9,14 @@ import {LoggerService} from "../../services/logger.service";
 import {forkJoin, lastValueFrom, tap} from "rxjs";
 
 @Component({
-  selector: 'app-browser',
-  standalone: true,
-  imports: [
-    FormsModule,
-    NgClass,
-    CreateNewModalComponent
-  ],
-  templateUrl: './browser.component.html',
-  styleUrl: './browser.component.scss'
+    selector: 'app-browser',
+    imports: [
+        FormsModule,
+        NgClass,
+        CreateNewModalComponent
+    ],
+    templateUrl: './browser.component.html',
+    styleUrl: './browser.component.scss'
 })
 export class BrowserComponent {
   currentFolder: Directory | null = null;
