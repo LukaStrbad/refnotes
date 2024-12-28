@@ -71,7 +71,7 @@ public class BrowserControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task AddDirectory_ReturnsOk_WhenDirectoryAdded()
     {
@@ -82,7 +82,7 @@ public class BrowserControllerTests : BaseTests
 
         Assert.IsType<OkResult>(result);
     }
-    
+
     [Fact]
     public async Task AddDirectory_ReturnsBadRequest_WhenDirectoryAlreadyExists()
     {
@@ -94,7 +94,7 @@ public class BrowserControllerTests : BaseTests
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Directory already exists.", badRequestResult.Value);
     }
-    
+
     [Fact]
     public async Task DeleteDirectory_ReturnsOk_WhenDirectoryDeleted()
     {
@@ -105,7 +105,7 @@ public class BrowserControllerTests : BaseTests
 
         Assert.IsType<OkResult>(result);
     }
-    
+
     [Fact]
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDeletingRootDirectory()
     {
@@ -117,7 +117,7 @@ public class BrowserControllerTests : BaseTests
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Cannot delete root directory.", badRequestResult.Value);
     }
-    
+
     [Fact]
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDirectoryNotEmpty()
     {
@@ -129,7 +129,7 @@ public class BrowserControllerTests : BaseTests
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Directory not empty.", badRequestResult.Value);
     }
-    
+
     [Fact]
     public async Task DeleteDirectory_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
@@ -163,9 +163,9 @@ public class BrowserControllerTests : BaseTests
         var result = await _controller.AddFile(directoryPath);
 
         Assert.IsType<OkResult>(result);
-        await _fileService.Received(1).SaveFile(fileName, fileStream);
+        await _fileService.Received(1).SaveFileAsync(fileName, fileStream);
     }
-    
+
     [Fact]
     public async Task AddFile_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
@@ -189,7 +189,7 @@ public class BrowserControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task Task_ReturnsBadRequest_WhenFileAlreadyExists()
     {
@@ -224,11 +224,11 @@ public class BrowserControllerTests : BaseTests
 
         _browserService.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        
+
         var result = await _controller.AddTextFile(directoryPath, name);
 
         Assert.IsType<OkResult>(result);
-        await _fileService.Received(1).SaveFile(fileName, Arg.Any<Stream>());
+        await _fileService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public class BrowserControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task DeleteFile_ReturnsOk_WhenFileDeleted()
     {
@@ -273,7 +273,7 @@ public class BrowserControllerTests : BaseTests
 
         Assert.IsType<OkResult>(result);
     }
-    
+
     [Fact]
     public async Task DeleteFile_ReturnsNotFound_WhenFileDoesNotExist()
     {

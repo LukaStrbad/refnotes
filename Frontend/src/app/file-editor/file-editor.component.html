@@ -1,0 +1,14 @@
+<div class="flex flex-col gap-4">
+  <div class="flex flex-1">
+    <span class="font-bold text-2xl"> Editing {{ fileName }} </span>
+    <button class="btn btn-primary ms-auto" (click)="saveContent()">
+      Save
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="skeleton h-72 w-full"></div>
+  } @else {
+    <app-md-editor [(value)]="content"></app-md-editor>
+  }
+</div>

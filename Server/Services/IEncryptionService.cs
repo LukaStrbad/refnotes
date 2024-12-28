@@ -25,7 +25,7 @@ public interface IEncryptionService
     /// </summary>
     /// <param name="inputStream">The input stream to encrypt.</param>
     /// <param name="outputStream">The encrypted output stream</param>
-    public void EncryptAesToStream(Stream inputStream, Stream outputStream);
+    public Task EncryptAesToStreamAsync(Stream inputStream, Stream outputStream);
 
     /// <summary>
     /// Encrypts the given text using AES encryption and returns the result as a Base64 string.
@@ -41,7 +41,7 @@ public interface IEncryptionService
     /// <param name="encryptedBytes">The encrypted byte array to decrypt.</param>
     /// <returns>The decrypted byte array.</returns>
     IEnumerable<byte> DecryptAes(byte[] encryptedBytes);
-    
+
     /// <summary>
     /// Decrypts the given stream using AES decryption and writes the result to the output stream.
     /// </summary>
@@ -56,7 +56,7 @@ public interface IEncryptionService
     /// <param name="encryptedBytes">The encrypted byte array to decrypt.</param>
     /// <returns>The decrypted text as a string.</returns>
     string DecryptAesString(byte[] encryptedBytes);
-    
+
     /// <summary>
     /// Decrypts the given encrypted text (Base64 encoded) using AES decryption and returns the result as a string.
     /// Text is decoded as UTF-8.

@@ -1,16 +1,52 @@
-<div class="md-editor flex gap-4 w-100 justify-stretch">
-  <div class="editor w-1/2">
-    <textarea
-      class="editor-textarea w-full bg-base-300 min-h-96 p-2 rounded-md"
-      placeholder="Write something..."
-      [(ngModel)]="editorContent"
-      (ngModelChange)="onEditorChange($event)"
-    ></textarea>
+<div class="flex flex-col gap-2 bg-base-300 p-2 rounded-xl">
+  <div role="tablist" class="hidden sm:tabs tabs-boxed self-end">
+    <a
+      role="tab"
+      class="tab"
+      [class.tab-active]="editorMode() === 'SideBySide'"
+      (click)="editorMode.set('SideBySide')"
+    >
+      Side by Side
+    </a>
+    <a
+      role="tab"
+      class="tab"
+      [class.tab-active]="editorMode() === 'EditorOnly'"
+      (click)="editorMode.set('EditorOnly')"
+    >
+      Editor
+    </a>
+    <a
+      role="tab"
+      class="tab"
+      [class.tab-active]="editorMode() === 'PreviewOnly'"
+      (click)="editorMode.set('PreviewOnly')"
+    >
+      Preview
+    </a>
   </div>
-  <div class="preview bg-base-300 w-1/2 rounded-md">
-    <div
-      class="preview-content w-full h-full p-2"
-      [innerHTML]="previewContnet"
-    ></div>
+  <div class="carousel space-x-2 sm:space-x-0 sm:flex gap-2 justify-stretch">
+    @if (isMobile || showEditor()) {
+      <div class="editor rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1">
+        <textarea
+          class="editor-textarea w-full bg-base-200 min-h-72 p-2 rounded-lg outline-none resize-none"
+          placeholder="Write something..."
+          [(ngModel)]="value"
+          (input)="onEditorInput($event)"
+          (keydown)="onEditorKeydown($event)"
+        ></textarea>
+      </div>
+    }
+    @if (isMobile || showPreview()) {
+      <div
+        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1"
+        [class.no-wrap]="!wrapLines"
+      >
+        <div
+          class="preview-content w-full h-full p-2 min-h-72"
+          [innerHTML]="previewContent"
+        ></div>
+      </div>
+    }
   </div>
 </div>
