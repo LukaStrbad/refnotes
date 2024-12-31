@@ -1,4 +1,4 @@
-<header>
+<header class="bg-base-100">
   <div class="navbar bg-base-100 container mx-auto">
     <div class="navbar-start w-auto">
       <div class="dropdown">
@@ -25,8 +25,8 @@
           @for (route of headerRoutes; track route) {
             <li>
               <a [routerLink]="route.path" (click)="handleClick()">{{
-                  getRouteTitle(route)
-                }}</a>
+                getRouteTitle(route)
+              }}</a>
             </li>
           }
         </ul>
