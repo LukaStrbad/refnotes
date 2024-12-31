@@ -14,8 +14,7 @@ import { Router, RouterLink } from '@angular/router';
   imports: [
     FormsModule,
     NgClass,
-    CreateNewModalComponent,
-    RouterLink
+    CreateNewModalComponent
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.scss'

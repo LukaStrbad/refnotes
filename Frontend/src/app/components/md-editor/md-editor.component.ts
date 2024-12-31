@@ -1,9 +1,10 @@
-import { Component, computed, effect, ElementRef, HostListener, model, signal, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, computed, effect, ElementRef, HostListener, model, Signal, signal, ViewChild, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import markdownit from 'markdown-it';
 import hljs from 'highlight.js';
 import MarkdownIt from 'markdown-it/index.js';
-import { EditorMode } from './editor-mode';
+import { SettingsService } from '../../../services/settings.service';
+import { EditorMode } from '../../../model/settings';
 
 @Component({
   selector: 'app-md-editor',
@@ -15,12 +16,11 @@ import { EditorMode } from './editor-mode';
 export class MdEditorComponent {
   value = model('');
 
+  editorMode: Signal<EditorMode>;
   showEditor = computed(() => this.editorMode() === "EditorOnly" || this.editorMode() === "SideBySide");
   showPreview = computed(() => this.editorMode() === "PreviewOnly" || this.editorMode() === "SideBySide");
 
   previewContent: string = '';
-  editorMode = signal<EditorMode>("SideBySide");
-
   testDisplay = '';
 
   private readonly md: MarkdownIt;
@@ -30,10 +30,10 @@ export class MdEditorComponent {
   private previewLines: PreviewLine[] | null = null;
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
   isMobile: boolean = false;
-  lineNumbers = true;
-  wrapLines = false;
 
-  constructor() {
+  constructor(
+    public settings: SettingsService
+  ) {
     this.md = markdownit({
       breaks: true,
       highlight: (str, lang) => {
@@ -53,7 +53,7 @@ export class MdEditorComponent {
         }
 
         let code = rawCode;
-        if (this.lineNumbers) {
+        if (settings.mdEditor().showLineNumbers) {
           const split = rawCode.split('\n');
           const lineNumberDigits = split.length.toString().length;
           code = split.reduce((acc, line, i) => {
@@ -68,6 +68,8 @@ export class MdEditorComponent {
       }
     });
 
+    this.editorMode = computed(() => settings.mdEditor().editorMode);
+
     effect(() => {
       console.time('render');
       this.previewContent = this.md.render(this.value());
@@ -75,11 +77,6 @@ export class MdEditorComponent {
     });
 
     this.onWindowResize();
-
-    this.editorMode.set(localStorage.getItem('editor-mode') as EditorMode || "SideBySide");
-    effect(() => {
-      localStorage.setItem('editor-mode', this.editorMode());
-    });
   }
 
   onEditorKeydown(event: KeyboardEvent) {

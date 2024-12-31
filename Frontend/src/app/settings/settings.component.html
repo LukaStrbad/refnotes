@@ -1,0 +1,96 @@
+<div class="max-w-[30rem] mx-auto flex flex-col gap-4">
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Theme</h2>
+
+      <div class="form-control">
+        <label class="label cursor-pointer gap-4">
+          <span class="label-text">
+            <i class="bi bi-circle-half mr-2"></i>Auto</span
+          >
+          <input
+            type="radio"
+            name="theme-radios"
+            class="radio theme-controller"
+            value="auto"
+            (change)="setTheme('auto')"
+            [checked]="settings.theme() === 'auto'"
+          />
+        </label>
+      </div>
+      <div class="form-control">
+        <label class="label cursor-pointer gap-4">
+          <span class="label-text"
+            ><i class="bi bi-sun-fill mr-2"></i>Light mode</span
+          >
+          <input
+            type="radio"
+            name="theme-radios"
+            class="radio theme-controller"
+            value="light"
+            (change)="setTheme('light')"
+            [checked]="settings.theme() === 'light'"
+          />
+        </label>
+      </div>
+      <div class="form-control">
+        <label class="label cursor-pointer gap-4">
+          <span class="label-text"
+            ><i class="bi bi-moon-fill mr-2"></i>Dark mode</span
+          >
+          <input
+            type="radio"
+            name="theme-radios"
+            class="radio theme-controller"
+            value="dark"
+            (change)="setTheme('dark')"
+            [checked]="settings.theme() === 'dark'"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Editor Settings</h2>
+
+      <select
+        class="select select-accent w-full"
+        [(ngModel)]="mdEditor.editorMode"
+        (change)="updateMdEditorSettings()"
+      >
+        <option disabled>View type</option>
+        <option value="SideBySide">Side by Side</option>
+        <option value="EditorOnly">Editor Only</option>
+        <option value="PreviewOnly">Preview Only</option>
+      </select>
+
+      <div class="form-control">
+        <label class="cursor-pointer label">
+          <span class="label-text mr-2"
+            >Show line numbers in code blocks within preview</span
+          >
+          <input
+            type="checkbox"
+            class="checkbox checkbox-accent"
+            [(ngModel)]="mdEditor.showLineNumbers"
+            (change)="updateMdEditorSettings()"
+          />
+        </label>
+      </div>
+
+      <div class="form-control">
+        <label class="cursor-pointer label">
+          <span class="label-text mr-2">Wrap lines in preview</span>
+          <input
+            type="checkbox"
+            class="checkbox checkbox-accent"
+            [(ngModel)]="mdEditor.wrapLines"
+            (change)="updateMdEditorSettings()"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

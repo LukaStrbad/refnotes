@@ -3,34 +3,25 @@ import { Component } from '@angular/core';
 import { headerRoutes } from '../../app.routes';
 import { Route, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { SettingsService } from '../../../services/settings.service';
+import { Theme } from '../../../model/settings';
 
 @Component({
-    selector: 'app-header',
-    imports: [CommonModule, RouterModule],
-    templateUrl: './header.component.html',
-    styleUrl: './header.component.scss'
+  selector: 'app-header',
+  imports: [CommonModule, RouterModule],
+  templateUrl: './header.component.html',
+  styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  theme = 'auto';
   headerRoutes = headerRoutes;
 
-  constructor(public auth: AuthService) {
-    this.theme = localStorage.getItem('theme') ?? 'auto';
-  }
+  constructor(
+    public auth: AuthService,
+    public settings: SettingsService
+  ) { }
 
-  setTheme(newTheme: string) {
-    this.theme = newTheme;
-    if (newTheme === 'auto') {
-      localStorage.removeItem('theme');
-      newTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    } else {
-      if (newTheme !== 'light' && newTheme !== 'dark') {
-        newTheme = 'light';
-      }
-      localStorage.setItem('theme', newTheme);
-    }
-
-    document.documentElement.setAttribute('data-theme', newTheme);
+  setTheme(newTheme: Theme) {
+    this.settings.setTheme(newTheme);
   }
 
   handleClick() {
@@ -42,6 +33,8 @@ export class HeaderComponent {
     switch (route.path) {
       case 'homepage':
         return 'Home';
+      case 'settings':
+        return 'Settings';
       default:
         return route.path;
     }
