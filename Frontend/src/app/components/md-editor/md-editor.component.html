@@ -9,7 +9,7 @@
         role="tab"
         class="tab"
         [class.tab-active]="editorMode() === 'SideBySide'"
-        (click)="editorMode.set('SideBySide')"
+        (click)="settings.setMdEditorMode('SideBySide')"
       >
         Side by Side
       </a>
@@ -17,7 +17,7 @@
         role="tab"
         class="tab"
         [class.tab-active]="editorMode() === 'EditorOnly'"
-        (click)="editorMode.set('EditorOnly')"
+        (click)="settings.setMdEditorMode('EditorOnly')"
       >
         Editor
       </a>
@@ -25,7 +25,7 @@
         role="tab"
         class="tab"
         [class.tab-active]="editorMode() === 'PreviewOnly'"
-        (click)="editorMode.set('PreviewOnly')"
+        (click)="settings.setMdEditorMode('PreviewOnly')"
       >
         Preview
       </a>
@@ -50,7 +50,7 @@
     @if (isMobile || showPreview()) {
       <div
         class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-scroll"
-        [class.no-wrap]="!wrapLines"
+        [class.no-wrap]="!settings.mdEditor().wrapLines"
       >
         <div
           class="preview-content w-full h-full p-2"

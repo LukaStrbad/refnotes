@@ -1,4 +1,4 @@
-<header class="bg-base-100">
+<header class="bg-base-100 shadow-md">
   <div class="navbar bg-base-100 container mx-auto">
     <div class="navbar-start w-auto">
       <div class="dropdown">
@@ -24,9 +24,10 @@
         >
           @for (route of headerRoutes; track route) {
             <li>
-              <a [routerLink]="route.path" (click)="handleClick()">{{
-                getRouteTitle(route)
-              }}</a>
+              <a [routerLink]="route.path" (click)="handleClick()">
+                <i class="bi bi-{{ route.icon }}"></i>
+                {{ getRouteTitle(route) }}</a
+              >
             </li>
           }
         </ul>
@@ -39,7 +40,10 @@
         <ul class="menu menu-horizontal px-1">
           @for (route of headerRoutes; track route) {
             <li>
-              <a [routerLink]="route.path">{{ getRouteTitle(route) }}</a>
+              <a [routerLink]="route.path">
+                <i class="bi bi-{{ route.icon }}"></i>
+                {{ getRouteTitle(route) }}
+              </a>
             </li>
           }
         </ul>
@@ -58,7 +62,7 @@
 
       <div class="dropdown dropdown-end z-10">
         <div tabindex="0" role="button" class="btn btn-circle">
-          @switch (theme) {
+          @switch (settings.theme()) {
             @case ("dark") {
               <i class="bi bi-moon-fill"></i>
             }
@@ -81,7 +85,7 @@
               name="theme-dropdown"
               class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
               (click)="setTheme('auto')"
-              [ngClass]="{ selected: theme === 'auto' }"
+              [ngClass]="{ selected: settings.theme() === 'auto' }"
             >
               <i class="bi bi-circle-half"></i> Auto
             </button>
@@ -93,7 +97,7 @@
               name="theme-dropdown"
               class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
               (click)="setTheme('light')"
-              [ngClass]="{ selected: theme === 'light' }"
+              [ngClass]="{ selected: settings.theme() === 'light' }"
             >
               <i class="bi bi-sun-fill"></i> Light mode
             </button>
@@ -105,7 +109,7 @@
               name="theme-dropdown"
               class="theme-controller btn btn-sm flex-1 w-full btn-ghost justify-start"
               (click)="setTheme('dark')"
-              [ngClass]="{ selected: theme === 'dark' }"
+              [ngClass]="{ selected: settings.theme() === 'dark' }"
             >
               <i class="bi bi-moon-fill"></i> Dark mode
             </button>
