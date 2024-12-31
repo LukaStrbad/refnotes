@@ -2,7 +2,7 @@
 
 public class FileService(IEncryptionService encryptionService, AppConfiguration appConfig) : IFileService
 {
-    public async Task SaveFile(string fileName, Stream inputStream)
+    public async Task SaveFileAsync(string fileName, Stream inputStream)
     {
         if (string.IsNullOrWhiteSpace(fileName))
         {
@@ -11,7 +11,7 @@ public class FileService(IEncryptionService encryptionService, AppConfiguration 
 
         var filePath = Path.Combine(appConfig.DataDir, fileName);
         await using var stream = new FileStream(filePath, FileMode.Create);
-        encryptionService.EncryptAesToStream(inputStream, stream);
+        await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
     }
 
     public Stream GetFile(string fileName)

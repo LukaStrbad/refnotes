@@ -15,38 +15,38 @@ public class EncryptionServiceTests : BaseTests
     {
         _encryptionService = new EncryptionService(AesKey, AesIv);
     }
-    
-    [Fact] 
+
+    [Fact]
     public void EncryptionServiceConstructor_WithAppConfig_InitializesKeyAndIv()
     {
         const string baseDir = ".";
         var appConfig = new AppConfiguration { BaseDir = baseDir };
-        
+
         // Create files in the base directory to simulate existing key and IV files.
         var keyPath = Path.Combine(baseDir, EncryptionService.AesKeyFileName);
         var ivPath = Path.Combine(baseDir, EncryptionService.AesIvFileName);
         File.WriteAllBytes(keyPath, AesKey);
         File.WriteAllBytes(ivPath, AesIv);
-        
+
         var encryptionService = new EncryptionService(appConfig);
-        
+
         Assert.NotNull(encryptionService);
         Assert.Equal(AesKey, encryptionService.AesKey);
         Assert.Equal(AesIv, encryptionService.AesIv);
-        
+
         // Clean up the files created for this test.
         File.Delete(keyPath);
         File.Delete(ivPath);
     }
-    
+
     [Fact]
     public void EncryptionServiceConstructor_WithAppConfigNoFiles_InitializesKeyAndIv()
     {
         const string baseDir = ".";
         var appConfig = new AppConfiguration { BaseDir = baseDir };
-        
+
         var encryptionService = new EncryptionService(appConfig);
-        
+
         Assert.NotNull(encryptionService);
         Assert.NotEqual(AesKey, encryptionService.AesKey);
         Assert.NotEqual(AesIv, encryptionService.AesIv);
@@ -62,7 +62,7 @@ public class EncryptionServiceTests : BaseTests
         Assert.NotNull(encryptedBytes);
         Assert.NotEqual(bytes, encryptedBytes);
     }
-    
+
     [Fact]
     public void EncryptAes_EncryptsStream_ReturnsEncryptedStream()
     {
@@ -70,7 +70,7 @@ public class EncryptionServiceTests : BaseTests
         using var inputStream = new MemoryStream(bytes);
         using var outputStream = new MemoryStream();
 
-        _encryptionService.EncryptAesToStream(inputStream, outputStream);
+        _encryptionService.EncryptAesToStreamAsync(inputStream, outputStream);
 
         var encryptedBytes = outputStream.ToArray();
         Assert.NotNull(encryptedBytes);
@@ -109,18 +109,18 @@ public class EncryptionServiceTests : BaseTests
 
         Assert.Equal(bytes, decryptedBytes);
     }
-    
+
     [Fact]
     public void DecryptAes_DecryptsEncryptedStream_ReturnsOriginalStream()
     {
         var bytes = "test data"u8.ToArray();
         var encryptedBytes = _encryptionService.EncryptAes(bytes);
-        
+
         using var encryptedInputStream = new MemoryStream(encryptedBytes);
         using var outputStream = new MemoryStream();
-        
+
         _encryptionService.DecryptAesToStream(encryptedInputStream, outputStream);
-        
+
         var decryptedBytes = outputStream.ToArray();
         Assert.Equal(bytes, decryptedBytes);
     }

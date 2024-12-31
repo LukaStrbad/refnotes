@@ -7,7 +7,7 @@ public class EncryptionService : IEncryptionService
 {
     public byte[] AesKey { get; }
     public byte[] AesIv { get; }
-    
+
     public const string AesKeyFileName = "aes_key.bin";
     public const string AesIvFileName = "aes_iv.bin";
 
@@ -31,7 +31,7 @@ public class EncryptionService : IEncryptionService
             File.WriteAllBytes(ivPath, AesIv);
         }
     }
-    
+
     public EncryptionService(byte[] aesKey, byte[] aesIv)
     {
         AesKey = aesKey;
@@ -61,7 +61,7 @@ public class EncryptionService : IEncryptionService
         return encrypted;
     }
 
-    public void EncryptAesToStream(Stream inputStream, Stream outputStream)
+    public async Task EncryptAesToStreamAsync(Stream inputStream, Stream outputStream)
     {
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
@@ -72,11 +72,11 @@ public class EncryptionService : IEncryptionService
 
         // Create the streams used for encryption.
         using var csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
-        inputStream.CopyTo(csEncrypt);
+        await inputStream.CopyToAsync(csEncrypt);
     }
 
     public byte[] EncryptAes(string text) => EncryptAes(Encoding.UTF8.GetBytes(text));
-    
+
     public string EncryptAesStringBase64(string text) =>
         Convert.ToBase64String(EncryptAes(text));
 
@@ -111,7 +111,7 @@ public class EncryptionService : IEncryptionService
             }
         }
     }
-    
+
     public void DecryptAesToStream(Stream encryptedInputStream, Stream decryptedOutputStream)
     {
         using var aesAlg = Aes.Create();
@@ -123,7 +123,7 @@ public class EncryptionService : IEncryptionService
 
         // Create the streams used for decryption.
         using var csDecrypt = new CryptoStream(encryptedInputStream, decryptor, CryptoStreamMode.Read);
-        
+
         csDecrypt.CopyTo(decryptedOutputStream);
     }
 

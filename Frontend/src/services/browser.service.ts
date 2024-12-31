@@ -1,6 +1,6 @@
-import {HttpClient, HttpEvent} from '@angular/common/http';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {firstValueFrom, Observable} from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
 
@@ -44,5 +44,15 @@ export class BrowserService {
 
   async deleteDirectory(path: string) {
     return firstValueFrom(this.http.delete(`${apiUrl}/deleteDirectory?path=${path}`));
+  }
+
+  async getFile(directoryPath: string, name: string) {
+    return await firstValueFrom(this.http.get(
+      `${apiUrl}/getFile?directoryPath=${directoryPath}&name=${name}`, { responseType: 'arraybuffer' })
+    );
+  }
+
+  async saveTextfile(directoryPath: string, name: string, content: string) {
+    await firstValueFrom(this.http.post(`${apiUrl}/saveTextFile?directoryPath=${directoryPath}&name=${name}`, content));
   }
 }

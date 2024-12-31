@@ -65,7 +65,7 @@ public class BrowserService(
     public async Task<ResponseDirectory?> List(ClaimsPrincipal claimsPrincipal, string path = "/")
     {
         var user = await GetUser(claimsPrincipal);
-        
+
         // Ensure root directory exists
         if (path is "/")
         {
@@ -76,9 +76,9 @@ public class BrowserService(
                 await AddDirectory(claimsPrincipal, "/");
             }
         }
-        
+
         var directory = await GetDirectory(user, path);
-        
+
         return directory?.Decrypt(encryptionService);
     }
 
@@ -88,7 +88,7 @@ public class BrowserService(
 
         path = NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
-        
+
         var existingDir = await context.Directories
             .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
 
@@ -114,7 +114,7 @@ public class BrowserService(
             await AddDirectory(claimsPrincipal, baseDir);
             parentDir = await GetDirectory(user, baseDir);
         }
-        
+
         if (parentDir is null)
         {
             throw new DirectoryNotFoundException($"Parent directory at path '{baseDir}' not found");
@@ -127,14 +127,14 @@ public class BrowserService(
     public async Task DeleteDirectory(ClaimsPrincipal claimsPrincipal, string path)
     {
         var user = await GetUser(claimsPrincipal);
-        
+
         path = NormalizePath(path);
-        
+
         if (path is "/")
         {
             throw new ArgumentException("Cannot delete root directory");
         }
-        
+
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
         var directory = await context.Directories
             .Include(dir => dir.Parent)
@@ -146,7 +146,7 @@ public class BrowserService(
         {
             throw new DirectoryNotFoundException($"Directory at path '{path}' not found");
         }
-        
+
         if (directory.Files.Count != 0 || directory.Directories.Count != 0)
         {
             throw new DirectoryNotEmptyException($"Directory at path '{path}' is not empty");
@@ -215,15 +215,15 @@ public class BrowserService(
         {
             throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
         }
-        
+
         var encryptedName = encryptionService.EncryptAesStringBase64(name);
         var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
-        
+
         if (file is null)
         {
             throw new FileNotFoundException($"File with name ${name} not found in directory ${directoryPath}.");
         }
-        
+
         directory.Files.Remove(file);
         context.Entry(file).State = EntityState.Deleted;
         await context.SaveChangesAsync();
@@ -241,7 +241,7 @@ public class BrowserService(
             throw new ArgumentException("Path must not be root");
         return new DirPathName(parentDir, name);
     }
-    
+
     private static string NormalizePath(string path) => path.Replace("\\", "/");
 
     private async Task<User> GetUser(ClaimsPrincipal claimsPrincipal)

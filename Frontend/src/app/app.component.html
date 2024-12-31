@@ -1,7 +1,9 @@
-<main class="bg-base-200 min-h-screen">
-  <app-header></app-header
-  >
-  <div class="container mx-auto p-6">
-    <router-outlet></router-outlet>
+<main class="bg-base-200 h-screen flex flex-col">
+  <app-header></app-header>
+
+  <div class="flex-1 overflow-y-scroll">
+    <div class="container mx-auto py-4 px-2 h-full flex flex-col">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </main>

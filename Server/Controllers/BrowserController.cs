@@ -74,13 +74,13 @@ public class BrowserController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
+
     private async Task<ActionResult?> AddFileResult(string directoryPath, string name, Stream stream)
     {
         try
         {
             var fileName = await _browserService.AddFile(User, directoryPath, name);
-            await _fileService.SaveFile(fileName, stream);
+            await _fileService.SaveFileAsync(fileName, stream);
             return null;
         }
         catch (DirectoryNotFoundException e)
@@ -109,7 +109,7 @@ public class BrowserController : ControllerBase
                 return result;
             }
         }
-        
+
         return Ok();
     }
 
@@ -131,18 +131,51 @@ public class BrowserController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name)
     {
-        var fileName = await _browserService.GetFilesystemFilePath(User, directoryPath, name);
-        if (fileName is null)
+        try
         {
-            return NotFound("File not found.");
+            var fileName = await _browserService.GetFilesystemFilePath(User, directoryPath, name);
+            if (fileName is null)
+            {
+                return NotFound("File not found.");
+            }
+
+            var stream = _fileService.GetFile(fileName);
+
+            var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
+                ? "text/markdown"
+                : "application/octet-stream";
+            return File(stream, contentType, name);
         }
+        catch (DirectoryNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
 
-        var stream = _fileService.GetFile(fileName);
+    [HttpPost("saveTextFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SaveTextFile(string directoryPath, string name)
+    {
+        try
+        {
+            var fileName = await _browserService.GetFilesystemFilePath(User, directoryPath, name);
+            if (fileName is null)
+            {
+                return NotFound("File not found.");
+            }
 
-        var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
-            ? "text/markdown"
-            : "application/octet-stream";
-        return File(stream, contentType, name);
+            await _fileService.SaveFileAsync(fileName, Request.Body);
+            return Ok();
+        }
+        catch (DirectoryNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+        catch (FileAlreadyExistsException e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 
     [HttpDelete("deleteFile")]

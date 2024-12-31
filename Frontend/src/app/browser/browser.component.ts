@@ -1,22 +1,24 @@
-import {Component, ViewChild} from '@angular/core';
-import {BrowserService} from '../../services/browser.service';
-import {FormsModule} from "@angular/forms";
-import {Directory} from "../../model/directory";
-import {NgClass} from "@angular/common";
-import {CreateNewModalComponent} from "../components/create-new-modal/create-new-modal.component";
-import {HttpEventType} from "@angular/common/http";
-import {LoggerService} from "../../services/logger.service";
-import {forkJoin, lastValueFrom, tap} from "rxjs";
+import { Component, ViewChild } from '@angular/core';
+import { BrowserService } from '../../services/browser.service';
+import { FormsModule } from "@angular/forms";
+import { Directory } from "../../model/directory";
+import { NgClass } from "@angular/common";
+import { CreateNewModalComponent } from "../components/create-new-modal/create-new-modal.component";
+import { HttpEventType } from "@angular/common/http";
+import { LoggerService } from "../../services/logger.service";
+import { forkJoin, lastValueFrom, tap } from "rxjs";
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
-    selector: 'app-browser',
-    imports: [
-        FormsModule,
-        NgClass,
-        CreateNewModalComponent
-    ],
-    templateUrl: './browser.component.html',
-    styleUrl: './browser.component.scss'
+  selector: 'app-browser',
+  imports: [
+    FormsModule,
+    NgClass,
+    CreateNewModalComponent,
+    RouterLink
+  ],
+  templateUrl: './browser.component.html',
+  styleUrl: './browser.component.scss'
 })
 export class BrowserComponent {
   currentFolder: Directory | null = null;
@@ -52,7 +54,8 @@ export class BrowserComponent {
 
   constructor(
     private browser: BrowserService,
-    private logger: LoggerService
+    private logger: LoggerService,
+    private router: Router
   ) {
     browser.list(this.currentPath).then((currentFolder) => {
       this.currentFolder = currentFolder;
@@ -145,6 +148,10 @@ export class BrowserComponent {
     }
 
     this.fileModal.close();
+  }
+
+  async openEdit(fileName: string) {
+    await this.router.navigateByUrl(`/editor?directory=${this.currentPath}&file=${fileName}`);
   }
 }
 
