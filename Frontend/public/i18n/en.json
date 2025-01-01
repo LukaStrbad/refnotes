@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "editorSettings": {
+      "rapLines": "Wrap lines in preview",
+      "showLineNumbers": "Show line numbers in code blocks within preview",
+      "title": "Editor Settings",
+      "viewType": {
+        "editorOnly": "Editor Only",
+        "previewOnly": "Preview Only",
+        "sideBySide": "Side by Side",
+        "title": "View Type"
+      }
+    },
+    "language": {
+      "en": "English",
+      "hr": "Hrvatski",
+      "selectLanguage": "Select language",
+      "title": "Language"
+    },
+    "theme": {
+      "auto": "Auto",
+      "dark": "Dark",
+      "light": "Light",
+      "title": "Theme"
+    }
+  },
+  "app": {
+    "title": "RefNotes"
+  }
+}

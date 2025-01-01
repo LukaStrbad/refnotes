@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "editorSettings": {
+      "rapLines": "Prelamanje linija u pregledu",
+      "showLineNumbers": "Prikaži brojeve redaka u blokovima koda unutar pregleda",
+      "title": "Postavke editora",
+      "viewType": {
+        "editorOnly": "Samo editor",
+        "previewOnly": "Samo pregled",
+        "sideBySide": "Usporedni prikaz",
+        "title": "Vrsta prikaza"
+      }
+    },
+    "language": {
+      "en": "English",
+      "hr": "Hrvatski",
+      "selectLanguage": "Odaberite jezik",
+      "title": "Jezik"
+    },
+    "theme": {
+      "auto": "Automatski",
+      "dark": "Tamna",
+      "light": "Svijetla",
+      "title": "Tema"
+    }
+  },
+  "app": {
+    "title": "RefNotes"
+  }
+}

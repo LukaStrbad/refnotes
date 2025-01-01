@@ -32,7 +32,9 @@
           }
         </ul>
       </div>
-      <a class="btn btn-ghost text-xl" routerLink="">RefNotes</a>
+      <a class="btn btn-ghost text-xl" routerLink="">{{
+        "app.title" | translate
+      }}</a>
     </div>
 
     @if (auth.isUserLoggedIn()) {

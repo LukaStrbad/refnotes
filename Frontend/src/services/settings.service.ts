@@ -1,12 +1,22 @@
 import { effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { EditorMode, MdEditorSettings, Theme } from '../model/settings';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SettingsService {
+  private _language: WritableSignal<string>;
   private _theme: WritableSignal<Theme>;
   private _mdEditor: WritableSignal<MdEditorSettings>;
+
+  public get language(): Signal<string> {
+    return this._language;
+  }
+
+  public get languageList(): string[] {
+    return this.translate.getLangs();
+  }
 
   public get theme(): Signal<Theme> {
     return this._theme;
@@ -16,9 +26,20 @@ export class SettingsService {
     return this._mdEditor;
   }
 
-  constructor() {
+  constructor(
+    private translate: TranslateService
+  ) {
+    this._language = signal(this.loadLanguage());
     this._mdEditor = signal(this.loadMdEditorSettings());
     this._theme = signal(this.loadTheme());
+  }
+
+  private loadLanguage(): string {
+    const language = localStorage.getItem('language');
+    if (language) {
+      return language;
+    }
+    return 'en';
   }
 
   private loadTheme(): Theme {
@@ -39,6 +60,12 @@ export class SettingsService {
       showLineNumbers: true,
       wrapLines: false
     };
+  }
+
+  public setLanguage(language: string) {
+    this._language.set(language);
+    localStorage.setItem('language', language);
+    this.translate.use(language);
   }
 
   public setTheme(theme: Theme) {
