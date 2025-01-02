@@ -74,5 +74,9 @@
       "upload": "Potvrdi",
       "size": "veličina"
     }
+  },
+  "auth": {
+    "sessionExpired": "Sesija je istekla",
+    "error": "Došlo je do pogreške"
   }
 }

@@ -1,12 +1,12 @@
-import {Injectable, signal, Signal, WritableSignal} from '@angular/core';
-import {environment} from '../environments/environment';
-import {HttpClient} from '@angular/common/http';
-import {firstValueFrom} from 'rxjs';
-import {User} from '../model/user';
-import {Router} from '@angular/router';
-import {jwtDecode, JwtPayload} from "jwt-decode";
-import {LoginInfo} from "../app/login/login.component";
-import {getStatusCode} from '../utils/errorHandler';
+import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { environment } from '../environments/environment';
+import { HttpBackend, HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { User } from '../model/user';
+import { Router } from '@angular/router';
+import { jwtDecode, JwtPayload } from "jwt-decode";
+import { LoginInfo } from "../app/login/login.component";
+import { getStatusCode } from '../utils/errorHandler';
 
 const apiUrl = environment.apiUrl + '/auth';
 
@@ -24,6 +24,8 @@ export class AuthService {
   private token: DecodedToken | null = null;
   private _isUserLoggedIn: WritableSignal<boolean> = signal(false);
   public isUserLoggedIn: Signal<boolean> = this._isUserLoggedIn;
+
+  private http: HttpClient;
 
   get accessToken() {
     const accessToken = localStorage.getItem('accessToken');
@@ -43,39 +45,53 @@ export class AuthService {
   }
 
   constructor(
-    private http: HttpClient,
+    httpBackend: HttpBackend,
     private router: Router
   ) {
+    // This ignores all interceptors
+    // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
+    this.http = new HttpClient(httpBackend);
+
     const accessToken = this.accessToken;
     if (accessToken) {
-      const decodedToken = this.setUserAndToken(accessToken);
+      this.setUserAndToken(accessToken);
 
-      const expired = decodedToken.exp * 1000 < Date.now();
-
-      if (expired) {
-        this.refreshTokens().then(() => {
-          this._isUserLoggedIn.set(true);
-          console.log("tokens refreshed");
-        }, (reason) => {
-          const status = getStatusCode(reason);
-
-          if (status === 401) {
-            this.logout("Session expired").then();
-          } else {
-            this.logout("An error occurred").then();
-          }
-        });
-      } else {
+      if (!this.isTokenExpired()) {
         this._isUserLoggedIn.set(true);
       }
     }
+  }
+
+  isTokenExpired() {
+    if (!this.token) {
+      return true;
+    }
+
+    return this.token.exp * 1000 < Date.now();
+  }
+
+  async tryToRefreshTokens() {
+    return this.refreshTokens().then(() => {
+      this._isUserLoggedIn.set(true);
+      return true;
+    }, (reason) => {
+      const status = getStatusCode(reason);
+
+      if (status === 401) {
+        this.logout("auth.sessionExpired").then();
+      } else {
+        this.logout("auth.error").then();
+      }
+
+      return false;
+    });
   }
 
   async login(username: string, password: string) {
     this.accessToken = await firstValueFrom(
       this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true, responseType: 'text' })
     );
-    await this.router.navigate(['/homepage']);
+    await this.router.navigate(['/browser']);
   }
 
   private setUserAndToken(accessToken: string) {
@@ -114,7 +130,7 @@ export class AuthService {
   async refreshTokens() {
     this.accessToken = await firstValueFrom(
       this.http.post(`${apiUrl}/refreshAccessToken`, this.accessToken,
-        {withCredentials: true, responseType: 'text'})
+        { withCredentials: true, responseType: 'text' })
     );
   }
 
