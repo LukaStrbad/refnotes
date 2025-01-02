@@ -22,20 +22,18 @@
           tabindex="0"
           class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
         >
-          <ul class="menu menu-horizontal px-1">
-            <li>
-              <a routerLink="browser">
-                <i class="bi bi-house"></i>
-                {{ "header.routes.home" | translate }}
-              </a>
-            </li>
-            <li>
-              <a routerLink="settings">
-                <i class="bi bi-gear"></i>
-                {{ "header.routes.settings" | translate }}
-              </a>
-            </li>
-          </ul>
+          <li>
+            <a routerLink="browser">
+              <i class="bi bi-house"></i>
+              {{ "header.routes.home" | translate }}
+            </a>
+          </li>
+          <li>
+            <a routerLink="settings">
+              <i class="bi bi-gear"></i>
+              {{ "header.routes.settings" | translate }}
+            </a>
+          </li>
         </ul>
       </div>
       <a class="btn btn-ghost text-xl" routerLink="" translate>app.title</a>
