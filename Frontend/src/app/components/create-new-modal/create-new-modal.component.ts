@@ -1,20 +1,23 @@
-import {Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {NgClass} from "@angular/common";
-import {ByteSizePipe} from "../../../pipes/byte-size.pipe";
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { NgClass } from "@angular/common";
+import { ByteSizePipe } from "../../../pipes/byte-size.pipe";
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 type ModalType = 'file' | 'folder';
 
 @Component({
-    selector: 'app-create-new-modal',
-    imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        NgClass,
-        ByteSizePipe
-    ],
-    templateUrl: './create-new-modal.component.html',
-    styleUrl: './create-new-modal.component.scss'
+  selector: 'app-create-new-modal',
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    NgClass,
+    ByteSizePipe,
+    TranslatePipe,
+    TranslateDirective
+  ],
+  templateUrl: './create-new-modal.component.html',
+  styleUrl: './create-new-modal.component.scss'
 })
 export class CreateNewModalComponent {
   @Input("modalType")
@@ -111,9 +114,7 @@ export class CreateNewModalComponent {
   }
 
   onUploadClick() {
-    console.log('Upload clicked');
     if (this.selectedFiles) {
-      console.log('Emitting upload event');
       this.onUpload.emit(this.selectedFiles);
     }
   }

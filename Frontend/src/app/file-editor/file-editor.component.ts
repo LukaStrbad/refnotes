@@ -2,10 +2,11 @@ import { Component, effect, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
 import { MdEditorComponent } from "../components/md-editor/md-editor.component";
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-file-editor',
-  imports: [MdEditorComponent],
+  imports: [MdEditorComponent, TranslatePipe, TranslateDirective],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.scss'
 })

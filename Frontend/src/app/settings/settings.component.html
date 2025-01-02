@@ -1,19 +1,21 @@
 <div class="max-w-[30rem] mx-auto flex flex-col gap-4">
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title">{{ "settings.language.title" | translate }}</h2>
+      <h2 class="card-title" translate>settings.language.title</h2>
 
       <select
         class="select select-accent w-full"
         [(ngModel)]="selectedLanguage"
         (change)="updateLanguage()"
       >
-        <option disabled>
-          {{ "settings.language.selectLanguage" | translate }}
-        </option>
+        <option disabled translate>settings.language.selectLanguage</option>
         @for (lang of settings.languageList; track lang) {
-          <option [value]="lang" [selected]="lang === selectedLanguage">
-            {{ "settings.language." + lang | translate }}
+          <option
+            [value]="lang"
+            [selected]="lang === selectedLanguage"
+            translate
+          >
+            settings.language.{{ lang }}
           </option>
         }
       </select>
@@ -22,14 +24,14 @@
 
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title">{{ "settings.theme.title" | translate }}</h2>
+      <h2 class="card-title" translate>settings.theme.title</h2>
 
       <div class="form-control">
         <label class="label cursor-pointer gap-4">
           <span class="label-text">
-            <i class="bi bi-circle-half mr-2"></i
-            >{{ "settings.theme.auto" | translate }}</span
-          >
+            <i class="bi bi-circle-half mr-2"></i>
+            <span translate>settings.theme.auto</span>
+          </span>
           <input
             type="radio"
             name="theme-radios"
@@ -42,10 +44,10 @@
       </div>
       <div class="form-control">
         <label class="label cursor-pointer gap-4">
-          <span class="label-text"
-            ><i class="bi bi-sun-fill mr-2"></i
-            >{{ "settings.theme.light" | translate }}</span
-          >
+          <span class="label-text">
+            <i class="bi bi-sun-fill mr-2"></i>
+            <span translate>settings.theme.light</span>
+          </span>
           <input
             type="radio"
             name="theme-radios"
@@ -58,10 +60,10 @@
       </div>
       <div class="form-control">
         <label class="label cursor-pointer gap-4">
-          <span class="label-text"
-            ><i class="bi bi-moon-fill mr-2"></i
-            >{{ "settings.theme.dark" | translate }}</span
-          >
+          <span class="label-text">
+            <i class="bi bi-moon-fill mr-2"></i>
+            <span translate>settings.theme.dark</span>
+          </span>
           <input
             type="radio"
             name="theme-radios"
@@ -77,34 +79,28 @@
 
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title">
-        {{ "settings.editorSettings.title" | translate }}
-      </h2>
+      <h2 class="card-title" translate>settings.editorSettings.title</h2>
 
       <select
         class="select select-accent w-full"
         [(ngModel)]="mdEditor.editorMode"
         (change)="updateMdEditorSettings()"
       >
-        <option disabled>
-          {{ "settings.editorSettings.viewType.title" | translate }}
+        <option disabled translate>
+          settings.editorSettings.viewTypeTitle
         </option>
-        <option value="SideBySide">
-          {{ "settings.editorSettings.viewType.sideBySide" | translate }}
-        </option>
-        <option value="EditorOnly">
-          {{ "settings.editorSettings.viewType.editorOnly" | translate }}
-        </option>
-        <option value="PreviewOnly">
-          {{ "settings.editorSettings.viewType.previewOnly" | translate }}
+        <option value="SideBySide" translate>editor.viewType.sideBySide</option>
+        <option value="EditorOnly" translate>editor.viewType.editorOnly</option>
+        <option value="PreviewOnly" translate>
+          editor.viewType.previewOnly
         </option>
       </select>
 
       <div class="form-control">
         <label class="cursor-pointer label">
-          <span class="label-text mr-2">{{
-            "settings.editorSettings.showLineNumbers" | translate
-          }}</span>
+          <span class="label-text mr-2" translate>
+            settings.editorSettings.showLineNumbers
+          </span>
           <input
             type="checkbox"
             class="checkbox checkbox-accent"
@@ -116,9 +112,9 @@
 
       <div class="form-control">
         <label class="cursor-pointer label">
-          <span class="label-text mr-2">{{
-            "settings.editorSettings.rapLines" | translate
-          }}</span>
+          <span class="label-text mr-2" translate>
+            settings.editorSettings.wrapLines
+          </span>
           <input
             type="checkbox"
             class="checkbox checkbox-accent"

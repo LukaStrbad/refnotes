@@ -1,15 +1,10 @@
 {
   "settings": {
     "editorSettings": {
-      "rapLines": "Prelamanje linija u pregledu",
+      "wrapLines": "Prelamanje linija u pregledu",
       "showLineNumbers": "Prikaži brojeve redaka u blokovima koda unutar pregleda",
       "title": "Postavke editora",
-      "viewType": {
-        "editorOnly": "Samo editor",
-        "previewOnly": "Samo pregled",
-        "sideBySide": "Usporedni prikaz",
-        "title": "Vrsta prikaza"
-      }
+      "viewTypeTitle": "Vrsta prikaza"
     },
     "language": {
       "en": "English",
@@ -26,5 +21,58 @@
   },
   "app": {
     "title": "RefNotes"
+  },
+  "header": {
+    "logout": "Odjava",
+    "routes": {
+      "home": "Početna",
+      "settings": "Postavke"
+    }
+  },
+  "login": {
+    "username": "Korisničko ime",
+    "password": "Lozinka",
+    "login": "Prijava",
+    "errors": {
+      "usernameNotFound": "Korisničko ime nije pronađeno",
+      "invalidPassword": "Neispravna lozinka"
+    }
+  },
+  "browser": {
+    "newFolder": "Nova mapa",
+    "newFile": "Nova datoteka",
+    "table": {
+      "name": "Ime",
+      "actions": "Radnje",
+      "folders": "Mape",
+      "files": "Datoteke"
+    },
+    "delete": "Izbriši",
+    "edit": "Uredi",
+    "home": "Početna"
+  },
+  "editor": {
+    "viewType": {
+      "editorOnly": "Samo editor",
+      "previewOnly": "Samo pregled",
+      "sideBySide": "Usporedni prikaz"
+    },
+    "writeSomething": "Napiši nešto...",
+    "editingFile": "Uređivanje {{fileName}}",
+    "save": "Spremi"
+  },
+  "modals": {
+    "create": {
+      "createFile": "Stvori ili dodaj datoteku",
+      "createFolder": "Stvori novu mapu",
+      "enterFolderName": "Unesi naziv mape",
+      "dragAndDropFile": "Povucite i ispustite datoteku ovdje",
+      "browseFile": "Odaberi datoteku",
+      "enterFileName": "Unesi naziv datoteke",
+      "cancel": "Otkaži",
+      "create": "Potvrdi",
+      "upload": "Potvrdi",
+      "size": "veličina"
+    }
   }
 }

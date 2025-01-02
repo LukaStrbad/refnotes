@@ -5,10 +5,11 @@ import hljs from 'highlight.js';
 import MarkdownIt from 'markdown-it/index.js';
 import { SettingsService } from '../../../services/settings.service';
 import { EditorMode } from '../../../model/settings';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-md-editor',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslateDirective, TranslatePipe],
   templateUrl: './md-editor.component.html',
   styleUrl: './md-editor.component.scss',
   encapsulation: ViewEncapsulation.None

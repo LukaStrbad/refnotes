@@ -2,19 +2,23 @@ import { Component, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from "@angular/forms";
 import { Directory } from "../../model/directory";
-import { NgClass } from "@angular/common";
+import { AsyncPipe, NgClass } from "@angular/common";
 import { CreateNewModalComponent } from "../components/create-new-modal/create-new-modal.component";
 import { HttpEventType } from "@angular/common/http";
 import { LoggerService } from "../../services/logger.service";
 import { forkJoin, lastValueFrom, tap } from "rxjs";
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-browser',
   imports: [
     FormsModule,
     NgClass,
-    CreateNewModalComponent
+    CreateNewModalComponent,
+    TranslatePipe,
+    TranslateDirective,
+    AsyncPipe
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.scss'
@@ -36,16 +40,14 @@ export class BrowserComponent {
   }
 
   get breadcrumbs(): BreadcrumbItem[] {
-    const breadcrumbs: BreadcrumbItem[] = [{
-      name: 'Home',
-      path: '/'
-    }];
+    const breadcrumbs: BreadcrumbItem[] = [];
     let path = '';
     for (let i = 0; i < this.pathStack.length; i++) {
       path += '/' + this.pathStack[i];
       breadcrumbs.push({
         name: this.pathStack[i],
-        path: path
+        path: path,
+        icon: 'folder'
       });
     }
     return breadcrumbs;
@@ -157,4 +159,5 @@ export class BrowserComponent {
 interface BreadcrumbItem {
   name: string;
   path: string;
+  icon: string;
 }

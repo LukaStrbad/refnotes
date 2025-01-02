@@ -22,32 +22,40 @@
           tabindex="0"
           class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
         >
-          @for (route of headerRoutes; track route) {
+          <ul class="menu menu-horizontal px-1">
             <li>
-              <a [routerLink]="route.path" (click)="handleClick()">
-                <i class="bi bi-{{ route.icon }}"></i>
-                {{ getRouteTitle(route) }}</a
-              >
+              <a routerLink="browser">
+                <i class="bi bi-house"></i>
+                {{ "header.routes.home" | translate }}
+              </a>
             </li>
-          }
+            <li>
+              <a routerLink="settings">
+                <i class="bi bi-gear"></i>
+                {{ "header.routes.settings" | translate }}
+              </a>
+            </li>
+          </ul>
         </ul>
       </div>
-      <a class="btn btn-ghost text-xl" routerLink="">{{
-        "app.title" | translate
-      }}</a>
+      <a class="btn btn-ghost text-xl" routerLink="" translate>app.title</a>
     </div>
 
     @if (auth.isUserLoggedIn()) {
       <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
-          @for (route of headerRoutes; track route) {
-            <li>
-              <a [routerLink]="route.path">
-                <i class="bi bi-{{ route.icon }}"></i>
-                {{ getRouteTitle(route) }}
-              </a>
-            </li>
-          }
+          <li>
+            <a routerLink="browser">
+              <i class="bi bi-house"></i>
+              {{ "header.routes.home" | translate }}
+            </a>
+          </li>
+          <li>
+            <a routerLink="settings">
+              <i class="bi bi-gear"></i>
+              {{ "header.routes.settings" | translate }}
+            </a>
+          </li>
         </ul>
       </div>
     }
@@ -57,8 +65,9 @@
         <button
           class="btn btn-secondary btn-outline btn-sm mr-4"
           (click)="logout()"
+          translate
         >
-          Logout
+          header.logout
         </button>
       }
 
@@ -89,7 +98,8 @@
               (click)="setTheme('auto')"
               [ngClass]="{ selected: settings.theme() === 'auto' }"
             >
-              <i class="bi bi-circle-half"></i> Auto
+              <i class="bi bi-circle-half"></i>
+              {{ "settings.theme.auto" | translate }}
             </button>
           </li>
 
@@ -101,7 +111,8 @@
               (click)="setTheme('light')"
               [ngClass]="{ selected: settings.theme() === 'light' }"
             >
-              <i class="bi bi-sun-fill"></i> Light mode
+              <i class="bi bi-sun-fill"></i>
+              {{ "settings.theme.light" | translate }}
             </button>
           </li>
 
@@ -113,7 +124,8 @@
               (click)="setTheme('dark')"
               [ngClass]="{ selected: settings.theme() === 'dark' }"
             >
-              <i class="bi bi-moon-fill"></i> Dark mode
+              <i class="bi bi-moon-fill"></i>
+              {{ "settings.theme.dark" | translate }}
             </button>
           </li>
         </ul>

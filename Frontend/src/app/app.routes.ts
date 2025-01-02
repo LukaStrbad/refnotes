@@ -4,23 +4,10 @@ import { HomeComponent } from './home/home.component';
 import { FileEditorComponent } from './file-editor/file-editor.component';
 import { SettingsComponent } from './settings/settings.component';
 
-export const headerRoutes: RouteWithIcon[] = [
-    {
-        path: "homepage",
-        component: HomeComponent,
-        icon: "house",
-    },
-    {
-        path: "settings",
-        component: SettingsComponent,
-        icon: "gear",
-    }
-];
-
 export const routes: Routes = [
     {
         path: "",
-        redirectTo: "homepage",
+        redirectTo: "browser",
         pathMatch: "full",
     },
     {
@@ -31,9 +18,12 @@ export const routes: Routes = [
         path: "editor",
         component: FileEditorComponent
     },
-    ...headerRoutes
+    {
+        path: "browser",
+        component: HomeComponent,
+    },
+    {
+        path: "settings",
+        component: SettingsComponent,
+    }
 ];
-
-export interface RouteWithIcon extends Route {
-    icon: string;
-}

@@ -1,8 +1,10 @@
 <div class="flex flex-col gap-4 h-full">
   <div class="flex">
-    <span class="font-bold text-2xl"> Editing {{ fileName }} </span>
-    <button class="btn btn-primary ms-auto" (click)="saveContent()">
-      Save
+    <span class="font-bold text-2xl">
+      {{ "editor.editingFile" | translate: { fileName } }}
+    </span>
+    <button class="btn btn-primary ms-auto" (click)="saveContent()" translate>
+      editor.save
     </button>
   </div>
 

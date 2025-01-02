@@ -10,24 +10,27 @@
         class="tab"
         [class.tab-active]="editorMode() === 'SideBySide'"
         (click)="settings.setMdEditorMode('SideBySide')"
+        translate
       >
-        Side by Side
+        editor.viewType.sideBySide
       </a>
       <a
         role="tab"
         class="tab"
         [class.tab-active]="editorMode() === 'EditorOnly'"
         (click)="settings.setMdEditorMode('EditorOnly')"
+        translate
       >
-        Editor
+        editor.viewType.editorOnly
       </a>
       <a
         role="tab"
         class="tab"
         [class.tab-active]="editorMode() === 'PreviewOnly'"
         (click)="settings.setMdEditorMode('PreviewOnly')"
+        translate
       >
-        Preview
+        editor.viewType.previewOnly
       </a>
     </div>
   </div>
@@ -39,7 +42,7 @@
         <textarea
           class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-none resize-none"
           (resize)="onEditorResize($event)"
-          placeholder="Write something..."
+          placeholder="{{ 'editor.writeSomething' | translate }}"
           [(ngModel)]="value"
           (input)="onEditorInput($event)"
           (keydown)="onEditorKeydown($event)"

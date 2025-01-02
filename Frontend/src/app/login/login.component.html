@@ -2,14 +2,14 @@
   <form class="card-body" #loginForm="ngForm">
     <div class="form-control">
       <label class="label">
-        <span class="label-text">Username</span>
+        <span class="label-text" translate>login.username</span>
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
         <input
           type="text"
           class="grow"
-          placeholder="username"
+          placeholder="{{ 'login.username' | translate | lowercase }}"
           name="username"
           [(ngModel)]="username"
           #usernameInput="ngModel"
@@ -18,14 +18,14 @@
     </div>
     <div class="form-control">
       <label class="label">
-        <span class="label-text">Password</span>
+        <span class="label-text" translate>login.password</span>
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
         <input
           type="password"
           class="grow"
-          placeholder="password"
+          placeholder="{{ 'login.password' | translate | lowercase }}"
           name="password"
           [(ngModel)]="password"
           #passwordInput="ngModel"
@@ -36,19 +36,21 @@
     @if (message) {
       <div role="alert" class="alert alert-info mt-2">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        <span>{{ message }}</span>
+        <span>{{ message | translate }}</span>
       </div>
     }
 
     @if (error) {
       <div role="alert" class="alert alert-error mt-2">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        <span>{{ error }}</span>
+        <span>{{ error | translate }}</span>
       </div>
     }
 
     <div class="form-control mt-4">
-      <button class="btn btn-primary" (click)="login()">Login</button>
+      <button class="btn btn-primary" (click)="login()" translate>
+        login.login
+      </button>
     </div>
   </form>
 </div>

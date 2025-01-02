@@ -1,16 +1,16 @@
 import { Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AuthService } from "../../services/auth.service";
-import { CommonModule } from "@angular/common";
-import { HttpErrorResponse, HttpResponse } from "@angular/common/http";
-import { ActivatedRoute, Router } from "@angular/router";
+import { CommonModule, LowerCasePipe } from "@angular/common";
+import { Router } from "@angular/router";
 import { getErrorMessage } from "../../utils/errorHandler";
+import { TranslateDirective, TranslatePipe } from "@ngx-translate/core";
 
 @Component({
-    selector: "app-login",
-    imports: [CommonModule, FormsModule],
-    templateUrl: "./login.component.html",
-    styleUrl: "./login.component.scss"
+  selector: "app-login",
+  imports: [CommonModule, FormsModule, TranslateDirective, TranslatePipe, LowerCasePipe],
+  templateUrl: "./login.component.html",
+  styleUrl: "./login.component.scss"
 })
 export class LoginComponent {
   username = "";
@@ -20,8 +20,7 @@ export class LoginComponent {
 
   constructor(
     private auth: AuthService,
-    private router: Router,
-    private activatedRoute: ActivatedRoute
+    private router: Router
   ) {
     const navigation = this.router.getCurrentNavigation();
     const info = navigation?.extras.info as LoginInfo;
@@ -36,8 +35,8 @@ export class LoginComponent {
       await this.auth.login(this.username, this.password);
     } catch (e) {
       this.error = getErrorMessage(e, {
-        401: "Invalid password",
-        404: "Username not found",
+        401: "login.errors.invalidPassword",
+        404: "login.errors.usernameNotFound",
       });
     }
   }

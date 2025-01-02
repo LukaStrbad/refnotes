@@ -2,11 +2,11 @@ import { Component } from '@angular/core';
 import { SettingsService } from '../../services/settings.service';
 import { MdEditorSettings, Theme } from '../../model/settings';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslateDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss'
 })
