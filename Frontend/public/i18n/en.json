@@ -74,5 +74,9 @@
       "upload": "Upload",
       "size": "size"
     }
+  },
+  "auth": {
+    "sessionExpired": "Session expired",
+    "error": "An error occurred"
   }
 }

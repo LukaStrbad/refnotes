@@ -31,13 +31,14 @@ public static class Configuration
         {
             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(x =>
+        }).AddJwtBearer(options =>
         {
-            x.TokenValidationParameters = new TokenValidationParameters
+            options.TokenValidationParameters = new TokenValidationParameters
             {
                 IssuerSigningKey = new SymmetricSecurityKey(appConfig.JwtPrivateKeyBytes),
                 ValidateIssuer = false,
-                ValidateAudience = false
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.FromMinutes(1)
             };
         });
         builder.Services.AddAuthorizationBuilder()
