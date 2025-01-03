@@ -13,8 +13,26 @@ public class RefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContex
 {
     public RefNotesContext CreateDbContext(string[] args)
     {
+        string? connectionString;
+        if (args.Length > 0)
+        {
+            connectionString = args[0];
+        }
+        else
+        {
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.Development.json")
+                .Build();
+
+            connectionString = configuration["Db:ConnectionString"];
+        }
+
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var serverVersion = ServerVersion.AutoDetect(connectionString);
+        
         var optionsBuilder = new DbContextOptionsBuilder<RefNotesContext>();
-        optionsBuilder.UseSqlite("Data Source=refnotes.db");
+        optionsBuilder.UseMySql(connectionString, serverVersion);
 
         return new RefNotesContext(optionsBuilder.Options);
     }

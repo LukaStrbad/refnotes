@@ -1,4 +1,6 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.IO;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -21,12 +23,13 @@ public class BaseTests : IDisposable
             return Path.Combine(TestFolder, fileName);
         }
     }
-    
+
     protected byte[] AesKey { get; } = "1234567890123456"u8.ToArray();
     protected byte[] AesIv { get; } = "1234567890123456"u8.ToArray();
     protected const string DefaultPassword = "password";
-    
-    protected AppConfiguration AppConfig => new() { DataDir = TestFolder, JwtPrivateKey = "test_jwt_private_key_123456789234234247"};
+
+    protected AppConfiguration AppConfig => new()
+        { DataDir = TestFolder, JwtPrivateKey = "test_jwt_private_key_123456789234234247" };
 
     public BaseTests()
     {
@@ -36,8 +39,14 @@ public class BaseTests : IDisposable
 
     protected RefNotesContext CreateDb()
     {
+        var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
+                               "Server=127.0.0.1;Database=refnotes_test;Uid=root;Pwd=root;";
+
+        var serverVersion = ServerVersion.AutoDetect(connectionString);
+
         // Create test db
-        var dbOptions = new DbContextOptionsBuilder<RefNotesContext>().UseSqlite("Data Source=test.db").Options;
+        var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
+            .UseMySql(connectionString, serverVersion).Options;
         var context = new RefNotesContext(dbOptions);
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
@@ -57,16 +66,18 @@ public class BaseTests : IDisposable
             new Claim(ClaimTypes.Name, newUser.Username),
             new Claim(ClaimTypes.Email, newUser.Email)
         ]));
-        
+
         return (newUser, claimsPrincipal);
     }
 
 
-    public void Dispose()
+    public void  Dispose()
     {
         if (Directory.Exists(TestFolder))
         {
             Directory.Delete(TestFolder, true);
         }
+        
+        GC.SuppressFinalize(this);
     }
 }

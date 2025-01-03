@@ -1,5 +1,9 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +15,7 @@ using Server.Db;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using Xunit;
 
 namespace ServerTests.ControllerTests;
 
@@ -20,7 +25,6 @@ public class BrowserControllerTests : BaseTests
     private readonly IBrowserService _browserService;
     private readonly IEncryptionService _encryptionService;
     private readonly AppConfiguration _appConfig;
-    private readonly RefNotesContext _db;
     private ClaimsPrincipal _claimsPrincipal;
     private readonly IFileService _fileService;
     private DefaultHttpContext _httpContext;
@@ -28,8 +32,6 @@ public class BrowserControllerTests : BaseTests
     public BrowserControllerTests()
     {
         _appConfig = new AppConfiguration { DataDir = "test_data_dir" };
-        var options = new DbContextOptionsBuilder<RefNotesContext>().UseInMemoryDatabase("test_db").Options;
-        _db = Substitute.For<RefNotesContext>(options);
         _encryptionService = Substitute.For<IEncryptionService>();
         _browserService = Substitute.For<IBrowserService>();
         _fileService = Substitute.For<IFileService>();
@@ -286,5 +288,51 @@ public class BrowserControllerTests : BaseTests
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
+    }
+    
+    [Fact]
+    public async Task SaveTextFile_ReturnsOk_WhenFileSaved()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string fileName = "test_file_name";
+        const string content = "test content";
+
+        _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
+
+        var result = await _controller.SaveTextFile(directoryPath, name);
+
+        Assert.IsType<OkResult>(result);
+        await _fileService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+    
+    [Fact]
+    public async Task SaveTextFile_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+
+        _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+
+        var result = await _controller.SaveTextFile(directoryPath, name);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
+    }
+    
+    [Fact]
+    public async Task SaveTextFile_ReturnsNotFound_WhenDirectoryDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+
+        _browserService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name)
+            .Returns(Task.FromException<string?>(new DirectoryNotFoundException("Directory not found.")));
+
+        var result = await _controller.SaveTextFile(directoryPath, name);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("Directory not found.", notFoundResult.Value);
     }
 }
