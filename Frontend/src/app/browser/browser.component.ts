@@ -84,8 +84,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.listSubscription?.unsubscribe();
     this.listSubscription = this.browser.listCached(this.currentPath).subscribe(folder => {
       this.currentFolder = folder;
-      setTimeout(() => {
-      }, 1000);
     });
   }
 
