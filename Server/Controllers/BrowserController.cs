@@ -172,10 +172,6 @@ public class BrowserController : ControllerBase
         {
             return NotFound(e.Message);
         }
-        catch (FileAlreadyExistsException e)
-        {
-            return BadRequest(e.Message);
-        }
     }
 
     [HttpDelete("deleteFile")]

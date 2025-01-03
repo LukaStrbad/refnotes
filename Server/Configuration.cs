@@ -57,10 +57,13 @@ public static class Configuration
 
     private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)
     {
-        var dbPath = Path.Join(appConfig.BaseDir, "refnotes.db");
+        var connectionString = builder.Configuration["Db:ConnectionString"];
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var serverVersion = ServerVersion.AutoDetect(connectionString);
         builder.Services.AddDbContext<RefNotesContext>(options =>
-            options.UseSqlite($"Data Source={dbPath}")
+            options.UseMySql(connectionString, serverVersion)
         );
+        
         using var scope = builder.Services.BuildServiceProvider().CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<RefNotesContext>();
         db.Database.Migrate();
