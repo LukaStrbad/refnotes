@@ -3,6 +3,7 @@ import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { FileEditorComponent } from './file-editor/file-editor.component';
 import { SettingsComponent } from './settings/settings.component';
+import { BrowserComponent } from './browser/browser.component';
 
 export const routes: Routes = [
     {
@@ -20,7 +21,13 @@ export const routes: Routes = [
     },
     {
         path: "browser",
-        component: HomeComponent,
+        component: BrowserComponent,
+        children: [
+            {
+                path: '**',
+                component: BrowserComponent
+            }
+        ]
     },
     {
         path: "settings",
