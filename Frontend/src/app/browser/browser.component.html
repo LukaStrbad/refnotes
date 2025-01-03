@@ -1,50 +1,48 @@
-@if (currentFolder == null) {
-  <div>Loading...</div>
-} @else {
-  <div class="m-2 flex gap-2 justify-end">
-    <button class="btn btn-accent btn-sm" (click)="folderModal.show()">
-      <i class="bi bi-folder-plus"></i>
-      {{ "browser.newFolder" | translate }}
-    </button>
+<div class="m-2 flex gap-2 justify-end">
+  <button class="btn btn-accent btn-sm" (click)="folderModal.show()">
+    <i class="bi bi-folder-plus"></i>
+    {{ "browser.newFolder" | translate }}
+  </button>
 
-    <button class="btn btn-accent btn-sm" (click)="fileModal.show()">
-      <i class="bi bi-file-earmark-plus"></i>
-      {{ "browser.newFile" | translate }}
-    </button>
+  <button class="btn btn-accent btn-sm" (click)="fileModal.show()">
+    <i class="bi bi-file-earmark-plus"></i>
+    {{ "browser.newFile" | translate }}
+  </button>
 
-    <app-create-new-modal
-      #folderModal
-      modalType="folder"
-      (onCreate)="createNewFolder($event)"
-    ></app-create-new-modal>
-    <app-create-new-modal
-      #fileModal
-      (onCreate)="createNewFile($event)"
-      (onUpload)="onFilesUpload($event)"
-      [uploadProgress]="uploadProgress"
-    ></app-create-new-modal>
-  </div>
+  <app-create-new-modal
+    #folderModal
+    modalType="folder"
+    (onCreate)="createNewFolder($event)"
+  ></app-create-new-modal>
+  <app-create-new-modal
+    #fileModal
+    (onCreate)="createNewFile($event)"
+    (onUpload)="onFilesUpload($event)"
+    [uploadProgress]="uploadProgress"
+  ></app-create-new-modal>
+</div>
 
-  <div class="overflow-x-auto mt-6">
-    <div class="breadcrumbs text-sm">
-      <ul>
+<div class="overflow-x-auto mt-6">
+  <div class="breadcrumbs text-sm">
+    <ul>
+      <li>
+        <a routerLink="/browser">
+          <i class="bi bi-house mr-1"></i>
+          {{ "browser.home" | translate }}
+        </a>
+      </li>
+      @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a (click)="navigateToFolder('/')">
-            <i class="bi bi-house mr-1"></i>
-            {{ "browser.home" | translate }}
+          <a routerLink="/browser{{ breadcrumb.path }}">
+            <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
+            {{ breadcrumb.name }}
           </a>
         </li>
-        @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
-          <li>
-            <a (click)="navigateToFolder(breadcrumb.path)">
-              <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
-              {{ breadcrumb.name }}
-            </a>
-          </li>
-        }
-      </ul>
-    </div>
+      }
+    </ul>
+  </div>
 
+  @if (currentFolder) {
     <table class="table table-pin-rows">
       <thead>
         <tr>
@@ -127,5 +125,9 @@
         }
       </tbody>
     </table>
-  </div>
-}
+  } @else {
+    <div class="w-full flex justify-center pt-20">
+      <span class="loading loading-dots loading-lg"></span>
+    </div>
+  }
+</div>

@@ -1,8 +1,9 @@
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
+import { LRUCache } from 'lru-cache';
 
 const apiUrl = environment.apiUrl + '/browser';
 
@@ -10,14 +11,21 @@ const apiUrl = environment.apiUrl + '/browser';
   providedIn: 'root'
 })
 export class BrowserService {
+  private listCache = new LRUCache<string, Directory>({ max: 100 });
 
   constructor(
     private http: HttpClient
   ) {
   }
 
-  async list(path: string = '/') {
-    return firstValueFrom(this.http.get<Directory>(`${apiUrl}/list?path=${path}`));
+  listCached(path: string = '/'): Observable<Directory> {
+    const cached = this.listCache.get(path);
+
+    const network = this.http.get<Directory>(`${apiUrl}/list?path=${path}`).pipe(
+      tap(value => this.listCache.set(path, value))
+    );
+
+    return cached ? merge(of(cached), network) : network;
   }
 
   addFile(directoryPath: string, file: File): Observable<HttpEvent<Object>> {
