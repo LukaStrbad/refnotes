@@ -10,7 +10,7 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,5 +34,4 @@ jobs:
         with:
           name: dotnet-results-8.0.x
           path: TestResults
-        # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
