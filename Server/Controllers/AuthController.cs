@@ -47,6 +47,7 @@ public class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("register")]
     [ProducesResponseType<Ok<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<BadRequest>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<string>> Register(User newUser)
     {
         try

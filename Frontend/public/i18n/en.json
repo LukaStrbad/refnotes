@@ -36,7 +36,8 @@
     "errors": {
       "usernameNotFound": "Username not found",
       "invalidPassword": "Invalid password"
-    }
+    },
+    "signUp": "Sign up instead?"
   },
   "browser": {
     "newFolder": "New Folder",
@@ -78,5 +79,23 @@
   "auth": {
     "sessionExpired": "Session expired",
     "error": "An error occurred"
+  },
+  "register": {
+    "signup": "Sign Up",
+    "login": "Login instead?",
+    "confirmPassword": "Confirm password",
+    "email": "E-mail",
+    "name": "Name",
+    "errors": {
+      "usernameRequired": "Username required",
+      "usernameMinLength": "Username must have at least 4 characters",
+      "nameRequired": "Name is required",
+      "emailRequired": "E-mail is required",
+      "emailInvalid": "E-mail is invalid",
+      "passwordRequired": "Password required",
+      "passwordMinLength": "Password must be at least 8 characters long",
+      "passwordConfirmRequired": "Enter confirmation password",
+      "passwordMismatch": "Passwords do not match"
+    }
   }
 }

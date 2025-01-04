@@ -9,6 +9,7 @@ import { LoggerService } from "../../services/logger.service";
 import { filter, forkJoin, lastValueFrom, Subscription, tap } from "rxjs";
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-browser',
@@ -53,8 +54,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
   constructor(
     private browser: BrowserService,
     private logger: LoggerService,
-    private router: Router
+    private router: Router,
+    private auth: AuthService
   ) {
+    if (this.auth.user === null) {
+      this.router.navigate(['/login']);
+    }
   }
 
   ngOnInit(): void {

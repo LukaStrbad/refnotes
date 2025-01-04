@@ -1,9 +1,9 @@
-import { Route, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
-import { HomeComponent } from './home/home.component';
 import { FileEditorComponent } from './file-editor/file-editor.component';
 import { SettingsComponent } from './settings/settings.component';
 import { BrowserComponent } from './browser/browser.component';
+import { RegisterComponent } from './register/register.component';
 
 export const routes: Routes = [
     {
@@ -14,6 +14,10 @@ export const routes: Routes = [
     {
         path: "login",
         component: LoginComponent,
+    },
+    {
+        path: "signup",
+        component: RegisterComponent,
     },
     {
         path: "editor",
