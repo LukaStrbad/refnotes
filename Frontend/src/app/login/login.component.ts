@@ -2,13 +2,21 @@ import { Component } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AuthService } from "../../services/auth.service";
 import { CommonModule, LowerCasePipe } from "@angular/common";
-import { Router } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { getErrorMessage } from "../../utils/errorHandler";
 import { TranslateDirective, TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-login",
-  imports: [CommonModule, FormsModule, TranslateDirective, TranslatePipe, LowerCasePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslateDirective,
+    TranslatePipe,
+    LowerCasePipe,
+    RouterLink,
+    TranslateDirective
+  ],
   templateUrl: "./login.component.html",
   styleUrl: "./login.component.scss"
 })

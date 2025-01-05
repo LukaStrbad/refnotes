@@ -1,0 +1,229 @@
+<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl mx-auto">
+  <form
+    class="card-body"
+    [formGroup]="registrationForm"
+    (ngSubmit)="register()"
+  >
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text" translate>login.username</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-person-fill"></i>
+        <input
+          type="text"
+          class="grow"
+          placeholder="{{ 'login.username' | translate | lowercase }}"
+          name="username"
+          formControlName="username"
+        />
+      </label>
+    </div>
+
+    <div
+      #usernameError
+      [@reveal]="{
+        value: displayUsernameError,
+        params: {
+          startHeight: usernameError.clientHeight,
+        },
+      }"
+    >
+      @if (displayUsernameError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+
+          <span translate>
+            @if (username?.hasError("required")) {
+              register.errors.usernameRequired
+            } @else if (username?.hasError("minlength")) {
+              register.errors.usernameMinLength
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text" translate>register.name</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-person-fill"></i>
+        <input
+          type="text"
+          class="grow"
+          placeholder="{{ 'register.name' | translate | lowercase }}"
+          name="name"
+          formControlName="name"
+        />
+      </label>
+    </div>
+
+    <div
+      #nameError
+      [@reveal]="{
+        value: displayNameError,
+        params: {
+          startHeight: nameError.clientHeight,
+        },
+      }"
+    >
+      @if (displayNameError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (name?.hasError("required")) {
+              register.errors.nameRequired
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text" translate>register.email</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-envelope-fill"></i>
+        <input
+          type="text"
+          class="grow"
+          placeholder="{{ 'register.email' | translate | lowercase }}"
+          name="email"
+          formControlName="email"
+        />
+      </label>
+    </div>
+
+    <div
+      #emailError
+      [@reveal]="{
+        value: displayEmailError,
+        params: {
+          startHeight: emailError.clientHeight,
+        },
+      }"
+    >
+      @if (displayEmailError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (email?.hasError("required")) {
+              register.errors.emailRequired
+            } @else if (email?.hasError("email")) {
+              register.errors.emailInvalid
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text" translate>login.password</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-key-fill"></i>
+        <input
+          type="password"
+          class="grow"
+          placeholder="{{ 'login.password' | translate | lowercase }}"
+          name="password"
+          formControlName="password"
+        />
+      </label>
+    </div>
+
+    <div
+      #passwordError
+      [@reveal]="{
+        value: displayPasswordError,
+        params: {
+          startHeight: passwordError.clientHeight,
+        },
+      }"
+    >
+      @if (displayPasswordError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (password?.hasError("required")) {
+              register.errors.passwordRequired
+            } @else if (password?.hasError("minlength")) {
+              register.errors.passwordMinLength
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text" translate>register.confirmPassword</span>
+      </label>
+      <label class="input input-bordered flex items-center gap-2">
+        <i class="bi bi-key-fill"></i>
+        <input
+          type="password"
+          class="grow"
+          placeholder="{{ 'register.confirmPassword' | translate | lowercase }}"
+          name="password"
+          formControlName="confirmPassword"
+        />
+      </label>
+    </div>
+
+    <div
+      #confirmPasswordError
+      [@reveal]="{
+        value: displayConfirmPasswordError,
+        params: {
+          startHeight: confirmPasswordError.clientHeight,
+        },
+      }"
+    >
+      @if (displayConfirmPasswordError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (confirmPassword?.hasError("required")) {
+              register.errors.passwordConfirmRequired
+            } @else if (confirmPassword?.hasError("minlength")) {
+              register.errors.passwordMinLength
+            } @else if (confirmPassword?.hasError("passwordMismatch")) {
+              register.errors.passwordMismatch
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
+
+    <div class="form-control mt-4">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!registrationForm.valid"
+        translate
+      >
+        register.signup
+      </button>
+      <a routerLink="/login">
+        <button class="btn btn-secondary mt-4 w-full" translate>
+          register.login
+        </button>
+      </a>
+    </div>
+  </form>
+</div>

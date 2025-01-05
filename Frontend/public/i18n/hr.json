@@ -36,7 +36,8 @@
     "errors": {
       "usernameNotFound": "Korisničko ime nije pronađeno",
       "invalidPassword": "Neispravna lozinka"
-    }
+    },
+    "signUp": "Registracija?"
   },
   "browser": {
     "newFolder": "Nova mapa",
@@ -78,5 +79,23 @@
   "auth": {
     "sessionExpired": "Sesija je istekla",
     "error": "Došlo je do pogreške"
+  },
+  "register": {
+    "confirmPassword": "Potvrdi lozinku",
+    "email": "E-pošta",
+    "login": "Prijava?",
+    "name": "Ime",
+    "signup": "Registriraj se",
+    "errors": {
+      "emailInvalid": "E-mail je nevažeći",
+      "emailRequired": "E-mail je obavezan",
+      "nameRequired": "Ime je obavezno",
+      "passwordConfirmRequired": "Unesite lozinku za potvrdu",
+      "passwordMinLength": "Lozinka mora imati najmanje 8 znakova",
+      "passwordMismatch": "Lozinke se ne podudaraju",
+      "passwordRequired": "Potrebna lozinka",
+      "usernameMinLength": "Korisničko ime mora imati najmanje 4 znaka",
+      "usernameRequired": "Potrebno korisničko ime"
+    }
   }
 }

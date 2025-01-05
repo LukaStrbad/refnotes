@@ -94,6 +94,13 @@ export class AuthService {
     await this.router.navigate(['/browser']);
   }
 
+  async register(username: string, name: string, email: string, password: string) {
+    this.accessToken = await firstValueFrom(
+      this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true, responseType: 'text' })
+    );
+    await this.router.navigate(['/browser']);
+  }
+
   private setUserAndToken(accessToken: string) {
     const decodedToken = jwtDecode(accessToken);
     // Check if token has the required fields (role is optional)
