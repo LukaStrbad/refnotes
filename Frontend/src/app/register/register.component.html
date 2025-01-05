@@ -20,21 +20,29 @@
       </label>
     </div>
 
-    <div>
-      @if (
-        username && username.invalid && (username.dirty || username.touched)
-      ) {
+    <div
+      #usernameError
+      [@reveal]="{
+        value: displayUsernameError,
+        params: {
+          startHeight: usernameError.clientHeight,
+        },
+      }"
+    >
+      @if (displayUsernameError) {
         <div role="alert" class="alert alert-error mt-2">
           <i class="bi bi-exclamation-triangle-fill"></i>
 
           <span translate>
-            @if (username.hasError("required")) {
+            @if (username?.hasError("required")) {
               register.errors.usernameRequired
-            } @else if (username.hasError("minlength")) {
+            } @else if (username?.hasError("minlength")) {
               register.errors.usernameMinLength
             }
           </span>
         </div>
+      } @else {
+        <div></div>
       }
     </div>
 
@@ -54,16 +62,28 @@
       </label>
     </div>
 
-    @if (name && name.invalid && (name.dirty || name.touched)) {
-      <div role="alert" class="alert alert-error mt-2">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span translate>
-          @if (name.hasError("required")) {
-            register.errors.nameRequired
-          }
-        </span>
-      </div>
-    }
+    <div
+      #nameError
+      [@reveal]="{
+        value: displayNameError,
+        params: {
+          startHeight: nameError.clientHeight,
+        },
+      }"
+    >
+      @if (displayNameError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (name?.hasError("required")) {
+              register.errors.nameRequired
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
 
     <div class="form-control">
       <label class="label">
@@ -81,18 +101,30 @@
       </label>
     </div>
 
-    @if (email && email.invalid && (email.dirty || email.touched)) {
-      <div role="alert" class="alert alert-error mt-2">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span translate>
-          @if (email.hasError("required")) {
-            register.errors.emailRequired
-          } @else if (email.hasError("email")) {
-            register.errors.emailInvalid
-          }
-        </span>
-      </div>
-    }
+    <div
+      #emailError
+      [@reveal]="{
+        value: displayEmailError,
+        params: {
+          startHeight: emailError.clientHeight,
+        },
+      }"
+    >
+      @if (displayEmailError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (email?.hasError("required")) {
+              register.errors.emailRequired
+            } @else if (email?.hasError("email")) {
+              register.errors.emailInvalid
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
 
     <div class="form-control">
       <label class="label">
@@ -110,18 +142,30 @@
       </label>
     </div>
 
-    @if (password && password.invalid && (password.dirty || password.touched)) {
-      <div role="alert" class="alert alert-error mt-2">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span translate>
-          @if (password.hasError("required")) {
-            register.errors.passwordRequired
-          } @else if (password.hasError("minlength")) {
-            register.errors.passwordMinLength
-          }
-        </span>
-      </div>
-    }
+    <div
+      #passwordError
+      [@reveal]="{
+        value: displayPasswordError,
+        params: {
+          startHeight: passwordError.clientHeight,
+        },
+      }"
+    >
+      @if (displayPasswordError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (password?.hasError("required")) {
+              register.errors.passwordRequired
+            } @else if (password?.hasError("minlength")) {
+              register.errors.passwordMinLength
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
 
     <div class="form-control">
       <label class="label">
@@ -139,24 +183,32 @@
       </label>
     </div>
 
-    @if (
-      confirmPassword &&
-      confirmPassword.invalid &&
-      (confirmPassword.dirty || confirmPassword.touched)
-    ) {
-      <div role="alert" class="alert alert-error mt-2">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <span translate>
-          @if (confirmPassword.hasError("required")) {
-            register.errors.passwordConfirmRequired
-          } @else if (confirmPassword.hasError("minlength")) {
-            register.errors.passwordMinLength
-          } @else if (confirmPassword.hasError("passwordMismatch")) {
-            register.errors.passwordMismatch
-          }
-        </span>
-      </div>
-    }
+    <div
+      #confirmPasswordError
+      [@reveal]="{
+        value: displayConfirmPasswordError,
+        params: {
+          startHeight: confirmPasswordError.clientHeight,
+        },
+      }"
+    >
+      @if (displayConfirmPasswordError) {
+        <div role="alert" class="alert alert-error mt-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span translate>
+            @if (confirmPassword?.hasError("required")) {
+              register.errors.passwordConfirmRequired
+            } @else if (confirmPassword?.hasError("minlength")) {
+              register.errors.passwordMinLength
+            } @else if (confirmPassword?.hasError("passwordMismatch")) {
+              register.errors.passwordMismatch
+            }
+          </span>
+        </div>
+      } @else {
+        <div></div>
+      }
+    </div>
 
     <div class="form-control mt-4">
       <button

@@ -1,9 +1,10 @@
 import { CommonModule, LowerCasePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
+import { animate, group, query, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-register',
@@ -17,7 +18,31 @@ import { AuthService } from '../../services/auth.service';
     ReactiveFormsModule
   ],
   templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+  styleUrl: './register.component.scss',
+  animations: [
+    trigger('reveal', [
+      transition('* => *', [
+        query(':self', [
+          style({ height: '{{startHeight}}px' })
+        ]),
+        query(':enter', [
+          style({ opacity: 0, scale: 0.0 }),
+        ]),
+        query(':leave', [
+          style({ opacity: 1, scale: 1 }),
+          animate('0.2s ease-in', style({ opacity: 0, scale: 0.0 }))
+        ]),
+        group([
+          query(':self', [
+            animate('0.2s ease-in', style({ height: '*' }))
+          ]),
+          query(':enter', [
+            animate('0.2s ease-in', style({ opacity: 1, scale: 1 }))
+          ])
+        ])
+      ], { params: { startHeight: 0 } })
+    ])
+  ]
 })
 export class RegisterComponent {
   registrationForm = new FormGroup({
@@ -43,6 +68,22 @@ export class RegisterComponent {
   get email() { return this.registrationForm.get('email'); }
   get password() { return this.registrationForm.get('password'); }
   get confirmPassword() { return this.registrationForm.get('confirmPassword'); }
+
+  get displayUsernameError() {
+    return this.username && this.username.invalid && (this.username.dirty || this.username.touched);
+  }
+  get displayNameError() {
+    return this.name && this.name.invalid && (this.name.dirty || this.name.touched);
+  }
+  get displayEmailError() {
+    return this.email && this.email.invalid && (this.email.dirty || this.email.touched);
+  }
+  get displayPasswordError() {
+    return this.password && this.password.invalid && (this.password.dirty || this.password.touched);
+  }
+  get displayConfirmPasswordError() {
+    return this.confirmPassword && this.confirmPassword.invalid && (this.confirmPassword.dirty || this.confirmPassword.touched);
+  }
 
   constructor(
     private auth: AuthService
