@@ -27,8 +27,8 @@ export class MdEditorComponent {
   private readonly md: MarkdownIt;
   // TODO: Use a better cache mechanism
   private highlightCache: Map<number, string> = new Map();
-  private editorLines: EditorLine[] | null = null;
-  private previewLines: PreviewLine[] | null = null;
+  editorLines: EditorLine[] | null = null;
+  previewLines: PreviewLine[] | null = null;
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
   isMobile: boolean = false;
 

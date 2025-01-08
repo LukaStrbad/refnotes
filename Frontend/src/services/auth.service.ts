@@ -25,7 +25,7 @@ export class AuthService {
   private _isUserLoggedIn: WritableSignal<boolean> = signal(false);
   public isUserLoggedIn: Signal<boolean> = this._isUserLoggedIn;
 
-  private http: HttpClient;
+  private http!: HttpClient;
 
   get accessToken() {
     const accessToken = localStorage.getItem('accessToken');
@@ -45,12 +45,17 @@ export class AuthService {
   }
 
   constructor(
-    httpBackend: HttpBackend,
+    private httpBackend: HttpBackend,
     private router: Router
   ) {
+    this.init();
+  }
+
+  // This method is separate for testing purposes
+  init() {
     // This ignores all interceptors
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
-    this.http = new HttpClient(httpBackend);
+    this.http = new HttpClient(this.httpBackend);
 
     const accessToken = this.accessToken;
     if (accessToken) {
@@ -60,6 +65,11 @@ export class AuthService {
         this._isUserLoggedIn.set(true);
       }
     }
+  }
+
+  // For testing purposes
+  overrideHttpClient(http: HttpClient) {
+    this.http = http;
   }
 
   isTokenExpired() {
@@ -78,9 +88,9 @@ export class AuthService {
       const status = getStatusCode(reason);
 
       if (status === 401) {
-        this.logout("auth.sessionExpired").then();
+        this.logout("auth.sessionExpired", false).then();
       } else {
-        this.logout("auth.error").then();
+        this.logout("auth.error", false).then();
       }
 
       return false;
@@ -91,6 +101,7 @@ export class AuthService {
     this.accessToken = await firstValueFrom(
       this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true, responseType: 'text' })
     );
+    console.log("Navigating to browser");
     await this.router.navigate(['/browser']);
   }
 
@@ -125,8 +136,12 @@ export class AuthService {
     };
   }
 
-  async logout(reason: undefined | string = undefined) {
+  async logout(reason: undefined | string = undefined, navigateToLogin = true) {
     this.accessToken = null;
+    if (!navigateToLogin) {
+      return;
+    }
+
     await this.router.navigate(['/login'], {
       info: <LoginInfo>{
         message: reason

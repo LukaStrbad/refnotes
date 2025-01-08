@@ -12,7 +12,7 @@ async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Prom
   let accessToken = authService.accessToken;
 
   if (accessToken === null) {
-    return lastValueFrom(next(req));
+    return await lastValueFrom(next(req));
   }
 
   if (authService.isTokenExpired()) {
@@ -27,7 +27,7 @@ async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Prom
     if (result) {
       accessToken = authService.accessToken;
     } else {
-      authService.logout().then();
+      return await lastValueFrom(next(req));
     }
   }
 
@@ -35,5 +35,5 @@ async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Prom
     headers: req.headers.set('Authorization', `Bearer ${accessToken}`)
   });
 
-  return lastValueFrom(next(newReq));
+  return await lastValueFrom(next(newReq));
 }
