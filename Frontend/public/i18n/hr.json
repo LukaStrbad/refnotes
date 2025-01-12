@@ -97,5 +97,8 @@
       "usernameMinLength": "Korisničko ime mora imati najmanje 4 znaka",
       "usernameRequired": "Potrebno korisničko ime"
     }
+  },
+  "generic": {
+    "error": "Došlo je do pogreške"
   }
 }

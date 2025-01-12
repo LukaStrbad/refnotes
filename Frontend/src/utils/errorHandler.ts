@@ -13,8 +13,7 @@ export function getErrorMessage(e: unknown, messages: Messages): string {
         }
     }
 
-    console.error(e);
-    return "An error occurred";
+    return "generic.error";
 }
 
 export function getStatusCode(e: unknown): number | null {

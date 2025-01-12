@@ -3,21 +3,20 @@ import { SettingsService } from '../../services/settings.service';
 import { MdEditorSettings, Theme } from '../../model/settings';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TestTagDirective } from '../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, TranslateDirective],
+  imports: [FormsModule, TranslateDirective, TestTagDirective],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss'
+  styleUrl: './settings.component.scss',
 })
 export class SettingsComponent {
   mdEditor: MdEditorSettings;
 
   selectedLanguage: string;
 
-  constructor(
-    public settings: SettingsService
-  ) {
+  constructor(public settings: SettingsService) {
     this.mdEditor = settings.mdEditor();
     this.selectedLanguage = settings.language();
   }

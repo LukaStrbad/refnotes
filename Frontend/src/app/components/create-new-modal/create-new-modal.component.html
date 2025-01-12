@@ -29,6 +29,7 @@
         (dragover)="onFileDragOver($event)"
         (dragleave)="onFileDragLeave()"
         (drop)="onFileDrop($event)"
+        testTag="drag-and-drop-target"
       >
         {{ "modals.create.dragAndDropFile" | translate }}
         <button
@@ -56,10 +57,10 @@
       } @else {
         <div class="mt-4">
           @for (file of selectedFilesArray; track file.name) {
-            <div class="badge badge-accent h-auto pr-0 m-1">
+            <div class="badge badge-accent h-auto pr-0 m-1" testTag="file-info">
               {{ file.name }} ({{ "modals.create.size" | translate }}:
               {{ file.size | byteSize }})
-              <button class="m-2" (click)="removeSelectedFile(file)">
+              <button class="m-2" (click)="removeSelectedFile(file)" testTag="remove-file-button">
                 <i class="bi bi-x"></i>
               </button>
             </div>
@@ -104,6 +105,7 @@
         <button
           class="btn btn-sm btn-primary"
           (click)="onUploadClick()"
+          testTag="upload-button"
           translate
         >
           modals.create.upload

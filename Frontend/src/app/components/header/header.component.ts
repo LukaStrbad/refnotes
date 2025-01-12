@@ -22,11 +22,6 @@ export class HeaderComponent {
     this.settings.setTheme(newTheme);
   }
 
-  handleClick() {
-    const elem = document.activeElement as HTMLElement | null;
-    elem?.blur();
-  }
-
   async logout() {
     await this.auth.logout();
   }

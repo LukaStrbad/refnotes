@@ -7,6 +7,7 @@
         class="select select-accent w-full"
         [(ngModel)]="selectedLanguage"
         (change)="updateLanguage()"
+        testTag="language-select"
       >
         <option disabled translate>settings.language.selectLanguage</option>
         @for (lang of settings.languageList; track lang) {
@@ -85,6 +86,7 @@
         class="select select-accent w-full"
         [(ngModel)]="mdEditor.editorMode"
         (change)="updateMdEditorSettings()"
+        testTag="editor-mode-select"
       >
         <option disabled translate>
           settings.editorSettings.viewTypeTitle

@@ -1,15 +1,16 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
-import { FormsModule } from "@angular/forms";
-import { Directory } from "../../model/directory";
-import { NgClass } from "@angular/common";
-import { CreateNewModalComponent } from "../components/create-new-modal/create-new-modal.component";
-import { HttpEventType } from "@angular/common/http";
-import { LoggerService } from "../../services/logger.service";
-import { filter, forkJoin, lastValueFrom, Subscription, tap } from "rxjs";
+import { FormsModule } from '@angular/forms';
+import { Directory } from '../../model/directory';
+import { NgClass } from '@angular/common';
+import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
+import { HttpEventType } from '@angular/common/http';
+import { LoggerService } from '../../services/logger.service';
+import {filter, firstValueFrom, forkJoin, lastValueFrom, Subscription, tap} from 'rxjs';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
+import {TestTagDirective} from "../../directives/test-tag.directive";
 
 @Component({
   selector: 'app-browser',
@@ -19,23 +20,32 @@ import { AuthService } from '../../services/auth.service';
     CreateNewModalComponent,
     TranslatePipe,
     TranslateDirective,
-    RouterLink
+    RouterLink,
+    TestTagDirective,
   ],
   templateUrl: './browser.component.html',
-  styleUrl: './browser.component.scss'
+  styleUrl: './browser.component.scss',
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   currentFolder: Directory | null = null;
-  @ViewChild("fileModal")
+  @ViewChild('fileModal')
   fileModal!: CreateNewModalComponent;
-  @ViewChild("folderModal")
+  @ViewChild('folderModal')
   folderModal!: CreateNewModalComponent;
   pathStack: string[] = [];
   currentPath: string = '/';
   uploadProgress: { [key: string]: number | null } = {};
 
   private navSubscription?: Subscription;
-  private listSubscription?: Subscription;
+
+  /**
+   * For testing purposes, this property is used to store the promise returned by the refreshRoute method.
+   */
+  loadingPromise?: Promise<any>;
+  /**
+   * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
+   */
+  refreshRouteInnerPromise?: Promise<Directory>;
 
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
@@ -45,7 +55,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       breadcrumbs.push({
         name: this.pathStack[i],
         path: path,
-        icon: 'folder'
+        icon: 'folder',
       });
     }
     return breadcrumbs;
@@ -55,28 +65,27 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private browser: BrowserService,
     private logger: LoggerService,
     private router: Router,
-    private auth: AuthService
-  ) {
-    if (this.auth.user === null) {
-      this.router.navigate(['/login']);
-    }
-  }
+    private auth: AuthService,
+  ) {}
 
   ngOnInit(): void {
-    this.navSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.refreshRoute();
-    });
-    this.refreshRoute();
+    if (this.auth.user === null) {
+      this.router.navigate(['/login']).then();
+    }
+
+    this.navSubscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.loadingPromise = this.refreshRoute();
+      });
+    this.loadingPromise = this.refreshRoute();
   }
 
   ngOnDestroy(): void {
     this.navSubscription?.unsubscribe();
-    this.listSubscription?.unsubscribe();
   }
 
-  refreshRoute() {
+  async refreshRoute() {
     this.currentFolder = null;
     // Get the current path from the URL (removes the leading /browser)
     this.pathStack = this.router.url.split('/').slice(2);
@@ -86,10 +95,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.currentPath = '/' + this.pathStack.join('/');
     }
 
-    this.listSubscription?.unsubscribe();
-    this.listSubscription = this.browser.listCached(this.currentPath).subscribe(folder => {
-      this.currentFolder = folder;
-    });
+    const observable = this.browser.listCached(this.currentPath);
+    // Cached
+    this.refreshRouteInnerPromise = firstValueFrom(observable);
+    this.currentFolder = await this.refreshRouteInnerPromise;
+    // From server
+    this.refreshRouteInnerPromise = lastValueFrom(observable);
+    this.currentFolder = await this.refreshRouteInnerPromise;
   }
 
   async createNewFile(filename: string) {
@@ -106,7 +118,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const path = this.currentPath == '/' ? `/${folderName}` : `${this.currentPath}/${folderName}`;
+    const path =
+      this.currentPath == '/'
+        ? `/${folderName}`
+        : `${this.currentPath}/${folderName}`;
     await this.browser.addDirectory(path);
     this.currentFolder.directories.push(folderName);
     this.folderModal.close();
@@ -114,18 +129,20 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   async deleteFile(name: string) {
     await this.browser.deleteFile(this.currentPath, name);
-    this.refreshRoute();
+    await this.refreshRoute();
   }
 
   async openFolder(name: string) {
-    const newPath = this.currentPath === '/' ? `/${name}` : `${this.currentPath}/${name}`;
+    const newPath =
+      this.currentPath === '/' ? `/${name}` : `${this.currentPath}/${name}`;
     await this.navigateToFolder(newPath);
   }
 
   async deleteFolder(name: string) {
-    const path = this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
+    const path =
+      this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
     await this.browser.deleteDirectory(path);
-    this.refreshRoute();
+    await this.refreshRoute();
   }
 
   async navigateToFolder(path: string) {
@@ -151,19 +168,24 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < files.length; i++) {
       this.logger.info(`Uploading file ${files[i].name}`);
-      const uploadObservable = this.browser.addFile(this.currentPath, files[i])
-        .pipe(tap(event => {
-          if (event.type === HttpEventType.UploadProgress) {
-            this.uploadProgress[files[i].name] = event.total ? Math.round(100 * event.loaded / event.total) : null;
-          } else if (event.type === HttpEventType.Response) {
-            if (event.status === 200) {
-              this.logger.info('File uploaded successfully', event);
-              this.currentFolder?.files.push(files[i].name);
-            } else {
-              console.error('Error uploading file', event);
+      const uploadObservable = this.browser
+        .addFile(this.currentPath, files[i])
+        .pipe(
+          tap((event) => {
+            if (event.type === HttpEventType.UploadProgress) {
+              this.uploadProgress[files[i].name] = event.total
+                ? Math.round((100 * event.loaded) / event.total)
+                : null;
+            } else if (event.type === HttpEventType.Response) {
+              if (event.status === 200) {
+                this.logger.info('File uploaded successfully', event);
+                this.currentFolder?.files.push(files[i].name);
+              } else {
+                console.error('Error uploading file', event);
+              }
             }
-          }
-        }))
+          }),
+        );
 
       observables.push(uploadObservable);
     }
@@ -181,8 +203,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.router.navigate(['/editor'], {
       queryParams: {
         directory: this.currentPath,
-        file: fileName
-      }
+        file: fileName,
+      },
     });
   }
 }

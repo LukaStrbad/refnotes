@@ -3,6 +3,7 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { NgClass } from "@angular/common";
 import { ByteSizePipe } from "../../../pipes/byte-size.pipe";
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import {TestTagDirective} from "../../../directives/test-tag.directive";
 
 type ModalType = 'file' | 'folder';
 
@@ -14,22 +15,23 @@ type ModalType = 'file' | 'folder';
     NgClass,
     ByteSizePipe,
     TranslatePipe,
-    TranslateDirective
+    TranslateDirective,
+    TestTagDirective,
   ],
   templateUrl: './create-new-modal.component.html',
-  styleUrl: './create-new-modal.component.scss'
+  styleUrl: './create-new-modal.component.scss',
 })
 export class CreateNewModalComponent {
-  @Input("modalType")
+  @Input('modalType')
   modalType: ModalType = 'file';
-  @Output("onCreate")
+  @Output('onCreate')
   onCreate = new EventEmitter<string>();
-  @Output("onUpload")
+  @Output('onUpload')
   onUpload = new EventEmitter<FileList>();
-  @Input("uploadProgress")
+  @Input('uploadProgress')
   uploadProgress: { [key: string]: number | null } = {};
 
-  @ViewChild("modal")
+  @ViewChild('modal')
   modal!: ElementRef<HTMLDialogElement>;
 
   selectedFiles: FileList | null = null;
@@ -90,7 +92,7 @@ export class CreateNewModalComponent {
   removeSelectedFile(file: File) {
     if (this.selectedFiles) {
       const list = new DataTransfer();
-      Array.from(this.selectedFiles).forEach(f => {
+      Array.from(this.selectedFiles).forEach((f) => {
         if (f !== file) {
           list.items.add(f);
         }
