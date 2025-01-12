@@ -41,13 +41,13 @@ describe('MdEditorComponent', () => {
   });
 
   it('should set isMobile to true on window resize below 640px', () => {
-    window.innerWidth = 600;
+    spyOnProperty(window, 'innerWidth').and.returnValue(600);
     window.dispatchEvent(new Event('resize'));
     expect(component.isMobile).toBeTrue();
   });
 
   it('should set isMobile to false on window resize above 640px', () => {
-    window.innerWidth = 800;
+    spyOnProperty(window, 'innerWidth').and.returnValue(800);
     window.dispatchEvent(new Event('resize'));
     expect(component.isMobile).toBeFalse();
   });

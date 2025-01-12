@@ -61,6 +61,7 @@ describe('SettingsComponent', () => {
 
     expect(darkThemeRadio).toBeTruthy();
     darkThemeRadio!.click();
+    fixture.detectChanges();
 
     expect(settings.setTheme).toHaveBeenCalledWith('dark');
   });

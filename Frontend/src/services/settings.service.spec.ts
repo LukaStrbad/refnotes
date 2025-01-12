@@ -12,8 +12,14 @@ import {MdEditorSettings, Theme} from '../model/settings';
 describe('SettingsService', () => {
   let service: SettingsService;
   let translate: TranslateService;
+  let storage: { [key: string]: string } = {};
 
   beforeEach(() => {
+    spyOn(localStorage, 'getItem').and.callFake((key: string) => storage[key] ?? null);
+    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
+      storage[key] = value;
+    });
+
     TestBed.configureTestingModule({
       imports: [
         TranslateModule.forRoot({
@@ -25,7 +31,7 @@ describe('SettingsService', () => {
       ],
       providers: [TranslateService],
     });
-    localStorage.clear();
+    storage = {};
     service = TestBed.inject(SettingsService);
     translate = TestBed.inject(TranslateService);
   });

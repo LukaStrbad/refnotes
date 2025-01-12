@@ -133,7 +133,9 @@ export class MdEditorComponent {
 
     this.previewLines ??= this.calculatePreviewLines(this.previewContentElement.nativeElement);
     const lastEl = this.previewLines[this.previewLines.length - 1];
-    this.testDisplay = `Editor: ${this.value().split('\n').length}, Preview: ${lastEl.lineIndex + lastEl.totalLines}`;
+    const lastElLineIndex = lastEl?.lineIndex ?? 0;
+    const lastElTotalLines = lastEl?.totalLines ?? 0;
+    this.testDisplay = `Editor: ${this.value().split('\n').length}, Preview: ${lastElLineIndex + lastElTotalLines}`;
     console.log(this.previewLines);
     const previewLine = this.previewLines.find(l => l.lineIndex === line.lineIndex);
     if (previewLine) {

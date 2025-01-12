@@ -22,8 +22,16 @@ describe('BrowserComponent', () => {
   let component: BrowserComponent;
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
+  let storage: { [key: string]: string } = {};
 
   beforeEach(async () => {
+    // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
+    // This mocks localStorage to avoid the issue
+    spyOn(localStorage, 'getItem').and.callFake((key: string) => storage[key] ?? null);
+    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
+      storage[key] = value;
+    });
+
     browserService = jasmine.createSpyObj('BrowserService', [
       'listCached',
       'addTextFile',
