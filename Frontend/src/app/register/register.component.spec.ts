@@ -22,26 +22,36 @@ describe('RegisterComponent', () => {
   let confirmPasswordInput: HTMLInputElement;
   let submitButton: HTMLButtonElement;
 
-  function setValues(username?: string, name?: string, email?: string, password?: string, confirmPassword?: string) {
+  async function setValues(username?: string, name?: string, email?: string, password?: string, confirmPassword?: string) {
     if (username) {
       usernameInput.value = username;
       usernameInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
     }
     if (name) {
       nameInput.value = name;
       nameInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
     }
     if (email) {
       emailInput.value = email;
       emailInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
     }
     if (password) {
       passwordInput.value = password;
       passwordInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
     }
     if (confirmPassword) {
       confirmPasswordInput.value = confirmPassword;
       confirmPasswordInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      fixture.detectChanges();
     }
   }
 
@@ -87,7 +97,7 @@ describe('RegisterComponent', () => {
   });
 
   it('should call register method when form is valid', async () => {
-    setValues('testuser', 'Test User', 'test@example.com', 'password123', 'password123');
+    await setValues('testuser', 'Test User', 'test@example.com', 'password123', 'password123');
     fixture.detectChanges();
 
     expect(submitButton.disabled).toBeFalse();
@@ -102,10 +112,7 @@ describe('RegisterComponent', () => {
   });
 
   it('should display errors when data is invalid', async () => {
-    setValues('a', '', 'a', 'a', 'a');
-    await fixture.whenStable();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await setValues('a', '', 'a', 'a', 'a');
 
     expect(submitButton.disabled).toBeTrue();
 
