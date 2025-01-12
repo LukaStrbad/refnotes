@@ -33,7 +33,7 @@
       </li>
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a routerLink="/browser{{ breadcrumb.path }}">
+          <a routerLink="/browser{{ breadcrumb.path }}" testTag="breadcrumb-item">
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
             {{ breadcrumb.name }}
           </a>
@@ -62,7 +62,7 @@
       }
       <tbody>
         @for (folderName of currentFolder.directories; track folderName) {
-          <tr (click)="openFolder(folderName)" class="hover:bg-base-300">
+          <tr (click)="openFolder(folderName)" class="hover:bg-base-300" testTag="folder-tr">
             <td>
               <i class="bi bi-folder"></i>
             </td>
@@ -91,7 +91,7 @@
       }
       <tbody>
         @for (fileName of currentFolder.files; track fileName) {
-          <tr class="hover:bg-base-300">
+          <tr class="hover:bg-base-300" testTag="file-tr">
             <td>
               <i
                 class="bi"

@@ -3,12 +3,18 @@ import { ActivatedRoute } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
 import { MdEditorComponent } from "../components/md-editor/md-editor.component";
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import {TestTagDirective} from "../../directives/test-tag.directive";
 
 @Component({
   selector: 'app-file-editor',
-  imports: [MdEditorComponent, TranslatePipe, TranslateDirective],
+  imports: [
+    MdEditorComponent,
+    TranslatePipe,
+    TranslateDirective,
+    TestTagDirective,
+  ],
   templateUrl: './file-editor.component.html',
-  styleUrl: './file-editor.component.scss'
+  styleUrl: './file-editor.component.scss',
 })
 export class FileEditorComponent {
   readonly directoryPath: string;
@@ -18,12 +24,12 @@ export class FileEditorComponent {
 
   constructor(
     route: ActivatedRoute,
-    private browser: BrowserService
+    private browser: BrowserService,
   ) {
-    this.directoryPath = route.snapshot.queryParamMap.get('directory') as string;
+    this.directoryPath = route.snapshot.queryParamMap.get(
+      'directory',
+    ) as string;
     this.fileName = route.snapshot.queryParamMap.get('file') as string;
-
-    console.log(this.directoryPath, this.fileName);
 
     browser.getFile(this.directoryPath, this.fileName).then((content) => {
       this.content = new TextDecoder().decode(content);
@@ -32,6 +38,10 @@ export class FileEditorComponent {
   }
 
   async saveContent() {
-    this.browser.saveTextfile(this.directoryPath, this.fileName, this.content);
+    await this.browser.saveTextfile(
+      this.directoryPath,
+      this.fileName,
+      this.content,
+    );
   }
 }

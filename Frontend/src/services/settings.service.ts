@@ -6,9 +6,9 @@ import { TranslateService } from '@ngx-translate/core';
   providedIn: 'root'
 })
 export class SettingsService {
-  private _language: WritableSignal<string>;
-  private _theme: WritableSignal<Theme>;
-  private _mdEditor: WritableSignal<MdEditorSettings>;
+  private readonly _language: WritableSignal<string>;
+  private readonly _theme: WritableSignal<Theme>;
+  private readonly _mdEditor: WritableSignal<MdEditorSettings>;
 
   public get language(): Signal<string> {
     return this._language;
@@ -70,12 +70,14 @@ export class SettingsService {
 
   public setTheme(theme: Theme) {
     this._theme.set(theme);
+
     if (theme === 'auto') {
       localStorage.removeItem('theme');
       theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } else {
       if (theme !== 'light' && theme !== 'dark') {
         theme = 'light';
+        this._theme.set(theme);
       }
       localStorage.setItem('theme', theme);
     }

@@ -14,8 +14,7 @@ import { TranslateDirective, TranslatePipe } from "@ngx-translate/core";
     TranslateDirective,
     TranslatePipe,
     LowerCasePipe,
-    RouterLink,
-    TranslateDirective
+    RouterLink
   ],
   templateUrl: "./login.component.html",
   styleUrl: "./login.component.scss"

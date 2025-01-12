@@ -97,5 +97,8 @@
       "passwordConfirmRequired": "Enter confirmation password",
       "passwordMismatch": "Passwords do not match"
     }
+  },
+  "generic": {
+    "error": "An error has occurred"
   }
 }

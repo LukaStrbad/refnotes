@@ -30,7 +30,7 @@
       }"
     >
       @if (displayUsernameError) {
-        <div role="alert" class="alert alert-error mt-2">
+        <div role="alert" class="alert alert-error mt-2" testTag="username-error">
           <i class="bi bi-exclamation-triangle-fill"></i>
 
           <span translate>
@@ -72,7 +72,7 @@
       }"
     >
       @if (displayNameError) {
-        <div role="alert" class="alert alert-error mt-2">
+        <div role="alert" class="alert alert-error mt-2" testTag="name-error">
           <i class="bi bi-exclamation-triangle-fill"></i>
           <span translate>
             @if (name?.hasError("required")) {
@@ -111,7 +111,7 @@
       }"
     >
       @if (displayEmailError) {
-        <div role="alert" class="alert alert-error mt-2">
+        <div role="alert" class="alert alert-error mt-2" testTag="email-error">
           <i class="bi bi-exclamation-triangle-fill"></i>
           <span translate>
             @if (email?.hasError("required")) {
@@ -152,7 +152,7 @@
       }"
     >
       @if (displayPasswordError) {
-        <div role="alert" class="alert alert-error mt-2">
+        <div role="alert" class="alert alert-error mt-2" testTag="password-error">
           <i class="bi bi-exclamation-triangle-fill"></i>
           <span translate>
             @if (password?.hasError("required")) {
@@ -177,7 +177,7 @@
           type="password"
           class="grow"
           placeholder="{{ 'register.confirmPassword' | translate | lowercase }}"
-          name="password"
+          name="confirmPassword"
           formControlName="confirmPassword"
         />
       </label>
@@ -193,7 +193,7 @@
       }"
     >
       @if (displayConfirmPasswordError) {
-        <div role="alert" class="alert alert-error mt-2">
+        <div role="alert" class="alert alert-error mt-2" testTag="confirmPassword-error">
           <i class="bi bi-exclamation-triangle-fill"></i>
           <span translate>
             @if (confirmPassword?.hasError("required")) {
