@@ -6,6 +6,7 @@
         class="tab"
         [class.tab-active]="editorMode() === 'SideBySide'"
         (click)="settings.setMdEditorMode('SideBySide')"
+        testTag="editorMode-sideBySide"
         translate
       >
         editor.viewType.sideBySide
@@ -15,6 +16,7 @@
         class="tab"
         [class.tab-active]="editorMode() === 'EditorOnly'"
         (click)="settings.setMdEditorMode('EditorOnly')"
+        testTag="editorMode-editorOnly"
         translate
       >
         editor.viewType.editorOnly
@@ -24,6 +26,7 @@
         class="tab"
         [class.tab-active]="editorMode() === 'PreviewOnly'"
         (click)="settings.setMdEditorMode('PreviewOnly')"
+        testTag="editorMode-previewOnly"
         translate
       >
         editor.viewType.previewOnly
@@ -48,11 +51,11 @@
     }
     @if (isMobile || showPreview()) {
       <div
-        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-scroll relative"
+        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-hidden relative"
         [class.no-wrap]="!settings.mdEditor().wrapLines"
       >
         <div
-          class="preview-content w-full h-full p-2"
+          class="preview-content w-full h-full p-2 overflow-y-scroll"
           [innerHTML]="previewContent"
           #previewRef
         ></div>

@@ -1,10 +1,12 @@
 import {
+  AfterViewInit,
   Component,
   computed,
   effect,
   ElementRef,
   HostListener,
   model,
+  OnInit,
   Signal,
   ViewChild,
   ViewEncapsulation,
@@ -18,15 +20,16 @@ import { EditorMode } from '../../../model/settings';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
+import { TestTagDirective } from '../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-md-editor',
-  imports: [FormsModule, TranslateDirective, TranslatePipe],
+  imports: [FormsModule, TranslateDirective, TranslatePipe, TestTagDirective],
   templateUrl: './md-editor.component.html',
   styleUrl: './md-editor.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
-export class MdEditorComponent {
+export class MdEditorComponent implements OnInit, AfterViewInit {
   value = model('');
 
   editorMode: Signal<EditorMode>;
@@ -59,12 +62,42 @@ export class MdEditorComponent {
     this.editorMode = computed(() => settings.mdEditor().editorMode);
 
     effect(() => {
-      this.previewContent = this.marked.parse(this.value()) as string;
-      const tokens = this.marked.lexer(this.value());
-      this.editorIndices = this.calculateEditorIndex(tokens);
+      // Don't render anything if there is no preview visible
+      if (!this.showPreview() || this.isMobile) {
+        return;
+      }
+      this.renderPreview(this.value());
     });
+  }
 
+  ngOnInit() {
     this.onWindowResize();
+    this.renderPreview(this.value());
+  }
+
+  ngAfterViewInit() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        // Only render preview on mobile when it's visible
+        // When it's not mobile, then effect in the constructor will take care of it
+        if (this.isMobile && entry.isIntersecting) {
+          console.log('rendering preview');
+          this.renderPreview(this.value());
+          this.syncScrolls(true, true);
+        }
+      },
+      {
+        threshold: 0,
+      },
+    );
+    observer.observe(this.previewContentElement.nativeElement);
+  }
+
+  renderPreview(text: string) {
+    this.previewContent = this.marked.parse(text) as string;
+    const tokens = this.marked.lexer(text);
+    this.editorIndices = this.calculateEditorIndex(tokens);
   }
 
   calculateEditorIndex(tokens: TokensList): EditorIndex[] {
@@ -145,6 +178,10 @@ export class MdEditorComponent {
     });
   }
 
+  /**
+   * This is used to insert tab character if it's clicked
+   * @param event
+   */
   onEditorKeydown(event: KeyboardEvent) {
     this.editorLines = null;
     if (event.key === 'Tab') {
@@ -179,10 +216,13 @@ export class MdEditorComponent {
     }, 0);
   }
 
-  syncScrolls() {
-    const target = this.editorElementRef.nativeElement;
-    const scrollOffset = target.scrollTop;
-    this.editorLines ??= this.calculateEditorLineSizes(target);
+  syncScrolls(force = false, instant = false) {
+    if (this.isMobile && !force) {
+      return;
+    }
+    const editor = this.editorElementRef.nativeElement;
+    const scrollOffset = editor.scrollTop;
+    this.editorLines ??= this.calculateEditorLineSizes(editor);
     const filtered = this.editorLines.filter((l) => scrollOffset >= l.offset);
     const line = filtered[filtered.length - 1];
 
@@ -190,20 +230,27 @@ export class MdEditorComponent {
     while (
       editorIndex >= 0 &&
       this.editorIndices[editorIndex].editorLineIndex > line.lineIndex
-      ) {
+    ) {
       editorIndex--;
     }
-    const editorLine = this.editorIndices[editorIndex];
+    const editorLine: EditorIndex | undefined = this.editorIndices[editorIndex];
 
-    const element =
-      this.previewContentElement.nativeElement.children[
-        editorLine.previewElementIndex
-        ];
-    if (element && this.syncPreview) {
-      element.scrollIntoView({
-        block: 'start',
-        behavior: 'smooth',
-      });
+    if (!editorLine) {
+      return;
+    }
+
+    const element = this.previewContentElement.nativeElement.children[
+      editorLine.previewElementIndex
+    ] as HTMLElement;
+    if (element && (this.syncPreview || force)) {
+      if (instant) {
+        this.previewContentElement.nativeElement.scrollTop = element.offsetTop;
+      } else {
+        element.scrollIntoView({
+          block: 'start',
+          behavior: 'smooth',
+        });
+      }
     }
   }
 
