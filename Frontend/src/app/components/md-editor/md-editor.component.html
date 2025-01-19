@@ -1,9 +1,5 @@
 <div class="flex flex-col h-full gap-2 bg-base-300 p-2 rounded-xl">
   <div class="flex flex-1 justify-between">
-    <div>
-      {{ testDisplay }}
-    </div>
-
     <div role="tablist" class="hidden sm:tabs tabs-boxed self-end">
       <a
         role="tab"
@@ -40,19 +36,19 @@
     @if (isMobile || showEditor()) {
       <div class="editor rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1">
         <textarea
+          #editorRef
           class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-none resize-none"
           (resize)="onEditorResize($event)"
           placeholder="{{ 'editor.writeSomething' | translate }}"
           [(ngModel)]="value"
-          (input)="onEditorInput($event)"
           (keydown)="onEditorKeydown($event)"
-          (scroll)="onEditorScroll($event)"
+          (scroll)="syncScrolls()"
         ></textarea>
       </div>
     }
     @if (isMobile || showPreview()) {
       <div
-        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-scroll"
+        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-scroll relative"
         [class.no-wrap]="!settings.mdEditor().wrapLines"
       >
         <div
@@ -60,6 +56,14 @@
           [innerHTML]="previewContent"
           #previewRef
         ></div>
+
+        @if (!isMobile) {
+          <button class="btn btn-square btn-sm sticky right-4 top-4 bg-opacity-70 backdrop-blur-sm"
+                  [class.btn-primary]="syncPreview"
+                  [class.bg-base-300]="!syncPreview" (click)="toggleSyncPreview()">
+            <i class="bi bi-arrow-down-up"></i>
+          </button>
+        }
       </div>
     }
   </div>
