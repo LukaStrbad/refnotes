@@ -53,12 +53,20 @@ export class SettingsService {
   private loadMdEditorSettings(): MdEditorSettings {
     const settings = localStorage.getItem('mdEditorSettings');
     if (settings) {
-      return JSON.parse(settings);
+      const s = JSON.parse(settings);
+      // Check if the settings are valid
+      return {
+        editorMode: s.editorMode ?? 'SideBySide',
+        showLineNumbers: s.showLineNumbers ?? true,
+        wrapLines: s.wrapLines ?? false,
+        experimentalFastRender: s.experimentalFastRender ?? false
+      };
     }
     return {
       editorMode: 'SideBySide',
       showLineNumbers: true,
-      wrapLines: false
+      wrapLines: false,
+      experimentalFastRender: false
     };
   }
 

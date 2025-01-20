@@ -4,7 +4,9 @@
       "wrapLines": "Prelamanje linija u pregledu",
       "showLineNumbers": "Prikaži brojeve redaka u blokovima koda unutar pregleda",
       "title": "Postavke editora",
-      "viewTypeTitle": "Vrsta prikaza"
+      "viewTypeTitle": "Vrsta prikaza",
+      "experimentalFastRender": "Omogući brži prikaz markdown pregleda",
+      "experimentalFastRenderExplanation": "Trenutno je ovo brže samo na Firefoxu. Ova postavka usporava markdown prikaz u preglednicima baziranim na Chromiumu-u."
     },
     "language": {
       "en": "English",

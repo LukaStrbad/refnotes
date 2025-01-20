@@ -4,7 +4,9 @@
       "wrapLines": "Wrap lines in preview",
       "showLineNumbers": "Show line numbers in code blocks within preview",
       "title": "Editor Settings",
-      "viewTypeTitle": "View Type"
+      "viewTypeTitle": "View Type",
+      "experimentalFastRender": "Enable faster rendering of markdown preview",
+      "experimentalFastRenderExplanation": "Currently, this is only faster on Firefox. This setting slows down rendering on Chromium based browsers."
     },
     "language": {
       "en": "English",

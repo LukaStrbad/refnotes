@@ -12,7 +12,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Marked, TokensList } from 'marked';
+import { Marked, Token, TokensList } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import { SettingsService } from '../../../services/settings.service';
@@ -42,8 +42,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
       this.editorMode() === 'PreviewOnly' || this.editorMode() === 'SideBySide',
   );
 
-  previewContent: string = '';
-
   private readonly marked: Marked;
   // TODO: Use a better cache mechanism
   private highlightCache: Map<number, string> = new Map();
@@ -55,6 +53,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
   isMobile: boolean = false;
   syncPreview = true;
+  previewedTokens: PreviewToken[] = [];
 
   constructor(public settings: SettingsService) {
     this.marked = new Marked(this.highlightExtension());
@@ -62,20 +61,22 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
     this.editorMode = computed(() => settings.mdEditor().editorMode);
 
     effect(() => {
+      const value = this.value();
       // Don't render anything if there is no preview visible
-      if (!this.showPreview() || this.isMobile) {
+      if (!this.showPreview() || this.isMobile || !this.previewContentElement) {
         return;
       }
-      this.renderPreview(this.value());
+      this.renderPreview(value);
     });
   }
 
   ngOnInit() {
     this.onWindowResize();
-    this.renderPreview(this.value());
   }
 
   ngAfterViewInit() {
+    this.renderPreview(this.value());
+
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -95,8 +96,76 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
   }
 
   renderPreview(text: string) {
-    this.previewContent = this.marked.parse(text) as string;
+    if (this.settings.mdEditor().experimentalFastRender) {
+      this.experimentalFastRender(text);
+      return;
+    }
+
+    const previewContent = this.marked.parse(text) as string;
     const tokens = this.marked.lexer(text);
+    this.editorIndices = this.calculateEditorIndex(tokens);
+    this.previewContentElement.nativeElement.innerHTML = previewContent;
+  }
+
+  experimentalFastRender(text: string) {
+    const previewContent = this.marked.parse(text) as string;
+    const tokens = this.marked.lexer(text).filter(t => t.type !== 'space') as TokensList;
+
+    let tokenHashes: { key: number, raw: string, token: Token, occurrence: number }[] = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      const tokenHash = this.strHash(token.raw);
+      const existingHash = tokenHashes.findLast(t => t.key == tokenHash);
+      const occurrence = existingHash ? existingHash.occurrence + 1 : 0;
+      tokenHashes.push({ key: tokenHash, raw: token.raw, token, occurrence });
+    }
+
+    console.log(tokenHashes);
+
+    // Delete previous tokens that are not in the new tokens
+    for (let i = this.previewedTokens.length - 1; i >= 0; i--) {
+      const token = this.previewedTokens[i];
+      if (!tokens.some(t => t.raw == token.raw)) {
+        this.previewContentElement.nativeElement.removeChild(token.element);
+        this.previewedTokens.splice(i, 1);
+      }
+    }
+
+    // Add new tokens
+    const layoutElements: { element: HTMLElement, token: Token }[] = [];
+
+    for (const hash of tokenHashes) {
+      const previewedTokens = this.previewedTokens.filter(t => t.raw == hash.raw);
+      const previewedToken = previewedTokens[hash.occurrence];
+      if (previewedToken) {
+        layoutElements.push({ element: previewedToken.element, token: hash.token });
+      } else {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.marked.parse(hash.token.raw) as string;
+        const newElement = tempDiv.children[0] as HTMLElement;
+        layoutElements.push({ element: newElement, token: hash.token });
+
+        const previousElement = layoutElements[layoutElements.length - 2];
+        if (previousElement) {
+          console.log("Inserting new element after previous element");
+          previousElement.element.after(newElement);
+        } else {
+          console.log("Appending new element under previewContentElement");
+          this.previewContentElement.nativeElement.insertBefore(newElement, this.previewContentElement.nativeElement.firstChild);
+        }
+      }
+    }
+
+    if (this.previewedTokens.length == 0) {
+      for (const element of layoutElements) {
+        this.previewContentElement.nativeElement.appendChild(element.element);
+      }
+    }
+
+    this.previewedTokens = layoutElements.map(e => {
+      return { ...e.token, element: e.element };
+    });
+
     this.editorIndices = this.calculateEditorIndex(tokens);
   }
 
@@ -310,4 +379,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
       this.syncScrolls();
     }
   }
+}
+
+type PreviewToken = Token & {
+  element: HTMLElement;
 }

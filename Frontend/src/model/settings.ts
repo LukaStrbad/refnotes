@@ -7,4 +7,5 @@ export interface MdEditorSettings {
     editorMode: EditorMode;
     showLineNumbers: boolean;
     wrapLines: boolean;
+    experimentalFastRender: boolean;
 }
