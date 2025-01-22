@@ -41,6 +41,7 @@ describe('SettingsComponent', () => {
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,
+      experimentalFastRender: false,
     });
     expect(component.selectedLanguage).toBe('en');
   });

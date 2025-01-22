@@ -96,6 +96,7 @@ describe('SettingsService', () => {
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,
+      experimentalFastRender: false,
     });
   });
 
@@ -104,6 +105,7 @@ describe('SettingsService', () => {
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
+      experimentalFastRender: true,
     });
     localStorage.setItem('mdEditorSettings', settings);
     service = new SettingsService(translate);
@@ -112,6 +114,7 @@ describe('SettingsService', () => {
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
+      experimentalFastRender: true,
     });
   });
 
@@ -120,6 +123,7 @@ describe('SettingsService', () => {
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
+      experimentalFastRender: true,
     };
     service.setMdEditorSettings(settings);
 

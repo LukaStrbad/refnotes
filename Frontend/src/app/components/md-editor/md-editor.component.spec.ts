@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MdEditorComponent } from './md-editor.component';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import {SettingsService} from "../../../services/settings.service";
 
 describe('MdEditorComponent', () => {
   let component: MdEditorComponent;
   let fixture: ComponentFixture<MdEditorComponent>;
-  let editor: HTMLTextAreaElement;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -27,7 +27,15 @@ describe('MdEditorComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    editor = fixture.nativeElement.querySelector('.editor-textarea') as HTMLTextAreaElement;
+    // Ensure that the editor is visible
+    const settings = TestBed.inject(SettingsService);
+    settings.setMdEditorSettings({
+      editorMode: 'SideBySide',
+      showLineNumbers: true,
+      wrapLines: false,
+      experimentalFastRender: false,
+    });
+    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -36,6 +44,7 @@ describe('MdEditorComponent', () => {
 
   it('should handle Tab key press in onEditorKeydown', () => {
     const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    const editor = component.editorElementRef.nativeElement;
     editor.dispatchEvent(event);
     expect(component.value()).toBe('    ');
   });
@@ -56,16 +65,39 @@ describe('MdEditorComponent', () => {
     const markdown = '# Title';
     component.value.set(markdown);
     fixture.detectChanges();
-    expect(component.previewContent).toContain('<h1>Title</h1>');
+    const preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
   });
 
-  it('should update editorLines when editor is scrolled', () => {
+  it("should update preview only when it's visible", () => {
+    const markdown = '# Title';
+    const editorOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-editorOnly"]') as HTMLAnchorElement;
+    editorOnlyEl.click();
+    component.value.set(markdown);
+    fixture.detectChanges();
+    // Empty content when preview is not visible
+    let preview = component.previewContentElement.nativeElement;
+    expect(preview.checkVisibility()).toBeFalsy();
+    expect(preview.innerHTML).toBe('');
+
+    // Content should update when preview becomes visible
+    const previewOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-sideBySide"]') as HTMLAnchorElement;
+    previewOnlyEl.click();
+    fixture.detectChanges();
+    preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
+  });
+
+  it('should update editorLines when editor is scrolled', async () => {
     const markdown = '# Title\n\nContent';
     component.value.set(markdown);
+    fixture.detectChanges();
+    const editor = component.editorElementRef.nativeElement;
     editor.scrollTop = 100;
     editor.dispatchEvent(new Event('scroll'));
     fixture.detectChanges();
-    expect(component.previewContent).toContain('<h1>Title</h1>');
+    const preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
     expect(component.editorLines?.length).toBeGreaterThan(0);
   });
 });
