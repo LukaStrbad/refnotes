@@ -259,12 +259,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
           }, '');
         }
 
-        const ret =
-          '<pre class="hljs-code-block"><code class="hljs">' +
-          code +
-          '</code></pre>';
-        this.highlightCache.set(hash, ret);
-        return ret;
+        this.highlightCache.set(hash, code);
+        return code;
       },
     });
   }

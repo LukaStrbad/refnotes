@@ -24,10 +24,18 @@ h3 {
   text-decoration: underline;
 }
 
-code:not(.hljs) {
+code {
   border-radius: 3px;
   padding: 2px 4px;
   @apply bg-base-100;
+}
+
+pre {
+  code {
+    border-radius: 0;
+    padding: 0;
+    background-color: transparent;
+  }
 }
 
 .preview {
@@ -44,7 +52,7 @@ code:not(.hljs) {
   }
 }
 
-.hljs-code-block {
+pre {
   background-color: var(--hljs-background);
   border-radius: 3px;
   padding: 1em;
@@ -59,7 +67,7 @@ code:not(.hljs) {
 }
 
 div.no-wrap {
-  .hljs-code-block {
+  pre {
     white-space: pre;
     overflow: scroll;
   }
