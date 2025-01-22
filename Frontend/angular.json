@@ -35,8 +35,7 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": [],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -109,8 +108,7 @@
                 "replace": "src/environments/environment.ts",
                 "with": "src/environments/environment.development.ts"
               }
-            ],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            ]
           }
         }
       }

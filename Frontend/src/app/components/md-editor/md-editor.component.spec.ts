@@ -32,7 +32,8 @@ describe('MdEditorComponent', () => {
     settings.setMdEditorSettings({
       editorMode: 'SideBySide',
       showLineNumbers: true,
-      wrapLines: false
+      wrapLines: false,
+      experimentalFastRender: false,
     });
     fixture.detectChanges();
   });
@@ -64,23 +65,27 @@ describe('MdEditorComponent', () => {
     const markdown = '# Title';
     component.value.set(markdown);
     fixture.detectChanges();
-    expect(component.previewContent).toContain('<h1>Title</h1>');
+    const preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
   });
 
-  it("should update previewContent only when it's visible", () => {
+  it("should update preview only when it's visible", () => {
     const markdown = '# Title';
     const editorOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-editorOnly"]') as HTMLAnchorElement;
     editorOnlyEl.click();
     component.value.set(markdown);
     fixture.detectChanges();
     // Empty content when preview is not visible
-    expect(component.previewContent).toEqual('');
+    let preview = component.previewContentElement.nativeElement;
+    expect(preview.checkVisibility()).toBeFalsy();
+    expect(preview.innerHTML).toBe('');
 
     // Content should update when preview becomes visible
     const previewOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-sideBySide"]') as HTMLAnchorElement;
     previewOnlyEl.click();
     fixture.detectChanges();
-    expect(component.previewContent).toContain('<h1>Title</h1>');
+    preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
   });
 
   it('should update editorLines when editor is scrolled', async () => {
@@ -91,7 +96,8 @@ describe('MdEditorComponent', () => {
     editor.scrollTop = 100;
     editor.dispatchEvent(new Event('scroll'));
     fixture.detectChanges();
-    expect(component.previewContent).toContain('<h1>Title</h1>');
+    const preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<h1>Title</h1>');
     expect(component.editorLines?.length).toBeGreaterThan(0);
   });
 });

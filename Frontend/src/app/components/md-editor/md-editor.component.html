@@ -36,8 +36,7 @@
   <div
     class="carousel space-x-2 sm:space-x-0 sm:flex gap-2 justify-stretch h-full"
   >
-    @if (isMobile || showEditor()) {
-      <div class="editor rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1">
+    <div class="editor rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1" [class.hidden]="!(isMobile || showEditor())">
         <textarea
           #editorRef
           class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-none resize-none"
@@ -47,27 +46,25 @@
           (keydown)="onEditorKeydown($event)"
           (scroll)="syncScrolls()"
         ></textarea>
-      </div>
-    }
-    @if (isMobile || showPreview()) {
+    </div>
+
+    <div
+      class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-hidden relative"
+      [class.no-wrap]="!settings.mdEditor().wrapLines"
+      [class.hidden]="!(isMobile || showPreview())"
+    >
       <div
-        class="preview bg-base-200 rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1 overflow-y-hidden relative"
-        [class.no-wrap]="!settings.mdEditor().wrapLines"
-      >
-        <div
-          class="preview-content w-full h-full p-2 overflow-y-scroll"
+        class="preview-content w-full h-full p-2 overflow-y-scroll absolute"
+        #previewRef
+      ></div>
 
-          #previewRef
-        ></div>
-
-        @if (!isMobile) {
-          <button class="btn btn-square btn-sm sticky right-4 top-4 bg-opacity-70 backdrop-blur-sm"
-                  [class.btn-primary]="syncPreview"
-                  [class.bg-base-300]="!syncPreview" (click)="toggleSyncPreview()">
-            <i class="bi bi-arrow-down-up"></i>
-          </button>
-        }
-      </div>
-    }
+      @if (!isMobile) {
+        <button class="btn btn-square btn-sm absolute right-4 top-4 bg-opacity-70 backdrop-blur-sm"
+                [class.btn-primary]="syncPreview"
+                [class.bg-base-300]="!syncPreview" (click)="toggleSyncPreview()">
+          <i class="bi bi-arrow-down-up"></i>
+        </button>
+      }
+    </div>
   </div>
 </div>

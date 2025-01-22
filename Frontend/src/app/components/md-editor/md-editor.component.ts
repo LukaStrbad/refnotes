@@ -21,6 +21,7 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
+import { LoggerService } from '../../../services/logger.service';
 
 @Component({
   selector: 'app-md-editor',
@@ -55,17 +56,22 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
-  constructor(public settings: SettingsService) {
+  constructor(
+    public settings: SettingsService,
+    private log: LoggerService,
+  ) {
     this.marked = new Marked(this.highlightExtension());
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);
 
     effect(() => {
       const value = this.value();
+      const showPreview = this.showPreview();
       // Don't render anything if there is no preview visible
-      if (!this.showPreview() || this.isMobile || !this.previewContentElement) {
+      if (!showPreview || this.isMobile || !this.previewContentElement) {
         return;
       }
+
       this.renderPreview(value);
     });
   }
@@ -92,10 +98,16 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
         threshold: 0,
       },
     );
-    observer.observe(this.previewContentElement.nativeElement);
+    if (this.previewContentElement) {
+      observer.observe(this.previewContentElement.nativeElement);
+    }
   }
 
   renderPreview(text: string) {
+    if (this.previewContentElement?.nativeElement == null) {
+      this.log.error('Preview element is not available');
+      return;
+    }
     if (this.settings.mdEditor().experimentalFastRender) {
       this.experimentalFastRender(text);
       return;
@@ -108,37 +120,46 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
   }
 
   experimentalFastRender(text: string) {
-    const previewContent = this.marked.parse(text) as string;
-    const tokens = this.marked.lexer(text).filter(t => t.type !== 'space') as TokensList;
+    const tokens = this.marked
+      .lexer(text)
+      .filter((t) => t.type !== 'space') as TokensList;
 
-    let tokenHashes: { key: number, raw: string, token: Token, occurrence: number }[] = [];
+    let tokenHashes: {
+      key: number;
+      raw: string;
+      token: Token;
+      occurrence: number;
+    }[] = [];
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       const tokenHash = this.strHash(token.raw);
-      const existingHash = tokenHashes.findLast(t => t.key == tokenHash);
+      const existingHash = tokenHashes.findLast((t) => t.key == tokenHash);
       const occurrence = existingHash ? existingHash.occurrence + 1 : 0;
       tokenHashes.push({ key: tokenHash, raw: token.raw, token, occurrence });
     }
 
-    console.log(tokenHashes);
-
     // Delete previous tokens that are not in the new tokens
     for (let i = this.previewedTokens.length - 1; i >= 0; i--) {
       const token = this.previewedTokens[i];
-      if (!tokens.some(t => t.raw == token.raw)) {
+      if (!tokens.some((t) => t.raw == token.raw)) {
         this.previewContentElement.nativeElement.removeChild(token.element);
         this.previewedTokens.splice(i, 1);
       }
     }
 
     // Add new tokens
-    const layoutElements: { element: HTMLElement, token: Token }[] = [];
+    const layoutElements: { element: HTMLElement; token: Token }[] = [];
 
     for (const hash of tokenHashes) {
-      const previewedTokens = this.previewedTokens.filter(t => t.raw == hash.raw);
+      const previewedTokens = this.previewedTokens.filter(
+        (t) => t.raw == hash.raw,
+      );
       const previewedToken = previewedTokens[hash.occurrence];
       if (previewedToken) {
-        layoutElements.push({ element: previewedToken.element, token: hash.token });
+        layoutElements.push({
+          element: previewedToken.element,
+          token: hash.token,
+        });
       } else {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = this.marked.parse(hash.token.raw) as string;
@@ -147,11 +168,12 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
 
         const previousElement = layoutElements[layoutElements.length - 2];
         if (previousElement) {
-          console.log("Inserting new element after previous element");
           previousElement.element.after(newElement);
         } else {
-          console.log("Appending new element under previewContentElement");
-          this.previewContentElement.nativeElement.insertBefore(newElement, this.previewContentElement.nativeElement.firstChild);
+          this.previewContentElement.nativeElement.insertBefore(
+            newElement,
+            this.previewContentElement.nativeElement.firstChild,
+          );
         }
       }
     }
@@ -162,7 +184,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
       }
     }
 
-    this.previewedTokens = layoutElements.map(e => {
+    this.previewedTokens = layoutElements.map((e) => {
       return { ...e.token, element: e.element };
     });
 
@@ -383,4 +405,4 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
 
 type PreviewToken = Token & {
   element: HTMLElement;
-}
+};
