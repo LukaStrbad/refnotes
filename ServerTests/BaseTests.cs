@@ -13,6 +13,7 @@ namespace ServerTests;
 
 public class BaseTests : IDisposable
 {
+    private RefNotesContext? _context;
     protected string TestFolder { get; }
 
     protected string TestFile
@@ -39,21 +40,23 @@ public class BaseTests : IDisposable
 
     protected RefNotesContext CreateDb()
     {
+        var className = GetType().Name;
+        // Create test db with current class name
         var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                               "Server=127.0.0.1;Database=refnotes_test;Uid=root;Pwd=root;";
+                               $"Server=127.0.0.1;Database=refnotes_test_{className};Uid=root;Pwd=root;";
 
         var serverVersion = ServerVersion.AutoDetect(connectionString);
 
         // Create test db
         var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
             .UseMySql(connectionString, serverVersion).Options;
-        var context = new RefNotesContext(dbOptions);
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();
-        return context;
+        _context = new RefNotesContext(dbOptions);
+        _context.Database.EnsureDeleted();
+        _context.Database.EnsureCreated();
+        return _context;
     }
 
-    protected (User, ClaimsPrincipal) CreateUser(RefNotesContext context, string username, params string[] roles)
+    protected static (User, ClaimsPrincipal) CreateUser(RefNotesContext context, string username, params string[] roles)
     {
         // Add test user to db
         var newUser = new User(0, username, username, $"{username}@test.com", DefaultPassword)
@@ -71,13 +74,16 @@ public class BaseTests : IDisposable
     }
 
 
-    public void  Dispose()
+    public void Dispose()
     {
+        // Delete test db
+        _context?.Database.EnsureDeleted();
+
         if (Directory.Exists(TestFolder))
         {
             Directory.Delete(TestFolder, true);
         }
-        
+
         GC.SuppressFinalize(this);
     }
 }
