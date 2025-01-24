@@ -139,6 +139,30 @@ describe('BrowserService', () => {
     expect(await promise).toEqual(mockResponse);
   });
 
+  it('should get an image', async () => {
+    const mockResponse = new ArrayBuffer(8);
+    const promise = service.getImage('/', 'test.txt');
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/getImage?directoryPath=/&name=test.txt`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
+    expect(await promise).toEqual(mockResponse);
+  });
+
+  it('should get null if image doesn\'t exist', async () => {
+    const mockResponse = new ArrayBuffer(0);
+    const promise = service.getImage('/', 'test.txt');
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/getImage?directoryPath=/&name=test.txt`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
+    expect(await promise).toEqual(null);
+  });
+
   it('should save a text file', async () => {
     const mockResponse = {};
     const promise = service.saveTextfile('/', 'test.txt', 'content');
@@ -148,5 +172,6 @@ describe('BrowserService', () => {
     );
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
+    await promise;
   });
 });

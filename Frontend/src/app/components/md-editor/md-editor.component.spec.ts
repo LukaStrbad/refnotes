@@ -2,12 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MdEditorComponent } from './md-editor.component';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import {SettingsService} from "../../../services/settings.service";
+import {BrowserService} from "../../../services/browser.service";
 
 describe('MdEditorComponent', () => {
   let component: MdEditorComponent;
   let fixture: ComponentFixture<MdEditorComponent>;
+  let browserService: jasmine.SpyObj<BrowserService>;
 
   beforeEach(async () => {
+    browserService = jasmine.createSpyObj('BrowserService', ['getImage']);
+
     await TestBed.configureTestingModule({
       imports: [
         MdEditorComponent,
@@ -19,7 +23,8 @@ describe('MdEditorComponent', () => {
         })
       ],
       providers: [
-        TranslateService
+        TranslateService,
+        { provide: BrowserService, useValue: browserService }
       ]
     }).compileComponents();
 
@@ -99,5 +104,36 @@ describe('MdEditorComponent', () => {
     const preview = component.previewContentElement.nativeElement;
     expect(preview.innerHTML).toContain('<h1>Title</h1>');
     expect(component.editorLines?.length).toBeGreaterThan(0);
+  });
+
+  it('should render image in preview (http)', () => {
+    const markdown = '![image](https://example.com/image.jpg "Image Title")';
+    component.value.set(markdown);
+    fixture.detectChanges();
+    const preview = component.previewContentElement.nativeElement;
+    expect(preview.innerHTML).toContain('<img src="https://example.com/image.jpg" alt="image" title="Image Title">');
+  });
+
+  it('should update image in preview (relative path)', async () => {
+    const buffer = new Uint8Array([0, 1, 2, 3]).buffer;
+    browserService.getImage.and.resolveTo(buffer);
+    const markdown = '![image](./image.jpg "Image Title")';
+    component.value.set(markdown);
+    fixture.detectChanges();
+    await fixture.whenStable()
+
+    const preview = component.previewContentElement.nativeElement;
+    const img = preview.querySelector('img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.src).toContain('blob:');
+    expect(img.alt).toBe('image');
+    expect(img.title).toBe('Image Title');
+
+    // Convert back to array
+    const src = img.src;
+    const data = await fetch(src);
+    const arrayBuffer = await data.arrayBuffer();
+    const array = Array.from(new Uint8Array(arrayBuffer));
+    expect(array).toEqual([0, 1, 2, 3]);
   });
 });

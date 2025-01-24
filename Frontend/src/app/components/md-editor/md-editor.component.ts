@@ -5,14 +5,15 @@ import {
   effect,
   ElementRef,
   HostListener,
-  model,
+  input,
+  model, OnDestroy,
   OnInit,
   Signal,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Marked, Token, TokensList } from 'marked';
+import { Marked, Token, Tokens, TokensList } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import { SettingsService } from '../../../services/settings.service';
@@ -22,6 +23,11 @@ import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { LoggerService } from '../../../services/logger.service';
+import {
+  resolveRelativeFolderPath,
+  splitDirAndName,
+} from '../../../utils/path-utils';
+import { BrowserService } from '../../../services/browser.service';
 
 @Component({
   selector: 'app-md-editor',
@@ -30,7 +36,8 @@ import { LoggerService } from '../../../services/logger.service';
   styleUrl: './md-editor.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
-export class MdEditorComponent implements OnInit, AfterViewInit {
+export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
+  currentPath = input('/');
   value = model('');
 
   editorMode: Signal<EditorMode>;
@@ -56,11 +63,16 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
+  imageUrls: { elementAttr: string; src: string; blob: string | null }[] = [];
+
   constructor(
     public settings: SettingsService,
     private log: LoggerService,
+    private browser: BrowserService,
   ) {
-    this.marked = new Marked(this.highlightExtension());
+    this.marked = new Marked(this.highlightExtension(), {
+      renderer: this.imageExtension(),
+    });
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);
 
@@ -73,6 +85,14 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
       }
 
       this.renderPreview(value);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.imageUrls.forEach((imageUrl) => {
+      if (imageUrl.blob) {
+        URL.revokeObjectURL(imageUrl.blob);
+      }
     });
   }
 
@@ -110,6 +130,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
     }
     if (this.settings.mdEditor().experimentalFastRender) {
       this.experimentalFastRender(text);
+      this.updateImages();
       return;
     }
 
@@ -117,6 +138,43 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
     const tokens = this.marked.lexer(text);
     this.editorIndices = this.calculateEditorIndex(tokens);
     this.previewContentElement.nativeElement.innerHTML = previewContent;
+    this.updateImages();
+  }
+
+  /**
+   * Updates the image elements with the correct image source
+   */
+  updateImages() {
+    this.imageUrls.forEach((imageUrl) => {
+      const elements =
+        this.previewContentElement.nativeElement.querySelectorAll(
+          `img[data-image-id="${imageUrl.elementAttr}"]`,
+        );
+
+      // If the image is already loaded, set the src attribute
+      if (imageUrl.blob !== null) {
+        elements.forEach((element) =>
+          element.setAttribute('src', imageUrl.blob!),
+        );
+        return;
+      }
+
+      const [dir, name] = splitDirAndName(imageUrl.src);
+      // Load the image from the server
+      this.browser
+        .getImage(dir, name)
+        .then((data) => {
+          if (!data) {
+            return;
+          }
+          const imageType = name.split('.').pop();
+          const blob = new Blob([data], { type: `image/${imageType}` });
+          const objectURL = URL.createObjectURL(blob);
+          // Save the blob URL to the image URL
+          imageUrl.blob = objectURL;
+          elements.forEach((element) => element.setAttribute('src', objectURL));
+        });
+    });
   }
 
   experimentalFastRender(text: string) {
@@ -233,7 +291,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
         if (this.highlightCache.has(hash)) {
           return this.highlightCache.get(hash)!;
         }
-        let rawCode = '';
+        let rawCode: string;
         if (lang && hljs.getLanguage(lang)) {
           try {
             rawCode = hljs.highlight(str, {
@@ -241,12 +299,10 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
               ignoreIllegals: true,
             }).value;
           } catch (__) {
-            // TODO: escape HTML
-            rawCode = str;
+            rawCode = this.escapeHtml(str);
           }
         } else {
-          // TODO: escape HTML
-          rawCode = str;
+          rawCode = this.escapeHtml(str);
         }
 
         let code = rawCode;
@@ -263,6 +319,44 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
         return code;
       },
     });
+  }
+
+  escapeHtml(unsafe: string) {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  imageExtension() {
+    return {
+      image: (token: Tokens.Image) => {
+        let src = token.href;
+        const title = token.title ?? '';
+        const alt = token.text;
+
+        // If the image points to an external URL, just return the image tag
+        if (src.startsWith('http')) {
+          return `<img src="${src}" alt="${alt}" title="${title}" />`;
+        }
+
+        src = resolveRelativeFolderPath(this.currentPath(), src);
+        let imageUrl = this.imageUrls.find((i) => i.src === src);
+        if (!imageUrl) {
+          const elementAttr = `image-${this.imageUrls.length}`;
+          imageUrl = { elementAttr, src, blob: null };
+          this.imageUrls.push(imageUrl);
+        }
+
+        // Check if the image is already loaded
+        if (imageUrl.blob) {
+          return `<img src="${imageUrl.blob}" alt="${alt}" title="${title}" />`;
+        }
+        return `<img alt="${alt}" title="${title}" data-image-id="${imageUrl.elementAttr}" />`;
+      },
+    };
   }
 
   /**
@@ -292,7 +386,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit {
     this.isMobile = window.innerWidth < 640;
   }
 
-  onEditorResize($event: UIEvent) {
+  onEditorResize() {
     this.editorLines = null;
   }
 

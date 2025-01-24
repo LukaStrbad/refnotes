@@ -8,22 +8,19 @@ import { LRUCache } from 'lru-cache';
 const apiUrl = environment.apiUrl + '/browser';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class BrowserService {
   private listCache = new LRUCache<string, Directory>({ max: 100 });
 
-  constructor(
-    private http: HttpClient
-  ) {
-  }
+  constructor(private http: HttpClient) {}
 
   listCached(path: string = '/'): Observable<Directory> {
     const cached = this.listCache.get(path);
 
-    const network = this.http.get<Directory>(`${apiUrl}/list?path=${path}`).pipe(
-      tap(value => this.listCache.set(path, value))
-    );
+    const network = this.http
+      .get<Directory>(`${apiUrl}/list?path=${path}`)
+      .pipe(tap((value) => this.listCache.set(path, value)));
 
     return cached ? merge(of(cached), network) : network;
   }
@@ -32,35 +29,78 @@ export class BrowserService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post(`${apiUrl}/addFile?directoryPath=${directoryPath}`, formData, {
-      reportProgress: true,
-      observe: "events"
-    });
-  }
-
-  async addTextFile(directoryPath: string, name: string, content: string) {
-    return firstValueFrom(this.http.post(`${apiUrl}/addTextFile?directoryPath=${directoryPath}&name=${name}`, content));
-  }
-
-  async deleteFile(directoryPath: string, name: string) {
-    return firstValueFrom(this.http.delete(`${apiUrl}/deleteFile?directoryPath=${directoryPath}&name=${name}`));
-  }
-
-  async addDirectory(path: string) {
-    return firstValueFrom(this.http.post(`${apiUrl}/addDirectory?path=${path}`, {}));
-  }
-
-  async deleteDirectory(path: string) {
-    return firstValueFrom(this.http.delete(`${apiUrl}/deleteDirectory?path=${path}`));
-  }
-
-  async getFile(directoryPath: string, name: string) {
-    return await firstValueFrom(this.http.get(
-      `${apiUrl}/getFile?directoryPath=${directoryPath}&name=${name}`, { responseType: 'arraybuffer' })
+    return this.http.post(
+      `${apiUrl}/addFile?directoryPath=${directoryPath}`,
+      formData,
+      {
+        reportProgress: true,
+        observe: 'events',
+      },
     );
   }
 
+  async addTextFile(directoryPath: string, name: string, content: string) {
+    return firstValueFrom(
+      this.http.post(
+        `${apiUrl}/addTextFile?directoryPath=${directoryPath}&name=${name}`,
+        content,
+      ),
+    );
+  }
+
+  async deleteFile(directoryPath: string, name: string) {
+    return firstValueFrom(
+      this.http.delete(
+        `${apiUrl}/deleteFile?directoryPath=${directoryPath}&name=${name}`,
+      ),
+    );
+  }
+
+  async addDirectory(path: string) {
+    return firstValueFrom(
+      this.http.post(`${apiUrl}/addDirectory?path=${path}`, {}),
+    );
+  }
+
+  async deleteDirectory(path: string) {
+    return firstValueFrom(
+      this.http.delete(`${apiUrl}/deleteDirectory?path=${path}`),
+    );
+  }
+
+  async getFile(directoryPath: string, name: string) {
+    return await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/getFile?directoryPath=${directoryPath}&name=${name}`,
+        { responseType: 'arraybuffer' },
+      ),
+    );
+  }
+
+  async getImage(
+    directoryPath: string,
+    name: string,
+  ): Promise<ArrayBuffer | null> {
+    const result = await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/getImage?directoryPath=${directoryPath}&name=${name}`,
+        { responseType: 'arraybuffer' },
+      ),
+    );
+
+    if (result.byteLength === 0) {
+      return null;
+    }
+
+    return result;
+  }
+
   async saveTextfile(directoryPath: string, name: string, content: string) {
-    await firstValueFrom(this.http.post(`${apiUrl}/saveTextFile?directoryPath=${directoryPath}&name=${name}`, content));
+    await firstValueFrom(
+      this.http.post(
+        `${apiUrl}/saveTextFile?directoryPath=${directoryPath}&name=${name}`,
+        content,
+      ),
+    );
   }
 }
