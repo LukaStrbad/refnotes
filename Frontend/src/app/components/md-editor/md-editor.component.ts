@@ -173,9 +173,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           // Save the blob URL to the image URL
           imageUrl.blob = objectURL;
           elements.forEach((element) => element.setAttribute('src', objectURL));
-        })
-        // This is for ignoring errors if image is not found
-        .catch((e) => {});
+        });
     });
   }
 
@@ -293,7 +291,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (this.highlightCache.has(hash)) {
           return this.highlightCache.get(hash)!;
         }
-        let rawCode = '';
+        let rawCode: string;
         if (lang && hljs.getLanguage(lang)) {
           try {
             rawCode = hljs.highlight(str, {
@@ -388,7 +386,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isMobile = window.innerWidth < 640;
   }
 
-  onEditorResize($event: UIEvent) {
+  onEditorResize() {
     this.editorLines = null;
   }
 

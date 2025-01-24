@@ -40,7 +40,7 @@
         <textarea
           #editorRef
           class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-none resize-none"
-          (resize)="onEditorResize($event)"
+          (resize)="onEditorResize()"
           placeholder="{{ 'editor.writeSomething' | translate }}"
           [(ngModel)]="value"
           (keydown)="onEditorKeydown($event)"
