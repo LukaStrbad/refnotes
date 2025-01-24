@@ -33,7 +33,7 @@ import { BrowserService } from '../../../services/browser.service';
   selector: 'app-md-editor',
   imports: [FormsModule, TranslateDirective, TranslatePipe, TestTagDirective],
   templateUrl: './md-editor.component.html',
-  styleUrl: './md-editor.component.scss',
+  styleUrl: './md-editor.component.css',
   encapsulation: ViewEncapsulation.None,
 })
 export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {

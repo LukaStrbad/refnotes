@@ -35,7 +35,7 @@ import {TestTagDirective} from "../../directives/test-tag.directive";
     TestTagDirective,
   ],
   templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
+  styleUrl: './register.component.css',
   animations: [
     trigger('reveal', [
       transition(

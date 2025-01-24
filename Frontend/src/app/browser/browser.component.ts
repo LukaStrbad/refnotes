@@ -24,7 +24,7 @@ import {TestTagDirective} from "../../directives/test-tag.directive";
     TestTagDirective,
   ],
   templateUrl: './browser.component.html',
-  styleUrl: './browser.component.scss',
+  styleUrl: './browser.component.css',
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   currentFolder: Directory | null = null;

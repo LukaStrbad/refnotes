@@ -1,5 +1,5 @@
-@use "themes/atom-one-dark.scss";
-@use "themes/atom-one-light.scss";
+@import "themes/atom-one-dark.css";
+@import "themes/atom-one-light.css";
 
 h1 {
   font-size: 2em;

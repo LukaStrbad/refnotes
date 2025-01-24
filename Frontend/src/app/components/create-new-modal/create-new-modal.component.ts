@@ -19,7 +19,7 @@ type ModalType = 'file' | 'folder';
     TestTagDirective,
   ],
   templateUrl: './create-new-modal.component.html',
-  styleUrl: './create-new-modal.component.scss',
+  styleUrl: './create-new-modal.component.css',
 })
 export class CreateNewModalComponent {
   @Input('modalType')

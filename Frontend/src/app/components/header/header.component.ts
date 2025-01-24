@@ -10,7 +10,7 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
   selector: 'app-header',
   imports: [CommonModule, RouterModule, TranslateDirective, TranslatePipe],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.css'
 })
 export class HeaderComponent {
   constructor(

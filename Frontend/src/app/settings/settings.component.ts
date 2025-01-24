@@ -9,7 +9,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
   selector: 'app-settings',
   imports: [FormsModule, TranslateDirective, TestTagDirective],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss',
+  styleUrl: './settings.component.css',
 })
 export class SettingsComponent {
   mdEditor: MdEditorSettings;
