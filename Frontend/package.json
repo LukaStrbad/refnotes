@@ -39,7 +39,7 @@
     "@angular/localize": "19.0.5",
     "@types/jasmine": "~5.1.5",
     "@types/markdown-it": "^14.1.2",
-    "daisyui": "^4.12.23",
+    "daisyui": "5.0.0-beta.2",
     "jasmine-core": "~5.1.2",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.2.0",
