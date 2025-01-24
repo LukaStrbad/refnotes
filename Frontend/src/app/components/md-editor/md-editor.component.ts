@@ -162,8 +162,11 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const [dir, name] = splitDirAndName(imageUrl.src);
       // Load the image from the server
       this.browser
-        .getFile(dir, name)
+        .getImage(dir, name)
         .then((data) => {
+          if (!data) {
+            return;
+          }
           const imageType = name.split('.').pop();
           const blob = new Blob([data], { type: `image/${imageType}` });
           const objectURL = URL.createObjectURL(blob);

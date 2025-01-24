@@ -152,6 +152,30 @@ public class BrowserController : ControllerBase
         }
     }
 
+    [HttpGet("getImage")]
+    [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetImage(string directoryPath, string name)
+    {
+        try
+        {
+            var fileName = await _browserService.GetFilesystemFilePath(User, directoryPath, name);
+            if (fileName is null)
+            {
+                return File([], "application/octet-stream");
+            }
+
+            var stream = _fileService.GetFile(fileName);
+
+            const string contentType = "application/octet-stream";
+            return File(stream, contentType, name);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // As this is an image, return 200 anyway not to clutter the console with errors while the user is inputting the image path
+            return File([], "application/octet-stream");
+        }
+    }
+
     [HttpPost("saveTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
