@@ -27,9 +27,9 @@
     <div class="card-body">
       <h2 class="card-title" translate>settings.theme.title</h2>
 
-      <div class="form-control">
+      <fieldset class="fieldset">
         <label class="label cursor-pointer gap-4">
-          <span class="label-text">
+          <span>
             <i class="bi bi-circle-half mr-2"></i>
             <span translate>settings.theme.auto</span>
           </span>
@@ -42,10 +42,10 @@
             [checked]="settings.theme() === 'auto'"
           />
         </label>
-      </div>
-      <div class="form-control">
-        <label class="label cursor-pointer gap-4">
-          <span class="label-text">
+      </fieldset>
+      <fieldset class="fieldset">
+        <label class="fieldset-label cursor-pointer gap-4">
+          <span>
             <i class="bi bi-sun-fill mr-2"></i>
             <span translate>settings.theme.light</span>
           </span>
@@ -58,10 +58,10 @@
             [checked]="settings.theme() === 'light'"
           />
         </label>
-      </div>
-      <div class="form-control">
-        <label class="label cursor-pointer gap-4">
-          <span class="label-text">
+      </fieldset>
+      <fieldset class="fieldset">
+        <label class="fieldset-label cursor-pointer gap-4">
+          <span>
             <i class="bi bi-moon-fill mr-2"></i>
             <span translate>settings.theme.dark</span>
           </span>
@@ -74,7 +74,7 @@
             [checked]="settings.theme() === 'dark'"
           />
         </label>
-      </div>
+      </fieldset>
     </div>
   </div>
 
@@ -98,8 +98,8 @@
         </option>
       </select>
 
-      <div class="form-control">
-        <label class="cursor-pointer label">
+      <fieldset class="fieldset">
+        <label class="cursor-pointer fieldset-label">
           <span class="label-text mr-2" translate>
             settings.editorSettings.showLineNumbers
           </span>
@@ -110,10 +110,10 @@
             (change)="updateMdEditorSettings()"
           />
         </label>
-      </div>
+      </fieldset>
 
-      <div class="form-control">
-        <label class="cursor-pointer label">
+      <fieldset class="fieldset">
+        <label class="cursor-pointer fieldset-label">
           <span class="label-text mr-2" translate>
             settings.editorSettings.wrapLines
           </span>
@@ -124,10 +124,10 @@
             (change)="updateMdEditorSettings()"
           />
         </label>
-      </div>
+      </fieldset>
 
-      <div class="form-control">
-        <label class="cursor-pointer label">
+      <fieldset class="fieldset">
+        <label class="cursor-pointer fieldset-label">
           <div class="flex flex-col gap-2">
             <span class="label-text mr-2" translate>
               settings.editorSettings.experimentalFastRender
@@ -143,7 +143,7 @@
             (change)="updateMdEditorSettings()"
           />
         </label>
-      </div>
+      </fieldset>
     </div>
   </div>
 </div>

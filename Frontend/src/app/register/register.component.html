@@ -4,9 +4,9 @@
     [formGroup]="registrationForm"
     (ngSubmit)="register()"
   >
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text" translate>login.username</span>
+    <fieldset class="fieldset">
+      <label class="fieldset-label" translate>
+        login.username
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
@@ -18,7 +18,7 @@
           formControlName="username"
         />
       </label>
-    </div>
+    </fieldset>
 
     <div
       #usernameError
@@ -46,9 +46,9 @@
       }
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text" translate>register.name</span>
+    <fieldset class="fieldset">
+      <label class="fieldset-label" translate>
+        register.name
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
@@ -60,7 +60,7 @@
           formControlName="name"
         />
       </label>
-    </div>
+    </fieldset>
 
     <div
       #nameError
@@ -85,9 +85,9 @@
       }
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text" translate>register.email</span>
+    <fieldset class="fieldset">
+      <label class="fieldset-label" translate>
+        register.email
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-envelope-fill"></i>
@@ -99,7 +99,7 @@
           formControlName="email"
         />
       </label>
-    </div>
+    </fieldset>
 
     <div
       #emailError
@@ -126,9 +126,9 @@
       }
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text" translate>login.password</span>
+    <fieldset class="fieldset">
+      <label class="fieldset-label" translate>
+        login.password
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
@@ -140,7 +140,7 @@
           formControlName="password"
         />
       </label>
-    </div>
+    </fieldset>
 
     <div
       #passwordError
@@ -167,9 +167,9 @@
       }
     </div>
 
-    <div class="form-control">
-      <label class="label">
-        <span class="label-text" translate>register.confirmPassword</span>
+    <fieldset class="fieldset">
+      <label class="fieldset-label" translate>
+        register.confirmPassword
       </label>
       <label class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
@@ -181,7 +181,7 @@
           formControlName="confirmPassword"
         />
       </label>
-    </div>
+    </fieldset>
 
     <div
       #confirmPasswordError
@@ -210,7 +210,7 @@
       }
     </div>
 
-    <div class="form-control mt-4">
+    <fieldset class="fieldset mt-4">
       <button
         type="submit"
         class="btn btn-primary"
@@ -224,6 +224,6 @@
           register.login
         </button>
       </a>
-    </div>
+    </fieldset>
   </form>
 </div>

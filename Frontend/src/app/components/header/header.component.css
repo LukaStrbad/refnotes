@@ -1,3 +1,9 @@
 button[name="theme-dropdown"].selected {
-  @apply bg-primary text-white hover:brightness-90 hover:bg-primary;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+
+  &:hover {
+    filter: brightness(90%);
+    background-color: var(--color-primary);
+  }
 }

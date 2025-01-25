@@ -1,10 +1,10 @@
 <div class="flex flex-col h-full gap-2 bg-base-300 p-2 rounded-xl">
   <div class="flex flex-1 justify-between">
-    <div role="tablist" class="hidden sm:tabs tabs-boxed self-end">
+    <div role="tablist" class="hidden sm:tabs tabs-boxed tabs-sm self-end">
       <a
         role="tab"
-        class="tab"
-        [class.tab-active]="editorMode() === 'SideBySide'"
+        class="tab rounded-sm"
+        [ngClass]="{ 'tab-active bg-primary': editorMode() === 'SideBySide' }"
         (click)="settings.setMdEditorMode('SideBySide')"
         testTag="editorMode-sideBySide"
         translate
@@ -13,8 +13,8 @@
       </a>
       <a
         role="tab"
-        class="tab"
-        [class.tab-active]="editorMode() === 'EditorOnly'"
+        class="tab rounded-sm"
+        [ngClass]="{ 'tab-active bg-primary': editorMode() === 'EditorOnly' }"
         (click)="settings.setMdEditorMode('EditorOnly')"
         testTag="editorMode-editorOnly"
         translate
@@ -23,8 +23,8 @@
       </a>
       <a
         role="tab"
-        class="tab"
-        [class.tab-active]="editorMode() === 'PreviewOnly'"
+        class="tab rounded-sm"
+        [ngClass]="{ 'tab-active bg-primary': editorMode() === 'PreviewOnly' }"
         (click)="settings.setMdEditorMode('PreviewOnly')"
         testTag="editorMode-previewOnly"
         translate
@@ -39,7 +39,7 @@
     <div class="editor rounded-lg carousel-item w-full sm:w-1/2 sm:flex-1" [class.hidden]="!(isMobile || showEditor())">
         <textarea
           #editorRef
-          class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-none resize-none"
+          class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-hidden resize-none border-none"
           (resize)="onEditorResize()"
           placeholder="{{ 'editor.writeSomething' | translate }}"
           [(ngModel)]="value"
@@ -59,8 +59,8 @@
       ></div>
 
       @if (!isMobile) {
-        <button class="btn btn-square btn-sm absolute right-4 top-4 bg-opacity-70 backdrop-blur-sm"
-                [class.btn-primary]="syncPreview"
+        <button class="btn btn-square btn-sm absolute right-4 top-4 backdrop-blur-xs hover:brightness-120"
+                [ngClass]="syncPreview ? 'btn-primary bg-primary/70' : 'bg-base-300/70'"
                 [class.bg-base-300]="!syncPreview" (click)="toggleSyncPreview()">
           <i class="bi bi-arrow-down-up"></i>
         </button>

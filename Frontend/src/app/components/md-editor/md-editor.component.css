@@ -1,5 +1,5 @@
-@import "themes/atom-one-dark.css";
-@import "themes/atom-one-light.css";
+@import './themes/atom-one-dark.css';
+@import './themes/atom-one-light.css';
 
 h1 {
   font-size: 2em;
@@ -27,7 +27,7 @@ h3 {
 code {
   border-radius: 3px;
   padding: 2px 4px;
-  @apply bg-base-100;
+  background-color: var(--color-base-100);
 }
 
 pre {
