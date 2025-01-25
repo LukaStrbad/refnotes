@@ -101,7 +101,8 @@
             ],
             "styles": [
               "src/styles.css",
-              "bootstrap-icons/font/bootstrap-icons.css"
+              "bootstrap-icons/font/bootstrap-icons.css",
+              "dist/test.css"
             ],
             "scripts": [],
             "karmaConfig": "karma.conf.js",
