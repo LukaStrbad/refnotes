@@ -1,0 +1,9 @@
+button[name="theme-dropdown"].selected {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+
+  &:hover {
+    filter: brightness(90%);
+    background-color: var(--color-primary);
+  }
+}

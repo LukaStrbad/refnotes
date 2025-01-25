@@ -17,7 +17,7 @@ import { TranslateDirective, TranslatePipe } from "@ngx-translate/core";
     RouterLink
   ],
   templateUrl: "./login.component.html",
-  styleUrl: "./login.component.scss"
+  styleUrl: "./login.component.css"
 })
 export class LoginComponent {
   username = "";

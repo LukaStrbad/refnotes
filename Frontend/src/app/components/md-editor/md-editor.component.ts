@@ -28,12 +28,13 @@ import {
   splitDirAndName,
 } from '../../../utils/path-utils';
 import { BrowserService } from '../../../services/browser.service';
+import {NgClass} from "@angular/common";
 
 @Component({
   selector: 'app-md-editor',
-  imports: [FormsModule, TranslateDirective, TranslatePipe, TestTagDirective],
+  imports: [FormsModule, TranslateDirective, TranslatePipe, TestTagDirective, NgClass],
   templateUrl: './md-editor.component.html',
-  styleUrl: './md-editor.component.scss',
+  styleUrl: './md-editor.component.css',
   encapsulation: ViewEncapsulation.None,
 })
 export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {

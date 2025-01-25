@@ -14,7 +14,7 @@ import {TestTagDirective} from "../../directives/test-tag.directive";
     TestTagDirective,
   ],
   templateUrl: './file-editor.component.html',
-  styleUrl: './file-editor.component.scss',
+  styleUrl: './file-editor.component.css',
 })
 export class FileEditorComponent {
   readonly directoryPath: string;
