@@ -1,0 +1,68 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_PORT:-0}:80"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - internal
+
+  frontend:
+    build: ./Frontend
+    image: angular-app
+    expose:
+      - "80"
+    restart: always
+    networks:
+      - internal
+
+  backend:
+    build: ./Server
+    image: aspnet-app
+    expose:
+      - "5000"
+    environment:
+      - ${CONNECTION_STRING}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    volumes:
+      - ${REFNOTES_CONFIG}:/root/.config/refnotes
+      - refnotes-data:/data
+    restart: always
+    networks:
+      - internal
+
+  mysql-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_EXPOSE_PORT:-}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+volumes:
+  mysql-data:
+  caddy-data:
+  caddy-config:
+  refnotes-data:
+
+networks:
+  internal:
