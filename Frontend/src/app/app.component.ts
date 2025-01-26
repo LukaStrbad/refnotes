@@ -24,6 +24,7 @@ export class AppComponent {
     translate.setDefaultLang('en');
     const lang = settings.language();
     translate.use(lang);
+    console.log("App is running");
   }
 
   removeNotification(id: number) {
