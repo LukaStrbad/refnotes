@@ -1,6 +1,7 @@
+using Server.Model;
 using Server.Services;
 
-namespace Server.Model;
+namespace Server.Db.Model;
 
 public class EncryptedDirectory
 {

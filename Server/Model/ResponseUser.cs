@@ -1,4 +1,6 @@
-﻿namespace Server.Model;
+﻿using Server.Db.Model;
+
+namespace Server.Model;
 
 public class ResponseUser(User user)
 {

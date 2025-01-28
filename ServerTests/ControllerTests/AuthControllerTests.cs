@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
+using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;

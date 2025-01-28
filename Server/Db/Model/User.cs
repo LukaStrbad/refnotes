@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
-namespace Server.Model;
+namespace Server.Db.Model;
 
 public class User(
     int id,

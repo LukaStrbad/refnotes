@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Db;
+using Server.Db.Model;
 using Server.Model;
 using Xunit.Abstractions;
 
