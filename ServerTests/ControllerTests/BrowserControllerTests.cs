@@ -46,7 +46,7 @@ public class BrowserControllerTests : BaseTests
     public async Task List_ReturnsOk_WhenDirectoryExists()
     {
         const string path = "test_path";
-        var responseDirectory = new ResponseDirectory("test_dir", [], []);
+        var responseDirectory = new DirectoryDto("test_dir", [], []);
 
         _browserService.List(_claimsPrincipal, path).Returns(responseDirectory);
 
@@ -60,7 +60,7 @@ public class BrowserControllerTests : BaseTests
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "test_path";
-        _browserService.List(_claimsPrincipal, path).Returns((ResponseDirectory?)null);
+        _browserService.List(_claimsPrincipal, path).Returns((DirectoryDto?)null);
 
         var result = await _controller.List(path);
 

@@ -8,7 +8,7 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class FileServiceTests : BaseTests
+public class FileServiceTests : BaseTests, IAsyncLifetime
 {
     private readonly RefNotesContext _context;
     private readonly FileService _fileService;
@@ -16,6 +16,7 @@ public class FileServiceTests : BaseTests
     private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly EncryptionService _encryptionService;
+    private const string DirectoryPath = "/test";
 
     public FileServiceTests()
     {
@@ -25,17 +26,21 @@ public class FileServiceTests : BaseTests
         _fileService = new FileService(_context, _encryptionService, AppConfig);
         _browserService = new BrowserService(_context, _encryptionService, AppConfig);
     }
+    
+    public async Task InitializeAsync()
+    {
+        await _browserService.AddDirectory(_claimsPrincipal, DirectoryPath);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task AddFile_AddsFile()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, path, fileName);
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(path);
+        var encryptedPath = _encryptionService.EncryptAesStringBase64(DirectoryPath);
         var encryptedFileName = _encryptionService.EncryptAesStringBase64(fileName);
 
         var directory = await _context.Directories
@@ -50,38 +55,31 @@ public class FileServiceTests : BaseTests
     [Fact]
     public async Task AddFile_ThrowsIfFileAlreadyExists()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, path, fileName);
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
         await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
-            _fileService.AddFile(_claimsPrincipal, path, fileName));
+            _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName));
     }
 
     [Fact]
     public async Task AddFile_ThrowsIfDirectoryDoesNotExist()
     {
-        const string path = "/test";
         const string fileName = "testfile.txt";
 
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.AddFile(_claimsPrincipal, path, fileName));
+            _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName));
     }
 
     [Fact]
     public async Task DeleteFile_RemovesFile()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, path, fileName);
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        await _fileService.DeleteFile(_claimsPrincipal, path, fileName);
+        await _fileService.DeleteFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(path);
+        var encryptedPath = _encryptionService.EncryptAesStringBase64(DirectoryPath);
 
         var directory = await _context.Directories
             .Include(x => x.Files)
@@ -94,25 +92,19 @@ public class FileServiceTests : BaseTests
     [Fact]
     public async Task DeleteFile_ThrowsIfFileDoesNotExist()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _fileService.DeleteFile(_claimsPrincipal, path, fileName));
+            _fileService.DeleteFile(_claimsPrincipal, DirectoryPath, fileName));
     }
 
     [Fact]
     public async Task GetFilesystemFilePath_ReturnsFilePath()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
-        var addedFilePath = await _fileService.AddFile(_claimsPrincipal, path, fileName);
+        var addedFilePath = await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var filePath = await _fileService.GetFilesystemFilePath(_claimsPrincipal, path, fileName);
+        var filePath = await _fileService.GetFilesystemFilePath(_claimsPrincipal, DirectoryPath, fileName);
 
         Assert.NotNull(filePath);
         Assert.Equal(addedFilePath, filePath);
@@ -121,10 +113,7 @@ public class FileServiceTests : BaseTests
     [Fact]
     public async Task GetFilesystemFilePath_ReturnsNull_WhenFileDoesNotExist()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
-        var filePath = await _fileService.GetFilesystemFilePath(_claimsPrincipal, path, "nonexistent.txt");
+        var filePath = await _fileService.GetFilesystemFilePath(_claimsPrincipal, DirectoryPath, "nonexistent.txt");
 
         Assert.Null(filePath);
     }
@@ -132,27 +121,23 @@ public class FileServiceTests : BaseTests
     [Fact]
     public async Task GetFilesystemPath_ThrowsIfDirectoryDoesNotExist()
     {
-        const string path = "/test";
-
+        const string nonExistentPath = "/nonexistent";
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.GetFilesystemFilePath(_claimsPrincipal, path, "testfile.txt"));
+            _fileService.GetFilesystemFilePath(_claimsPrincipal, nonExistentPath, "testfile.txt"));
     }
 
     [Fact]
     public async Task BrowserService_List_ReturnsFile()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, path, fileName);
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var responseDirectory = await _browserService.List(_claimsPrincipal, path);
+        var responseDirectory = await _browserService.List(_claimsPrincipal, DirectoryPath);
 
         Assert.NotNull(responseDirectory);
         Assert.Equal("test", responseDirectory.Name);
         Assert.Single(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
-        Assert.Equal(fileName, responseDirectory.Files[0]);
+        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
     }
 }

@@ -162,7 +162,7 @@ public class FileControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task GetImage_ReturnsOk_WhenImageExists()
     {
@@ -219,7 +219,7 @@ public class FileControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task SaveTextFile_ReturnsOk_WhenFileSaved()
     {
@@ -236,7 +236,7 @@ public class FileControllerTests : BaseTests
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
     }
-    
+
     [Fact]
     public async Task SaveTextFile_ReturnsNotFound_WhenFileDoesNotExist()
     {
@@ -250,7 +250,7 @@ public class FileControllerTests : BaseTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
-    
+
     [Fact]
     public async Task SaveTextFile_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
@@ -261,6 +261,98 @@ public class FileControllerTests : BaseTests
             .Returns(Task.FromException<string?>(new DirectoryNotFoundException("Directory not found.")));
 
         var result = await _controller.SaveTextFile(directoryPath, name);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("Directory not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task AddFileTag_ReturnsOk_WhenTagAdded()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.AddFileTag(_claimsPrincipal, directoryPath, name, tag).Returns(Task.CompletedTask);
+
+        var result = await _controller.AddFileTag(directoryPath, name, tag);
+
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task AddFileTag_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.AddFileTag(_claimsPrincipal, directoryPath, name, tag)
+            .Returns(Task.FromException(new FileNotFoundException("File not found.")));
+
+        var result = await _controller.AddFileTag(directoryPath, name, tag);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task AddFileTag_ReturnsNotFound_WhenDirectoryDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.AddFileTag(_claimsPrincipal, directoryPath, name, tag)
+            .Returns(Task.FromException(new DirectoryNotFoundException("Directory not found.")));
+
+        var result = await _controller.AddFileTag(directoryPath, name, tag);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("Directory not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task RemoveFileTag_ReturnsOk_WhenTagRemoved()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.RemoveFileTag(_claimsPrincipal, directoryPath, name, tag).Returns(Task.CompletedTask);
+
+        var result = await _controller.RemoveFileTag(directoryPath, name, tag);
+
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task RemoveFileTag_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.RemoveFileTag(_claimsPrincipal, directoryPath, name, tag)
+            .Returns(Task.FromException(new FileNotFoundException("File not found.")));
+
+        var result = await _controller.RemoveFileTag(directoryPath, name, tag);
+
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task RemoveFileTag_ReturnsNotFound_WhenDirectoryDoesNotExist()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string tag = "test_tag";
+
+        _fileService.RemoveFileTag(_claimsPrincipal, directoryPath, name, tag)
+            .Returns(Task.FromException(new DirectoryNotFoundException("Directory not found.")));
+
+        var result = await _controller.RemoveFileTag(directoryPath, name, tag);
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);

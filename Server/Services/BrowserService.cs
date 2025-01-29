@@ -16,7 +16,7 @@ public interface IBrowserService
     /// <param name="claimsPrincipal">Owner of the directory</param>
     /// <param name="path">Path of the directory</param>
     /// <returns>Name of the requested directory, together with its contents</returns>
-    Task<ResponseDirectory?> List(ClaimsPrincipal claimsPrincipal, string path = "/");
+    Task<DirectoryDto?> List(ClaimsPrincipal claimsPrincipal, string path = "/");
 
     /// <summary>
     /// Add a new directory at the specified path.
@@ -38,7 +38,7 @@ public class BrowserService(
     IEncryptionService encryptionService,
     AppConfiguration appConfiguration) : BaseService(context), IBrowserService
 {
-    public async Task<ResponseDirectory?> List(ClaimsPrincipal claimsPrincipal, string path = "/")
+    public async Task<DirectoryDto?> List(ClaimsPrincipal claimsPrincipal, string path = "/")
     {
         var user = await GetUser(claimsPrincipal);
 

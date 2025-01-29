@@ -159,4 +159,44 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
         return Ok();
     }
+    
+    [HttpPost("addFileTag")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> AddFileTag(string directoryPath, string name, string tag)
+    {
+        try
+        {
+            await fileService.AddFileTag(User, directoryPath, name, tag);
+            return Ok();
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("File not found.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return NotFound("Directory not found.");
+        }
+    }
+    
+    [HttpDelete("removeFileTag")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> RemoveFileTag(string directoryPath, string name, string tag)
+    {
+        try
+        {
+            await fileService.RemoveFileTag(User, directoryPath, name, tag);
+            return Ok();
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("File not found.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return NotFound("Directory not found.");
+        }
+    }
 }

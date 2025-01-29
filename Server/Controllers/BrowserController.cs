@@ -13,9 +13,9 @@ namespace Server.Controllers;
 public class BrowserController(IBrowserService browserService) : ControllerBase
 {
     [HttpGet("list")]
-    [ProducesResponseType<ResponseDirectory>(StatusCodes.Status200OK)]
+    [ProducesResponseType<DirectoryDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<string>> List(string path)
+    public async Task<ActionResult<DirectoryDto>> List(string path)
     {
         var directory = await browserService.List(User, path);
         if (directory is null)

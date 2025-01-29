@@ -135,7 +135,7 @@ public class BrowserServiceTests : BaseTests
         Assert.NotNull(rootDirectory);
         Assert.Single(rootDirectory.Directories);
         Assert.Empty(rootDirectory.Files);
-        Assert.Equal("test", rootDirectory.Directories[0]);
+        Assert.Equal("test", rootDirectory.Directories.FirstOrDefault());
         
         var responseDirectory = await _browserService.List(_claimsPrincipal, path);
         
