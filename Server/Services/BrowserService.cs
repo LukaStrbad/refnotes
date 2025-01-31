@@ -35,8 +35,7 @@ public interface IBrowserService
 
 public class BrowserService(
     RefNotesContext context,
-    IEncryptionService encryptionService,
-    AppConfiguration appConfiguration) : BaseService(context), IBrowserService
+    IEncryptionService encryptionService) : BaseService(context), IBrowserService
 {
     public async Task<DirectoryDto?> List(ClaimsPrincipal claimsPrincipal, string path = "/")
     {

@@ -21,7 +21,7 @@ public class BrowserServiceTests : BaseTests
         _encryptionService = new EncryptionService(AesKey, AesIv);
         _context = CreateDb();
         (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
-        _browserService = new BrowserService(_context, _encryptionService, AppConfig);
+        _browserService = new BrowserService(_context, _encryptionService);
     }
     
     [Fact]

@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
-using Server.Model;
 using Server.Services;
+using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
 
@@ -15,16 +15,15 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     private readonly BrowserService _browserService;
     private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
-    private readonly EncryptionService _encryptionService;
     private const string DirectoryPath = "/test";
 
     public FileServiceTests()
     {
-        _encryptionService = new EncryptionService(AesKey, AesIv);
+        var encryptionService = new FakeEncryptionService();
         _context = CreateDb();
         (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
-        _fileService = new FileService(_context, _encryptionService, AppConfig);
-        _browserService = new BrowserService(_context, _encryptionService, AppConfig);
+        _fileService = new FileService(_context, encryptionService, AppConfig);
+        _browserService = new BrowserService(_context, encryptionService);
     }
     
     public async Task InitializeAsync()
@@ -40,16 +39,13 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(DirectoryPath);
-        var encryptedFileName = _encryptionService.EncryptAesStringBase64(fileName);
-
         var directory = await _context.Directories
             .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == encryptedPath);
+            .FirstOrDefaultAsync(d => d.Path == DirectoryPath);
 
         Assert.NotNull(directory);
         Assert.Single(directory.Files);
-        Assert.Equal(encryptedFileName, directory.Files[0].Name);
+        Assert.Equal(fileName, directory.Files[0].Name);
     }
 
     [Fact]
@@ -68,7 +64,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
 
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName));
+            _fileService.AddFile(_claimsPrincipal, "/nonexistent", fileName));
     }
 
     [Fact]
@@ -79,11 +75,9 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         await _fileService.DeleteFile(_claimsPrincipal, DirectoryPath, fileName);
 
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(DirectoryPath);
-
         var directory = await _context.Directories
             .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == encryptedPath);
+            .FirstOrDefaultAsync(d => d.Path == DirectoryPath);
 
         Assert.NotNull(directory);
         Assert.Empty(directory.Files);
@@ -139,5 +133,61 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         Assert.Single(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
         Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
+    }
+    
+    [Fact]
+    public async Task AddFileTag_AddsTag()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+
+        const string tag = "test_tag";
+        await _fileService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+
+        var file = await _context.Files
+            .Include(f => f.Tags)
+            .FirstOrDefaultAsync(f => f.Name == fileName);
+
+        Assert.NotNull(file);
+        Assert.Single(file.Tags);
+        Assert.Equal(tag, file.Tags.FirstOrDefault()?.Name);
+    }
+
+    [Fact]
+    public async Task AddFileTag_ThrowsIfFileDoesNotExist()
+    {
+        const string fileName = "testfile.txt";
+        const string tag = "test_tag";
+
+        await Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _fileService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag));
+    }
+    
+    [Fact]
+    public async Task RemoveFileTag_RemovesTag()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        const string tag = "test_tag";
+        await _fileService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+
+        await _fileService.RemoveFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+
+        var file = await _context.Files
+            .Include(f => f.Tags)
+            .FirstOrDefaultAsync(f => f.Name == fileName);
+
+        Assert.NotNull(file);
+        Assert.Empty(file.Tags);
+    }
+    
+    [Fact]
+    public async Task RemoveFileTag_ThrowsIfFileDoesNotExist()
+    {
+        const string fileName = "testfile.txt";
+        const string tag = "test_tag";
+
+        await Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _fileService.RemoveFileTag(_claimsPrincipal, DirectoryPath, fileName, tag));
     }
 }

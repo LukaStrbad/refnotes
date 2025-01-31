@@ -24,7 +24,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
     public Stream GetFile(string fileName)
     {
         var filePath = Path.Combine(appConfig.DataDir, fileName);
-        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
         var decryptedStream = new MemoryStream();
         encryptionService.DecryptAesToStream(stream, decryptedStream);
         decryptedStream.Position = 0;
