@@ -6,11 +6,20 @@ import { NgClass } from '@angular/common';
 import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
 import { HttpEventType } from '@angular/common/http';
 import { LoggerService } from '../../services/logger.service';
-import {filter, firstValueFrom, forkJoin, lastValueFrom, Subscription, tap} from 'rxjs';
+import {
+  filter,
+  firstValueFrom,
+  forkJoin,
+  lastValueFrom,
+  Subscription,
+  tap,
+} from 'rxjs';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
-import {TestTagDirective} from "../../directives/test-tag.directive";
+import { TestTagDirective } from '../../directives/test-tag.directive';
+import { FileService } from '../../services/file.service';
+import {File} from "../../model/file";
 
 @Component({
   selector: 'app-browser',
@@ -63,6 +72,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   constructor(
     private browser: BrowserService,
+    private fileService: FileService,
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
@@ -108,8 +118,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (this.currentFolder === null) {
       return;
     }
-    await this.browser.addTextFile(this.currentPath, filename, '');
-    this.currentFolder.files.push(filename);
+    await this.fileService.addTextFile(this.currentPath, filename, '');
+    this.currentFolder.files.push({ name: filename, tags: [] });
     this.fileModal.close();
   }
 
@@ -127,8 +137,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.folderModal.close();
   }
 
-  async deleteFile(name: string) {
-    await this.browser.deleteFile(this.currentPath, name);
+  async deleteFile(file: File) {
+    await this.fileService.deleteFile(this.currentPath, file.name);
     await this.refreshRoute();
   }
 
@@ -154,12 +164,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.router.navigateByUrl(`/browser${path}`);
   }
 
-  isTextFile(name: string) {
-    return name.endsWith('.txt');
+  isTextFile(file: File) {
+    return file.name.endsWith('.txt');
   }
 
-  isMarkdownFile(name: string) {
-    return name.endsWith('.md') || name.endsWith('.markdown');
+  isMarkdownFile(file: File) {
+    return file.name.endsWith('.md') || file.name.endsWith('.markdown');
   }
 
   async onFilesUpload(files: FileList) {
@@ -168,7 +178,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < files.length; i++) {
       this.logger.info(`Uploading file ${files[i].name}`);
-      const uploadObservable = this.browser
+      const uploadObservable = this.fileService
         .addFile(this.currentPath, files[i])
         .pipe(
           tap((event) => {
@@ -179,7 +189,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
                 this.logger.info('File uploaded successfully', event);
-                this.currentFolder?.files.push(files[i].name);
+                this.currentFolder?.files.push({
+                  name: files[i].name,
+                  tags: [],
+                });
               } else {
                 console.error('Error uploading file', event);
               }
@@ -199,11 +212,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.fileModal.close();
   }
 
-  async openEdit(fileName: string) {
+  async openEdit(file: File) {
     await this.router.navigate(['/editor'], {
       queryParams: {
         directory: this.currentPath,
-        file: fileName,
+        file: file.name,
       },
     });
   }

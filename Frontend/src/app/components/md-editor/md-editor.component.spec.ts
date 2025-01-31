@@ -1,16 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MdEditorComponent } from './md-editor.component';
-import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import {SettingsService} from "../../../services/settings.service";
-import {BrowserService} from "../../../services/browser.service";
+import {
+  TranslateFakeLoader,
+  TranslateLoader,
+  TranslateModule,
+  TranslateService,
+} from '@ngx-translate/core';
+import { SettingsService } from '../../../services/settings.service';
+import { FileService } from '../../../services/file.service';
 
 describe('MdEditorComponent', () => {
   let component: MdEditorComponent;
   let fixture: ComponentFixture<MdEditorComponent>;
-  let browserService: jasmine.SpyObj<BrowserService>;
+  let fileService: jasmine.SpyObj<FileService>;
 
   beforeEach(async () => {
-    browserService = jasmine.createSpyObj('BrowserService', ['getImage']);
+    fileService = jasmine.createSpyObj('FileService', ['getImage']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -18,14 +23,14 @@ describe('MdEditorComponent', () => {
         TranslateModule.forRoot({
           loader: {
             provide: TranslateLoader,
-            useClass: TranslateFakeLoader
-          }
-        })
+            useClass: TranslateFakeLoader,
+          },
+        }),
       ],
       providers: [
         TranslateService,
-        { provide: BrowserService, useValue: browserService }
-      ]
+        { provide: FileService, useValue: fileService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MdEditorComponent);
@@ -76,7 +81,9 @@ describe('MdEditorComponent', () => {
 
   it("should update preview only when it's visible", () => {
     const markdown = '# Title';
-    const editorOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-editorOnly"]') as HTMLAnchorElement;
+    const editorOnlyEl = fixture.nativeElement.querySelector(
+      'a[data-test="editorMode-editorOnly"]',
+    ) as HTMLAnchorElement;
     editorOnlyEl.click();
     component.value.set(markdown);
     fixture.detectChanges();
@@ -86,7 +93,9 @@ describe('MdEditorComponent', () => {
     expect(preview.innerHTML).toBe('');
 
     // Content should update when preview becomes visible
-    const previewOnlyEl = fixture.nativeElement.querySelector('a[data-test="editorMode-sideBySide"]') as HTMLAnchorElement;
+    const previewOnlyEl = fixture.nativeElement.querySelector(
+      'a[data-test="editorMode-sideBySide"]',
+    ) as HTMLAnchorElement;
     previewOnlyEl.click();
     fixture.detectChanges();
     preview = component.previewContentElement.nativeElement;
@@ -111,16 +120,18 @@ describe('MdEditorComponent', () => {
     component.value.set(markdown);
     fixture.detectChanges();
     const preview = component.previewContentElement.nativeElement;
-    expect(preview.innerHTML).toContain('<img src="https://example.com/image.jpg" alt="image" title="Image Title">');
+    expect(preview.innerHTML).toContain(
+      '<img src="https://example.com/image.jpg" alt="image" title="Image Title">',
+    );
   });
 
   it('should update image in preview (relative path)', async () => {
     const buffer = new Uint8Array([0, 1, 2, 3]).buffer;
-    browserService.getImage.and.resolveTo(buffer);
+    fileService.getImage.and.resolveTo(buffer);
     const markdown = '![image](./image.jpg "Image Title")';
     component.value.set(markdown);
     fixture.detectChanges();
-    await fixture.whenStable()
+    await fixture.whenStable();
 
     const preview = component.previewContentElement.nativeElement;
     const img = preview.querySelector('img') as HTMLImageElement;

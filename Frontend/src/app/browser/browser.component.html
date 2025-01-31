@@ -90,32 +90,32 @@
         </thead>
       }
       <tbody>
-        @for (fileName of currentFolder.files; track fileName) {
+        @for (file of currentFolder.files; track file) {
           <tr class="hover:bg-base-300" testTag="file-tr">
             <td>
               <i
                 class="bi"
                 [ngClass]="{
-                  'bi-filetype-md': isMarkdownFile(fileName),
-                  'bi-file-text': isTextFile(fileName),
+                  'bi-filetype-md': isMarkdownFile(file),
+                  'bi-file-text': isTextFile(file),
                   'bi-file-earmark': true,
                 }"
               ></i>
             </td>
             <td class="text-center">
-              {{ fileName }}
+              {{ file.name }}
             </td>
             <td class="flex gap-2 justify-end">
               <button
                 class="btn btn-sm btn-accent"
-                (click)="openEdit(fileName)"
+                (click)="openEdit(file)"
               >
                 <i class="bi bi-pencil"></i>
                 {{ "browser.edit" | translate }}
               </button>
               <button
                 class="btn btn-sm btn-error"
-                (click)="deleteFile(fileName)"
+                (click)="deleteFile(file)"
               >
                 <i class="bi bi-trash"></i>
                 {{ "browser.delete" | translate }}

@@ -29,6 +29,7 @@ import {
 } from '../../../utils/path-utils';
 import { BrowserService } from '../../../services/browser.service';
 import {NgClass} from "@angular/common";
+import {FileService} from "../../../services/file.service";
 
 @Component({
   selector: 'app-md-editor',
@@ -69,7 +70,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public settings: SettingsService,
     private log: LoggerService,
-    private browser: BrowserService,
+    private fileService: FileService,
   ) {
     this.marked = new Marked(this.highlightExtension(), {
       renderer: this.imageExtension(),
@@ -162,7 +163,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
       const [dir, name] = splitDirAndName(imageUrl.src);
       // Load the image from the server
-      this.browser
+      this.fileService
         .getImage(dir, name)
         .then((data) => {
           if (!data) {

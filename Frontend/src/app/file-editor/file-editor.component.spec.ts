@@ -10,6 +10,7 @@ import {
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {BrowserService} from "../../services/browser.service";
+import {FileService} from "../../services/file.service";
 
 @Component({
   selector: 'app-md-editor',
@@ -20,10 +21,10 @@ class MdEditorStub {}
 describe('FileEditorComponent', () => {
   let component: FileEditorComponent;
   let fixture: ComponentFixture<FileEditorComponent>;
-  let browserService: jasmine.SpyObj<BrowserService>;
+  let fileService: jasmine.SpyObj<FileService>;
 
   beforeEach(async () => {
-    browserService = jasmine.createSpyObj('BrowserService', ['getFile', 'saveTextfile']);
+    fileService = jasmine.createSpyObj('FileService', ['getFile', 'saveTextFile']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -39,13 +40,13 @@ describe('FileEditorComponent', () => {
       providers: [
         TranslateService,
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => 'test' } } } },
-        { provide: BrowserService, useValue: browserService },
+        { provide: FileService, useValue: fileService },
       ],
     }).compileComponents();
   });
 
   it('should create', () => {
-    browserService.getFile.and.resolveTo(new ArrayBuffer(0));
+    fileService.getFile.and.resolveTo(new ArrayBuffer(0));
 
     fixture = TestBed.createComponent(FileEditorComponent);
     component = fixture.componentInstance;
@@ -55,7 +56,7 @@ describe('FileEditorComponent', () => {
   });
 
   it('should load file content', async () => {
-    browserService.getFile.and.resolveTo(new TextEncoder().encode('test'));
+    fileService.getFile.and.resolveTo(new TextEncoder().encode('test'));
 
     fixture = TestBed.createComponent(FileEditorComponent);
     component = fixture.componentInstance;
@@ -70,7 +71,7 @@ describe('FileEditorComponent', () => {
   it('should show loading skeleton', async () => {
     let resolve: ((value?: unknown) => void) | null = null;
     const waitPromise = new Promise(r => {resolve = r;});
-    browserService.getFile.and.callFake(async () => {
+    fileService.getFile.and.callFake(async () => {
       await waitPromise;
       return new TextEncoder().encode('test');
     });
@@ -98,7 +99,7 @@ describe('FileEditorComponent', () => {
   });
 
   it('should save file content', async () => {
-    browserService.getFile.and.resolveTo(new ArrayBuffer(0));
+    fileService.getFile.and.resolveTo(new ArrayBuffer(0));
 
     fixture = TestBed.createComponent(FileEditorComponent);
     component = fixture.componentInstance;
@@ -110,6 +111,6 @@ describe('FileEditorComponent', () => {
     const saveButton = fixture.nativeElement.querySelector('[data-test="save-button"]');
     saveButton.click();
 
-    expect(browserService.saveTextfile).toHaveBeenCalledWith('test', 'test', 'test');
+    expect(fileService.saveTextFile).toHaveBeenCalledWith('test', 'test', 'test');
   });
 });

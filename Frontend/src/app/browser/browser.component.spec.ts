@@ -17,11 +17,13 @@ import {
 } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
+import {FileService} from "../../services/file.service";
 
 describe('BrowserComponent', () => {
   let component: BrowserComponent;
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
+  let fileService: jasmine.SpyObj<FileService>;
   let storage: { [key: string]: string } = {};
 
   beforeEach(async () => {
@@ -34,10 +36,12 @@ describe('BrowserComponent', () => {
 
     browserService = jasmine.createSpyObj('BrowserService', [
       'listCached',
-      'addTextFile',
       'addDirectory',
-      'deleteFile',
       'deleteDirectory',
+    ]);
+    fileService = jasmine.createSpyObj('FileService', [
+      'addTextFile',
+      'deleteFile',
       'addFile',
     ]);
 
@@ -67,6 +71,7 @@ describe('BrowserComponent', () => {
         LoggerService,
         AuthService,
         { provide: BrowserService, useValue: browserService },
+        { provide: FileService, useValue: fileService },
       ],
     }).compileComponents();
 
@@ -149,7 +154,7 @@ describe('BrowserComponent', () => {
 
     expect(fileTrs.length).toBe(1);
     expect(component.currentFolder!.files).toContain('test.txt');
-    expect(browserService.addTextFile).toHaveBeenCalledWith(
+    expect(fileService.addTextFile).toHaveBeenCalledWith(
       '/',
       'test.txt',
       '',
@@ -175,7 +180,7 @@ describe('BrowserComponent', () => {
     await component.loadingPromise;
     expect(component.currentFolder?.files).toContain('test.txt');
 
-    browserService.deleteFile.and.callFake((directoryPath, name) => {
+    fileService.deleteFile.and.callFake((directoryPath, name) => {
       browserService.listCached.and.returnValue(
         of({ name: '/', files: [], directories: [] }),
       );
@@ -236,7 +241,7 @@ describe('BrowserComponent', () => {
       length: 1,
       item: (index: number) => mockFile,
     } as FileList;
-    browserService.addFile.and.returnValue(
+    fileService.addFile.and.returnValue(
       of(new HttpResponse<Object>({ status: 200 })),
     );
     spyOn(component.fileModal, 'close');
