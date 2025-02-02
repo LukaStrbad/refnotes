@@ -9,11 +9,30 @@ namespace Server.Controllers;
 [Authorize]
 public class TagController(ITagService tagService): ControllerBase
 {
-    [HttpGet("listTags")]
+    [HttpGet("listAllTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListTags()
+    public async Task<ActionResult<IEnumerable<string>>> ListAllTags()
     {
-        return Ok(await tagService.GetAllTags(User));
+        return Ok(await tagService.ListAllTags(User));
+    }
+    
+    [HttpGet("listFileTags")]
+    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IEnumerable<string>>> ListFileTags(string directoryPath, string name)
+    {
+        try
+        {
+            return Ok(await tagService.ListFileTags(User, directoryPath, name));
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound("File not found.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return NotFound("Directory not found.");
+        }
     }
     
     [HttpPost("addFileTag")]

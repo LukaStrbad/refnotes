@@ -48,7 +48,8 @@
       "name": "Ime",
       "actions": "Radnje",
       "folders": "Mape",
-      "files": "Datoteke"
+      "files": "Datoteke",
+      "buttonEditTags": "oznake"
     },
     "delete": "Izbriši",
     "edit": "Uredi",
@@ -62,7 +63,9 @@
     },
     "writeSomething": "Napiši nešto...",
     "editingFile": "Uređivanje {{fileName}}",
-    "save": "Spremi"
+    "save": "Spremi",
+    "buttonEditTags": "Uredi oznake",
+    "labelTags": "Oznake:"
   },
   "modals": {
     "create": {
@@ -78,10 +81,12 @@
       "size": "veličina"
     },
     "editTags": {
-      "cancel": "Otkaži",
       "title": "Uredi oznake",
       "buttonAdd": "Dodaj",
-      "inputAddTag": "Unesi oznaku"
+      "inputAddTag": "Unesi oznaku",
+      "done": "Završi",
+      "tooltipRemove": "Ukloni oznaku",
+      "tooltipRestore": "Vrati oznaku"
     }
   },
   "auth": {

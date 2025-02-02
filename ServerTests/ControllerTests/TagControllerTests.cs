@@ -30,15 +30,31 @@ public class TagControllerTests : BaseTests
     }
     
     [Fact]
-    public async Task ListTags_ReturnsOk_WhenTagsListed()
+    public async Task ListAllTags_ReturnsOk_WhenTagsListed()
     {
-        _tagService.GetAllTags(_claimsPrincipal).Returns(Task.FromResult(new List<string> { "tag1", "tag2" }));
+        _tagService.ListAllTags(_claimsPrincipal).Returns(Task.FromResult(new List<string> { "tag1", "tag2" }));
 
-        var result = await _controller.ListTags();
+        var result = await _controller.ListAllTags();
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var tags = Assert.IsType<List<string>>(okResult.Value);
-        Assert.Equal(new List<string> { "tag1", "tag2" }, tags);
+        Assert.Equal(["tag1", "tag2"], tags);
+    }
+    
+    [Fact]
+    public async Task ListFileTags_ReturnsOk_WhenTagsListed()
+    {
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+
+        _tagService.ListFileTags(_claimsPrincipal, directoryPath, name)
+            .Returns(Task.FromResult(new List<string> { "tag1", "tag2" }));
+
+        var result = await _controller.ListFileTags(directoryPath, name);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var tags = Assert.IsType<List<string>>(okResult.Value);
+        Assert.Equal(["tag1", "tag2"], tags);
     }
     
     [Fact]

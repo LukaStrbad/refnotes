@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 
 const apiUrl = environment.apiUrl + '/tag';
 
@@ -9,7 +9,27 @@ const apiUrl = environment.apiUrl + '/tag';
   providedIn: 'root',
 })
 export class TagService {
+  private listCache: string[] | null = null;
+
   constructor(private http: HttpClient) {}
+
+  listAllCached(): Observable<string[]> {
+    const network = this.http.get<string[]>(`${apiUrl}/listAllTags`).pipe(
+      tap((value) => {
+        this.listCache = value;
+      }),
+    );
+
+    return this.listCache ? merge(of(this.listCache), network) : network;
+  }
+
+  async listFileTags(directoryPath: string, name: string) {
+    return await firstValueFrom(
+      this.http.get<string[]>(
+        `${apiUrl}/listFileTags?directoryPath=${directoryPath}&name=${name}`,
+      ),
+    );
+  }
 
   async addFileTag(directoryPath: string, name: string, tag: string) {
     await firstValueFrom(

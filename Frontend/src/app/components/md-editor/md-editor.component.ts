@@ -6,7 +6,8 @@ import {
   ElementRef,
   HostListener,
   input,
-  model, OnDestroy,
+  model,
+  OnDestroy,
   OnInit,
   Signal,
   ViewChild,
@@ -27,13 +28,18 @@ import {
   resolveRelativeFolderPath,
   splitDirAndName,
 } from '../../../utils/path-utils';
-import { BrowserService } from '../../../services/browser.service';
-import {NgClass} from "@angular/common";
-import {FileService} from "../../../services/file.service";
+import { NgClass } from '@angular/common';
+import { FileService } from '../../../services/file.service';
 
 @Component({
   selector: 'app-md-editor',
-  imports: [FormsModule, TranslateDirective, TranslatePipe, TestTagDirective, NgClass],
+  imports: [
+    FormsModule,
+    TranslateDirective,
+    TranslatePipe,
+    TestTagDirective,
+    NgClass,
+  ],
   templateUrl: './md-editor.component.html',
   styleUrl: './md-editor.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -163,19 +169,17 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
       const [dir, name] = splitDirAndName(imageUrl.src);
       // Load the image from the server
-      this.fileService
-        .getImage(dir, name)
-        .then((data) => {
-          if (!data) {
-            return;
-          }
-          const imageType = name.split('.').pop();
-          const blob = new Blob([data], { type: `image/${imageType}` });
-          const objectURL = URL.createObjectURL(blob);
-          // Save the blob URL to the image URL
-          imageUrl.blob = objectURL;
-          elements.forEach((element) => element.setAttribute('src', objectURL));
-        });
+      this.fileService.getImage(dir, name).then((data) => {
+        if (!data) {
+          return;
+        }
+        const imageType = name.split('.').pop();
+        const blob = new Blob([data], { type: `image/${imageType}` });
+        const objectURL = URL.createObjectURL(blob);
+        // Save the blob URL to the image URL
+        imageUrl.blob = objectURL;
+        elements.forEach((element) => element.setAttribute('src', objectURL));
+      });
     });
   }
 

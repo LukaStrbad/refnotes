@@ -12,8 +12,17 @@ public interface ITagService
     /// List all tags owned by the specified user.
     /// </summary>
     /// <param name="claimsPrincipal">Owner of the tags</param>
-    /// <returns>Enumerable of all file tags</returns>
-    public Task<List<string>> GetAllTags(ClaimsPrincipal claimsPrincipal);
+    /// <returns>List of all file tags</returns>
+    public Task<List<string>> ListAllTags(ClaimsPrincipal claimsPrincipal);
+    
+    /// <summary>
+    /// List all tags associated with a file in the specified directory.
+    /// </summary>
+    /// <param name="claimsPrincipal">Owner of the file</param>
+    /// <param name="directoryPath">Path of the directory containing the file</param>
+    /// <param name="name">Name of the file</param>
+    /// <returns>List of file tags</returns>
+    public Task<List<string>> ListFileTags(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
 
     /// <summary>
     /// Add a tag to a file in the specified directory.
@@ -38,7 +47,7 @@ public class TagService(RefNotesContext context, IEncryptionService encryptionSe
 {
     private readonly ServiceUtils _utils = new(context, encryptionService);
 
-    public async Task<List<string>> GetAllTags(ClaimsPrincipal claimsPrincipal)
+    public async Task<List<string>> ListAllTags(ClaimsPrincipal claimsPrincipal)
     {
         var user = await _utils.GetUser(claimsPrincipal);
         return await context.FileTags
@@ -47,9 +56,15 @@ public class TagService(RefNotesContext context, IEncryptionService encryptionSe
             .ToListAsync();
     }
 
+    public async Task<List<string>> ListFileTags(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    {
+        var (_, file, _) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, includeTags: true);
+        return file.Tags.Select(t => t.DecryptedName(encryptionService)).ToList();
+    }
+
     public async Task AddFileTag(ClaimsPrincipal claimsPrincipal, string directoryPath, string name, string tag)
     {
-        var (_, file, user) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, true);
+        var (_, file, user) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
         if (file.Tags.Any(x => x.Name == encryptedTag))
@@ -64,11 +79,7 @@ public class TagService(RefNotesContext context, IEncryptionService encryptionSe
             .Where(t => t.OwnerId == user.Id)
             .FirstOrDefaultAsync(t => t.Name == encryptedTag);
 
-        var tagToAdd = existingTag ?? new FileTag
-        {
-            Name = encryptedTag,
-            Owner = user
-        };
+        var tagToAdd = existingTag ?? new FileTag(encryptedTag, user.Id);
 
         file.Tags.Add(tagToAdd);
         await context.SaveChangesAsync();

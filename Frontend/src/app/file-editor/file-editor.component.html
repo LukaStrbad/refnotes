@@ -1,11 +1,36 @@
 <div class="flex flex-col gap-4 h-full">
-  <div class="flex">
-    <span class="font-bold text-2xl">
-      {{ "editor.editingFile" | translate: { fileName } }}
-    </span>
-    <button class="btn btn-primary ms-auto" (click)="saveContent()" testTag="save-button" translate>
-      editor.save
-    </button>
+  <h1 class="font-bold text-2xl">
+    {{ "editor.editingFile" | translate: { fileName } }}
+  </h1>
+
+  <div
+    class="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center"
+  >
+    <div class="flex gap-2 items-center">
+      <h2 class="text-lg" translate>editor.labelTags</h2>
+      @for (tag of tags; track tag) {
+        <div class="badge badge-soft badge-primary">{{ tag }}</div>
+      }
+    </div>
+
+    <div class="flex gap-2 self-end">
+      <button
+        class="btn btn-secondary"
+        (click)="editTagsModal.show(fileName, tags)"
+      >
+        <i class="bi bi-pencil"></i>
+        <span translate>editor.buttonEditTags</span>
+      </button>
+
+      <button
+        class="btn btn-primary ms-auto"
+        (click)="saveContent()"
+        testTag="save-button"
+        translate
+      >
+        editor.save
+      </button>
+    </div>
   </div>
 
   @if (loading) {
@@ -17,3 +42,9 @@
     ></app-md-editor>
   }
 </div>
+
+<app-edit-tags-modal
+  #editTagsModal
+  (onAdd)="addTag($event)"
+  (onRemove)="removeTag($event)"
+></app-edit-tags-modal>

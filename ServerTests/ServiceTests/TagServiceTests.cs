@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Server.Db;
-using Server.Exceptions;
+using Server.Db.Model;
 using Server.Services;
 using ServerTests.Mocks;
 
@@ -13,6 +13,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
     private readonly FileService _fileService;
     private readonly TagService _tagService;
     private readonly BrowserService _browserService;
+    private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
     private const string DirectoryPath = "/tag_service_test";
 
@@ -20,7 +21,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
     {
         var encryptionService = new FakeEncryptionService();
         _context = CreateDb();
-        (_, _claimsPrincipal) = CreateUser(_context, "test");
+        (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
         _fileService = new FileService(_context, encryptionService, AppConfig);
         _tagService = new TagService(_context, encryptionService);
         _browserService = new BrowserService(_context, encryptionService);
@@ -32,6 +33,49 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
+
+    private async Task<string> AddFileWithTags(List<string> tags)
+    {
+        var fileName = $"{RandomString(16)}.txt";
+        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        
+        var file = await _context.Files
+            .Include(f => f.Tags)
+            .FirstOrDefaultAsync(f => f.Name == fileName);
+
+        file?.Tags.AddRange(tags.Select(t => new FileTag(t, _testUser.Id)));
+        await _context.SaveChangesAsync();
+        
+        return fileName;
+    }
+    
+    [Fact]
+    public async Task ListAllTags_ListsTags()
+    {
+        await AddFileWithTags(["test_tag", "test_tag2"]);
+        await AddFileWithTags(["test_tag3"]);
+        
+        var tags = await _tagService.ListAllTags(_claimsPrincipal);
+
+        Assert.NotNull(tags);
+        Assert.Equal(3, tags.Count);
+        Assert.Contains("test_tag", tags);
+        Assert.Contains("test_tag2", tags);
+        Assert.Contains("test_tag3", tags);
+    }
+
+    [Fact]
+    public async Task ListFileTags_ListsTags()
+    {
+        var fileName = await AddFileWithTags(["test_tag", "test_tag2"]);
+        
+        var tags = await _tagService.ListFileTags(_claimsPrincipal, DirectoryPath, fileName);
+
+        Assert.NotNull(tags);
+        Assert.Equal(2, tags.Count);
+        Assert.Contains("test_tag", tags);
+        Assert.Contains("test_tag2", tags);
+    }
 
     [Fact]
     public async Task AddFileTag_AddsTag()

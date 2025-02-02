@@ -34,13 +34,13 @@ export class EditTagsModalComponent {
   onRemove = new EventEmitter<[string, string]>();
 
   fileName = '';
-  tags: string[] = [];
+  tags: TagWithStatus[] = [];
   newTag: string = '';
 
   show(fileName: string, tags: string[]) {
     this.fileName = fileName;
     // Copy the tags array to avoid modifying the original array.
-    this.tags = [...tags];
+    this.tags = tags.map((tag) => ({ name: tag, deleted: false }));
     this.modal.nativeElement.showModal();
   }
 
@@ -48,18 +48,43 @@ export class EditTagsModalComponent {
     this.modal.nativeElement.close();
   }
 
+  restoreTag(tag: string) {
+    const tagIndex = this.tags.findIndex((t) => t.name === tag);
+    if (tagIndex === -1) {
+      return;
+    }
+
+    this.tags[tagIndex].deleted = false;
+    this.onAdd.emit([this.fileName, tag]);
+  }
+
   addTag() {
     if (this.newTag.trim() === '') {
       return;
     }
 
-    this.tags.push(this.newTag);
+    const existingTag = this.tags.find((t) => t.name === this.newTag);
+    if (existingTag) {
+      existingTag.deleted = false;
+    } else {
+      this.tags.push({ name: this.newTag, deleted: false });
+    }
     this.onAdd.emit([this.fileName, this.newTag]);
     this.newTag = '';
   }
 
   removeTag(tag: string) {
-    this.tags = this.tags.filter((t) => t !== tag);
+    const tagIndex = this.tags.findIndex((t) => t.name === tag);
+    if (tagIndex === -1) {
+      return;
+    }
+
+    this.tags[tagIndex].deleted = true;
     this.onRemove.emit([this.fileName, tag]);
   }
+}
+
+interface TagWithStatus {
+  name: string;
+  deleted: boolean;
 }

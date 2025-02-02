@@ -48,7 +48,8 @@
       "name": "Name",
       "actions": "Actions",
       "folders": "Folders",
-      "files": "Files"
+      "files": "Files",
+      "buttonEditTags": "tags"
     },
     "delete": "Delete",
     "edit": "Edit",
@@ -62,7 +63,9 @@
     },
     "writeSomething": "Write something...",
     "editingFile": "Editing {{fileName}}",
-    "save": "Save"
+    "save": "Save",
+    "buttonEditTags": "Edit tags",
+    "labelTags": "Tags:"
   },
   "modals": {
     "create": {
@@ -79,9 +82,11 @@
     },
     "editTags": {
       "title": "Edit tags",
-      "cancel": "Cancel",
       "buttonAdd": "Add",
-      "inputAddTag": "Enter tag"
+      "inputAddTag": "Enter tag",
+      "done": "Done",
+      "tooltipRemove": "Remove tag",
+      "tooltipRestore": "Restore tag"
     }
   },
   "auth": {

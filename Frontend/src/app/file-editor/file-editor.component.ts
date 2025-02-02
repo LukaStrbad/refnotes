@@ -1,10 +1,12 @@
 import { Component, effect, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
-import { MdEditorComponent } from "../components/md-editor/md-editor.component";
+import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import {TestTagDirective} from "../../directives/test-tag.directive";
-import {FileService} from "../../services/file.service";
+import { TestTagDirective } from '../../directives/test-tag.directive';
+import { FileService } from '../../services/file.service';
+import { TagService } from '../../services/tag.service';
+import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 
 @Component({
   selector: 'app-file-editor',
@@ -13,6 +15,7 @@ import {FileService} from "../../services/file.service";
     TranslatePipe,
     TranslateDirective,
     TestTagDirective,
+    EditTagsModalComponent,
   ],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
@@ -22,10 +25,12 @@ export class FileEditorComponent {
   readonly fileName: string;
   content = '';
   loading = true;
+  tags: string[] = [];
 
   constructor(
     route: ActivatedRoute,
     private fileService: FileService,
+    private tagService: TagService,
   ) {
     this.directoryPath = route.snapshot.queryParamMap.get(
       'directory',
@@ -36,6 +41,10 @@ export class FileEditorComponent {
       this.content = new TextDecoder().decode(content);
       this.loading = false;
     });
+
+    tagService.listFileTags(this.directoryPath, this.fileName).then((tags) => {
+      this.tags = tags;
+    });
   }
 
   async saveContent() {
@@ -44,5 +53,17 @@ export class FileEditorComponent {
       this.fileName,
       this.content,
     );
+  }
+
+  async addTag([fileName, tag]: [string, string]) {
+    await this.tagService.addFileTag(this.directoryPath, fileName, tag);
+    if (!this.tags.includes(tag)) {
+      this.tags.push(tag);
+    }
+  }
+
+  async removeTag([fileName, tag]: [string, string]) {
+    await this.tagService.removeFileTag(this.directoryPath, fileName, tag);
+    this.tags = this.tags.filter((t) => t !== tag);
   }
 }

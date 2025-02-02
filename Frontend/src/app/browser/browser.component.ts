@@ -238,7 +238,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async addTag([fileName, tag]: [string, string]) {
     await this.tagService.addFileTag(this.currentPath, fileName, tag);
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
-    if (file) {
+    if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
     }
   }
