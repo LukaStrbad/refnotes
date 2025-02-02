@@ -10,14 +10,16 @@ import { BrowserService } from '../../services/browser.service';
 import { LoggerService } from '../../services/logger.service';
 import { AuthService } from '../../services/auth.service';
 import { provideRouter, Router } from '@angular/router';
-import {Observable, of, Subscriber} from 'rxjs';
-import {
-  HttpResponse,
-  provideHttpClient,
-} from '@angular/common/http';
+import { Observable, of, Subscriber } from 'rxjs';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
-import {FileService} from "../../services/file.service";
+import { FileService } from '../../services/file.service';
+import { File } from '../../model/file';
+
+function createFile(name: string): File {
+  return { name, tags: [] };
+}
 
 describe('BrowserComponent', () => {
   let component: BrowserComponent;
@@ -29,10 +31,14 @@ describe('BrowserComponent', () => {
   beforeEach(async () => {
     // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
     // This mocks localStorage to avoid the issue
-    spyOn(localStorage, 'getItem').and.callFake((key: string) => storage[key] ?? null);
-    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
-      storage[key] = value;
-    });
+    spyOn(localStorage, 'getItem').and.callFake(
+      (key: string) => storage[key] ?? null,
+    );
+    spyOn(localStorage, 'setItem').and.callFake(
+      (key: string, value: string) => {
+        storage[key] = value;
+      },
+    );
 
     browserService = jasmine.createSpyObj('BrowserService', [
       'listCached',
@@ -99,14 +105,14 @@ describe('BrowserComponent', () => {
   it('should refresh routes when refreshRoute is called', async () => {
     const cachedDirectory: Directory = {
       name: '/',
-      files: ['test.txt'],
+      files: [createFile('test.txt')],
       directories: [],
-    }
+    };
     const networkDirectory: Directory = {
       name: '/',
-      files: ['test.txt', 'test2.txt'],
+      files: [createFile('test.txt'), createFile('test2.txt')],
       directories: ['dir'],
-    }
+    };
 
     let sub: Subscriber<Directory> = null!;
     const observable = new Observable<Directory>((subscriber) => {
@@ -131,15 +137,19 @@ describe('BrowserComponent', () => {
   it('should list cached directory on refresh route', async () => {
     const mockDirectory: Directory = {
       name: '/',
-      files: ['test.txt'],
+      files: [createFile('test.txt')],
       directories: ['dir'],
     };
     browserService.listCached.and.returnValue(of(mockDirectory));
     await component.refreshRoute();
     fixture.detectChanges();
 
-    const folderTrs = fixture.nativeElement.querySelectorAll('tr[data-test="folder-tr"]');
-    const fileTrs = fixture.nativeElement.querySelectorAll('tr[data-test="file-tr"]');
+    const folderTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="folder-tr"]',
+    );
+    const fileTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="file-tr"]',
+    );
     expect(folderTrs.length).toBe(1);
     expect(fileTrs.length).toBe(1);
 
@@ -150,22 +160,22 @@ describe('BrowserComponent', () => {
     await component.createNewFile('test.txt');
     fixture.detectChanges();
 
-    const fileTrs = fixture.nativeElement.querySelectorAll('tr[data-test="file-tr"]');
+    const fileTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="file-tr"]',
+    );
 
     expect(fileTrs.length).toBe(1);
-    expect(component.currentFolder!.files).toContain('test.txt');
-    expect(fileService.addTextFile).toHaveBeenCalledWith(
-      '/',
-      'test.txt',
-      '',
-    );
+    expect(component.currentFolder!.files).toContain(createFile('test.txt'));
+    expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '');
   });
 
   it('should create a new folder', async () => {
     await component.createNewFolder('newFolder');
     fixture.detectChanges();
 
-    const folderTrs = fixture.nativeElement.querySelectorAll('tr[data-test="folder-tr"]');
+    const folderTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="folder-tr"]',
+    );
 
     expect(folderTrs.length).toBe(1);
     expect(component.currentFolder!.directories).toContain('newFolder');
@@ -174,11 +184,13 @@ describe('BrowserComponent', () => {
 
   it('should delete a file', async () => {
     browserService.listCached.and.returnValue(
-      of({ name: '/', files: ['test.txt'], directories: [] }),
+      of({ name: '/', files: [createFile('test.txt')], directories: [] }),
     );
     component.ngOnInit();
     await component.loadingPromise;
-    expect(component.currentFolder?.files).toContain('test.txt');
+    expect(component.currentFolder?.files.map((f) => f.name)).toContain(
+      'test.txt',
+    );
 
     fileService.deleteFile.and.callFake((directoryPath, name) => {
       browserService.listCached.and.returnValue(
@@ -187,10 +199,12 @@ describe('BrowserComponent', () => {
       return Promise.resolve(Object);
     });
 
-    await component.deleteFile('test.txt');
+    await component.deleteFile(createFile('test.txt'));
     fixture.detectChanges();
 
-    const fileTrs = fixture.nativeElement.querySelectorAll('tr[data-test="file-tr"]');
+    const fileTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="file-tr"]',
+    );
 
     expect(fileTrs.length).toBe(0);
     expect(component.currentFolder?.files).not.toContain('test.txt');
@@ -214,7 +228,9 @@ describe('BrowserComponent', () => {
     await component.deleteFolder('testFolder');
     fixture.detectChanges();
 
-    const folderTrs = fixture.nativeElement.querySelectorAll('tr[data-test="folder-tr"]');
+    const folderTrs = fixture.nativeElement.querySelectorAll(
+      'tr[data-test="folder-tr"]',
+    );
 
     expect(folderTrs.length).toBe(0);
     expect(component.currentFolder?.directories).not.toContain('testFolder');
@@ -228,7 +244,9 @@ describe('BrowserComponent', () => {
     await component.loadingPromise;
     fixture.detectChanges();
 
-    const breadcrumb = fixture.nativeElement.querySelector('a[data-test="breadcrumb-item"][href="/browser/newFolder"]');
+    const breadcrumb = fixture.nativeElement.querySelector(
+      'a[data-test="breadcrumb-item"][href="/browser/newFolder"]',
+    );
 
     expect(breadcrumb).toBeTruthy();
     expect(component.currentPath).toBe('/newFolder');
@@ -252,7 +270,7 @@ describe('BrowserComponent', () => {
   it('should open edit for a file', async () => {
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate');
-    await component.openEdit('test.txt');
+    await component.openEdit(createFile('test.txt'));
     expect(router.navigate).toHaveBeenCalledWith(['/editor'], {
       queryParams: { directory: '/', file: 'test.txt' },
     });

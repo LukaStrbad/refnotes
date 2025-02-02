@@ -19,7 +19,8 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
-import {File} from "../../model/file";
+import { File } from '../../model/file';
+import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 
 @Component({
   selector: 'app-browser',
@@ -31,11 +32,14 @@ import {File} from "../../model/file";
     TranslateDirective,
     RouterLink,
     TestTagDirective,
+    EditTagsModalComponent,
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
 export class BrowserComponent implements OnInit, OnDestroy {
+  protected readonly tagLimit = 3;
+
   currentFolder: Directory | null = null;
   @ViewChild('fileModal')
   fileModal!: CreateNewModalComponent;
@@ -219,6 +223,33 @@ export class BrowserComponent implements OnInit, OnDestroy {
         file: file.name,
       },
     });
+  }
+
+  limitTags(tags: string[]): string[] {
+    return tags.slice(0, this.tagLimit);
+  }
+
+  getRemainingTags(tags: string[]): string[] {
+    return tags.slice(this.tagLimit);
+  }
+
+  async addTag([fileName, tag]: [string, string]) {
+    await this.fileService.addFileTag(this.currentPath, fileName, tag);
+    const file = this.currentFolder?.files.find((f) => f.name === fileName);
+    if (file) {
+      file.tags.push(tag);
+    }
+  }
+
+  async removeTag([fileName, tag]: [string, string]) {
+    await this.fileService.removeFileTag(this.currentPath, fileName, tag);
+    const file = this.currentFolder?.files.find((f) => f.name === fileName);
+    if (file) {
+      const index = file.tags.indexOf(tag);
+      if (index !== -1) {
+        file.tags.splice(index, 1);
+      }
+    }
   }
 }
 

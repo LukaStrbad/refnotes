@@ -33,7 +33,10 @@
       </li>
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a routerLink="/browser{{ breadcrumb.path }}" testTag="breadcrumb-item">
+          <a
+            routerLink="/browser{{ breadcrumb.path }}"
+            testTag="breadcrumb-item"
+          >
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
             {{ breadcrumb.name }}
           </a>
@@ -48,7 +51,7 @@
         <tr>
           <!-- For icons-->
           <th></th>
-          <th class="text-center" translate>browser.table.name</th>
+          <th class="text-start" translate>browser.table.name</th>
           <th class="text-end" translate>browser.table.actions</th>
         </tr>
       </thead>
@@ -62,11 +65,15 @@
       }
       <tbody>
         @for (folderName of currentFolder.directories; track folderName) {
-          <tr (click)="openFolder(folderName)" class="hover:bg-base-300" testTag="folder-tr">
+          <tr
+            (click)="openFolder(folderName)"
+            class="hover:bg-base-300"
+            testTag="folder-tr"
+          >
             <td>
               <i class="bi bi-folder"></i>
             </td>
-            <td class="text-center">
+            <td class="text-start">
               {{ folderName }}
             </td>
             <td class="flex gap-2 justify-end">
@@ -102,21 +109,40 @@
                 }"
               ></i>
             </td>
-            <td class="text-center">
-              {{ file.name }}
+            <td class="text-start">
+              <div class="flex gap-2">
+                <div>{{ file.name }}</div>
+
+                @for (tag of limitTags(file.tags); track tag) {
+                  <div class="badge badge-soft badge-primary">{{ tag }}</div>
+                }
+                @if (file.tags.length > tagLimit) {
+                  <div class="tooltip">
+                    <div class="tooltip-content bg-transparent">
+                      <div class="badge badge-soft badge-accent">
+                        {{ getRemainingTags(file.tags).join(", ") }}
+                      </div>
+                    </div>
+                    <button class="badge badge-soft badge-accent">
+                      +{{ file.tags.length - tagLimit }}
+                    </button>
+                  </div>
+                }
+
+                <button
+                  class="btn btn-xs btn-soft btn-secondary"
+                  (click)="editTagsModal.show(file.name, file.tags)"
+                >
+                  <i class="bi bi-pencil"></i>tags
+                </button>
+              </div>
             </td>
             <td class="flex gap-2 justify-end">
-              <button
-                class="btn btn-sm btn-accent"
-                (click)="openEdit(file)"
-              >
+              <button class="btn btn-sm btn-accent" (click)="openEdit(file)">
                 <i class="bi bi-pencil"></i>
                 {{ "browser.edit" | translate }}
               </button>
-              <button
-                class="btn btn-sm btn-error"
-                (click)="deleteFile(file)"
-              >
+              <button class="btn btn-sm btn-error" (click)="deleteFile(file)">
                 <i class="bi bi-trash"></i>
                 {{ "browser.delete" | translate }}
               </button>
@@ -131,3 +157,9 @@
     </div>
   }
 </div>
+
+<app-edit-tags-modal
+  #editTagsModal
+  (onAdd)="addTag($event)"
+  (onRemove)="removeTag($event)"
+></app-edit-tags-modal>

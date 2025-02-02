@@ -76,6 +76,12 @@
       "create": "Create",
       "upload": "Upload",
       "size": "size"
+    },
+    "editTags": {
+      "title": "Edit tags",
+      "cancel": "Cancel",
+      "buttonAdd": "Add",
+      "inputAddTag": "Enter tag"
     }
   },
   "auth": {

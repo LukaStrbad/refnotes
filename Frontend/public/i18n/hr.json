@@ -76,6 +76,12 @@
       "create": "Potvrdi",
       "upload": "Potvrdi",
       "size": "veličina"
+    },
+    "editTags": {
+      "cancel": "Otkaži",
+      "title": "Uredi oznake",
+      "buttonAdd": "Dodaj",
+      "inputAddTag": "Unesi oznaku"
     }
   },
   "auth": {

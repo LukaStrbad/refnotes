@@ -5,12 +5,17 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
-import { firstValueFrom, lastValueFrom, Observable, of } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { File } from '../model/file';
 
 const apiUrl = environment.apiUrl + '/browser';
+
+function createFile(name: string): File {
+  return { name, tags: [] };
+}
 
 describe('BrowserService', () => {
   let service: BrowserService;
@@ -40,7 +45,7 @@ describe('BrowserService', () => {
   it('should list directory with cache', async () => {
     const mockDirectory: Directory = {
       name: '/',
-      files: ['test.txt'],
+      files: [createFile('test.txt')],
       directories: [],
     };
 
@@ -59,7 +64,7 @@ describe('BrowserService', () => {
 
     const newDirectory: Directory = {
       name: '/',
-      files: ['test.txt', 'test2.txt'],
+      files: [createFile('test.txt'), createFile('test2.txt')],
       directories: ['dir'],
     };
 
