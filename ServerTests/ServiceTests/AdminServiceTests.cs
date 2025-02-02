@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Db;
+using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;

@@ -5,12 +5,17 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
-import { firstValueFrom, lastValueFrom, Observable, of } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { File } from '../model/file';
 
 const apiUrl = environment.apiUrl + '/browser';
+
+function createFile(name: string): File {
+  return { name, tags: [] };
+}
 
 describe('BrowserService', () => {
   let service: BrowserService;
@@ -40,7 +45,7 @@ describe('BrowserService', () => {
   it('should list directory with cache', async () => {
     const mockDirectory: Directory = {
       name: '/',
-      files: ['test.txt'],
+      files: [createFile('test.txt')],
       directories: [],
     };
 
@@ -59,7 +64,7 @@ describe('BrowserService', () => {
 
     const newDirectory: Directory = {
       name: '/',
-      files: ['test.txt', 'test2.txt'],
+      files: [createFile('test.txt'), createFile('test2.txt')],
       directories: ['dir'],
     };
 
@@ -68,43 +73,6 @@ describe('BrowserService', () => {
     const req2 = httpMock.expectOne(`${apiUrl}/list?path=/`);
     req2.flush(newDirectory);
     expect(await lastValue).toEqual(newDirectory);
-  });
-
-  it('should add a file', async () => {
-    const mockFile = new File([''], 'test.txt');
-
-    const promise = lastValueFrom(service.addFile('/', mockFile));
-
-    const req = httpMock.expectOne(`${apiUrl}/addFile?directoryPath=/`);
-    expect(req.request.method).toBe('POST');
-    req.flush({});
-
-    const response = await promise;
-    expect(response).toBeInstanceOf(HttpResponse);
-  });
-
-  it('should add a text file', async () => {
-    const mockResponse = {};
-    const promise = service.addTextFile('/', 'test.txt', 'content');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/addTextFile?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('POST');
-    req.flush(mockResponse);
-    expect(await promise).toEqual(mockResponse);
-  });
-
-  it('should delete a file', async () => {
-    const mockResponse = {};
-    const promise = service.deleteFile('/', 'test.txt');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/deleteFile?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('DELETE');
-    req.flush(mockResponse);
-    expect(await promise).toEqual(mockResponse);
   });
 
   it('should add a directory', async () => {
@@ -125,53 +93,5 @@ describe('BrowserService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush(mockResponse);
     expect(await promise).toEqual(mockResponse);
-  });
-
-  it('should get a file', async () => {
-    const mockResponse = new ArrayBuffer(8);
-    const promise = service.getFile('/', 'test.txt');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/getFile?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockResponse);
-    expect(await promise).toEqual(mockResponse);
-  });
-
-  it('should get an image', async () => {
-    const mockResponse = new ArrayBuffer(8);
-    const promise = service.getImage('/', 'test.txt');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/getImage?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockResponse);
-    expect(await promise).toEqual(mockResponse);
-  });
-
-  it('should get null if image doesn\'t exist', async () => {
-    const mockResponse = new ArrayBuffer(0);
-    const promise = service.getImage('/', 'test.txt');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/getImage?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockResponse);
-    expect(await promise).toEqual(null);
-  });
-
-  it('should save a text file', async () => {
-    const mockResponse = {};
-    const promise = service.saveTextfile('/', 'test.txt', 'content');
-
-    const req = httpMock.expectOne(
-      `${apiUrl}/saveTextFile?directoryPath=/&name=test.txt`,
-    );
-    expect(req.request.method).toBe('POST');
-    req.flush(mockResponse);
-    await promise;
   });
 });

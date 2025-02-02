@@ -1,19 +1,16 @@
-﻿using System;
-using System.IO;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Db;
-using Server.Model;
-using Xunit.Abstractions;
+using Server.Db.Model;
 
 namespace ServerTests;
 
 public class BaseTests : IDisposable
 {
     private RefNotesContext? _context;
+    private static readonly Random Rnd = new();
+
     protected string TestFolder { get; }
 
     protected string TestFile
@@ -73,6 +70,15 @@ public class BaseTests : IDisposable
         return (newUser, claimsPrincipal);
     }
 
+    protected static string RandomString(int length)
+    {
+        lock (Rnd)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[Rnd.Next(s.Length)]).ToArray());
+        }
+    }
 
     public void Dispose()
     {

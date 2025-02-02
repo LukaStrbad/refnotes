@@ -1,5 +1,7 @@
+import { File } from './file';
+
 export interface Directory {
-    name: string;
-    files: string[];
-    directories: string[];
+  name: string;
+  files: File[];
+  directories: string[];
 }

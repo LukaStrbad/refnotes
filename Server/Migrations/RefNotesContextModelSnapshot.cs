@@ -17,12 +17,27 @@ namespace Server.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Server.Model.EncryptedDirectory", b =>
+            modelBuilder.Entity("EncryptedFileFileTag", b =>
+                {
+                    b.Property<int>("FilesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("FilesId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("EncryptedFileFileTag");
+                });
+
+            modelBuilder.Entity("Server.Db.Model.EncryptedDirectory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -49,7 +64,7 @@ namespace Server.Migrations
                     b.ToTable("Directories");
                 });
 
-            modelBuilder.Entity("Server.Model.EncryptedFile", b =>
+            modelBuilder.Entity("Server.Db.Model.EncryptedFile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -74,10 +89,33 @@ namespace Server.Migrations
 
                     b.HasIndex("EncryptedDirectoryId");
 
-                    b.ToTable("EncryptedFile");
+                    b.ToTable("Files");
                 });
 
-            modelBuilder.Entity("Server.Model.User", b =>
+            modelBuilder.Entity("Server.Db.Model.FileTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("FileTags");
+                });
+
+            modelBuilder.Entity("Server.Db.Model.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -114,7 +152,7 @@ namespace Server.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Server.Model.UserRefreshToken", b =>
+            modelBuilder.Entity("Server.Db.Model.UserRefreshToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -140,15 +178,30 @@ namespace Server.Migrations
                     b.ToTable("UserRefreshTokens");
                 });
 
-            modelBuilder.Entity("Server.Model.EncryptedDirectory", b =>
+            modelBuilder.Entity("EncryptedFileFileTag", b =>
                 {
-                    b.HasOne("Server.Model.User", "Owner")
+                    b.HasOne("Server.Db.Model.EncryptedFile", null)
+                        .WithMany()
+                        .HasForeignKey("FilesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Db.Model.FileTag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Server.Db.Model.EncryptedDirectory", b =>
+                {
+                    b.HasOne("Server.Db.Model.User", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Model.EncryptedDirectory", "Parent")
+                    b.HasOne("Server.Db.Model.EncryptedDirectory", "Parent")
                         .WithMany("Directories")
                         .HasForeignKey("ParentId");
 
@@ -157,14 +210,25 @@ namespace Server.Migrations
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("Server.Model.EncryptedFile", b =>
+            modelBuilder.Entity("Server.Db.Model.EncryptedFile", b =>
                 {
-                    b.HasOne("Server.Model.EncryptedDirectory", null)
+                    b.HasOne("Server.Db.Model.EncryptedDirectory", null)
                         .WithMany("Files")
                         .HasForeignKey("EncryptedDirectoryId");
                 });
 
-            modelBuilder.Entity("Server.Model.EncryptedDirectory", b =>
+            modelBuilder.Entity("Server.Db.Model.FileTag", b =>
+                {
+                    b.HasOne("Server.Db.Model.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Server.Db.Model.EncryptedDirectory", b =>
                 {
                     b.Navigation("Directories");
 

@@ -1,6 +1,7 @@
+using Server.Model;
 using Server.Services;
 
-namespace Server.Model;
+namespace Server.Db.Model;
 
 public class EncryptedDirectory
 {
@@ -29,12 +30,17 @@ public class EncryptedDirectory
     public User Owner { get; init; }
     public EncryptedDirectory? Parent { get; init; }
 
-    public ResponseDirectory Decrypt(IEncryptionService encryptionService)
+    public DirectoryDto Decrypt(IEncryptionService encryptionService)
     {
         var name = DecryptedName(encryptionService);
-        var files = Files.Select(file => file.DecryptedName(encryptionService)).ToList();
-        var directories = Directories.Select(directory => directory.Decrypt(encryptionService).Name).ToList();
-        return new ResponseDirectory(name, files, directories);
+        var files = Files.Select(file =>
+        {
+            var fileName = file.DecryptedName(encryptionService);
+            var tags = file.Tags.Select(tag => tag.DecryptedName(encryptionService));
+            return new FileDto(fileName, tags);
+        });
+        var directories = Directories.Select(directory => directory.Decrypt(encryptionService).Name);
+        return new DirectoryDto(name, files, directories);
     }
     
     public string DecryptedPath(IEncryptionService encryptionService)
