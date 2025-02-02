@@ -6,8 +6,6 @@ import {
   TranslateLoader,
   TranslateModule,
 } from '@ngx-translate/core';
-import { ElementRef } from '@angular/core';
-import { By } from '@angular/platform-browser';
 
 describe('EditTagsModalComponent', () => {
   let component: EditTagsModalComponent;
@@ -84,5 +82,31 @@ describe('EditTagsModalComponent', () => {
     removeButton.click();
 
     expect(removedTag).toBe('Tag 1');
+  });
+
+  it('should delete and restore tags', () => {
+    component.show('file.txt', ['Tag 1', 'Tag 2']);
+
+    fixture.detectChanges();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '[data-test="button-remove-tag"]',
+    ) as HTMLButtonElement;
+    deleteButton.click();
+
+    fixture.detectChanges();
+
+    const tag = component.tags.find((t) => t.name === 'Tag 1');
+    expect(tag?.deleted).toBe(true);
+
+    const restoreButton = fixture.nativeElement.querySelector(
+      '[data-test="button-restore-tag"]',
+    ) as HTMLButtonElement;
+    restoreButton.click();
+
+    fixture.detectChanges();
+
+    const restoredTag = component.tags.find((t) => t.name === 'Tag 1');
+    expect(restoredTag?.deleted).toBe(false);
   });
 });
