@@ -77,22 +77,4 @@ export class FileService {
       ),
     );
   }
-
-  async addFileTag(directoryPath: string, name: string, tag: string) {
-    await firstValueFrom(
-      this.http.post(
-        `${apiUrl}/addFileTag?directoryPath=${directoryPath}&name=${name}&tag=${tag}`,
-        {},
-      ),
-    );
-  }
-
-  async removeFileTag(directoryPath: string, name: string, tag: string) {
-    await firstValueFrom(
-      this.http.delete(
-        `${apiUrl}/removeFileTag?directoryPath=${directoryPath}&name=${name}&tag=${tag}`,
-        {},
-      ),
-    );
-  }
 }

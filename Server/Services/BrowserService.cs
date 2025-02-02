@@ -35,16 +35,18 @@ public interface IBrowserService
 
 public class BrowserService(
     RefNotesContext context,
-    IEncryptionService encryptionService) : BaseService(context), IBrowserService
+    IEncryptionService encryptionService) : IBrowserService
 {
+    private readonly ServiceUtils _utils = new(context, encryptionService);
+
     public async Task<DirectoryDto?> List(ClaimsPrincipal claimsPrincipal, string path = "/")
     {
-        var user = await GetUser(claimsPrincipal);
+        var user = await _utils.GetUser(claimsPrincipal);
 
         // Ensure root directory exists
         if (path is "/")
         {
-            var rootDir = await Context.Directories
+            var rootDir = await context.Directories
                 .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptionService.EncryptAesStringBase64("/"));
             if (rootDir is null)
             {
@@ -52,25 +54,25 @@ public class BrowserService(
             }
         }
 
-        var directory = await ServiceUtils.GetDirectory(user, encryptionService, Context, path, true);
+        var directory = await _utils.GetDirectory(user, path, true);
 
         return directory?.Decrypt(encryptionService);
     }
 
     public async Task AddDirectory(ClaimsPrincipal claimsPrincipal, string path)
     {
-        var user = await GetUser(claimsPrincipal);
+        var user = await _utils.GetUser(claimsPrincipal);
 
         path = NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
 
-        var existingDir = await Context.Directories
+        var existingDir = await context.Directories
             .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
 
         if (path is "/")
         {
-            Context.Directories.Add(new EncryptedDirectory(encryptedPath, user));
-            await Context.SaveChangesAsync();
+            context.Directories.Add(new EncryptedDirectory(encryptedPath, user));
+            await context.SaveChangesAsync();
             return;
         }
 
@@ -81,13 +83,13 @@ public class BrowserService(
 
         var (baseDir, _) = SplitDirPathName(path);
         var newDirectory = new EncryptedDirectory(encryptedPath, user);
-        var parentDir = await ServiceUtils.GetDirectory(user, encryptionService, Context, baseDir, false);
+        var parentDir = await _utils.GetDirectory(user, baseDir, false);
 
         // Recursively create parent directories if they don't exist
         if (parentDir is null)
         {
             await AddDirectory(claimsPrincipal, baseDir);
-            parentDir = await ServiceUtils.GetDirectory(user, encryptionService, Context, baseDir, false);
+            parentDir = await _utils.GetDirectory(user, baseDir, false);
         }
 
         if (parentDir is null)
@@ -96,12 +98,12 @@ public class BrowserService(
         }
 
         parentDir.Directories.Add(newDirectory);
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteDirectory(ClaimsPrincipal claimsPrincipal, string path)
     {
-        var user = await GetUser(claimsPrincipal);
+        var user = await _utils.GetUser(claimsPrincipal);
 
         path = NormalizePath(path);
 
@@ -111,7 +113,7 @@ public class BrowserService(
         }
 
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
-        var directory = await Context.Directories
+        var directory = await context.Directories
             .Include(dir => dir.Parent)
             .Include(dir => dir.Files)
             .Include(dir => dir.Directories)
@@ -134,8 +136,8 @@ public class BrowserService(
         }
 
         parent.Directories.Remove(directory);
-        Context.Entry(directory).State = EntityState.Deleted;
-        await Context.SaveChangesAsync();
+        context.Entry(directory).State = EntityState.Deleted;
+        await context.SaveChangesAsync();
     }
 
     private record DirPathName(string ParentDir, string Name);

@@ -21,6 +21,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
+import { TagService } from '../../services/tag.service';
 
 @Component({
   selector: 'app-browser',
@@ -77,6 +78,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   constructor(
     private browser: BrowserService,
     private fileService: FileService,
+    private tagService: TagService,
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
@@ -234,7 +236,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async addTag([fileName, tag]: [string, string]) {
-    await this.fileService.addFileTag(this.currentPath, fileName, tag);
+    await this.tagService.addFileTag(this.currentPath, fileName, tag);
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file) {
       file.tags.push(tag);
@@ -242,7 +244,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async removeTag([fileName, tag]: [string, string]) {
-    await this.fileService.removeFileTag(this.currentPath, fileName, tag);
+    await this.tagService.removeFileTag(this.currentPath, fileName, tag);
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
