@@ -65,7 +65,7 @@ public static class Configuration
         builder.Services.AddDbContext<RefNotesContext>(options =>
             options.UseMySql(connectionString, serverVersion)
         );
-        
+
         using var scope = builder.Services.BuildServiceProvider().CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<RefNotesContext>();
         db.Database.Migrate();
@@ -94,9 +94,21 @@ public static class Configuration
 
     public static AppConfiguration LoadAppConfig()
     {
-        const Environment.SpecialFolder folder = Environment.SpecialFolder.LocalApplicationData;
-        var path = Environment.GetFolderPath(folder);
-        var baseDir = Path.Join(path, RootDir);
+        // Get user's home directory
+        const Environment.SpecialFolder folder = Environment.SpecialFolder.UserProfile;
+        var userFolder = Environment.GetFolderPath(folder);
+        var userConfigDir = Path.Join(userFolder, ".config", "refnotes");
+
+        // Check if CONFIG_PATH environment variable is set
+        var configPath = Environment.GetEnvironmentVariable("REFNOTES_CONFIG_PATH");
+
+        // Use CONFIG_PATH if set, otherwise use user's home directory
+        var baseDir = string.IsNullOrWhiteSpace(configPath)
+            ? userConfigDir
+            : configPath;
+
+        Console.WriteLine($"Using configuration path: {baseDir}");
+
         Directory.CreateDirectory(baseDir);
 
         var configFile = Path.Join(baseDir, ConfigFile);
@@ -110,6 +122,7 @@ public static class Configuration
             var json = File.ReadAllText(configFile);
             config = JsonSerializer.Deserialize<AppConfiguration>(json);
             ArgumentNullException.ThrowIfNull(config);
+            config.BaseDir = baseDir;
         }
         else
         {
