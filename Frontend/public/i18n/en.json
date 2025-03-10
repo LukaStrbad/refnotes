@@ -113,5 +113,9 @@
   },
   "generic": {
     "error": "An error has occurred"
+  },
+  "preview": {
+    "viewingFile": "Viewing {{fileName}}",
+    "labelTags": "Tags:"
   }
 }
