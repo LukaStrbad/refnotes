@@ -17,6 +17,14 @@
   @if (loading) {
     <div class="skeleton h-72 w-full"></div>
   } @else {
-    {{content}}
+    <div
+      class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
+      [class.no-wrap]="!settings.mdEditor().wrapLines"
+    >
+      <div
+        [innerHTML]="content"
+        class="preview bg-base-200 p-2 rounded-lg h-full"
+      ></div>
+    </div>
   }
 </div>

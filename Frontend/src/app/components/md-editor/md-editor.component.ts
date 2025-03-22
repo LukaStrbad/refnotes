@@ -41,7 +41,7 @@ import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
   encapsulation: ViewEncapsulation.None,
 })
 export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly markdownHighlighter;
+  private readonly markdownHighlighter: MarkdownHighlighter;
   currentPath = input('/');
   value = model('');
 
