@@ -3,16 +3,18 @@
     {{ "preview.viewingFile" | translate: { fileName } }}
   </h1>
 
-  <div
-    class="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center"
-  >
-    <div class="flex gap-2 items-center">
-      <h2 class="text-lg" translate>preview.labelTags</h2>
-      @for (tag of tags; track tag) {
-        <div class="badge badge-soft badge-primary">{{ tag }}</div>
-      }
+  @if (tags.length > 0) {
+    <div
+      class="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center"
+    >
+      <div class="flex gap-2 items-center">
+        <h2 class="text-lg" translate>preview.labelTags</h2>
+        @for (tag of tags; track tag) {
+          <div class="badge badge-soft badge-primary">{{ tag }}</div>
+        }
+      </div>
     </div>
-  </div>
+  }
 
   @if (loading) {
     <div class="skeleton h-72 w-full"></div>
