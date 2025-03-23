@@ -6,6 +6,7 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import * as fileUtils from '../../utils/file-utils';
 import { MarkdownHighlighter } from '../../utils/markdown-highlighter';
 import { SettingsService } from '../../services/settings.service';
+import { isMarkdownFile, isTextFile } from '../../utils/file-utils';
 
 @Component({
   selector: 'app-file-preview',
@@ -21,6 +22,7 @@ export class FilePreviewComponent {
   content = '';
   loading = true;
   tags: string[] = [];
+  fileType: fileUtils.FileType = 'unknown';
 
   fileUtils = fileUtils;
 
@@ -34,12 +36,18 @@ export class FilePreviewComponent {
       'directory',
     ) as string;
     this.fileName = route.snapshot.queryParamMap.get('file') as string;
+    this.fileType = fileUtils.getFileType(this.fileName);
 
     fileService.getFile(this.directoryPath, this.fileName)
       .then((content) => {
         const text = new TextDecoder().decode(content);
-        const markdown = this.markdownHighlighter.parse(text)
-        this.content = markdown as string;
+        if (this.fileType === 'markdown') {
+          const markdown = this.markdownHighlighter.parse(text)
+          this.content = markdown as string;
+        } else if (this.fileType === 'text') {
+          console.log(text);
+          this.content = text;
+        }
         this.loading = false;
       });
 

@@ -22,6 +22,7 @@
     <div
       class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
       [class.no-wrap]="!settings.mdEditor().wrapLines"
+      [class.whitespace-pre-wrap]="fileType === 'text'"
     >
       <div
         [innerHTML]="content"
