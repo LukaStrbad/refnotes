@@ -7,7 +7,7 @@ using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
 
-public class FileServiceTests : BaseTests, IAsyncLifetime
+public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDatabaseFixture>
 {
     private readonly RefNotesContext _context;
     private readonly FileService _fileService;
@@ -15,10 +15,10 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     private readonly ClaimsPrincipal _claimsPrincipal;
     private const string DirectoryPath = "/file_service_test";
 
-    public FileServiceTests()
+    public FileServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = CreateDb();
+        _context = testDatabaseFixture.Context;
         (_, _claimsPrincipal) = CreateUser(_context, "test");
         _fileService = new FileService(_context, encryptionService, AppConfig);
         _browserService = new BrowserService(_context, encryptionService);

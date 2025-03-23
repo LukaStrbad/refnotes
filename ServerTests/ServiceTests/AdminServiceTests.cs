@@ -7,16 +7,16 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class AdminServiceTests : BaseTests
+public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
 {
     private readonly RefNotesContext _context;
     private readonly AdminService _adminService;
     private User _adminUser;
     private User _user;
 
-    public AdminServiceTests()
+    public AdminServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = CreateDb();
+        _context = testDatabaseFixture.Context;
         _adminService = new AdminService(_context);
         
         (_adminUser, _) = CreateUser(_context, "admin", "admininstrator");

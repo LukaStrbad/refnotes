@@ -8,7 +8,7 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class BrowserServiceTests : BaseTests
+public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
 {
     private readonly RefNotesContext _context;
     private readonly BrowserService _browserService;
@@ -16,10 +16,10 @@ public class BrowserServiceTests : BaseTests
     private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly EncryptionService _encryptionService;
 
-    public BrowserServiceTests()
+    public BrowserServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         _encryptionService = new EncryptionService(AesKey, AesIv);
-        _context = CreateDb();
+        _context = testDatabaseFixture.Context;
         (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
         _browserService = new BrowserService(_context, _encryptionService);
     }
