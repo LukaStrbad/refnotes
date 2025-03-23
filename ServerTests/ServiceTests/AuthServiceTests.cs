@@ -9,18 +9,19 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class AuthServiceTests : BaseTests
+public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
 {
     private readonly RefNotesContext _context;
     private readonly AuthService _authService;
     private User _user;
     private readonly User _newUser;
 
-    public AuthServiceTests()
+    public AuthServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = CreateDb();
+        _context = testDatabaseFixture.Context;
         _authService = new AuthService(_context, AppConfig);
-        _newUser = new User(0, "newUser", "newUser", "new@new.com", DefaultPassword);
+        var rndString = RandomString(32);
+        _newUser = new User(0, $"newUser_{rndString}", "newUser", $"new.{rndString}@new.com", DefaultPassword);
 
         (_user, _) = CreateUser(_context, "test");
     }

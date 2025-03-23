@@ -7,16 +7,16 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class AdminServiceTests : BaseTests
+public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
 {
     private readonly RefNotesContext _context;
     private readonly AdminService _adminService;
     private User _adminUser;
     private User _user;
 
-    public AdminServiceTests()
+    public AdminServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = CreateDb();
+        _context = testDatabaseFixture.Context;
         _adminService = new AdminService(_context);
         
         (_adminUser, _) = CreateUser(_context, "admin", "admininstrator");
@@ -27,7 +27,7 @@ public class AdminServiceTests : BaseTests
     public async Task ListUsers_ReturnsUsers()
     {
         var users = await _adminService.ListUsers();
-        Assert.Equal(2, users.Count);
+        Assert.True(users.Count >= 2);
         Assert.Contains(users, u => u.Username == _adminUser.Username);
         Assert.Contains(users, u => u.Username == _user.Username);
     }
