@@ -27,7 +27,7 @@ public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     public async Task ListUsers_ReturnsUsers()
     {
         var users = await _adminService.ListUsers();
-        Assert.Equal(2, users.Count);
+        Assert.True(users.Count >= 2);
         Assert.Contains(users, u => u.Username == _adminUser.Username);
         Assert.Contains(users, u => u.Username == _user.Username);
     }

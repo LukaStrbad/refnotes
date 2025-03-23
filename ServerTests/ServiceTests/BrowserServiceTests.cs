@@ -16,12 +16,18 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly EncryptionService _encryptionService;
 
+    private readonly string _newDirectoryPath;
+
     public BrowserServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         _encryptionService = new EncryptionService(AesKey, AesIv);
         _context = testDatabaseFixture.Context;
-        (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
+        var rndString = RandomString(32);
+        (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
         _browserService = new BrowserService(_context, _encryptionService);
+        
+        rndString = RandomString(32);
+        _newDirectoryPath = $"/new_{rndString}";
     }
     
     [Fact]
@@ -46,11 +52,9 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     [Fact]
     public async Task AddDirectoryToRoot_AddsDirectory()
     {
-        const string path = "/test";
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        await _browserService.AddDirectory(_claimsPrincipal, path);
-        
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(path);
+        var encryptedPath = _encryptionService.EncryptAesStringBase64(_newDirectoryPath);
         var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath);
         Assert.NotNull(directory);
     }
@@ -58,15 +62,10 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     [Fact]
     public async Task AddDirectoryToSubdirectory_AddsDirectory()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        const string subPath = "/test/sub";
+        var subPath = $"{_newDirectoryPath}/sub";
         await _browserService.AddDirectory(_claimsPrincipal, subPath);
-        
-        var dirCount = await _context.Directories.CountAsync();
-        // Root directory + test directory + subdirectory
-        Assert.Equal(3, dirCount);
         
         var encryptedPath = _encryptionService.EncryptAesStringBase64(subPath);
         var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath);
@@ -76,42 +75,37 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     [Fact]
     public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        await Assert.ThrowsAsync<ArgumentException>(() => _browserService.AddDirectory(_claimsPrincipal, path));
+        await Assert.ThrowsAsync<ArgumentException>(() => _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath));
     }
     
     [Fact]
     public async Task DeleteDirectory_RemovesDirectory()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        await _browserService.DeleteDirectory(_claimsPrincipal, path);
+        await _browserService.DeleteDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == _encryptionService.EncryptAesStringBase64(path));
+        var directory = await _context.Directories.FirstOrDefaultAsync(d => d.Path == _encryptionService.EncryptAesStringBase64(_newDirectoryPath));
         Assert.Null(directory);
     }
     
     [Fact]
     public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist()
     {
-        const string path = "/test";
-        
-        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => _browserService.DeleteDirectory(_claimsPrincipal, path));
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => _browserService.DeleteDirectory(_claimsPrincipal, _newDirectoryPath));
     }
     
     [Fact]
     public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
         
-        const string subPath = "/test/sub";
+        var subPath = $"{_newDirectoryPath}/sub";
         await _browserService.AddDirectory(_claimsPrincipal, subPath);
         
-        await Assert.ThrowsAsync<DirectoryNotEmptyException>(() => _browserService.DeleteDirectory(_claimsPrincipal, path));
+        await Assert.ThrowsAsync<DirectoryNotEmptyException>(() => _browserService.DeleteDirectory(_claimsPrincipal, _newDirectoryPath));
     }
     
     [Fact]
@@ -128,19 +122,19 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     [Fact]
     public async Task List_ReturnsDirectory()
     {
-        const string path = "/test";
-        await _browserService.AddDirectory(_claimsPrincipal, path);
+        await _browserService.AddDirectory(_claimsPrincipal, _newDirectoryPath);
+        var expectedDirName = _newDirectoryPath.TrimStart('/');
         
         var rootDirectory = await _browserService.List(_claimsPrincipal);
         Assert.NotNull(rootDirectory);
         Assert.Single(rootDirectory.Directories);
         Assert.Empty(rootDirectory.Files);
-        Assert.Equal("test", rootDirectory.Directories.FirstOrDefault());
+        Assert.Equal(expectedDirName, rootDirectory.Directories.FirstOrDefault());
         
-        var responseDirectory = await _browserService.List(_claimsPrincipal, path);
+        var responseDirectory = await _browserService.List(_claimsPrincipal, _newDirectoryPath);
         
         Assert.NotNull(responseDirectory);
-        Assert.Equal("test", responseDirectory.Name);
+        Assert.Equal(expectedDirName, responseDirectory.Name);
         Assert.Empty(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
     }
@@ -148,9 +142,7 @@ public class BrowserServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     [Fact]
     public async Task List_ReturnsNull_WhenDirectoryDoesNotExist()
     {
-        const string path = "/test";
-        
-        var responseDirectory = await _browserService.List(_claimsPrincipal, path);
+        var responseDirectory = await _browserService.List(_claimsPrincipal, _newDirectoryPath);
         
         Assert.Null(responseDirectory);
     }

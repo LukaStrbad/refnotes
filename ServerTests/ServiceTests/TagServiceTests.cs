@@ -15,21 +15,25 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     private readonly BrowserService _browserService;
     private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
-    private const string DirectoryPath = "/tag_service_test";
+    private readonly string _directoryPath;
 
     public TagServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
         _context = testDatabaseFixture.Context;
-        (_testUser, _claimsPrincipal) = CreateUser(_context, "test");
+        var rndString = RandomString(32);
+        (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
         _fileService = new FileService(_context, encryptionService, AppConfig);
         _tagService = new TagService(_context, encryptionService);
         _browserService = new BrowserService(_context, encryptionService);
+        
+        rndString = RandomString(32);
+        _directoryPath = $"/tag_service_test_{rndString}";
     }
 
     public async Task InitializeAsync()
     {
-        await _browserService.AddDirectory(_claimsPrincipal, DirectoryPath);
+        await _browserService.AddDirectory(_claimsPrincipal, _directoryPath);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -37,7 +41,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     private async Task<string> AddFileWithTags(List<string> tags)
     {
         var fileName = $"{RandomString(16)}.txt";
-        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        await _fileService.AddFile(_claimsPrincipal, _directoryPath, fileName);
 
         var file = await _context.Files
             .Include(f => f.Tags)
@@ -69,7 +73,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     {
         var fileName = await AddFileWithTags(["test_tag", "test_tag2"]);
 
-        var tags = await _tagService.ListFileTags(_claimsPrincipal, DirectoryPath, fileName);
+        var tags = await _tagService.ListFileTags(_claimsPrincipal, _directoryPath, fileName);
 
         Assert.NotNull(tags);
         Assert.Equal(2, tags.Count);
@@ -80,11 +84,11 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     [Fact]
     public async Task AddFileTag_AddsTag()
     {
-        const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        var fileName = $"{RandomString(32)}.txt";
+        await _fileService.AddFile(_claimsPrincipal, _directoryPath, fileName);
 
         const string tag = "test_tag";
-        await _tagService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+        await _tagService.AddFileTag(_claimsPrincipal, _directoryPath, fileName, tag);
 
         var file = await _context.Files
             .Include(f => f.Tags)
@@ -98,12 +102,12 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     [Fact]
     public async Task AddFileTag_DoesntDoAnythingIfTagAlreadyExists()
     {
-        const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        var fileName = $"{RandomString(32)}.txt";
+        await _fileService.AddFile(_claimsPrincipal, _directoryPath, fileName);
 
         const string tag = "test_tag";
-        await _tagService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
-        await _tagService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+        await _tagService.AddFileTag(_claimsPrincipal, _directoryPath, fileName, tag);
+        await _tagService.AddFileTag(_claimsPrincipal, _directoryPath, fileName, tag);
 
         var file = await _context.Files
             .Include(f => f.Tags)
@@ -121,18 +125,18 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
         const string tag = "test_tag";
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _tagService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag));
+            _tagService.AddFileTag(_claimsPrincipal, _directoryPath, fileName, tag));
     }
 
     [Fact]
     public async Task RemoveFileTag_RemovesTag()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_claimsPrincipal, DirectoryPath, fileName);
+        await _fileService.AddFile(_claimsPrincipal, _directoryPath, fileName);
         const string tag = "test_tag";
-        await _tagService.AddFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+        await _tagService.AddFileTag(_claimsPrincipal, _directoryPath, fileName, tag);
 
-        await _tagService.RemoveFileTag(_claimsPrincipal, DirectoryPath, fileName, tag);
+        await _tagService.RemoveFileTag(_claimsPrincipal, _directoryPath, fileName, tag);
 
         var file = await _context.Files
             .Include(f => f.Tags)
@@ -149,6 +153,6 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
         const string tag = "test_tag";
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _tagService.RemoveFileTag(_claimsPrincipal, DirectoryPath, fileName, tag));
+            _tagService.RemoveFileTag(_claimsPrincipal, _directoryPath, fileName, tag));
     }
 }

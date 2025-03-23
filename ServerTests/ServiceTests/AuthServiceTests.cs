@@ -20,7 +20,8 @@ public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     {
         _context = testDatabaseFixture.Context;
         _authService = new AuthService(_context, AppConfig);
-        _newUser = new User(0, "newUser", "newUser", "new@new.com", DefaultPassword);
+        var rndString = RandomString(32);
+        _newUser = new User(0, $"newUser_{rndString}", "newUser", $"new.{rndString}@new.com", DefaultPassword);
 
         (_user, _) = CreateUser(_context, "test");
     }
