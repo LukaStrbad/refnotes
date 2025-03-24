@@ -26,6 +26,7 @@ import { splitDirAndName } from '../../../utils/path-utils';
 import { NgClass } from '@angular/common';
 import { FileService } from '../../../services/file.service';
 import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
+import { getImageBlobUrl } from '../../../utils/image-utils';
 
 @Component({
   selector: 'app-md-editor',
@@ -170,9 +171,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!data) {
           return;
         }
-        const imageType = name.split('.').pop();
-        const blob = new Blob([data], { type: `image/${imageType}` });
-        const objectURL = URL.createObjectURL(blob);
+        const objectURL = getImageBlobUrl(name, data);
         // Save the blob URL to the image URL
         imageUrl.blob = objectURL;
         elements.forEach((element) => element.setAttribute('src', objectURL));

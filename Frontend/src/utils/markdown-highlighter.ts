@@ -3,6 +3,7 @@ import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js';
 import { Marked, Tokens } from "marked";
 import { resolveRelativeFolderPath } from "./path-utils";
+import { resolveImageUrl } from "./image-utils";
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -96,12 +97,13 @@ export class MarkdownHighlighter {
         const title = token.title ?? '';
         const alt = token.text;
 
+        const resolvedImageUrl = resolveImageUrl(this.currentPath, src);
         // If the image points to an external URL, just return the image tag
-        if (src.startsWith('http')) {
-          return `<img src="${src}" alt="${alt}" title="${title}" />`;
+        if (resolvedImageUrl.isHttp) {
+          return `<img src="${resolvedImageUrl.url}" alt="${alt}" title="${title}" />`;
         }
 
-        src = resolveRelativeFolderPath(this.currentPath, src);
+        src = resolvedImageUrl.url;
         let imageUrl = this.imageUrls.find((i) => i.src === src);
         if (!imageUrl) {
           const elementAttr = `image-${this.imageUrls.length}`;

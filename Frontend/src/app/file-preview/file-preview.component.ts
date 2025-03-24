@@ -1,4 +1,4 @@
-import { Component, effect, ViewEncapsulation } from '@angular/core';
+import { Component, effect, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
@@ -6,23 +6,26 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import * as fileUtils from '../../utils/file-utils';
 import { MarkdownHighlighter } from '../../utils/markdown-highlighter';
 import { SettingsService } from '../../services/settings.service';
-import { isMarkdownFile, isTextFile } from '../../utils/file-utils';
+import { NgClass } from '@angular/common';
+import { getImageBlobUrl } from '../../utils/image-utils';
 
 @Component({
   selector: 'app-file-preview',
-  imports: [TranslatePipe, TranslateDirective],
+  imports: [TranslatePipe, TranslateDirective, NgClass],
   templateUrl: './file-preview.component.html',
   styleUrl: './file-preview.component.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class FilePreviewComponent {
+export class FilePreviewComponent implements OnInit, OnDestroy {
   private readonly markdownHighlighter: MarkdownHighlighter;
   readonly directoryPath: string;
   readonly fileName: string;
+
   content = '';
   loading = true;
   tags: string[] = [];
   fileType: fileUtils.FileType = 'unknown';
+  imageSrc: string | null = null;
 
   fileUtils = fileUtils;
 
@@ -38,7 +41,33 @@ export class FilePreviewComponent {
     this.fileName = route.snapshot.queryParamMap.get('file') as string;
     this.fileType = fileUtils.getFileType(this.fileName);
 
-    fileService.getFile(this.directoryPath, this.fileName)
+    this.markdownHighlighter = new MarkdownHighlighter(
+      this.settings.mdEditor().showLineNumbers,
+      this.directoryPath,
+    );
+
+    effect(() => {
+      const showLineNumbers = this.settings.mdEditor().showLineNumbers;
+      this.markdownHighlighter.showLineNumbers = showLineNumbers;
+    });
+  }
+
+  ngOnInit(): void {
+    if (this.fileType === 'image') {
+      this.loadImage();
+    } else {
+      this.loadFile();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.imageSrc) {
+      URL.revokeObjectURL(this.imageSrc);
+    }
+  }
+
+  loadFile() {
+    this.fileService.getFile(this.directoryPath, this.fileName)
       .then((content) => {
         const text = new TextDecoder().decode(content);
         if (this.fileType === 'markdown') {
@@ -51,18 +80,19 @@ export class FilePreviewComponent {
         this.loading = false;
       });
 
-    tagService.listFileTags(this.directoryPath, this.fileName).then((tags) => {
+    this.tagService.listFileTags(this.directoryPath, this.fileName).then((tags) => {
       this.tags = tags;
     });
+  }
 
-    this.markdownHighlighter = new MarkdownHighlighter(
-      this.settings.mdEditor().showLineNumbers,
-      this.directoryPath,
-    );
+  loadImage() {
+    this.fileService.getImage(this.directoryPath, this.fileName).then((data) => {
+      if (!data) {
+        return;
+      }
 
-    effect(() => {
-      const showLineNumbers = this.settings.mdEditor().showLineNumbers;
-      this.markdownHighlighter.showLineNumbers = showLineNumbers;
+      this.imageSrc = getImageBlobUrl(this.fileName, data);
+      this.loading = false;
     });
   }
 }
