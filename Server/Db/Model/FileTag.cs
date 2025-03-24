@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Server.Services;
 
 namespace Server.Db.Model;
 
+[Table("file_tags")]
 public class FileTag(string name, int ownerId)
 {
     public int Id { get; set; }

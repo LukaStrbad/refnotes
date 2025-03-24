@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Db.Model;
 
+[Table("users")]
 public class User(
     int id,
     string username,

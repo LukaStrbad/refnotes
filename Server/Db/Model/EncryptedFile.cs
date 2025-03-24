@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Server.Services;
 
 namespace Server.Db.Model;
 
+[Table("encrypted_files")]
 public class EncryptedFile(string filesystemName, string name)
 {
     public int Id { get; set; }

@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Server.Db.Model;
 
+[Table("user_refresh_tokens")]
 public class UserRefreshToken
 {
     [Key]
