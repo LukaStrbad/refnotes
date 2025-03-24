@@ -64,8 +64,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
-  imageUrls: { elementAttr: string; src: string; blob: string | null }[] = [];
-
   constructor(
     public settings: SettingsService,
     private log: LoggerService,
@@ -96,7 +94,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.imageUrls.forEach((imageUrl) => {
+    this.markdownHighlighter.imageUrls.forEach((imageUrl) => {
       if (imageUrl.blob) {
         URL.revokeObjectURL(imageUrl.blob);
       }
@@ -152,7 +150,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
    * Updates the image elements with the correct image source
    */
   updateImages() {
-    this.imageUrls.forEach((imageUrl) => {
+    this.markdownHighlighter.imageUrls.forEach((imageUrl) => {
       const elements =
         this.previewContentElement.nativeElement.querySelectorAll(
           `img[data-image-id="${imageUrl.elementAttr}"]`,
