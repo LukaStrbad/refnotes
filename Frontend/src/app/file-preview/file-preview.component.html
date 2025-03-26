@@ -25,19 +25,21 @@
           [src]="imageSrc"
           class="w-full h-auto object-cover"
           alt="{{ fileName }}"
+          testTag="preview.image"
         />
       </div>
-    } @else {
-      <div
-        class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
-        [ngClass]="{ 'whitespace-pre-wrap': fileType === 'text' }"
-        [class.no-wrap]="!settings.mdEditor().wrapLines"
-      >
-        <div
-          [innerHTML]="content"
-          class="preview bg-base-200 p-2 rounded-lg h-full"
-        ></div>
-      </div>
     }
+    <div
+      class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
+      [ngClass]="{ 'whitespace-pre-wrap': fileType === 'text' }"
+      [ngClass]="{ hidden: fileType === 'image' }"
+      [class.no-wrap]="!settings.mdEditor().wrapLines"
+    >
+      <div
+        class="preview bg-base-200 p-2 rounded-lg h-full"
+        #previewRef
+        testTag="preview.content"
+      ></div>
+    </div>
   }
 </div>

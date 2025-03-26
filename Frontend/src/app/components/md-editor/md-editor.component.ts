@@ -73,6 +73,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markdownHighlighter = new MarkdownHighlighter(
       this.settings.mdEditor().showLineNumbers,
       this.currentPath(),
+      fileService,
     );
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);
@@ -150,33 +151,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Updates the image elements with the correct image source
    */
-  updateImages() {
-    this.markdownHighlighter.imageUrls.forEach((imageUrl) => {
-      const elements =
-        this.previewContentElement.nativeElement.querySelectorAll(
-          `img[data-image-id="${imageUrl.elementAttr}"]`,
-        );
-
-      // If the image is already loaded, set the src attribute
-      if (imageUrl.blob !== null) {
-        elements.forEach((element) =>
-          element.setAttribute('src', imageUrl.blob!),
-        );
-        return;
-      }
-
-      const [dir, name] = splitDirAndName(imageUrl.src);
-      // Load the image from the server
-      this.fileService.getImage(dir, name).then((data) => {
-        if (!data) {
-          return;
-        }
-        const objectURL = getImageBlobUrl(name, data);
-        // Save the blob URL to the image URL
-        imageUrl.blob = objectURL;
-        elements.forEach((element) => element.setAttribute('src', objectURL));
-      });
-    });
+  private updateImages() {
+    this.markdownHighlighter.updateImages(this.previewContentElement);
   }
 
   experimentalFastRender(text: string) {

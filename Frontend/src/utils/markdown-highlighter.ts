@@ -2,8 +2,10 @@ import { LRUCache } from "lru-cache";
 import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js';
 import { Marked, Tokens } from "marked";
-import { resolveRelativeFolderPath } from "./path-utils";
-import { resolveImageUrl } from "./image-utils";
+import { splitDirAndName } from "./path-utils";
+import { getImageBlobUrl, resolveImageUrl } from "./image-utils";
+import { ElementRef } from "@angular/core";
+import { FileService } from "../services/file.service";
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -37,6 +39,7 @@ export class MarkdownHighlighter {
   constructor(
     private _showLineNumbers: boolean,
     private currentPath: string,
+    private fileService: FileService,
   ) {
     this.marked = new Marked(this.highlightExtension(), {
       renderer: this.imageExtension()
@@ -49,6 +52,41 @@ export class MarkdownHighlighter {
 
   lexer(text: string) {
     return this.marked.lexer(text);
+  }
+
+  /**
+   * Updates the image elements with the correct image source
+   */
+  updateImages(previewContentElement: ElementRef<HTMLElement>) {
+    this.imageUrls.forEach((imageUrl) => {
+      const elements =
+        previewContentElement.nativeElement.querySelectorAll(
+          `img[data-image-id="${imageUrl.elementAttr}"]`,
+        );
+
+      // If the image is already loaded, set the src attribute
+      if (imageUrl.blob !== null) {
+        elements.forEach((element) =>
+          element.setAttribute('src', imageUrl.blob!),
+        );
+        return;
+      }
+
+      const [dir, name] = splitDirAndName(imageUrl.src);
+      // Load the image from the server
+      this.fileService.getImage(dir, name).then((data) => {
+        if (!data) {
+          console.error(`Failed to fetch image: ${imageUrl.src}`);
+          return;
+        }
+        const objectURL = getImageBlobUrl(name, data);
+        // Save the blob URL to the image URL
+        imageUrl.blob = objectURL;
+        elements.forEach((element) => element.setAttribute('src', objectURL));
+      }).catch((error) => {
+        console.error(`Error fetching image from server: ${error.message}`);
+      });
+    });
   }
 
   private highlightExtension() {
@@ -115,6 +153,7 @@ export class MarkdownHighlighter {
         if (imageUrl.blob) {
           return `<img src="${imageUrl.blob}" alt="${alt}" title="${title}" />`;
         }
+
         return `<img alt="${alt}" title="${title}" data-image-id="${imageUrl.elementAttr}" />`;
       },
     };
