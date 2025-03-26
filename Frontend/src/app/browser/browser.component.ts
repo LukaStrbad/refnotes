@@ -22,6 +22,7 @@ import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { TagService } from '../../services/tag.service';
+import * as fileUtils from '../../utils/file-utils';
 
 @Component({
   selector: 'app-browser',
@@ -60,6 +61,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
    * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
    */
   refreshRouteInnerPromise?: Promise<Directory>;
+
+  fileUtils = fileUtils;
 
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
@@ -170,14 +173,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.router.navigateByUrl(`/browser${path}`);
   }
 
-  isTextFile(file: File) {
-    return file.name.endsWith('.txt');
-  }
-
-  isMarkdownFile(file: File) {
-    return file.name.endsWith('.md') || file.name.endsWith('.markdown');
-  }
-
   async onFilesUpload(files: FileList) {
     this.uploadProgress = {};
     const observables = [];
@@ -220,6 +215,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   async openEdit(file: File) {
     await this.router.navigate(['/editor'], {
+      queryParams: {
+        directory: this.currentPath,
+        file: file.name,
+      },
+    });
+  }
+
+  async openPreview(file: File) {
+    await this.router.navigate(['/preview'], {
       queryParams: {
         directory: this.currentPath,
         file: file.name,

@@ -1,6 +1,5 @@
-import { Component, effect, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BrowserService } from '../../services/browser.service';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { TestTagDirective } from '../../directives/test-tag.directive';

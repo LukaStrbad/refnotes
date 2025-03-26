@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Server.Model;
 using Server.Services;
 
 namespace Server.Db.Model;
 
+[Table("encrypted_directories")]
 public class EncryptedDirectory
 {
     public EncryptedDirectory(string path, User owner)

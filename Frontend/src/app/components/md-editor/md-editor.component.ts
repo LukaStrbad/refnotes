@@ -14,9 +14,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Marked, Token, Tokens, TokensList } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
+import { Token, TokensList } from 'marked';
 import { SettingsService } from '../../../services/settings.service';
 import { EditorMode } from '../../../model/settings';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -24,12 +22,11 @@ import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { LoggerService } from '../../../services/logger.service';
-import {
-  resolveRelativeFolderPath,
-  splitDirAndName,
-} from '../../../utils/path-utils';
+import { splitDirAndName } from '../../../utils/path-utils';
 import { NgClass } from '@angular/common';
 import { FileService } from '../../../services/file.service';
+import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
+import { getImageBlobUrl } from '../../../utils/image-utils';
 
 @Component({
   selector: 'app-md-editor',
@@ -45,6 +42,7 @@ import { FileService } from '../../../services/file.service';
   encapsulation: ViewEncapsulation.None,
 })
 export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly markdownHighlighter: MarkdownHighlighter;
   currentPath = input('/');
   value = model('');
 
@@ -58,10 +56,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.editorMode() === 'PreviewOnly' || this.editorMode() === 'SideBySide',
   );
 
-  private readonly marked: Marked;
-  // TODO: Use a better cache mechanism
-  private highlightCache: Map<number, string> = new Map();
-
   editorLines: EditorLineSize[] | null = null;
   editorIndices: EditorIndex[] = [];
 
@@ -71,16 +65,16 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
-  imageUrls: { elementAttr: string; src: string; blob: string | null }[] = [];
-
   constructor(
     public settings: SettingsService,
     private log: LoggerService,
     private fileService: FileService,
   ) {
-    this.marked = new Marked(this.highlightExtension(), {
-      renderer: this.imageExtension(),
-    });
+    this.markdownHighlighter = new MarkdownHighlighter(
+      this.settings.mdEditor().showLineNumbers,
+      this.currentPath(),
+      fileService,
+    );
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);
 
@@ -94,10 +88,15 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.renderPreview(value);
     });
+
+    effect(() => {
+      const showLineNumbers = this.settings.mdEditor().showLineNumbers;
+      this.markdownHighlighter.showLineNumbers = showLineNumbers;
+    });
   }
 
   ngOnDestroy(): void {
-    this.imageUrls.forEach((imageUrl) => {
+    this.markdownHighlighter.imageUrls.forEach((imageUrl) => {
       if (imageUrl.blob) {
         URL.revokeObjectURL(imageUrl.blob);
       }
@@ -142,8 +141,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const previewContent = this.marked.parse(text) as string;
-    const tokens = this.marked.lexer(text);
+    const previewContent = this.markdownHighlighter.parse(text) as string;
+    const tokens = this.markdownHighlighter.lexer(text);
     this.editorIndices = this.calculateEditorIndex(tokens);
     this.previewContentElement.nativeElement.innerHTML = previewContent;
     this.updateImages();
@@ -152,39 +151,12 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Updates the image elements with the correct image source
    */
-  updateImages() {
-    this.imageUrls.forEach((imageUrl) => {
-      const elements =
-        this.previewContentElement.nativeElement.querySelectorAll(
-          `img[data-image-id="${imageUrl.elementAttr}"]`,
-        );
-
-      // If the image is already loaded, set the src attribute
-      if (imageUrl.blob !== null) {
-        elements.forEach((element) =>
-          element.setAttribute('src', imageUrl.blob!),
-        );
-        return;
-      }
-
-      const [dir, name] = splitDirAndName(imageUrl.src);
-      // Load the image from the server
-      this.fileService.getImage(dir, name).then((data) => {
-        if (!data) {
-          return;
-        }
-        const imageType = name.split('.').pop();
-        const blob = new Blob([data], { type: `image/${imageType}` });
-        const objectURL = URL.createObjectURL(blob);
-        // Save the blob URL to the image URL
-        imageUrl.blob = objectURL;
-        elements.forEach((element) => element.setAttribute('src', objectURL));
-      });
-    });
+  private updateImages() {
+    this.markdownHighlighter.updateImages(this.previewContentElement);
   }
 
   experimentalFastRender(text: string) {
-    const tokens = this.marked
+    const tokens = this.markdownHighlighter
       .lexer(text)
       .filter((t) => t.type !== 'space') as TokensList;
 
@@ -226,7 +198,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       } else {
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = this.marked.parse(hash.token.raw) as string;
+        tempDiv.innerHTML = this.markdownHighlighter.parse(hash.token.raw) as string;
         const newElement = tempDiv.children[0] as HTMLElement;
         layoutElements.push({ element: newElement, token: hash.token });
 
@@ -286,83 +258,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return indices;
-  }
-
-  highlightExtension() {
-    return markedHighlight({
-      emptyLangClass: 'hljs',
-      langPrefix: 'hljs-',
-      highlight: (str, lang, info) => {
-        const hash = this.strHash(str + lang);
-        if (this.highlightCache.has(hash)) {
-          return this.highlightCache.get(hash)!;
-        }
-        let rawCode: string;
-        if (lang && hljs.getLanguage(lang)) {
-          try {
-            rawCode = hljs.highlight(str, {
-              language: lang,
-              ignoreIllegals: true,
-            }).value;
-          } catch (__) {
-            rawCode = this.escapeHtml(str);
-          }
-        } else {
-          rawCode = this.escapeHtml(str);
-        }
-
-        let code = rawCode;
-        if (this.settings.mdEditor().showLineNumbers) {
-          const split = rawCode.split('\n');
-          const lineNumberDigits = split.length.toString().length;
-          code = split.reduce((acc, line, i) => {
-            const lineNumber = (i + 1).toString().padStart(lineNumberDigits);
-            return `${acc}<span class="line-number">${lineNumber}</span>${line}\n`;
-          }, '');
-        }
-
-        this.highlightCache.set(hash, code);
-        return code;
-      },
-    });
-  }
-
-  escapeHtml(unsafe: string) {
-    return unsafe
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  imageExtension() {
-    return {
-      image: (token: Tokens.Image) => {
-        let src = token.href;
-        const title = token.title ?? '';
-        const alt = token.text;
-
-        // If the image points to an external URL, just return the image tag
-        if (src.startsWith('http')) {
-          return `<img src="${src}" alt="${alt}" title="${title}" />`;
-        }
-
-        src = resolveRelativeFolderPath(this.currentPath(), src);
-        let imageUrl = this.imageUrls.find((i) => i.src === src);
-        if (!imageUrl) {
-          const elementAttr = `image-${this.imageUrls.length}`;
-          imageUrl = { elementAttr, src, blob: null };
-          this.imageUrls.push(imageUrl);
-        }
-
-        // Check if the image is already loaded
-        if (imageUrl.blob) {
-          return `<img src="${imageUrl.blob}" alt="${alt}" title="${title}" />`;
-        }
-        return `<img alt="${alt}" title="${title}" data-image-id="${imageUrl.elementAttr}" />`;
-      },
-    };
   }
 
   /**

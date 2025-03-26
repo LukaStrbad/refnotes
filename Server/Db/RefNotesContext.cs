@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Db.Model;
-using Server.Model;
 
 namespace Server.Db;
 
@@ -11,4 +10,12 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<EncryptedDirectory> Directories { get; set; }
     public DbSet<EncryptedFile> Files { get; set; }
     public DbSet<FileTag> FileTags { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<EncryptedFile>()
+            .HasMany(left => left.Tags)
+            .WithMany(right => right.Files)
+            .UsingEntity(join => join.ToTable("encrypted_files_file_tags"));
+    }
 }
