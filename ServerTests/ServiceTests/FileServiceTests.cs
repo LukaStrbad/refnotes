@@ -7,7 +7,7 @@ using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
 
-public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDatabaseFixture>
+public class FileServiceTests : BaseTests, IAsyncLifetime
 {
     private readonly RefNotesContext _context;
     private readonly FileService _fileService;
@@ -18,7 +18,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDat
     public FileServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = testDatabaseFixture.Context;
+        _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
         (_, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
         _fileService = new FileService(_context, encryptionService, AppConfig);
@@ -28,12 +28,16 @@ public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDat
         _directoryPath = $"/file_service_test_{rndString}";
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _browserService.AddDirectory(_claimsPrincipal, _directoryPath);
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
 
     [Fact]
     public async Task AddFile_AddsFile()
@@ -43,7 +47,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDat
 
         var directory = await _context.Directories
             .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath);
+            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
 
         Assert.NotNull(directory);
         Assert.Single(directory.Files);
@@ -79,7 +83,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDat
 
         var directory = await _context.Directories
             .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath);
+            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
 
         Assert.NotNull(directory);
         Assert.Empty(directory.Files);

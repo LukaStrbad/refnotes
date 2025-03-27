@@ -7,22 +7,23 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
+public class AdminServiceTests : BaseTests, IDisposable
 {
     private readonly RefNotesContext _context;
     private readonly AdminService _adminService;
-    private User _adminUser;
-    private User _user;
+    private readonly User _adminUser;
+    private readonly User _user;
 
     public AdminServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = testDatabaseFixture.Context;
+        _context = testDatabaseFixture.CreateContext();
         _adminService = new AdminService(_context);
-        
-        (_adminUser, _) = CreateUser(_context, "admin", "admininstrator");
-        (_user, _) = CreateUser(_context, "test");
+
+        var rnd = RandomString(32);
+        (_adminUser, _) = CreateUser(_context, $"admin{rnd}", "admininstrator");
+        (_user, _) = CreateUser(_context, $"test{rnd}");
     }
-    
+
     [Fact]
     public async Task ListUsers_ReturnsUsers()
     {
@@ -31,7 +32,7 @@ public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
         Assert.Contains(users, u => u.Username == _adminUser.Username);
         Assert.Contains(users, u => u.Username == _user.Username);
     }
-    
+
     [Fact]
     public async Task ModifyRoles_AddsRoles()
     {
@@ -39,14 +40,14 @@ public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
         var roles = await _adminService.ModifyRoles(modifyRolesRequest);
         Assert.Contains("administrator", roles);
     }
-    
+
     [Fact]
     public async Task ModifyRoles_ThrowsExceptionIfUserNotFound()
     {
         var modifyRolesRequest = new ModifyRolesRequest("nonexistent", ["administrator"], []);
         await Assert.ThrowsAsync<UserNotFoundException>(() => _adminService.ModifyRoles(modifyRolesRequest));
     }
-    
+
     [Fact]
     public async Task ModifyRoles_AddsDistinctRoles()
     {
@@ -55,20 +56,21 @@ public class AdminServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
         Assert.Single(roles);
         Assert.Contains("administrator", roles);
     }
-    
+
     [Fact]
     public async Task ModifyRoles_RemovesRoles()
     {
         // Add random roles to user
         var modifyRolesRequest = new ModifyRolesRequest(_user.Username, ["random1", "random2"], []);
         await _adminService.ModifyRoles(modifyRolesRequest);
-        
+
         modifyRolesRequest = new ModifyRolesRequest(_user.Username, [], ["random1"]);
         var roles = await _adminService.ModifyRoles(modifyRolesRequest);
         Assert.DoesNotContain("random1", roles);
         Assert.Contains("random2", roles);
-        
-        var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.Username == _user.Username);
+
+        var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.Username == _user.Username,
+            TestContext.Current.CancellationToken);
         Assert.NotNull(userInDb);
         Assert.Equal(roles, userInDb.Roles);
     }

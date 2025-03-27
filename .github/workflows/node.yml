@@ -3,7 +3,8 @@ name: Angular tests
 on:
   pull_request:
     branches: [ "main" ]
-    paths: 'Frontend/**'
+    paths: 
+      - 'Frontend/**'
 
 jobs:
   test:
