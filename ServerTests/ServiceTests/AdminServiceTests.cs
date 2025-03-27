@@ -11,16 +11,17 @@ public class AdminServiceTests : BaseTests, IDisposable
 {
     private readonly RefNotesContext _context;
     private readonly AdminService _adminService;
-    private User _adminUser;
-    private User _user;
+    private readonly User _adminUser;
+    private readonly User _user;
 
     public AdminServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         _context = testDatabaseFixture.CreateContext();
         _adminService = new AdminService(_context);
 
-        (_adminUser, _) = CreateUser(_context, "admin", "admininstrator");
-        (_user, _) = CreateUser(_context, "test");
+        var rnd = RandomString(32);
+        (_adminUser, _) = CreateUser(_context, $"admin{rnd}", "admininstrator");
+        (_user, _) = CreateUser(_context, $"test{rnd}");
     }
 
     [Fact]
@@ -68,7 +69,8 @@ public class AdminServiceTests : BaseTests, IDisposable
         Assert.DoesNotContain("random1", roles);
         Assert.Contains("random2", roles);
 
-        var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.Username == _user.Username, TestContext.Current.CancellationToken);
+        var userInDb = await _context.Users.FirstOrDefaultAsync(u => u.Username == _user.Username,
+            TestContext.Current.CancellationToken);
         Assert.NotNull(userInDb);
         Assert.Equal(roles, userInDb.Roles);
     }
