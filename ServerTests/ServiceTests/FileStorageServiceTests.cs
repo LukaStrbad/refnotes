@@ -1,6 +1,5 @@
 ﻿using Server.Services;
 using ServerTests.Mocks;
-using Xunit.Abstractions;
 
 namespace ServerTests.ServiceTests;
 
@@ -25,7 +24,7 @@ public class FileStorageServiceTests : BaseTests
 
         var filePath = Path.Combine(AppConfig.DataDir, _fileName);
         Assert.True(File.Exists(filePath));
-        var encryptedContent = await File.ReadAllTextAsync(filePath);
+        var encryptedContent = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
         // We are not testing the encryption algorithm here, so we don't need to decrypt the content
         Assert.Equal("test content", encryptedContent);
     }
@@ -45,7 +44,7 @@ public class FileStorageServiceTests : BaseTests
         await _fileStorageService.SaveFileAsync(_fileName, inputStream);
 
         await using var stream = _fileStorageService.GetFile(_fileName);
-        var content = await new StreamReader(stream).ReadToEndAsync();
+        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("test content", content);
     }

@@ -9,7 +9,7 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
-public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
+public class AuthServiceTests : BaseTests
 {
     private readonly RefNotesContext _context;
     private readonly AuthService _authService;
@@ -18,7 +18,7 @@ public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
 
     public AuthServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = testDatabaseFixture.Context;
+        _context = testDatabaseFixture.CreateContext();
         _authService = new AuthService(_context, AppConfig);
         var rndString = RandomString(32);
         _newUser = new User(0, $"newUser_{rndString}", "newUser", $"new.{rndString}@new.com", DefaultPassword);
@@ -30,7 +30,7 @@ public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     public async Task Register_ReturnsUser()
     {
         var tokens = await _authService.Register(_newUser);
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username);
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username, TestContext.Current.CancellationToken);
 
         Assert.NotNull(user);
         Assert.NotEmpty(tokens.AccessToken);
@@ -49,7 +49,7 @@ public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
     {
         _newUser.Roles = ["admin"];
         await _authService.Register(_newUser);
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username);
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username, TestContext.Current.CancellationToken);
 
         Assert.NotNull(user);
         Assert.Empty(user.Roles);
@@ -101,10 +101,10 @@ public class AuthServiceTests : BaseTests, IClassFixture<TestDatabaseFixture>
         var tokens = await _authService.Register(_newUser);
         
         // Remove user from database
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username);
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username, TestContext.Current.CancellationToken);
         Assert.NotNull(user);
         _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
         
         await Assert.ThrowsAsync<UserNotFoundException>(() =>
             _authService.RefreshAccessToken(tokens.AccessToken, tokens.RefreshToken.Token));

@@ -1,39 +1,45 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Db;
+using ServerTests;
 using Testcontainers.MySql;
+
+[assembly: AssemblyFixture(typeof(TestDatabaseFixture))]
 
 namespace ServerTests;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public class TestDatabaseFixture : IAsyncLifetime
 {
-    public RefNotesContext Context { get; private set; } = null!;
-
     private readonly MySqlContainer _mysqlContainer = new MySqlBuilder()
         .WithImage("mysql:8.4")
         .Build();
+    
+    private string? _connectionString;
 
-    public async Task InitializeAsync()
+    public RefNotesContext CreateContext()
     {
-        await _mysqlContainer.StartAsync();
-
-        var connectionString = _mysqlContainer.GetConnectionString();
-        if (string.IsNullOrEmpty(connectionString))
+        if (string.IsNullOrEmpty(_connectionString))
         {
             throw new Exception("Connection string is not set");
         }
-
-        var serverVersion = ServerVersion.AutoDetect(connectionString);
-
-        // Create test db
+        var serverVersion = ServerVersion.AutoDetect(_connectionString);
         var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
-            .UseMySql(connectionString, serverVersion).Options;
-        Context = new RefNotesContext(dbOptions);
-        await Context.Database.EnsureCreatedAsync();
+            .UseMySql(_connectionString, serverVersion).Options;
+        return new RefNotesContext(dbOptions);
     }
 
-    public Task DisposeAsync()
+    public async ValueTask InitializeAsync()
     {
-        return _mysqlContainer?.DisposeAsync().AsTask() ?? Task.CompletedTask;
+        await _mysqlContainer.StartAsync();
+
+        _connectionString = _mysqlContainer.GetConnectionString();
+        await using var context = CreateContext();
+        await context.Database.EnsureCreatedAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _mysqlContainer.StopAsync();
+        GC.SuppressFinalize(this);
     }
 }

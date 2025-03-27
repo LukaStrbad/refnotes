@@ -7,7 +7,7 @@ using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
 
-public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestDatabaseFixture>
+public class TagServiceTests : BaseTests, IAsyncLifetime
 {
     private readonly RefNotesContext _context;
     private readonly FileService _fileService;
@@ -20,7 +20,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
     public TagServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = testDatabaseFixture.Context;
+        _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
         (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
         _fileService = new FileService(_context, encryptionService, AppConfig);
@@ -31,12 +31,16 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
         _directoryPath = $"/tag_service_test_{rndString}";
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _browserService.AddDirectory(_claimsPrincipal, _directoryPath);
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
 
     private async Task<string> AddFileWithTags(List<string> tags)
     {
@@ -92,7 +96,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
 
         var file = await _context.Files
             .Include(f => f.Tags)
-            .FirstOrDefaultAsync(f => f.Name == fileName);
+            .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 
         Assert.NotNull(file);
         Assert.Single(file.Tags);
@@ -111,7 +115,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
 
         var file = await _context.Files
             .Include(f => f.Tags)
-            .FirstOrDefaultAsync(f => f.Name == fileName);
+            .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 
         Assert.NotNull(file);
         Assert.Single(file.Tags);
@@ -140,7 +144,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime, IClassFixture<TestData
 
         var file = await _context.Files
             .Include(f => f.Tags)
-            .FirstOrDefaultAsync(f => f.Name == fileName);
+            .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 
         Assert.NotNull(file);
         Assert.Empty(file.Tags);

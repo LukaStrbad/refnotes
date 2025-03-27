@@ -1,6 +1,5 @@
 ﻿using Server;
 using Server.Services;
-using Xunit.Abstractions;
 
 namespace ServerTests.ServiceTests;
 
@@ -64,13 +63,13 @@ public class EncryptionServiceTests : BaseTests
     }
 
     [Fact]
-    public void EncryptAes_EncryptsStream_ReturnsEncryptedStream()
+    public async Task EncryptAes_EncryptsStream_ReturnsEncryptedStream()
     {
         var bytes = "test data"u8.ToArray();
-        using var inputStream = new MemoryStream(bytes);
-        using var outputStream = new MemoryStream();
+        await using var inputStream = new MemoryStream(bytes);
+        await using var outputStream = new MemoryStream();
 
-        _encryptionService.EncryptAesToStreamAsync(inputStream, outputStream);
+        await _encryptionService.EncryptAesToStreamAsync(inputStream, outputStream);
 
         var encryptedBytes = outputStream.ToArray();
         Assert.NotNull(encryptedBytes);
