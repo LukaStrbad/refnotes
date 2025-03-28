@@ -11,7 +11,7 @@ public class EncryptedFile(string filesystemName, string name)
     [MaxLength(255)]
     public string FilesystemName { get; init; } = filesystemName;
     [MaxLength(255)]
-    public string Name { get; init; } = name;
+    public string Name { get; set; } = name;
     public List<FileTag> Tags { get; init; } = [];
 
     public string DecryptedName(IEncryptionService encryptionService)

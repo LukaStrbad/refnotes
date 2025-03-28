@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Server.Db;
 using Server.Db.Model;
 using Server.Utils;
@@ -11,60 +12,55 @@ public interface ITagService
     /// <summary>
     /// List all tags owned by the specified user.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the tags</param>
     /// <returns>List of all file tags</returns>
-    public Task<List<string>> ListAllTags(ClaimsPrincipal claimsPrincipal);
-    
+    public Task<List<string>> ListAllTags();
+
     /// <summary>
     /// List all tags associated with a file in the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the file</param>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file</param>
     /// <returns>List of file tags</returns>
-    public Task<List<string>> ListFileTags(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+    public Task<List<string>> ListFileTags(string directoryPath, string name);
 
     /// <summary>
     /// Add a tag to a file in the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the directory/file</param>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file</param>
     /// <param name="tag">Tag to be added</param>
-    Task AddFileTag(ClaimsPrincipal claimsPrincipal, string directoryPath, string name, string tag);
+    Task AddFileTag(string directoryPath, string name, string tag);
 
     /// <summary>
     /// Remove a tag from a file in the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the directory/file</param>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file</param>
     /// <param name="tag">Tag to be removed</param>
-    Task RemoveFileTag(ClaimsPrincipal claimsPrincipal, string directoryPath, string name, string tag);
+    Task RemoveFileTag(string directoryPath, string name, string tag);
 }
 
-public class TagService(RefNotesContext context, IEncryptionService encryptionService) : ITagService
+public class TagService(RefNotesContext context, IEncryptionService encryptionService, ServiceUtils utils) : ITagService
 {
-    private readonly ServiceUtils _utils = new(context, encryptionService);
-
-    public async Task<List<string>> ListAllTags(ClaimsPrincipal claimsPrincipal)
+    public async Task<List<string>> ListAllTags()
     {
-        var user = await _utils.GetUser(claimsPrincipal);
+        var user = await utils.GetUser();
         return await context.FileTags
             .Where(t => t.OwnerId == user.Id)
             .Select(t => t.DecryptedName(encryptionService))
             .ToListAsync();
     }
 
-    public async Task<List<string>> ListFileTags(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    public async Task<List<string>> ListFileTags(string directoryPath, string name)
     {
-        var (_, file, _) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, includeTags: true);
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, includeTags: true);
         return file.Tags.Select(t => t.DecryptedName(encryptionService)).ToList();
     }
 
-    public async Task AddFileTag(ClaimsPrincipal claimsPrincipal, string directoryPath, string name, string tag)
+    public async Task AddFileTag(string directoryPath, string name, string tag)
     {
-        var (_, file, user) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, includeTags: true);
+        var user = await utils.GetUser();
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
         if (file.Tags.Any(x => x.Name == encryptedTag))
@@ -85,9 +81,9 @@ public class TagService(RefNotesContext context, IEncryptionService encryptionSe
         await context.SaveChangesAsync();
     }
 
-    public async Task RemoveFileTag(ClaimsPrincipal claimsPrincipal, string directoryPath, string name, string tag)
+    public async Task RemoveFileTag(string directoryPath, string name, string tag)
     {
-        var (_, file, _) = await _utils.GetDirAndFile(claimsPrincipal, directoryPath, name, includeTags: true);
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
         var tagToRemove = file.Tags.FirstOrDefault(x => x.Name == encryptedTag);

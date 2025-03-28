@@ -15,7 +15,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.AddFile(User, directoryPath, name);
+            var fileName = await fileService.AddFile(directoryPath, name);
             await fileStorageService.SaveFileAsync(fileName, stream);
             return null;
         }
@@ -69,7 +69,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return NotFound("File not found.");
@@ -94,7 +94,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return File([], "application/octet-stream");
@@ -119,7 +119,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return NotFound("File not found.");
@@ -139,7 +139,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteFile(string directoryPath, string name)
     {
-        var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
         if (fileName is null)
         {
             return NotFound("File not found.");
@@ -147,7 +147,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
         try
         {
-            await fileService.DeleteFile(User, directoryPath, name);
+            await fileService.DeleteFile(directoryPath, name);
             await fileStorageService.DeleteFile(fileName);
         }
         catch (FileNotFoundException)

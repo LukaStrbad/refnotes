@@ -48,7 +48,7 @@ public class BrowserControllerTests : BaseTests
         const string path = "test_path";
         var responseDirectory = new DirectoryDto("test_dir", [], []);
 
-        _browserService.List(_claimsPrincipal, path).Returns(responseDirectory);
+        _browserService.List(path).Returns(responseDirectory);
 
         var result = await _controller.List(path);
 
@@ -60,7 +60,7 @@ public class BrowserControllerTests : BaseTests
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "test_path";
-        _browserService.List(_claimsPrincipal, path).Returns((DirectoryDto?)null);
+        _browserService.List(path).Returns((DirectoryDto?)null);
 
         var result = await _controller.List(path);
 
@@ -72,7 +72,7 @@ public class BrowserControllerTests : BaseTests
     public async Task AddDirectory_ReturnsOk_WhenDirectoryAdded()
     {
         const string path = "/test_path";
-        _browserService.AddDirectory(_claimsPrincipal, path).Returns(Task.CompletedTask);
+        _browserService.AddDirectory(path).Returns(Task.CompletedTask);
 
         var result = await _controller.AddDirectory(path);
 
@@ -83,7 +83,7 @@ public class BrowserControllerTests : BaseTests
     public async Task AddDirectory_ReturnsBadRequest_WhenDirectoryAlreadyExists()
     {
         const string path = "/test_path";
-        _browserService.AddDirectory(_claimsPrincipal, path).Returns(Task.FromException(new Exception("Directory already exists.")));
+        _browserService.AddDirectory(path).Returns(Task.FromException(new Exception("Directory already exists.")));
 
         var result = await _controller.AddDirectory(path);
 
@@ -95,7 +95,7 @@ public class BrowserControllerTests : BaseTests
     public async Task DeleteDirectory_ReturnsOk_WhenDirectoryDeleted()
     {
         const string path = "/test_path";
-        _browserService.DeleteDirectory(_claimsPrincipal, path).Returns(Task.CompletedTask);
+        _browserService.DeleteDirectory(path).Returns(Task.CompletedTask);
 
         var result = await _controller.DeleteDirectory(path);
 
@@ -106,7 +106,7 @@ public class BrowserControllerTests : BaseTests
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDeletingRootDirectory()
     {
         const string path = "/";
-        _browserService.DeleteDirectory(_claimsPrincipal, path).Returns(Task.FromException(new ArgumentException("Cannot delete root directory.")));
+        _browserService.DeleteDirectory(path).Returns(Task.FromException(new ArgumentException("Cannot delete root directory.")));
 
         var result = await _controller.DeleteDirectory(path);
 
@@ -118,7 +118,7 @@ public class BrowserControllerTests : BaseTests
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDirectoryNotEmpty()
     {
         const string path = "/test_path";
-        _browserService.DeleteDirectory(_claimsPrincipal, path).Returns(Task.FromException(new DirectoryNotEmptyException("Directory not empty.")));
+        _browserService.DeleteDirectory(path).Returns(Task.FromException(new DirectoryNotEmptyException("Directory not empty.")));
 
         var result = await _controller.DeleteDirectory(path);
 
@@ -130,7 +130,7 @@ public class BrowserControllerTests : BaseTests
     public async Task DeleteDirectory_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "/test_path";
-        _browserService.DeleteDirectory(_claimsPrincipal, path).Returns(Task.FromException(new DirectoryNotFoundException("Directory not found.")));
+        _browserService.DeleteDirectory(path).Returns(Task.FromException(new DirectoryNotFoundException("Directory not found.")));
 
         var result = await _controller.DeleteDirectory(path);
 

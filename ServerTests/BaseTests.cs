@@ -45,7 +45,7 @@ public class BaseTests : IDisposable
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.Name, newUser.Username),
             new Claim(ClaimTypes.Email, newUser.Email)
-        ]));
+        ], "fake auth"));
 
         return (newUser, claimsPrincipal);
     }
