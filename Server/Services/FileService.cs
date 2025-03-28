@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Caching.Memory;
 using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
@@ -13,41 +13,45 @@ public interface IFileService
     /// <summary>
     /// Add a new file to the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the directory</param>
     /// <param name="directoryPath">Path of the directory where the file will be added</param>
     /// <param name="name">Name of the file to be added</param>
     /// <returns>Filesystem name of the added file</returns>
-    Task<string> AddFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+    Task<string> AddFile(string directoryPath, string name);
+
+    /// <summary>
+    /// Moves the existing file
+    /// </summary>
+    /// <param name="oldName">Full path of the old file</param>
+    /// /// <param name="newName">Full path of the new file</param>
+    /// <returns></returns>
+    Task MoveFile(string oldName, string newName);
 
     /// <summary>
     /// Get the filesystem path of a file in the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the directory/file</param>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file</param>
     /// <returns>Filesystem path of the file, or null if not found</returns>
-    Task<string?> GetFilesystemFilePath(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+    Task<string?> GetFilesystemFilePath(string directoryPath, string name);
 
     /// <summary>
     /// Delete a file from the specified directory.
     /// </summary>
-    /// <param name="claimsPrincipal">Owner of the directory/file</param>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to be deleted</param>
-    Task DeleteFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name);
+    Task DeleteFile(string directoryPath, string name);
 }
 
 public class FileService(
     RefNotesContext context,
     IEncryptionService encryptionService,
-    AppConfiguration appConfiguration) : IFileService
+    AppConfiguration appConfiguration,
+    ServiceUtils utils) : IFileService
 {
-    private readonly ServiceUtils _utils = new(context, encryptionService);
     
-    public async Task<string> AddFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    public async Task<string> AddFile(string directoryPath, string name)
     {
-        var user = await _utils.GetUser(claimsPrincipal);
-        var directory = await _utils.GetDirectory(user, directoryPath, true);
+        var directory = await utils.GetDirectory(directoryPath, true);
 
         if (directory is null)
         {
@@ -67,6 +71,32 @@ public class FileService(
         return encryptedFile.FilesystemName;
     }
 
+    public async Task MoveFile(string oldName, string newName)
+    {
+        var (dirName, filename) = ServiceUtils.SplitDirAndFile(oldName);
+        var (newDirName, newFilename) = ServiceUtils.SplitDirAndFile(newName);
+        
+        var (dir, file) = await utils.GetDirAndFile(dirName, filename);
+        var newDir = await utils.GetDirectory(newDirName, true);
+        
+        if (newDir is null)
+        {
+            throw new DirectoryNotFoundException($"Directory at path '{newDirName}' not found");
+        }
+
+        var encryptedName = encryptionService.EncryptAesStringBase64(newFilename);
+        if (newDir.Files.Any(f => f.Name == encryptedName))
+        {
+            throw new FileAlreadyExistsException(
+                $"File with name {newFilename} already exists in directory {newDirName}");
+        }
+        
+        dir.Files.Remove(file);
+        newDir.Files.Add(file);
+        file.Name = newFilename;
+        await context.SaveChangesAsync();
+    }
+
     private string GenerateFilesystemName()
     {
         for (var i = 0; i < 100; i++)
@@ -81,28 +111,22 @@ public class FileService(
         throw new Exception("Failed to generate unique filesystem name.");
     }
 
-    public async Task<string?> GetFilesystemFilePath(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    public async Task<string?> GetFilesystemFilePath(string directoryPath, string name)
     {
-        var user = await _utils.GetUser(claimsPrincipal);
-        var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
-        var directory = context.Directories
-            .Include(dir => dir.Files)
-            .FirstOrDefault(x => x.Owner == user && x.Path == encryptedPath);
-
-        if (directory is null)
+        try
         {
-            throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
+            var (_, file) = await utils.GetDirAndFile(directoryPath, name);
+            return file.FilesystemName;
         }
-
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
-        var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
-        return file?.FilesystemName;
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
     }
 
-    private async Task<(EncryptedDirectory, EncryptedFile, User)> GetDirAndFile(ClaimsPrincipal claimsPrincipal,
-        string directoryPath, string name, bool includeTags = false)
+    private async Task<(EncryptedDirectory, EncryptedFile, User)> GetDirAndFile(string directoryPath, string name, bool includeTags = false)
     {
-        var user = await _utils.GetUser(claimsPrincipal);
+        var user = await utils.GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
         var query = context.Directories
             .Include(dir => dir.Files)
@@ -130,9 +154,9 @@ public class FileService(
         return (directory, file, user);
     }
 
-    public async Task DeleteFile(ClaimsPrincipal claimsPrincipal, string directoryPath, string name)
+    public async Task DeleteFile(string directoryPath, string name)
     {
-        var (directory, file, _) = await GetDirAndFile(claimsPrincipal, directoryPath, name);
+        var (directory, file, _) = await GetDirAndFile(directoryPath, name);
 
         directory.Files.Remove(file);
         context.Entry(file).State = EntityState.Deleted;

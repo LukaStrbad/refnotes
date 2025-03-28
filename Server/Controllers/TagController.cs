@@ -7,15 +7,15 @@ namespace Server.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class TagController(ITagService tagService): ControllerBase
+public class TagController(ITagService tagService) : ControllerBase
 {
     [HttpGet("listAllTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<string>>> ListAllTags()
     {
-        return Ok(await tagService.ListAllTags(User));
+        return Ok(await tagService.ListAllTags());
     }
-    
+
     [HttpGet("listFileTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -23,7 +23,7 @@ public class TagController(ITagService tagService): ControllerBase
     {
         try
         {
-            return Ok(await tagService.ListFileTags(User, directoryPath, name));
+            return Ok(await tagService.ListFileTags(directoryPath, name));
         }
         catch (FileNotFoundException)
         {
@@ -34,7 +34,7 @@ public class TagController(ITagService tagService): ControllerBase
             return NotFound("Directory not found.");
         }
     }
-    
+
     [HttpPost("addFileTag")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -42,7 +42,7 @@ public class TagController(ITagService tagService): ControllerBase
     {
         try
         {
-            await tagService.AddFileTag(User, directoryPath, name, tag);
+            await tagService.AddFileTag(directoryPath, name, tag);
             return Ok();
         }
         catch (FileNotFoundException)
@@ -54,7 +54,7 @@ public class TagController(ITagService tagService): ControllerBase
             return NotFound("Directory not found.");
         }
     }
-    
+
     [HttpDelete("removeFileTag")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -62,7 +62,7 @@ public class TagController(ITagService tagService): ControllerBase
     {
         try
         {
-            await tagService.RemoveFileTag(User, directoryPath, name, tag);
+            await tagService.RemoveFileTag(directoryPath, name, tag);
             return Ok();
         }
         catch (FileNotFoundException)

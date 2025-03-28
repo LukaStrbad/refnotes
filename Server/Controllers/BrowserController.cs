@@ -17,7 +17,7 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DirectoryDto>> List(string path)
     {
-        var directory = await browserService.List(User, path);
+        var directory = await browserService.List(path);
         if (directory is null)
         {
             return NotFound("Directory not found.");
@@ -33,7 +33,7 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
     {
         try
         {
-            await browserService.AddDirectory(User, path);
+            await browserService.AddDirectory(path);
             return Ok();
         }
         catch (Exception e)
@@ -49,7 +49,7 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
     {
         try
         {
-            await browserService.DeleteDirectory(User, path);
+            await browserService.DeleteDirectory(path);
             return Ok();
         }
         catch (ArgumentException e)
