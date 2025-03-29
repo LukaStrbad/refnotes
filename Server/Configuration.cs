@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Server.Db;
 using Server.Middlewares;
 using Server.Services;
+using Server.Utils;
 
 namespace Server;
 
@@ -28,6 +29,7 @@ public static class Configuration
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ServiceUtils>();
 
         builder.Services.AddAuthentication(x =>
         {

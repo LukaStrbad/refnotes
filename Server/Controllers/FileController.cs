@@ -32,7 +32,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [HttpPost("addFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddFile(string directoryPath)
     {
         var files = Request.Form.Files;
@@ -52,7 +52,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [HttpPost("addTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddTextFile(string directoryPath, string name)
     {
         using var sr = new StreamReader(Request.Body);
@@ -64,6 +64,8 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
     [HttpPost("moveFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> MoveFile(string oldName, string newName)
     {
         try
