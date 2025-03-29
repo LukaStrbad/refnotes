@@ -25,7 +25,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         }
         catch (FileAlreadyExistsException e)
         {
-            return BadRequest(e.Message);
+            return Conflict(e.Message);
         }
     }
 
@@ -60,6 +60,26 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         var result = await AddFileResult(directoryPath, name, new MemoryStream(Encoding.UTF8.GetBytes(content)));
 
         return result ?? Ok();
+    }
+
+    [HttpPost("moveFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> MoveFile(string oldName, string newName)
+    {
+        try
+        {
+            await fileService.MoveFile(oldName, newName);
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return NotFound(e.Message);
+        }
+        catch (FileAlreadyExistsException e)
+        {
+            return Conflict(e.Message);
+        }
+
+        return Ok();
     }
 
     [HttpGet("getFile")]

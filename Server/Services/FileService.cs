@@ -22,7 +22,7 @@ public interface IFileService
     /// Moves the existing file
     /// </summary>
     /// <param name="oldName">Full path of the old file</param>
-    /// /// <param name="newName">Full path of the new file</param>
+    /// <param name="newName">Full path of the new file</param>
     /// <returns></returns>
     Task MoveFile(string oldName, string newName);
 
@@ -48,7 +48,6 @@ public class FileService(
     AppConfiguration appConfiguration,
     ServiceUtils utils) : IFileService
 {
-    
     public async Task<string> AddFile(string directoryPath, string name)
     {
         var directory = await utils.GetDirectory(directoryPath, true);
@@ -75,10 +74,13 @@ public class FileService(
     {
         var (dirName, filename) = ServiceUtils.SplitDirAndFile(oldName);
         var (newDirName, newFilename) = ServiceUtils.SplitDirAndFile(newName);
-        
+
         var (dir, file) = await utils.GetDirAndFile(dirName, filename);
-        var newDir = await utils.GetDirectory(newDirName, true);
-        
+        // If directory is the same, use the existing directory
+        var newDir = newDirName == dirName 
+            ? dir 
+            : await utils.GetDirectory(newDirName, true);
+
         if (newDir is null)
         {
             throw new DirectoryNotFoundException($"Directory at path '{newDirName}' not found");
@@ -90,7 +92,7 @@ public class FileService(
             throw new FileAlreadyExistsException(
                 $"File with name {newFilename} already exists in directory {newDirName}");
         }
-        
+
         dir.Files.Remove(file);
         newDir.Files.Add(file);
         file.Name = newFilename;
@@ -124,7 +126,8 @@ public class FileService(
         }
     }
 
-    private async Task<(EncryptedDirectory, EncryptedFile, User)> GetDirAndFile(string directoryPath, string name, bool includeTags = false)
+    private async Task<(EncryptedDirectory, EncryptedFile, User)> GetDirAndFile(string directoryPath, string name,
+        bool includeTags = false)
     {
         var user = await utils.GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
@@ -135,7 +138,8 @@ public class FileService(
         {
             query = query.Include(dir => dir.Files)
                 .ThenInclude(file => file.Tags);
-        }   
+        }
+
         var directory = query.FirstOrDefault(x => x.Owner == user && x.Path == encryptedPath);
 
         if (directory is null)

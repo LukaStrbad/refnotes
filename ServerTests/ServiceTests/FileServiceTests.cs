@@ -16,6 +16,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     private readonly BrowserService _browserService;
     private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly string _directoryPath;
+    private readonly string _newDirectoryPath;
 
     public FileServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
@@ -34,11 +35,13 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
+        _newDirectoryPath = $"/file_service_test_new_{rndString}";
     }
 
     public async ValueTask InitializeAsync()
     {
         await _browserService.AddDirectory(_directoryPath);
+        await _browserService.AddDirectory(_newDirectoryPath);
     }
 
     public ValueTask DisposeAsync()
@@ -79,6 +82,71 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
             _fileService.AddFile("/nonexistent", fileName));
+    }
+
+    [Fact]
+    public async Task MoveFile_MovesFile()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}");
+
+        var oldDirectory = await _context.Directories
+            .Include(x => x.Files)
+            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+
+        var newDirectory = await _context.Directories
+            .Include(x => x.Files)
+            .FirstOrDefaultAsync(d => d.Path == _newDirectoryPath, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(oldDirectory);
+        Assert.Empty(oldDirectory.Files);
+        Assert.NotNull(newDirectory);
+        Assert.NotEmpty(newDirectory.Files);
+        Assert.Equal(newFileName, newDirectory.Files[0].Name);
+    }
+
+    [Fact]
+    public async Task MoveFile_RenamesFile()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}");
+
+        var directory = await _context.Directories
+            .Include(x => x.Files)
+            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(directory);
+        Assert.Single(directory.Files);
+        Assert.Equal(newFileName, directory.Files[0].Name);
+    }
+
+    [Fact]
+    public async Task MoveFile_ThrowsExceptionIfNewDirectoryDoesntExist()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+        const string nonExistentDirectory = "/file_service_test_new_nonexistent";
+
+        await _fileService.AddFile(_directoryPath, fileName);
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{nonExistentDirectory}/{newFileName}"));
+    }
+
+    [Fact]
+    public async Task MoveFile_ThrowsExceptionIfFileAlreadyExists()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName);
+        await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}"));
     }
 
     [Fact]

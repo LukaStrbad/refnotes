@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
 using Server.Exceptions;
 using Server.Services;
@@ -83,7 +84,7 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
-    public async Task Task_ReturnsBadRequest_WhenFileAlreadyExists()
+    public async Task AddFile_ReturnsBadRequest_WhenFileAlreadyExists()
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
@@ -102,7 +103,7 @@ public class FileControllerTests : BaseTests
 
         var result = await _controller.AddFile(directoryPath);
 
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var badRequestResult = Assert.IsType<ConflictObjectResult>(result);
         Assert.Equal("File already exists.", badRequestResult.Value);
     }
 
@@ -121,6 +122,32 @@ public class FileControllerTests : BaseTests
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+
+    [Fact]
+    public async Task MoveFile_ReturnsOk_WhenFileIsMoved()
+    {
+        const string oldName = "/dir/file.txt";
+        const string newName = "/dir2/file2.txt";
+
+        _fileService.MoveFile(oldName, newName).Returns(Task.CompletedTask);
+
+        var result = await _controller.MoveFile(oldName, newName);
+
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task MoveFile_ReturnsConflict_WhenFileAlreadyExists()
+    {
+        const string oldName = "/dir/file.txt";
+        const string newName = "/dir/file.txt";
+
+        _fileService.MoveFile(oldName, newName).ThrowsAsync(new FileAlreadyExistsException("File already exists"));
+
+        var result = await _controller.MoveFile(oldName, newName);
+
+        Assert.IsType<ConflictObjectResult>(result);
     }
 
     [Fact]

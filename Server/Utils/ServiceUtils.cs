@@ -62,6 +62,14 @@ public class ServiceUtils(
         return user;
     }
 
+    /// <summary>
+    /// Gets directory and file from the given path
+    /// </summary>
+    /// <param name="directoryPath">Directory path</param>
+    /// <param name="name">Filename</param>
+    /// <param name="includeTags">Whether to include file tags</param>
+    /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
+    /// <exception cref="FileNotFoundException">Thrown when file doesn't exist</exception>
     public async Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
         bool includeTags = false)
     {
