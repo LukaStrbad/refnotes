@@ -46,7 +46,7 @@ describe('FileService', () => {
     const promise = service.moveFile('/oldPath/test.txt', '/newPath/test.txt');
 
     const req = httpMock.expectOne(
-      `${apiUrl}/moveFile?oldFilePath=/oldPath/test.txt&newFilePath=/newPath/test.txt`,
+      `${apiUrl}/moveFile?oldName=/oldPath/test.txt&newName=/newPath/test.txt`,
     );
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
