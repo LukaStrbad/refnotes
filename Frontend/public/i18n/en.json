@@ -54,7 +54,10 @@
     "delete": "Delete",
     "edit": "Edit",
     "home": "Home",
-    "rename": "Rename"
+    "rename": "Rename",
+    "label": {
+      "more-actions": "More actions"
+    }
   },
   "editor": {
     "viewType": {

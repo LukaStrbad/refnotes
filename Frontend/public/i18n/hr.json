@@ -54,7 +54,10 @@
     "delete": "Izbriši",
     "edit": "Uredi",
     "home": "Početna",
-    "rename": "Preimenuj"
+    "rename": "Preimenuj",
+    "label": {
+      "more-actions": "Više opcija"
+    }
   },
   "editor": {
     "viewType": {
