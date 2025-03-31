@@ -95,7 +95,7 @@ public class FileService(
 
         dir.Files.Remove(file);
         newDir.Files.Add(file);
-        file.Name = newFilename;
+        file.Name = encryptedName;
         await context.SaveChangesAsync();
     }
 

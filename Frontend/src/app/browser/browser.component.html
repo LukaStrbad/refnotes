@@ -135,7 +135,10 @@
 
                 <button
                   class="btn btn-xs btn-soft btn-secondary"
-                  (click)="$event.stopPropagation(); editTagsModal.show(file.name, file.tags)"
+                  (click)="
+                    $event.stopPropagation();
+                    editTagsModal.show(file.name, file.tags)
+                  "
                 >
                   <i class="bi bi-pencil"></i>
                   <span translate>browser.table.buttonEditTags</span>
@@ -143,14 +146,48 @@
               </div>
             </td>
             <td class="flex gap-2 justify-end">
-              <a class="btn btn-sm btn-accent" routerLink="/editor" [queryParams]="{directory: currentPath, file: file.name}">
+              <a
+                class="btn btn-sm btn-accent"
+                routerLink="/editor"
+                [queryParams]="{ directory: currentPath, file: file.name }"
+              >
                 <i class="bi bi-pencil"></i>
                 {{ "browser.edit" | translate }}
               </a>
-              <button class="btn btn-sm btn-error" (click)="$event.stopPropagation(); deleteFile(file)">
-                <i class="bi bi-trash"></i>
-                {{ "browser.delete" | translate }}
+              <!-- Dropdown for more actions -->
+              <button
+                class="btn btn-sm btn-info btn-circle"
+                (click)="$event.stopPropagation()"
+                [attr.popovertarget]="'fileActions' + file.name"
+                [style]="'anchor-name: --fileActions' + file.name"
+              >
+                <i class="bi bi-three-dots text-2xl"></i>
               </button>
+              <div
+                popover
+                id="fileActions{{ file.name }}"
+                class="dropdown menu p-2 shadow bg-base-100 rounded-box w-52 flex flex-col gap-2"
+                [style]="'position-anchor: --fileActions' + file.name"
+              >
+                <h1>More actions</h1>
+
+                <button
+                  class="btn btn-sm btn-secondary"
+                  (click)="
+                    $event.stopPropagation(); renameFileModal.show(file.name)
+                  "
+                >
+                  <i class="bi bi-pencil"></i>
+                  {{ "browser.rename" | translate }}
+                </button>
+                <button
+                  class="btn btn-sm btn-error"
+                  (click)="$event.stopPropagation(); deleteFile(file)"
+                >
+                  <i class="bi bi-trash"></i>
+                  {{ "browser.delete" | translate }}
+                </button>
+              </div>
             </td>
           </tr>
         }
@@ -168,3 +205,8 @@
   (onAdd)="addTag($event)"
   (onRemove)="removeTag($event)"
 ></app-edit-tags-modal>
+
+<app-rename-file-modal
+  #renameFileModal
+  (onRename)="renameFile($event)"
+></app-rename-file-modal>

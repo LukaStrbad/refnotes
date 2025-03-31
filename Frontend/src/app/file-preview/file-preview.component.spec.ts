@@ -6,6 +6,7 @@ import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { SettingsService } from '../../services/settings.service';
 import { By } from '@angular/platform-browser';
+import { mockActivatedRoute } from '../../tests/route-utils';
 
 describe('FilePreviewComponent', () => {
   let fixture: ComponentFixture<FilePreviewComponent>;
@@ -18,18 +19,6 @@ describe('FilePreviewComponent', () => {
     const component = fixture.componentInstance;
     fixture.detectChanges();
     return component;
-  }
-
-  const mockActivatedRoute = (directory: string, file: string) => {
-    const activatedRoute = TestBed.inject(ActivatedRoute);
-    activatedRoute.snapshot.queryParamMap.get = (param: string) => {
-      if (param === 'directory') {
-        return directory;
-      } else if (param === 'file') {
-        return file;
-      }
-      throw new Error(`Unknown query parameter: ${param}`);
-    }
   }
 
   beforeEach(async () => {

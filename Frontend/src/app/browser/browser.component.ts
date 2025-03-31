@@ -23,6 +23,8 @@ import { File } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
+import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
+import { joinPaths } from '../../utils/path-utils';
 
 @Component({
   selector: 'app-browser',
@@ -35,6 +37,7 @@ import * as fileUtils from '../../utils/file-utils';
     RouterLink,
     TestTagDirective,
     EditTagsModalComponent,
+    RenameFileModalComponent
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
@@ -85,7 +88,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.auth.user === null) {
@@ -256,6 +259,26 @@ export class BrowserComponent implements OnInit, OnDestroy {
         file.tags.splice(index, 1);
       }
     }
+  }
+
+  async renameFile([oldFileName, newFileName]: [string, string]) {
+    const oldFilePath = joinPaths(this.currentPath, oldFileName);
+    const newFilePath = joinPaths(this.currentPath, newFileName);
+    await this.fileService.moveFile(oldFilePath, newFilePath);
+    const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
+    if (file) {
+      file.name = newFileName;
+    }
+  }
+
+  clearOtherDropdowns(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const dropdowns = document.querySelectorAll('details.dropdown[open]');
+    dropdowns.forEach((dropdown) => {
+      if (dropdown !== target) {
+        dropdown.removeAttribute('open');
+      }
+    });
   }
 }
 
