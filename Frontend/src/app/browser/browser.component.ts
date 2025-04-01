@@ -25,6 +25,7 @@ import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
 import { joinPaths } from '../../utils/path-utils';
+import { MoveFileService } from '../../services/move-file.service';
 
 @Component({
   selector: 'app-browser',
@@ -53,6 +54,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   pathStack: string[] = [];
   currentPath: string = '/';
   uploadProgress: { [key: string]: number | null } = {};
+  readonly filesToMove: ReadonlySet<string>;
 
   private navSubscription?: Subscription;
 
@@ -88,7 +90,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
-  ) { }
+    private moveFileService: MoveFileService,
+  ) {
+    this.filesToMove = this.moveFileService.filesToMove;
+  }
 
   ngOnInit(): void {
     if (this.auth.user === null) {
@@ -268,6 +273,42 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
     if (file) {
       file.name = newFileName;
+    }
+  }
+
+  toggleFileToMove(filename: string, event: Event) {
+    const target = event.target as HTMLInputElement;
+    const filePath = joinPaths(this.currentPath, filename);
+    if (target.checked) {
+      this.moveFileService.addFile(filePath);
+    }
+    else {
+      this.moveFileService.removeFile(filePath);
+    }
+  }
+
+  isFileToMove(filename: string): boolean {
+    const filePath = joinPaths(this.currentPath, filename);
+    return this.filesToMove.has(filePath);
+  }
+
+  cancelMove() {
+    this.moveFileService.clearFilesToMove();
+  }
+
+  async moveFiles() {
+    const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.name)));
+
+    // Find only the files that are not in the current folder
+    const filesToMove = this.filesToMove.difference(filesFromCurrentFolder);
+    if (filesToMove.size === 0) {
+      return;
+    }
+
+    try {
+      await this.moveFileService.moveFiles(this.currentPath);
+    } finally {
+      await this.refreshRoute();
     }
   }
 }

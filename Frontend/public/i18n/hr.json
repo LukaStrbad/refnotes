@@ -56,8 +56,11 @@
     "home": "Početna",
     "rename": "Preimenuj",
     "label": {
-      "more-actions": "Više opcija"
-    }
+      "more-actions": "Više opcija",
+      "moving-file": "Premještanje {{count}} datoteka"
+    },
+    "cancelMove": "Poništi",
+    "moveHere": "Premjesti ovdje"
   },
   "editor": {
     "viewType": {

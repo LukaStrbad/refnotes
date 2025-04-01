@@ -56,8 +56,11 @@
     "home": "Home",
     "rename": "Rename",
     "label": {
-      "more-actions": "More actions"
-    }
+      "more-actions": "More actions",
+      "moving-file": "Moving {{count}} files"
+    },
+    "cancelMove": "Cancel",
+    "moveHere": "Move here"
   },
   "editor": {
     "viewType": {

@@ -1,26 +1,68 @@
-<div class="m-2 flex gap-2 justify-end">
-  <button class="btn btn-accent btn-sm" (click)="folderModal.show()">
-    <i class="bi bi-folder-plus"></i>
-    {{ "browser.newFolder" | translate }}
-  </button>
+@if (filesToMove.size > 0) {
+  <div class="m-2 flex gap-2 justify-between">
+    <div class="grow flex gap-2 items-baseline">
+      <h3 class="text-base">
+        {{
+          "browser.label.moving-file" | translate: { count: filesToMove.size }
+        }}
+      </h3>
+      <div class="dropdown dropdown-center">
+        <div
+          tabindex="0"
+          role="button"
+          class="btn btn-xs btn-soft btn-circle btn-accent"
+        >
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        <div
+          tabindex="0"
+          class="dropdown-content z-[1] meu p-2 shadow bg-base-100 rounded-box w-52 max-h-52"
+        >
+          <ul class="flex flex-col overflow-scroll">
+            @for (file of filesToMove; track file) {
+              <li>{{ file }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
 
-  <button class="btn btn-accent btn-sm" (click)="fileModal.show()">
-    <i class="bi bi-file-earmark-plus"></i>
-    {{ "browser.newFile" | translate }}
-  </button>
+    <div class="flex gap-2">
+      <button class="btn btn-error btn-sm" (click)="cancelMove()">
+        <i class="bi bi-x-circle"></i>
+        {{ "browser.cancelMove" | translate }}
+      </button>
+      <button class="btn btn-accent btn-sm" (click)="moveFiles()">
+        <i class="bi bi-arrow-down-square"></i>
+        {{ "browser.moveHere" | translate }}
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="m-2 flex gap-2 justify-end">
+    <button class="btn btn-accent btn-sm" (click)="folderModal.show()">
+      <i class="bi bi-folder-plus"></i>
+      {{ "browser.newFolder" | translate }}
+    </button>
 
-  <app-create-new-modal
-    #folderModal
-    modalType="folder"
-    (onCreate)="createNewFolder($event)"
-  ></app-create-new-modal>
-  <app-create-new-modal
-    #fileModal
-    (onCreate)="createNewFile($event)"
-    (onUpload)="onFilesUpload($event)"
-    [uploadProgress]="uploadProgress"
-  ></app-create-new-modal>
-</div>
+    <button class="btn btn-accent btn-sm" (click)="fileModal.show()">
+      <i class="bi bi-file-earmark-plus"></i>
+      {{ "browser.newFile" | translate }}
+    </button>
+
+    <app-create-new-modal
+      #folderModal
+      modalType="folder"
+      (onCreate)="createNewFolder($event)"
+    ></app-create-new-modal>
+    <app-create-new-modal
+      #fileModal
+      (onCreate)="createNewFile($event)"
+      (onUpload)="onFilesUpload($event)"
+      [uploadProgress]="uploadProgress"
+    ></app-create-new-modal>
+  </div>
+}
 
 <div class="overflow-x-auto mt-6">
   <div class="breadcrumbs text-sm">
@@ -101,7 +143,9 @@
             <td class="w-20">
               <input
                 type="checkbox"
+                [checked]="isFileToMove(file.name)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
+                (change)="toggleFileToMove(file.name, $event)"
               />
 
               <i
