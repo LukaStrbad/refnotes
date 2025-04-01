@@ -28,6 +28,7 @@ public class ServiceUtils(
             return await context.Directories
                 .Include(dir => dir.Files)
                 .ThenInclude(file => file.Tags)
+                .Include(dir => dir.Directories)
                 .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
         }
 
