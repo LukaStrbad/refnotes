@@ -65,21 +65,20 @@
       }
       <tbody>
         @for (folderName of currentFolder.directories; track folderName) {
-          <tr
-            (click)="openFolder(folderName)"
-            class="hover:bg-base-300"
-            testTag="folder-tr"
-          >
+          <tr class="hover:bg-base-300" testTag="folder-tr">
             <td>
               <i class="bi bi-folder"></i>
             </td>
-            <td class="text-start">
+            <td
+              class="text-start cursor-pointer"
+              (click)="openFolder(folderName)"
+            >
               {{ folderName }}
             </td>
             <td class="flex gap-2 justify-end">
               <button
                 class="btn btn-sm btn-error"
-                (click)="$event.stopPropagation(); deleteFolder(folderName)"
+                (click)="deleteFolder(folderName)"
               >
                 <i class="bi bi-trash"></i>
                 {{ "browser.delete" | translate }}
@@ -98,14 +97,15 @@
       }
       <tbody>
         @for (file of currentFolder.files; track file) {
-          <tr
-            (click)="openPreview(file)"
-            class="hover:bg-base-300"
-            testTag="file-tr"
-          >
-            <td>
+          <tr class="hover:bg-base-300 group" testTag="file-tr">
+            <td class="w-20">
+              <input
+                type="checkbox"
+                class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
+              />
+
               <i
-                class="bi"
+                class="bi group-hover:hidden peer-checked:hidden"
                 [ngClass]="{
                   'bi-filetype-md': fileUtils.isMarkdownFile(file.name),
                   'bi-file-text': fileUtils.isTextFile(file.name),
@@ -113,7 +113,7 @@
                 }"
               ></i>
             </td>
-            <td class="text-start">
+            <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
                 <div>{{ file.name }}</div>
 
@@ -158,9 +158,7 @@
               <details class="dropdown dropdown-end">
                 <summary
                   class="btn btn-sm btn-info btn-circle"
-                  (click)="
-                    $event.stopPropagation(); clearOtherDropdowns($event)
-                  "
+                  (click)="clearOtherDropdowns($event)"
                 >
                   <i class="bi bi-three-dots text-2xl"></i>
                 </summary>
@@ -172,16 +170,14 @@
 
                   <button
                     class="btn btn-sm btn-secondary"
-                    (click)="
-                      $event.stopPropagation(); renameFileModal.show(file.name)
-                    "
+                    (click)="renameFileModal.show(file.name)"
                   >
                     <i class="bi bi-pencil"></i>
                     {{ "browser.rename" | translate }}
                   </button>
                   <button
                     class="btn btn-sm btn-error"
-                    (click)="$event.stopPropagation(); deleteFile(file)"
+                    (click)="deleteFile(file)"
                   >
                     <i class="bi bi-trash"></i>
                     {{ "browser.delete" | translate }}
