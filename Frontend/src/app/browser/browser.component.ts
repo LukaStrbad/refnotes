@@ -270,18 +270,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
       file.name = newFileName;
     }
   }
-
-  clearOtherDropdowns(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const parent = target.closest('details.dropdown') as HTMLDetailsElement;
-
-    const dropdowns = document.querySelectorAll('details.dropdown[open]');
-    dropdowns.forEach((dropdown) => {
-      if (dropdown !== parent) {
-        dropdown.removeAttribute('open');
-      }
-    });
-  }
 }
 
 interface BreadcrumbItem {
