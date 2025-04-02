@@ -12,12 +12,13 @@ import { ActivatedRoute } from '@angular/router';
 import { BrowserService } from '../../services/browser.service';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
+import { mockActivatedRoute } from '../../tests/route-utils';
 
 @Component({
   selector: 'app-md-editor',
   template: '',
 })
-class MdEditorStub {}
+class MdEditorStub { }
 
 describe('FileEditorComponent', () => {
   let component: FileEditorComponent;
@@ -29,6 +30,7 @@ describe('FileEditorComponent', () => {
     fileService = jasmine.createSpyObj('FileService', [
       'getFile',
       'saveTextFile',
+      'moveFile',
     ]);
     tagService = jasmine.createSpyObj('TagService', [
       'listFileTags',
@@ -51,12 +53,14 @@ describe('FileEditorComponent', () => {
         TranslateService,
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: { get: () => 'test' } } },
+          useValue: { snapshot: { queryParamMap: {} } },
         },
         { provide: FileService, useValue: fileService },
         { provide: TagService, useValue: tagService },
       ],
     }).compileComponents();
+
+    mockActivatedRoute('/test', 'test.txt');
   });
 
   it('should create', () => {
@@ -138,8 +142,8 @@ describe('FileEditorComponent', () => {
     saveButton.click();
 
     expect(fileService.saveTextFile).toHaveBeenCalledWith(
-      'test',
-      'test',
+      '/test',
+      'test.txt',
       'test',
     );
   });
@@ -153,10 +157,10 @@ describe('FileEditorComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    await component.addTag(['file.txt', 'tag1']);
+    await component.addTag(['test.txt', 'tag1']);
     expect(tagService.addFileTag).toHaveBeenCalledWith(
-      'test',
-      'file.txt',
+      '/test',
+      'test.txt',
       'tag1',
     );
     expect(component.tags).toContain('tag1');
@@ -177,11 +181,49 @@ describe('FileEditorComponent', () => {
 
     await component.removeTag(['test.txt', 'tag1']);
     expect(tagService.removeFileTag).toHaveBeenCalledWith(
-      'test',
+      '/test',
       'test.txt',
       'tag1',
     );
     expect(component.tags).not.toContain('tag1');
     expect(component.tags).toContain('tag2');
+  });
+
+  it('should rename file', async () => {
+    fileService.moveFile.and.resolveTo();
+    fileService.getFile.and.resolveTo(new ArrayBuffer(0));
+    tagService.listFileTags.and.resolveTo([]);
+
+    fixture = TestBed.createComponent(FileEditorComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await component.renameFile(['test.txt', 'new-name.txt']);
+
+    expect(fileService.moveFile).toHaveBeenCalledWith(
+      "/test/test.txt",
+      "/test/new-name.txt",
+    );
+  });
+
+  it('should rename file in root directory', async () => {
+    fileService.moveFile.and.resolveTo();
+    fileService.getFile.and.resolveTo(new ArrayBuffer(0));
+    tagService.listFileTags.and.resolveTo([]);
+
+    mockActivatedRoute('/', 'test.txt');
+
+    fixture = TestBed.createComponent(FileEditorComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await component.renameFile(['test.txt', 'new-name.txt']);
+
+    expect(fileService.moveFile).toHaveBeenCalledWith(
+      "/test.txt",
+      "/new-name.txt",
+    );
   });
 });

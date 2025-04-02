@@ -53,7 +53,14 @@
     },
     "delete": "Delete",
     "edit": "Edit",
-    "home": "Home"
+    "home": "Home",
+    "rename": "Rename",
+    "label": {
+      "more-actions": "More actions",
+      "moving-file": "Moving {{count}} files"
+    },
+    "cancelMove": "Cancel",
+    "moveHere": "Move here"
   },
   "editor": {
     "viewType": {
@@ -87,6 +94,13 @@
       "done": "Done",
       "tooltipRemove": "Remove tag",
       "tooltipRestore": "Restore tag"
+    },
+    "renameFile": {
+      "title": "Rename file {{fileName}}",
+      "currentName": "Current name",
+      "newName": "New name",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   },
   "auth": {

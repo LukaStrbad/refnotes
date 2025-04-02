@@ -53,7 +53,14 @@
     },
     "delete": "Izbriši",
     "edit": "Uredi",
-    "home": "Početna"
+    "home": "Početna",
+    "rename": "Preimenuj",
+    "label": {
+      "more-actions": "Više opcija",
+      "moving-file": "Premještanje {{count}} datoteka"
+    },
+    "cancelMove": "Poništi",
+    "moveHere": "Premjesti ovdje"
   },
   "editor": {
     "viewType": {
@@ -87,6 +94,13 @@
       "done": "Završi",
       "tooltipRemove": "Ukloni oznaku",
       "tooltipRestore": "Vrati oznaku"
+    },
+    "renameFile": {
+      "cancel": "Poništi",
+      "currentName": "Trenutno ime",
+      "newName": "Novo ime",
+      "save": "Spremi",
+      "title": "Preimenuj datoteku {{fileName}}"
     }
   },
   "auth": {
@@ -113,5 +127,9 @@
   },
   "generic": {
     "error": "Došlo je do pogreške"
+  },
+  "preview": {
+    "labelTags": "Oznake:",
+    "viewingFile": "Pregled {{fileName}}"
   }
 }

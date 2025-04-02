@@ -6,6 +6,8 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
+import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
+import { joinPaths } from '../../utils/path-utils';
 
 @Component({
   selector: 'app-file-editor',
@@ -15,13 +17,14 @@ import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edi
     TranslateDirective,
     TestTagDirective,
     EditTagsModalComponent,
-  ],
+    RenameFileModalComponent
+],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
 })
 export class FileEditorComponent {
   readonly directoryPath: string;
-  readonly fileName: string;
+  fileName: string;
   content = '';
   loading = true;
   tags: string[] = [];
@@ -64,5 +67,12 @@ export class FileEditorComponent {
   async removeTag([fileName, tag]: [string, string]) {
     await this.tagService.removeFileTag(this.directoryPath, fileName, tag);
     this.tags = this.tags.filter((t) => t !== tag);
+  }
+
+  async renameFile([_, newFileName]: [string, string]) {
+    const oldFilePath = joinPaths(this.directoryPath, this.fileName);
+    const newFilePath = joinPaths(this.directoryPath, newFileName);
+    await this.fileService.moveFile(oldFilePath, newFilePath);
+    this.fileName = newFileName;
   }
 }

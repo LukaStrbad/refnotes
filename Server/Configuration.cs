@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Server.Db;
 using Server.Middlewares;
 using Server.Services;
+using Server.Utils;
 
 namespace Server;
 
@@ -20,7 +21,7 @@ public static class Configuration
         builder.Services.AddControllersWithViews();
         builder.AddDatabase(appConfig);
         builder.Services.AddSingleton(appConfig);
-
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();
         builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<ITagService, TagService>();
@@ -28,6 +29,7 @@ public static class Configuration
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ServiceUtils>();
 
         builder.Services.AddAuthentication(x =>
         {
@@ -55,6 +57,8 @@ public static class Configuration
         {
             options.Limits.MaxRequestBodySize = 1024 * 1024 * 1024; // 1 GB
         });
+
+        builder.Services.AddMemoryCache();
     }
 
     private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)

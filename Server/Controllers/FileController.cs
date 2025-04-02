@@ -15,7 +15,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.AddFile(User, directoryPath, name);
+            var fileName = await fileService.AddFile(directoryPath, name);
             await fileStorageService.SaveFileAsync(fileName, stream);
             return null;
         }
@@ -25,14 +25,14 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         }
         catch (FileAlreadyExistsException e)
         {
-            return BadRequest(e.Message);
+            return Conflict(e.Message);
         }
     }
 
     [HttpPost("addFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddFile(string directoryPath)
     {
         var files = Request.Form.Files;
@@ -52,7 +52,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [HttpPost("addTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddTextFile(string directoryPath, string name)
     {
         using var sr = new StreamReader(Request.Body);
@@ -62,6 +62,28 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         return result ?? Ok();
     }
 
+    [HttpPost("moveFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult> MoveFile(string oldName, string newName)
+    {
+        try
+        {
+            await fileService.MoveFile(oldName, newName);
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return NotFound(e.Message);
+        }
+        catch (FileAlreadyExistsException e)
+        {
+            return Conflict(e.Message);
+        }
+
+        return Ok();
+    }
+
     [HttpGet("getFile")]
     [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -69,7 +91,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return NotFound("File not found.");
@@ -94,7 +116,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return File([], "application/octet-stream");
@@ -119,7 +141,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
             if (fileName is null)
             {
                 return NotFound("File not found.");
@@ -139,7 +161,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteFile(string directoryPath, string name)
     {
-        var fileName = await fileService.GetFilesystemFilePath(User, directoryPath, name);
+        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
         if (fileName is null)
         {
             return NotFound("File not found.");
@@ -147,7 +169,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
         try
         {
-            await fileService.DeleteFile(User, directoryPath, name);
+            await fileService.DeleteFile(directoryPath, name);
             await fileStorageService.DeleteFile(fileName);
         }
         catch (FileNotFoundException)

@@ -32,3 +32,12 @@ export function splitDirAndName(path: string): [string, string] {
   const dir = parts.length === 0 ? '/' : `/${parts.join('/')}`;
   return [dir, name];
 }
+
+/**
+ * Joins multiple paths into a single path
+ * @param paths The paths to join
+ * @returns Joined path
+ */
+export function joinPaths(...paths: string[]): string {
+  return paths.join('/').replace(/\/+/g, '/');
+}

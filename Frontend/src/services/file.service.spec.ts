@@ -41,6 +41,18 @@ describe('FileService', () => {
     expect(response).toBeInstanceOf(HttpResponse);
   });
 
+  it('should move a file', async () => {
+    const mockResponse = {};
+    const promise = service.moveFile('/oldPath/test.txt', '/newPath/test.txt');
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/moveFile?oldName=/oldPath/test.txt&newName=/newPath/test.txt`,
+    );
+    expect(req.request.method).toBe('POST');
+    req.flush(mockResponse);
+    expect(await promise).toEqual(mockResponse);
+  })
+
   it('should add a text file', async () => {
     const mockResponse = {};
     const promise = service.addTextFile('/', 'test.txt', 'content');

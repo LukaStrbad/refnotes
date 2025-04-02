@@ -275,4 +275,30 @@ describe('BrowserComponent', () => {
       queryParams: { directory: '/', file: 'test.txt' },
     });
   });
+
+  it('should show moving files', async () => {
+    component.currentFolder = {
+      name: '/',
+      files: [createFile('test.txt')],
+      directories: [],
+    };
+    fixture.detectChanges();
+
+    const checkboxes = fixture.nativeElement.querySelectorAll(
+      'input[data-test="browser.file-to-move-checkbox"]',
+    ) as HTMLInputElement[];
+
+    expect(checkboxes.length).toBe(1);
+    expect(checkboxes[0].checked).toBe(false);
+    checkboxes[0].click();
+
+    fixture.detectChanges();
+
+    const filesToMove = fixture.nativeElement.querySelectorAll(
+      '[data-test="browser.file-to-move"]',
+    ) as HTMLElement[];
+
+    expect(filesToMove.length).toBe(1);
+    expect(filesToMove[0].textContent).toEqual('/test.txt');
+  });
 });

@@ -34,6 +34,15 @@ export class FileService {
     );
   }
 
+  async moveFile(oldFilePath: string, newFilePath: string) {
+    return firstValueFrom(
+      this.http.post(
+        `${apiUrl}/moveFile?oldName=${oldFilePath}&newName=${newFilePath}`,
+        {},
+      ),
+    );
+  }
+
   async deleteFile(directoryPath: string, name: string) {
     return firstValueFrom(
       this.http.delete(

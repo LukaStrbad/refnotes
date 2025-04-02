@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
 using Server.Exceptions;
 using Server.Services;
@@ -45,7 +46,7 @@ public class FileControllerTests : BaseTests
         file.OpenReadStream().Returns(fileStream);
         file.FileName.Returns(name);
 
-        _fileService.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _fileService.AddFile(directoryPath, name).Returns(fileName);
 
         var formFileCollection = new FormFileCollection { file };
         var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
@@ -68,7 +69,7 @@ public class FileControllerTests : BaseTests
         file.OpenReadStream().Returns(fileStream);
         file.FileName.Returns(name);
 
-        _fileService.AddFile(_claimsPrincipal, directoryPath, name)
+        _fileService.AddFile(directoryPath, name)
             .Returns(Task.FromException<string>(new DirectoryNotFoundException("Directory not found.")));
 
         var formFileCollection = new FormFileCollection { file };
@@ -83,7 +84,7 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
-    public async Task Task_ReturnsBadRequest_WhenFileAlreadyExists()
+    public async Task AddFile_ReturnsBadRequest_WhenFileAlreadyExists()
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
@@ -92,7 +93,7 @@ public class FileControllerTests : BaseTests
         file.OpenReadStream().Returns(fileStream);
         file.FileName.Returns(name);
 
-        _fileService.AddFile(_claimsPrincipal, directoryPath, name)
+        _fileService.AddFile(directoryPath, name)
             .Returns(Task.FromException<string>(new FileAlreadyExistsException("File already exists.")));
 
         var formFileCollection = new FormFileCollection { file };
@@ -102,7 +103,7 @@ public class FileControllerTests : BaseTests
 
         var result = await _controller.AddFile(directoryPath);
 
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var badRequestResult = Assert.IsType<ConflictObjectResult>(result);
         Assert.Equal("File already exists.", badRequestResult.Value);
     }
 
@@ -114,13 +115,39 @@ public class FileControllerTests : BaseTests
         const string fileName = "test_file_name";
         const string content = "test content";
 
-        _fileService.AddFile(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _fileService.AddFile(directoryPath, name).Returns(fileName);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
         var result = await _controller.AddTextFile(directoryPath, name);
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+
+    [Fact]
+    public async Task MoveFile_ReturnsOk_WhenFileIsMoved()
+    {
+        const string oldName = "/dir/file.txt";
+        const string newName = "/dir2/file2.txt";
+
+        _fileService.MoveFile(oldName, newName).Returns(Task.CompletedTask);
+
+        var result = await _controller.MoveFile(oldName, newName);
+
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task MoveFile_ReturnsConflict_WhenFileAlreadyExists()
+    {
+        const string oldName = "/dir/file.txt";
+        const string newName = "/dir/file.txt";
+
+        _fileService.MoveFile(oldName, newName).ThrowsAsync(new FileAlreadyExistsException("File already exists"));
+
+        var result = await _controller.MoveFile(oldName, newName);
+
+        Assert.IsType<ConflictObjectResult>(result);
     }
 
     [Fact]
@@ -131,7 +158,7 @@ public class FileControllerTests : BaseTests
         const string fileName = "test_file_name";
         var stream = Substitute.For<Stream>();
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns(fileName);
         _fileStorageService.GetFile(fileName).Returns(stream);
 
         var result = await _controller.GetFile(directoryPath, name);
@@ -145,7 +172,7 @@ public class FileControllerTests : BaseTests
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns((string?)null);
 
         var result = await _controller.GetFile(directoryPath, name);
 
@@ -161,7 +188,7 @@ public class FileControllerTests : BaseTests
         const string imageName = "test_file_name.png";
         var stream = Substitute.For<Stream>();
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(imageName);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns(imageName);
         _fileStorageService.GetFile(imageName).Returns(stream);
 
         var result = await _controller.GetImage(directoryPath, name);
@@ -175,7 +202,7 @@ public class FileControllerTests : BaseTests
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name.png";
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns((string?)null);
 
         var result = await _controller.GetImage(directoryPath, name);
 
@@ -189,7 +216,7 @@ public class FileControllerTests : BaseTests
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
 
-        _fileService.DeleteFile(_claimsPrincipal, directoryPath, name).Returns(Task.CompletedTask);
+        _fileService.DeleteFile(directoryPath, name).Returns(Task.CompletedTask);
 
         var result = await _controller.DeleteFile(directoryPath, name);
 
@@ -202,7 +229,7 @@ public class FileControllerTests : BaseTests
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns((string?)null);
 
         var result = await _controller.DeleteFile(directoryPath, name);
 
@@ -218,7 +245,7 @@ public class FileControllerTests : BaseTests
         const string fileName = "test_file_name";
         const string content = "test content";
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns(fileName);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns(fileName);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
         var result = await _controller.SaveTextFile(directoryPath, name);
@@ -233,7 +260,7 @@ public class FileControllerTests : BaseTests
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name).Returns((string?)null);
+        _fileService.GetFilesystemFilePath(directoryPath, name).Returns((string?)null);
 
         var result = await _controller.SaveTextFile(directoryPath, name);
 
@@ -247,7 +274,7 @@ public class FileControllerTests : BaseTests
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
 
-        _fileService.GetFilesystemFilePath(_claimsPrincipal, directoryPath, name)
+        _fileService.GetFilesystemFilePath(directoryPath, name)
             .Returns(Task.FromException<string?>(new DirectoryNotFoundException("Directory not found.")));
 
         var result = await _controller.SaveTextFile(directoryPath, name);
