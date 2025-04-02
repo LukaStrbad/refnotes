@@ -20,7 +20,7 @@
         >
           <ul class="flex flex-col overflow-scroll">
             @for (file of filesToMove; track file) {
-              <li>{{ file }}</li>
+              <li testTag="browser.file-to-move">{{ file }}</li>
             }
           </ul>
         </div>
@@ -146,6 +146,7 @@
                 [checked]="isFileToMove(file.name)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
                 (change)="toggleFileToMove(file.name, $event)"
+                testTag="browser.file-to-move-checkbox"
               />
 
               <i
