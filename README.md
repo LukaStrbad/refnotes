@@ -14,10 +14,10 @@ RefNotes is a note-taking application built with .NET and Angular.
 - Multilingual support.
 - Switch between light and dark themes, along with other settings.
 - Preview for image files
+- File operations (rename, move)
 
 ## Planned Features
 
-- File operations (rename, move)
 - File downloads
 - Alerts for errors and other actions
 - File and folder search
