@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -12,11 +12,26 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
-export class HeaderComponent {
+export class HeaderComponent implements AfterViewInit {
+  @ViewChild('header', { static: true })
+  private headerRef!: ElementRef<HTMLElement>;
+
   constructor(
     public auth: AuthService,
     public settings: SettingsService
   ) { }
+
+  ngAfterViewInit(): void {
+    this.setHeaderHeightVar();
+
+    this.headerRef.nativeElement.onresize = () => {
+      this.setHeaderHeightVar();
+    }
+  }
+
+  private setHeaderHeightVar() {
+    document.documentElement.style.setProperty('--header-height', `${this.headerRef.nativeElement.clientHeight}px`);
+  }
 
   setTheme(newTheme: Theme) {
     this.settings.setTheme(newTheme);
