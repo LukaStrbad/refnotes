@@ -60,7 +60,11 @@
       "moving-file": "Premještanje {{count}} datoteka"
     },
     "cancelMove": "Poništi",
-    "moveHere": "Premjesti ovdje"
+    "moveHere": "Premjesti ovdje",
+    "file-created": "Datoteka stvorena",
+    "folder-created": "Mapa kreirana",
+    "file-deleted": "Datoteka izbrisana",
+    "folder-deleted": "Mapa izbrisana"
   },
   "editor": {
     "viewType": {
@@ -131,5 +135,11 @@
   "preview": {
     "labelTags": "Oznake:",
     "viewingFile": "Pregled {{fileName}}"
+  },
+  "error": {
+    "file-already-exists": "Datoteka s istim imenom već postoji",
+    "folder-already-exists": "Mapa s istim imenom već postoji",
+    "file-not-found": "Datoteka nije pronađena",
+    "folder-not-found": "Mapa nije pronađena"
   }
 }

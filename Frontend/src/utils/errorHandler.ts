@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from "@angular/common/http";
 
-interface Messages {
+export interface HttpErrorMessages {
     [key: number]: string;
 }
 
-export function getErrorMessage(e: unknown, messages: Messages): string {
+export function getErrorMessage(e: unknown, messages: HttpErrorMessages): string {
     if (e instanceof HttpErrorResponse) {
         for (const [status, message] of Object.entries(messages)) {
             if (e.status === Number(status)) {

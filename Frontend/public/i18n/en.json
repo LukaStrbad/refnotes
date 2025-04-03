@@ -60,7 +60,11 @@
       "moving-file": "Moving {{count}} files"
     },
     "cancelMove": "Cancel",
-    "moveHere": "Move here"
+    "moveHere": "Move here",
+    "file-created": "File created",
+    "folder-created": "Folder created",
+    "file-deleted": "File deleted",
+    "folder-deleted": "Folder deleted"
   },
   "editor": {
     "viewType": {
@@ -131,5 +135,11 @@
   "preview": {
     "viewingFile": "Viewing {{fileName}}",
     "labelTags": "Tags:"
+  },
+  "error": {
+    "file-already-exists": "File with same name already exists",
+    "folder-already-exists": "Folder with same name already exists",
+    "file-not-found": "File not found",
+    "folder-not-found": "Folder not found"
   }
 }

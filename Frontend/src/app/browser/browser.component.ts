@@ -15,7 +15,7 @@ import {
   tap,
 } from 'rxjs';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
@@ -26,6 +26,9 @@ import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
 import { joinPaths } from '../../utils/path-utils';
 import { MoveFileService } from '../../services/move-file.service';
+import { getErrorMessage } from '../../utils/errorHandler';
+import { NotificationService } from '../../services/notification.service';
+import { getTranslation } from '../../utils/translation-utils';
 
 @Component({
   selector: 'app-browser',
@@ -91,6 +94,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private router: Router,
     private auth: AuthService,
     private moveFileService: MoveFileService,
+    private notificationService: NotificationService,
+    private translateService: TranslateService,
   ) {
     this.filesToMove = this.moveFileService.filesToMove;
   }
@@ -129,15 +134,24 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // From server
     this.refreshRouteInnerPromise = lastValueFrom(observable);
     this.currentFolder = await this.refreshRouteInnerPromise;
+    console.log(this.currentFolder.files);
   }
 
   async createNewFile(filename: string) {
     if (this.currentFolder === null) {
       return;
     }
-    await this.fileService.addTextFile(this.currentPath, filename, '');
-    this.currentFolder.files.push({ name: filename, tags: [] });
+
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.addTextFile(this.currentPath, filename, ''),
+      {
+        409: await getTranslation(this.translateService, 'error.file-already-exists')
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-created'));
     this.fileModal.close();
+    await this.refreshRoute();
   }
 
   async createNewFolder(folderName: string) {
@@ -149,13 +163,28 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.currentPath == '/'
         ? `/${folderName}`
         : `${this.currentPath}/${folderName}`;
-    await this.browser.addDirectory(path);
-    this.currentFolder.directories.push(folderName);
+
+    await this.notificationService.awaitAndNotifyError(
+      this.browser.addDirectory(path),
+      {
+        409: await getTranslation(this.translateService, 'error.folder-already-exists'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-created'));
     this.folderModal.close();
+    await this.refreshRoute();
   }
 
   async deleteFile(file: File) {
-    await this.fileService.deleteFile(this.currentPath, file.name);
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.deleteFile(this.currentPath, file.name),
+      {
+        404: await getTranslation(this.translateService, 'error.file-not-found'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
   }
 
@@ -168,7 +197,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async deleteFolder(name: string) {
     const path =
       this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
-    await this.browser.deleteDirectory(path);
+
+    await this.notificationService.awaitAndNotifyError(this.browser.deleteDirectory(path),
+      {
+        404: await getTranslation(this.translateService, 'error.folder-not-found'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-deleted'));
     await this.refreshRoute();
   }
 

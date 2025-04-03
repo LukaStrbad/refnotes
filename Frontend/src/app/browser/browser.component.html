@@ -138,7 +138,7 @@
         </thead>
       }
       <tbody>
-        @for (file of currentFolder.files; track file) {
+        @for (file of currentFolder.files; track file.name) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input

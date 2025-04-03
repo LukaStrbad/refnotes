@@ -4,11 +4,11 @@ import { HeaderComponent } from './components/header/header.component';
 import { TranslateService } from "@ngx-translate/core";
 import { SettingsService } from '../services/settings.service';
 import { NotificationService } from '../services/notification.service';
-import { NgClass } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, NgClass],
+  imports: [RouterOutlet, HeaderComponent, NgClass, AsyncPipe],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

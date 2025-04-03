@@ -41,7 +41,7 @@ export class LoginComponent {
     try {
       await this.auth.login(this.username, this.password);
     } catch (e) {
-      this.error = getErrorMessage(e, {
+      this.error = await getErrorMessage(e, {
         401: "login.errors.invalidPassword",
         404: "login.errors.usernameNotFound",
       });
