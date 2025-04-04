@@ -41,7 +41,7 @@ describe('CreateNewModalComponent', () => {
 
   it('should emit onCreate event with newName when onCreateClick is called', () => {
     let newName = '';
-    component.onCreate.subscribe(name => (newName = name));
+    component.create.subscribe(name => (newName = name));
     component.newName = 'New File';
     component.onCreateClick();
 
@@ -145,7 +145,7 @@ describe('CreateNewModalComponent', () => {
   });
 
   it('should emit onUpload event with selectedFiles when onUploadClick is called', () => {
-    const emitSpy = spyOn(component.onUpload, 'emit');
+    const emitSpy = spyOn(component.upload, 'emit');
 
     const input = document.createElement('input');
     input.type = 'file';

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpEvent, HttpResponse } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { createExpiredAccessToken, createValidAccessToken } from '../tests/token-utils';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 describe('AuthService', () => {
   let service: AuthService;

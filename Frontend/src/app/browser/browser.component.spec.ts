@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BrowserComponent } from './browser.component';
 import {
@@ -26,7 +26,7 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
-  let storage: { [key: string]: string } = {};
+  const storage: Record<string, string> = {};
 
   beforeEach(async () => {
     // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
@@ -157,6 +157,10 @@ describe('BrowserComponent', () => {
   });
 
   it('should create a new file', async () => {
+    fixture.detectChanges();
+    browserService.listCached.and.returnValue(
+      of({ name: '/', files: [createFile('test.txt')], directories: [] }),
+    );
     await component.createNewFile('test.txt');
     fixture.detectChanges();
 
@@ -170,6 +174,10 @@ describe('BrowserComponent', () => {
   });
 
   it('should create a new folder', async () => {
+    fixture.detectChanges();
+    browserService.listCached.and.returnValue(
+      of({ name: '/', files: [], directories: ['newFolder'] }),
+    );
     await component.createNewFolder('newFolder');
     fixture.detectChanges();
 
@@ -192,7 +200,7 @@ describe('BrowserComponent', () => {
       'test.txt',
     );
 
-    fileService.deleteFile.and.callFake((directoryPath, name) => {
+    fileService.deleteFile.and.callFake(() => {
       browserService.listCached.and.returnValue(
         of({ name: '/', files: [], directories: [] }),
       );
@@ -218,7 +226,7 @@ describe('BrowserComponent', () => {
     await component.loadingPromise;
     expect(component.currentFolder?.directories).toContain('testFolder');
 
-    browserService.deleteDirectory.and.callFake((path) => {
+    browserService.deleteDirectory.and.callFake(() => {
       browserService.listCached.and.returnValue(
         of({ name: '/', files: [], directories: [] }),
       );
@@ -257,10 +265,10 @@ describe('BrowserComponent', () => {
     const fileList = {
       0: mockFile,
       length: 1,
-      item: (index: number) => mockFile,
+      item: () => mockFile,
     } as FileList;
     fileService.addFile.and.returnValue(
-      of(new HttpResponse<Object>({ status: 200 })),
+      of(new HttpResponse<object>({ status: 200 })),
     );
     spyOn(component.fileModal, 'close');
     await component.onFilesUpload(fileList);

@@ -73,7 +73,7 @@ public class BrowserService(
 
         if (existingDir is not null)
         {
-            throw new ArgumentException($"Directory at path '{path}' already exists");
+            throw new DirectoryAlreadyExists($"Directory at path '{path}' already exists");
         }
 
         var (baseDir, _) = SplitDirPathName(path);

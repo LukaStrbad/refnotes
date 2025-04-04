@@ -22,11 +22,9 @@ import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { LoggerService } from '../../../services/logger.service';
-import { splitDirAndName } from '../../../utils/path-utils';
 import { NgClass } from '@angular/common';
 import { FileService } from '../../../services/file.service';
 import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
-import { getImageBlobUrl } from '../../../utils/image-utils';
 
 @Component({
   selector: 'app-md-editor',
@@ -61,7 +59,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('editorRef') editorElementRef!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
-  isMobile: boolean = false;
+  isMobile = false;
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
@@ -116,7 +114,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // Only render preview on mobile when it's visible
         // When it's not mobile, then effect in the constructor will take care of it
         if (this.isMobile && entry.isIntersecting) {
-          console.log('rendering preview');
           this.renderPreview(this.value());
           this.syncScrolls(true, true);
         }
@@ -132,7 +129,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   renderPreview(text: string) {
     if (this.previewContentElement?.nativeElement == null) {
-      this.log.error('Preview element is not available');
       return;
     }
     if (this.settings.mdEditor().experimentalFastRender) {
@@ -160,14 +156,13 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       .lexer(text)
       .filter((t) => t.type !== 'space') as TokensList;
 
-    let tokenHashes: {
+    const tokenHashes: {
       key: number;
       raw: string;
       token: Token;
       occurrence: number;
     }[] = [];
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
+    for (const token of tokens) {
       const tokenHash = this.strHash(token.raw);
       const existingHash = tokenHashes.findLast((t) => t.key == tokenHash);
       const occurrence = existingHash ? existingHash.occurrence + 1 : 0;
@@ -237,8 +232,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       let editorLineCount = 0;
       const raw: string | undefined = token['raw'];
       if (raw) {
-        for (let i = 0; i < raw.length; i++) {
-          if (raw[i] === '\n') {
+        for (const c of raw) {
+          if (c === '\n') {
             editorLineCount++;
           }
         }
@@ -367,7 +362,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let i = 0; i < textLines.length; i++) {
       const child = tempDiv.children[i] as HTMLElement;
       const rect = child.getBoundingClientRect();
-      let wrappedLinesCount = Math.ceil(rect.height / lineHeight) || 1;
+      const wrappedLinesCount = Math.ceil(rect.height / lineHeight) || 1;
 
       if (i > 0) {
         const prevLine = lines[i - 1];

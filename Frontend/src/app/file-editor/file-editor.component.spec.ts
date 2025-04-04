@@ -9,7 +9,6 @@ import {
 } from '@ngx-translate/core';
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { BrowserService } from '../../services/browser.service';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
@@ -18,7 +17,7 @@ import { mockActivatedRoute } from '../../tests/route-utils';
   selector: 'app-md-editor',
   template: '',
 })
-class MdEditorStub { }
+class MdEditorStubComponent { }
 
 describe('FileEditorComponent', () => {
   let component: FileEditorComponent;
@@ -41,7 +40,7 @@ describe('FileEditorComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         FileEditorComponent,
-        MdEditorStub,
+        MdEditorStubComponent,
         TranslateModule.forRoot({
           loader: {
             provide: TranslateLoader,

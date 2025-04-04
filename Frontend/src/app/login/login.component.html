@@ -1,10 +1,10 @@
 <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl mx-auto">
   <form class="card-body" #loginForm="ngForm">
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="usernameInput" translate>
         login.username
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
         <input
           type="text"
@@ -13,15 +13,16 @@
           name="username"
           [(ngModel)]="username"
           #usernameInput="ngModel"
+          id="usernameInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="passwordInput" translate>
         login.password
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
         <input
           type="password"
@@ -30,8 +31,9 @@
           name="password"
           [(ngModel)]="password"
           #passwordInput="ngModel"
+          id="passwordInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     @if (message) {

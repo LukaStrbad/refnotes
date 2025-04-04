@@ -5,10 +5,10 @@
     (ngSubmit)="register()"
   >
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="usernameInput" translate>
         login.username
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
         <input
           type="text"
@@ -16,8 +16,9 @@
           placeholder="{{ 'login.username' | translate | lowercase }}"
           name="username"
           formControlName="username"
+          id="usernameInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <div
@@ -47,10 +48,10 @@
     </div>
 
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="nameInput" translate>
         register.name
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-person-fill"></i>
         <input
           type="text"
@@ -58,8 +59,9 @@
           placeholder="{{ 'register.name' | translate | lowercase }}"
           name="name"
           formControlName="name"
+          id="nameInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <div
@@ -86,10 +88,10 @@
     </div>
 
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="emailInput" translate>
         register.email
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-envelope-fill"></i>
         <input
           type="text"
@@ -97,8 +99,9 @@
           placeholder="{{ 'register.email' | translate | lowercase }}"
           name="email"
           formControlName="email"
+          id="emailInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <div
@@ -127,10 +130,10 @@
     </div>
 
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="passwordInput" translate>
         login.password
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
         <input
           type="password"
@@ -138,8 +141,9 @@
           placeholder="{{ 'login.password' | translate | lowercase }}"
           name="password"
           formControlName="password"
+          id="passwordInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <div
@@ -168,10 +172,10 @@
     </div>
 
     <fieldset class="fieldset">
-      <label class="fieldset-label" translate>
+      <label class="fieldset-label" for="confirmPasswordInput" translate>
         register.confirmPassword
       </label>
-      <label class="input input-bordered flex items-center gap-2">
+      <div class="input input-bordered flex items-center gap-2">
         <i class="bi bi-key-fill"></i>
         <input
           type="password"
@@ -179,8 +183,9 @@
           placeholder="{{ 'register.confirmPassword' | translate | lowercase }}"
           name="confirmPassword"
           formControlName="confirmPassword"
+          id="confirmPasswordInput"
         />
-      </label>
+      </div>
     </fieldset>
 
     <div

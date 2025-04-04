@@ -15,7 +15,7 @@ import {
   tap,
 } from 'rxjs';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
@@ -26,6 +26,8 @@ import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
 import { joinPaths } from '../../utils/path-utils';
 import { MoveFileService } from '../../services/move-file.service';
+import { NotificationService } from '../../services/notification.service';
+import { getTranslation } from '../../utils/translation-utils';
 
 @Component({
   selector: 'app-browser',
@@ -52,8 +54,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   @ViewChild('folderModal')
   folderModal!: CreateNewModalComponent;
   pathStack: string[] = [];
-  currentPath: string = '/';
-  uploadProgress: { [key: string]: number | null } = {};
+  currentPath = '/';
+  uploadProgress: Record<string, number | null> = {};
   readonly filesToMove: ReadonlySet<string>;
 
   private navSubscription?: Subscription;
@@ -61,7 +63,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   /**
    * For testing purposes, this property is used to store the promise returned by the refreshRoute method.
    */
-  loadingPromise?: Promise<any>;
+  loadingPromise?: Promise<void>;
   /**
    * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
    */
@@ -72,10 +74,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
     let path = '';
-    for (let i = 0; i < this.pathStack.length; i++) {
-      path += '/' + this.pathStack[i];
+    for (const stackPart of this.pathStack) {
+      path += '/' + stackPart;
       breadcrumbs.push({
-        name: this.pathStack[i],
+        name: stackPart,
         path: path,
         icon: 'folder',
       });
@@ -91,6 +93,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private router: Router,
     private auth: AuthService,
     private moveFileService: MoveFileService,
+    private notificationService: NotificationService,
+    private translateService: TranslateService,
   ) {
     this.filesToMove = this.moveFileService.filesToMove;
   }
@@ -135,9 +139,17 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (this.currentFolder === null) {
       return;
     }
-    await this.fileService.addTextFile(this.currentPath, filename, '');
-    this.currentFolder.files.push({ name: filename, tags: [] });
+
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.addTextFile(this.currentPath, filename, ''),
+      {
+        409: await getTranslation(this.translateService, 'error.file-already-exists')
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-created'));
     this.fileModal.close();
+    await this.refreshRoute();
   }
 
   async createNewFolder(folderName: string) {
@@ -149,13 +161,28 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.currentPath == '/'
         ? `/${folderName}`
         : `${this.currentPath}/${folderName}`;
-    await this.browser.addDirectory(path);
-    this.currentFolder.directories.push(folderName);
+
+    await this.notificationService.awaitAndNotifyError(
+      this.browser.addDirectory(path),
+      {
+        409: await getTranslation(this.translateService, 'error.folder-already-exists'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-created'));
     this.folderModal.close();
+    await this.refreshRoute();
   }
 
   async deleteFile(file: File) {
-    await this.fileService.deleteFile(this.currentPath, file.name);
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.deleteFile(this.currentPath, file.name),
+      {
+        404: await getTranslation(this.translateService, 'error.file-not-found'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
   }
 
@@ -168,7 +195,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async deleteFolder(name: string) {
     const path =
       this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
-    await this.browser.deleteDirectory(path);
+
+    await this.notificationService.awaitAndNotifyError(this.browser.deleteDirectory(path),
+      {
+        404: await getTranslation(this.translateService, 'error.folder-not-found'),
+      }
+    );
+
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-deleted'));
     await this.refreshRoute();
   }
 
@@ -185,25 +219,26 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.uploadProgress = {};
     const observables = [];
 
-    for (let i = 0; i < files.length; i++) {
-      this.logger.info(`Uploading file ${files[i].name}`);
+    for (const file of Array.from(files)) {
       const uploadObservable = this.fileService
-        .addFile(this.currentPath, files[i])
+        .addFile(this.currentPath, file)
         .pipe(
           tap((event) => {
             if (event.type === HttpEventType.UploadProgress) {
-              this.uploadProgress[files[i].name] = event.total
+              this.uploadProgress[file.name] = event.total
                 ? Math.round((100 * event.loaded) / event.total)
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.logger.info('File uploaded successfully', event);
                 this.currentFolder?.files.push({
-                  name: files[i].name,
+                  name: file.name,
                   tags: [],
                 });
               } else {
-                console.error('Error uploading file', event);
+                getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
+                  .then((translation) => {
+                    this.notificationService.error(translation);
+                  });
               }
             }
           }),
@@ -214,8 +249,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     try {
       await lastValueFrom(forkJoin(observables));
+      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-uploaded-successfully'));
     } catch (error) {
-      console.error('Error uploading files', error);
+      this.logger.error('Error uploading files', error);
     }
 
     this.fileModal.close();
@@ -248,7 +284,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async addTag([fileName, tag]: [string, string]) {
-    await this.tagService.addFileTag(this.currentPath, fileName, tag);
+    await this.notificationService.awaitAndNotifyError(this.tagService.addFileTag(this.currentPath, fileName, tag), {
+      default: await getTranslation(this.translateService, 'error.add-file-tag'),
+    });
+
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
@@ -256,7 +295,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async removeTag([fileName, tag]: [string, string]) {
-    await this.tagService.removeFileTag(this.currentPath, fileName, tag);
+    await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.currentPath, fileName, tag), {
+      default: await getTranslation(this.translateService, 'error.remove-file-tag'),
+    });
+
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
@@ -306,7 +348,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     try {
-      await this.moveFileService.moveFiles(this.currentPath);
+      await this.notificationService.awaitAndNotifyError(this.moveFileService.moveFiles(this.currentPath), {
+        default: await getTranslation(this.translateService, 'error.move-files'),
+      });
     } finally {
       await this.refreshRoute();
     }

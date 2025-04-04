@@ -3,12 +3,14 @@
     <div role="tablist" class="hidden sm:tabs tabs-boxed tabs-sm self-end">
       <a
         role="tab"
+        tabindex="0"
         class="tab rounded-sm"
         [ngClass]="{
           'tab-active bg-primary text-neutral-content hover:text-neutral-content':
             editorMode() === 'SideBySide',
         }"
         (click)="settings.setMdEditorMode('SideBySide')"
+        (keyup.enter)="settings.setMdEditorMode('SideBySide')"
         testTag="editorMode-sideBySide"
         translate
       >
@@ -16,12 +18,14 @@
       </a>
       <a
         role="tab"
+        tabindex="0"
         class="tab rounded-sm"
         [ngClass]="{
           'tab-active bg-primary text-neutral-content hover:text-neutral-content':
             editorMode() === 'EditorOnly',
         }"
         (click)="settings.setMdEditorMode('EditorOnly')"
+        (keyup.enter)="settings.setMdEditorMode('EditorOnly')"
         testTag="editorMode-editorOnly"
         translate
       >
@@ -29,12 +33,14 @@
       </a>
       <a
         role="tab"
+        tabindex="0"
         class="tab rounded-sm"
         [ngClass]="{
           'tab-active bg-primary text-neutral-content hover:text-neutral-content':
             editorMode() === 'PreviewOnly',
         }"
         (click)="settings.setMdEditorMode('PreviewOnly')"
+        (keyup.enter)="settings.setMdEditorMode('PreviewOnly')"
         testTag="editorMode-previewOnly"
         translate
       >

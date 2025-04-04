@@ -36,15 +36,13 @@ export function createToken(payload: JwtPayload): string {
     return `${headerBase64}.${payloadBase64}.${signature}`;
 }
 
-export type AdditionalPayload = {
-    [key: string]: any;
-}
+export type AdditionalPayload = Record<string, unknown>;
 
-export type JwtPayload = {
+export interface JwtPayload {
     exp: number;
     id: string;
     unique_name: string;
     given_name: string;
     email: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }

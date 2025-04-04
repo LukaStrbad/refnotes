@@ -68,7 +68,6 @@ describe('HeaderComponent', () => {
     fixture.detectChanges();
 
     const navMenu = fixture.debugElement.query(By.css('.navbar-center'));
-    const logoutButton = fixture.debugElement.query(By.css('#logout-button'))
 
     expect(navMenu).toBeTruthy();
   });

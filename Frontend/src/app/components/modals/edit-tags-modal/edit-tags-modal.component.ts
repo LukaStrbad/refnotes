@@ -23,19 +23,19 @@ export class EditTagsModalComponent {
    * Emits when a tag is added.
    * The event payload is a tuple with the file name and the tag.
    */
-  @Output('onAdd')
-  onAdd = new EventEmitter<[string, string]>();
+  @Output()
+  add = new EventEmitter<[string, string]>();
 
   /**
    * Emits when a tag is removed.
    * The event payload is a tuple with the file name and the tag.
    */
-  @Output('onRemove')
-  onRemove = new EventEmitter<[string, string]>();
+  @Output()
+  remove = new EventEmitter<[string, string]>();
 
   fileName = '';
   tags: TagWithStatus[] = [];
-  newTag: string = '';
+  newTag = '';
 
   show(fileName: string, tags: string[]) {
     this.fileName = fileName;
@@ -55,7 +55,7 @@ export class EditTagsModalComponent {
     }
 
     this.tags[tagIndex].deleted = false;
-    this.onAdd.emit([this.fileName, tag]);
+    this.add.emit([this.fileName, tag]);
   }
 
   addTag() {
@@ -69,7 +69,7 @@ export class EditTagsModalComponent {
     } else {
       this.tags.push({ name: this.newTag, deleted: false });
     }
-    this.onAdd.emit([this.fileName, this.newTag]);
+    this.add.emit([this.fileName, this.newTag]);
     this.newTag = '';
   }
 
@@ -80,7 +80,7 @@ export class EditTagsModalComponent {
     }
 
     this.tags[tagIndex].deleted = true;
-    this.onRemove.emit([this.fileName, tag]);
+    this.remove.emit([this.fileName, tag]);
   }
 }
 

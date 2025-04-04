@@ -60,7 +60,12 @@
       "moving-file": "Premještanje {{count}} datoteka"
     },
     "cancelMove": "Poništi",
-    "moveHere": "Premjesti ovdje"
+    "moveHere": "Premjesti ovdje",
+    "file-created": "Datoteka stvorena",
+    "folder-created": "Mapa kreirana",
+    "file-deleted": "Datoteka izbrisana",
+    "folder-deleted": "Mapa izbrisana",
+    "files-uploaded-successfully": "Datoteke uspješno prenesene"
   },
   "editor": {
     "viewType": {
@@ -72,7 +77,8 @@
     "editingFile": "Uređivanje {{fileName}}",
     "save": "Spremi",
     "buttonEditTags": "Uredi oznake",
-    "labelTags": "Oznake:"
+    "labelTags": "Oznake:",
+    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'"
   },
   "modals": {
     "create": {
@@ -131,5 +137,20 @@
   "preview": {
     "labelTags": "Oznake:",
     "viewingFile": "Pregled {{fileName}}"
+  },
+  "error": {
+    "file-already-exists": "Datoteka s istim imenom već postoji",
+    "folder-already-exists": "Mapa s istim imenom već postoji",
+    "file-not-found": "Datoteka nije pronađena",
+    "folder-not-found": "Mapa nije pronađena",
+    "uploading-file": "Pogreška u prijenosu datoteke '{{name}}'",
+    "remove-file-tag": "Greška prilikom uklanjanja oznake datoteke",
+    "add-file-tag": "Greška prilikom dodavanja oznake datoteke",
+    "move-files": "Pogreška u premještanju datoteka",
+    "rename-file": "Greška prilikom preimenovanja datoteke",
+    "save-file": "Pogreška u spremanju datoteke",
+    "load-file": "Pogreška u učitavanje datoteke",
+    "load-image": "Pogreška učitavanje slike",
+    "load-file-tags": "Pogreška kod učitavanja oznaka datoteka"
   }
 }

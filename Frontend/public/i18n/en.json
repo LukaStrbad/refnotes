@@ -60,7 +60,12 @@
       "moving-file": "Moving {{count}} files"
     },
     "cancelMove": "Cancel",
-    "moveHere": "Move here"
+    "moveHere": "Move here",
+    "file-created": "File created",
+    "folder-created": "Folder created",
+    "file-deleted": "File deleted",
+    "folder-deleted": "Folder deleted",
+    "files-uploaded-successfully": "Files uploaded successfully"
   },
   "editor": {
     "viewType": {
@@ -72,7 +77,8 @@
     "editingFile": "Editing {{fileName}}",
     "save": "Save",
     "buttonEditTags": "Edit tags",
-    "labelTags": "Tags:"
+    "labelTags": "Tags:",
+    "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'"
   },
   "modals": {
     "create": {
@@ -131,5 +137,20 @@
   "preview": {
     "viewingFile": "Viewing {{fileName}}",
     "labelTags": "Tags:"
+  },
+  "error": {
+    "file-already-exists": "File with same name already exists",
+    "folder-already-exists": "Folder with same name already exists",
+    "file-not-found": "File not found",
+    "folder-not-found": "Folder not found",
+    "uploading-file": "Error uploading file '{{name}}'",
+    "add-file-tag": "Error adding file tag",
+    "remove-file-tag": "Error removing file tag",
+    "move-files": "Error moving files",
+    "rename-file": "Error renaming file",
+    "save-file": "Error saving file",
+    "load-file": "Error loading file",
+    "load-image": "Error loading image",
+    "load-file-tags": "Error loading file tags"
   }
 }

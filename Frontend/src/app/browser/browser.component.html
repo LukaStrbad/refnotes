@@ -53,12 +53,12 @@
     <app-create-new-modal
       #folderModal
       modalType="folder"
-      (onCreate)="createNewFolder($event)"
+      (create)="createNewFolder($event)"
     ></app-create-new-modal>
     <app-create-new-modal
       #fileModal
-      (onCreate)="createNewFile($event)"
-      (onUpload)="onFilesUpload($event)"
+      (create)="createNewFile($event)"
+      (upload)="onFilesUpload($event)"
       [uploadProgress]="uploadProgress"
     ></app-create-new-modal>
   </div>
@@ -138,7 +138,7 @@
         </thead>
       }
       <tbody>
-        @for (file of currentFolder.files; track file) {
+        @for (file of currentFolder.files; track file.name) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
@@ -247,11 +247,11 @@
 
 <app-edit-tags-modal
   #editTagsModal
-  (onAdd)="addTag($event)"
-  (onRemove)="removeTag($event)"
+  (add)="addTag($event)"
+  (remove)="removeTag($event)"
 ></app-edit-tags-modal>
 
 <app-rename-file-modal
   #renameFileModal
-  (onRename)="renameFile($event)"
+  (rename)="renameFile($event)"
 ></app-rename-file-modal>

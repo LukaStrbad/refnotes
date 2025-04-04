@@ -5,5 +5,46 @@
     <div class="container mx-auto py-4 px-2 h-full flex flex-col">
       <router-outlet></router-outlet>
     </div>
+
+    <div class="toast toast-top toast-start z-5 pt-(--header-height,0)">
+      @for (
+        notification of notificationService.notifications;
+        track notification.id
+      ) {
+        <div
+          class="alert select-none"
+          tabindex="0"
+          role="button"
+          [ngClass]="{
+            'alert-info': notification.type === 'info',
+            'alert-success': notification.type === 'success',
+            'alert-error': notification.type === 'error',
+            'alert-warning': notification.type === 'warning',
+          }"
+          (click)="removeNotification(notification.id)"
+          (keyup.enter)="removeNotification(notification.id)"
+        >
+          <i
+            class="bi text-xl"
+            [ngClass]="{
+              'bi-info-circle': notification.type === 'info',
+              'bi-check-circle': notification.type === 'success',
+              'bi-exclamation-triangle': notification.type === 'error',
+              'bi-exclamation-circle': notification.type === 'warning',
+            }"
+          ></i>
+
+          <div class="flex flex-col gap-1">
+            @if (notification.title) {
+              <span class="text-base font-bold">
+                {{ notification.title }}
+              </span>
+            }
+
+            <span>{{ notification.message }}</span>
+          </div>
+        </div>
+      }
+    </div>
   </div>
 </main>

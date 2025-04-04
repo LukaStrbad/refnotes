@@ -117,7 +117,7 @@ describe('RegisterComponent', () => {
     expect(submitButton.disabled).toBeTrue();
 
     const usernameError = fixture.nativeElement.querySelector('[data-test="username-error"]');
-    const nameError = fixture.nativeElement.querySelector('[data-test="name-error"]');
+    // const nameError = fixture.nativeElement.querySelector('[data-test="name-error"]');
     const emailError = fixture.nativeElement.querySelector('[data-test="email-error"]');
     const passwordError = fixture.nativeElement.querySelector('[data-test="password-error"]');
     const confirmPasswordError = fixture.nativeElement.querySelector('[data-test="confirmPassword-error"]');

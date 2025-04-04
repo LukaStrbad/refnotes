@@ -1,4 +1,4 @@
-import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -143,9 +143,9 @@ export class AuthService {
     }
 
     await this.router.navigate(['/login'], {
-      info: <LoginInfo>{
+      info: {
         message: reason
-      }
+      } as LoginInfo
     });
   }
 

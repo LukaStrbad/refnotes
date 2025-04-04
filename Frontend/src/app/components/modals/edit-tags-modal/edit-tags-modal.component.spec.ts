@@ -48,7 +48,7 @@ describe('EditTagsModalComponent', () => {
 
   it('should emit onAdd event with tag name when addTag is called', () => {
     let newTag = '';
-    component.onAdd.subscribe(([fileName, tag]) => (newTag = tag));
+    component.add.subscribe(([, tag]) => (newTag = tag));
 
     const input = fixture.nativeElement.querySelector(
       '[data-test="input-add-tag"]',
@@ -66,7 +66,7 @@ describe('EditTagsModalComponent', () => {
 
   it('should emit onRemove event with tag name when removeTag is called', () => {
     let removedTag = '';
-    component.onRemove.subscribe(([fileName, tag]) => (removedTag = tag));
+    component.remove.subscribe(([, tag]) => (removedTag = tag));
 
     component.show('file.txt', ['Tag 1', 'Tag 2']);
 

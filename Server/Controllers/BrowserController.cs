@@ -29,12 +29,17 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
     [HttpPost("addDirectory")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddDirectory(string path)
     {
         try
         {
             await browserService.AddDirectory(path);
             return Ok();
+        }
+        catch (DirectoryAlreadyExists e)
+        {
+            return Conflict(e.Message);
         }
         catch (Exception e)
         {

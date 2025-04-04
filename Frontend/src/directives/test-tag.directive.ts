@@ -1,7 +1,8 @@
-import {Directive, ElementRef, Input, input, OnInit} from '@angular/core';
+import { Directive, ElementRef, Input, OnInit } from '@angular/core';
 import { environment } from '../environments/environment';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[testTag]',
 })
 export class TestTagDirective implements OnInit {

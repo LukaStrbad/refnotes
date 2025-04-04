@@ -12,7 +12,6 @@ describe('FilePreviewComponent', () => {
   let fixture: ComponentFixture<FilePreviewComponent>;
   let fileService: jasmine.SpyObj<FileService>;
   let tagService: jasmine.SpyObj<TagService>;
-  let settingsService: jasmine.SpyObj<SettingsService>;
 
   const createComponent = () => {
     fixture = TestBed.createComponent(FilePreviewComponent);
