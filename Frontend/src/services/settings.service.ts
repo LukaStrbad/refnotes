@@ -1,4 +1,4 @@
-import { effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { EditorMode, MdEditorSettings, Theme } from '../model/settings';
 import { TranslateService } from '@ngx-translate/core';
 

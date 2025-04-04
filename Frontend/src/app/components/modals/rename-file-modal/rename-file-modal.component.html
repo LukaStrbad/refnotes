@@ -7,11 +7,12 @@
     </h3>
 
     <div class="form-control w-full">
-      <label class="label">
+      <label class="label" for="newFileName">
         <span class="label-text" translate>modals.renameFile.newName</span>
       </label>
       <input
         type="text"
+        id="newFileName"
         class="input input-bordered w-full"
         [(ngModel)]="newFileName"
         testTag="input-new-filename"

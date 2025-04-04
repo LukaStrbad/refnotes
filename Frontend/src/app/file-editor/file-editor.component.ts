@@ -87,7 +87,7 @@ export class FileEditorComponent {
     this.tags = this.tags.filter((t) => t !== tag);
   }
 
-  async renameFile([_, newFileName]: [string, string]) {
+  async renameFile([, newFileName]: [string, string]) {
     const oldFilePath = joinPaths(this.directoryPath, this.fileName);
     const newFilePath = joinPaths(this.directoryPath, newFileName);
     await this.notificationService.awaitAndNotifyError(this.fileService.moveFile(oldFilePath, newFilePath), {

@@ -25,9 +25,9 @@ export class CreateNewModalComponent {
   @Input()
   modalType: ModalType = 'file';
   @Output()
-  onCreate = new EventEmitter<string>();
+  create = new EventEmitter<string>();
   @Output()
-  onUpload = new EventEmitter<FileList>();
+  upload = new EventEmitter<FileList>();
   @Input()
   uploadProgress: Record<string, number | null> = {};
 
@@ -55,8 +55,8 @@ export class CreateNewModalComponent {
   isDragOver = false;
 
   onCreateClick() {
-    if (this.onCreate) {
-      this.onCreate.emit(this.newName);
+    if (this.create) {
+      this.create.emit(this.newName);
     }
   }
 
@@ -117,7 +117,7 @@ export class CreateNewModalComponent {
 
   onUploadClick() {
     if (this.selectedFiles) {
-      this.onUpload.emit(this.selectedFiles);
+      this.upload.emit(this.selectedFiles);
     }
   }
 }

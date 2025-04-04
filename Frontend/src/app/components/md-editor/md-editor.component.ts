@@ -162,8 +162,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       token: Token;
       occurrence: number;
     }[] = [];
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
+    for (const token of tokens) {
       const tokenHash = this.strHash(token.raw);
       const existingHash = tokenHashes.findLast((t) => t.key == tokenHash);
       const occurrence = existingHash ? existingHash.occurrence + 1 : 0;
@@ -233,8 +232,8 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       let editorLineCount = 0;
       const raw: string | undefined = token['raw'];
       if (raw) {
-        for (let i = 0; i < raw.length; i++) {
-          if (raw[i] === '\n') {
+        for (const c of raw) {
+          if (c === '\n') {
             editorLineCount++;
           }
         }

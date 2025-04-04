@@ -93,7 +93,7 @@ export class MarkdownHighlighter {
     return markedHighlight({
       emptyLangClass: 'hljs',
       langPrefix: 'hljs-',
-      highlight: (str, lang, info) => {
+      highlight: (str, lang) => {
         const hash = strHash(str + lang);
         if (this.highlightCache.has(hash)) {
           return this.highlightCache.get(hash)!;
@@ -105,7 +105,8 @@ export class MarkdownHighlighter {
               language: lang,
               ignoreIllegals: true,
             }).value;
-          } catch (_) {
+          } catch (e) {
+            console.error('Error highlighting code', e);
             rawCode = escapeHtml(str);
           }
         } else {

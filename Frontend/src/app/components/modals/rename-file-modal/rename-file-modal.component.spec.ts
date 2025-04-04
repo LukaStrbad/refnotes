@@ -46,7 +46,7 @@ describe('RenameFileModalComponent', () => {
   it('should emit onRename event with file names when saveChanges is called with valid input', () => {
     let oldFileName = '';
     let renamedFileName = '';
-    component.onRename.subscribe(([oldName, newName]) => {
+    component.rename.subscribe(([oldName, newName]) => {
       oldFileName = oldName;
       renamedFileName = newName;
     });
@@ -63,7 +63,7 @@ describe('RenameFileModalComponent', () => {
   it('should not emit onRename event when saveChanges is called with empty new file name', () => {
     // Arrange
     let emitted = false;
-    component.onRename.subscribe(() => {
+    component.rename.subscribe(() => {
       emitted = true;
     });
 
@@ -80,7 +80,7 @@ describe('RenameFileModalComponent', () => {
   it('should not emit onRename event when saveChanges is called with same file name', () => {
     // Arrange
     let emitted = false;
-    component.onRename.subscribe(() => {
+    component.rename.subscribe(() => {
       emitted = true;
     });
 

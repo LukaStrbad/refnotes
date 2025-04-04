@@ -52,11 +52,11 @@
 
 <app-edit-tags-modal
   #editTagsModal
-  (onAdd)="addTag($event)"
-  (onRemove)="removeTag($event)"
+  (add)="addTag($event)"
+  (remove)="removeTag($event)"
 ></app-edit-tags-modal>
 
 <app-rename-file-modal
   #renameFileModal
-  (onRename)="renameFile($event)"
+  (rename)="renameFile($event)"
 ></app-rename-file-modal>

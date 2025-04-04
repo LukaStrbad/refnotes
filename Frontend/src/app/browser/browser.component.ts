@@ -63,7 +63,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   /**
    * For testing purposes, this property is used to store the promise returned by the refreshRoute method.
    */
-  loadingPromise?: Promise<any>;
+  loadingPromise?: Promise<void>;
   /**
    * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
    */
@@ -74,10 +74,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
     let path = '';
-    for (let i = 0; i < this.pathStack.length; i++) {
-      path += '/' + this.pathStack[i];
+    for (const stackPart of this.pathStack) {
+      path += '/' + stackPart;
       breadcrumbs.push({
-        name: this.pathStack[i],
+        name: stackPart,
         path: path,
         icon: 'folder',
       });
@@ -220,23 +220,23 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.uploadProgress = {};
     const observables = [];
 
-    for (let i = 0; i < files.length; i++) {
+    for (const file of Array.from(files)) {
       const uploadObservable = this.fileService
-        .addFile(this.currentPath, files[i])
+        .addFile(this.currentPath, file)
         .pipe(
           tap((event) => {
             if (event.type === HttpEventType.UploadProgress) {
-              this.uploadProgress[files[i].name] = event.total
+              this.uploadProgress[file.name] = event.total
                 ? Math.round((100 * event.loaded) / event.total)
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
                 this.currentFolder?.files.push({
-                  name: files[i].name,
+                  name: file.name,
                   tags: [],
                 });
               } else {
-                getTranslation(this.translateService, 'error.uploading-file', { name: files[i].name })
+                getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
                   .then((translation) => {
                     this.notificationService.error(translation);
                   });

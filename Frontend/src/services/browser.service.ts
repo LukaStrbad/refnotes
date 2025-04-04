@@ -1,4 +1,4 @@
-import { HttpClient, HttpEvent } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 import { Directory } from '../model/directory';
@@ -13,7 +13,7 @@ const apiUrl = environment.apiUrl + '/browser';
 export class BrowserService {
   private listCache = new LRUCache<string, Directory>({ max: 100 });
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   listCached(path = '/'): Observable<Directory> {
     const cached = this.listCache.get(path);

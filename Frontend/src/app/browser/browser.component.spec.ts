@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BrowserComponent } from './browser.component';
 import {
@@ -192,7 +192,7 @@ describe('BrowserComponent', () => {
       'test.txt',
     );
 
-    fileService.deleteFile.and.callFake((directoryPath, name) => {
+    fileService.deleteFile.and.callFake(() => {
       browserService.listCached.and.returnValue(
         of({ name: '/', files: [], directories: [] }),
       );
@@ -218,7 +218,7 @@ describe('BrowserComponent', () => {
     await component.loadingPromise;
     expect(component.currentFolder?.directories).toContain('testFolder');
 
-    browserService.deleteDirectory.and.callFake((path) => {
+    browserService.deleteDirectory.and.callFake(() => {
       browserService.listCached.and.returnValue(
         of({ name: '/', files: [], directories: [] }),
       );
@@ -257,7 +257,7 @@ describe('BrowserComponent', () => {
     const fileList = {
       0: mockFile,
       length: 1,
-      item: (index: number) => mockFile,
+      item: () => mockFile,
     } as FileList;
     fileService.addFile.and.returnValue(
       of(new HttpResponse<object>({ status: 200 })),

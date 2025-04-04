@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { SettingsService } from '../../services/settings.service';
 import { MdEditorSettings, Theme } from '../../model/settings';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 
 @Component({

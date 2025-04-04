@@ -13,6 +13,8 @@
       ) {
         <div
           class="alert select-none"
+          tabindex="0"
+          role="button"
           [ngClass]="{
             'alert-info': notification.type === 'info',
             'alert-success': notification.type === 'success',
@@ -20,6 +22,7 @@
             'alert-warning': notification.type === 'warning',
           }"
           (click)="removeNotification(notification.id)"
+          (keyup.enter)="removeNotification(notification.id)"
         >
           <i
             class="bi text-xl"
