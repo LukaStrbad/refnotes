@@ -133,7 +133,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // From server
     this.refreshRouteInnerPromise = lastValueFrom(observable);
     this.currentFolder = await this.refreshRouteInnerPromise;
-    console.log(this.currentFolder.files);
   }
 
   async createNewFile(filename: string) {

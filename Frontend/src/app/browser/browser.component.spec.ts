@@ -157,6 +157,10 @@ describe('BrowserComponent', () => {
   });
 
   it('should create a new file', async () => {
+    fixture.detectChanges();
+    browserService.listCached.and.returnValue(
+      of({ name: '/', files: [createFile('test.txt')], directories: [] }),
+    );
     await component.createNewFile('test.txt');
     fixture.detectChanges();
 
@@ -170,6 +174,10 @@ describe('BrowserComponent', () => {
   });
 
   it('should create a new folder', async () => {
+    fixture.detectChanges();
+    browserService.listCached.and.returnValue(
+      of({ name: '/', files: [], directories: ['newFolder'] }),
+    );
     await component.createNewFolder('newFolder');
     fixture.detectChanges();
 
