@@ -23,7 +23,7 @@ export class RenameFileModalComponent {
    * Emits when a file is renamed.
    * The event payload is a tuple with the old file name and the new file name.
    */
-  @Output('onRename')
+  @Output()
   onRename = new EventEmitter<[string, string]>();
 
   originalFileName = '';

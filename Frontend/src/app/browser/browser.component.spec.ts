@@ -26,7 +26,7 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
-  let storage: { [key: string]: string } = {};
+  const storage: Record<string, string> = {};
 
   beforeEach(async () => {
     // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
@@ -260,7 +260,7 @@ describe('BrowserComponent', () => {
       item: (index: number) => mockFile,
     } as FileList;
     fileService.addFile.and.returnValue(
-      of(new HttpResponse<Object>({ status: 200 })),
+      of(new HttpResponse<object>({ status: 200 })),
     );
     spyOn(component.fileModal, 'close');
     await component.onFilesUpload(fileList);

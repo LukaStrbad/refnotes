@@ -64,7 +64,8 @@
     "file-created": "File created",
     "folder-created": "Folder created",
     "file-deleted": "File deleted",
-    "folder-deleted": "Folder deleted"
+    "folder-deleted": "Folder deleted",
+    "files-uploaded-successfully": "Files uploaded successfully"
   },
   "editor": {
     "viewType": {
@@ -140,6 +141,10 @@
     "file-already-exists": "File with same name already exists",
     "folder-already-exists": "Folder with same name already exists",
     "file-not-found": "File not found",
-    "folder-not-found": "Folder not found"
+    "folder-not-found": "Folder not found",
+    "uploading-file": "Error uploading file '{{name}}'",
+    "add-file-tag": "Error adding file tag",
+    "remove-file-tag": "Error removing file tag",
+    "move-files": "Error moving files"
   }
 }

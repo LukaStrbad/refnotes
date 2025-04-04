@@ -11,7 +11,7 @@ const apiUrl = environment.apiUrl + '/file';
 export class FileService {
   constructor(private http: HttpClient) {}
 
-  addFile(directoryPath: string, file: File): Observable<HttpEvent<Object>> {
+  addFile(directoryPath: string, file: File): Observable<HttpEvent<object>> {
     const formData = new FormData();
     formData.append('file', file);
 

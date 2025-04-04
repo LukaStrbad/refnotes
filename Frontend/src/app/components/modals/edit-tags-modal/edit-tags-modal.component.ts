@@ -23,19 +23,19 @@ export class EditTagsModalComponent {
    * Emits when a tag is added.
    * The event payload is a tuple with the file name and the tag.
    */
-  @Output('onAdd')
+  @Output()
   onAdd = new EventEmitter<[string, string]>();
 
   /**
    * Emits when a tag is removed.
    * The event payload is a tuple with the file name and the tag.
    */
-  @Output('onRemove')
+  @Output()
   onRemove = new EventEmitter<[string, string]>();
 
   fileName = '';
   tags: TagWithStatus[] = [];
-  newTag: string = '';
+  newTag = '';
 
   show(fileName: string, tags: string[]) {
     this.fileName = fileName;

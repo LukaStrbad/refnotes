@@ -8,7 +8,7 @@ const siPrefixes = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'];
 })
 export class ByteSizePipe implements PipeTransform {
 
-  transform(value: number, base2: boolean = true): string {
+  transform(value: number, base2 = true): string {
     if (value < 0) {
       throw new Error('Negative numbers are not supported');
     }

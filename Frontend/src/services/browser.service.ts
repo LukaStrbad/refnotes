@@ -15,7 +15,7 @@ export class BrowserService {
 
   constructor(private http: HttpClient) {}
 
-  listCached(path: string = '/'): Observable<Directory> {
+  listCached(path = '/'): Observable<Directory> {
     const cached = this.listCache.get(path);
 
     const network = this.http

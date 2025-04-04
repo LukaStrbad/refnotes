@@ -26,7 +26,6 @@ import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
 import { joinPaths } from '../../utils/path-utils';
 import { MoveFileService } from '../../services/move-file.service';
-import { getErrorMessage } from '../../utils/errorHandler';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 
@@ -55,8 +54,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   @ViewChild('folderModal')
   folderModal!: CreateNewModalComponent;
   pathStack: string[] = [];
-  currentPath: string = '/';
-  uploadProgress: { [key: string]: number | null } = {};
+  currentPath = '/';
+  uploadProgress: Record<string, number | null> = {};
   readonly filesToMove: ReadonlySet<string>;
 
   private navSubscription?: Subscription;
@@ -222,7 +221,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const observables = [];
 
     for (let i = 0; i < files.length; i++) {
-      this.logger.info(`Uploading file ${files[i].name}`);
       const uploadObservable = this.fileService
         .addFile(this.currentPath, files[i])
         .pipe(
@@ -233,13 +231,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.logger.info('File uploaded successfully', event);
                 this.currentFolder?.files.push({
                   name: files[i].name,
                   tags: [],
                 });
               } else {
-                console.error('Error uploading file', event);
+                getTranslation(this.translateService, 'error.uploading-file', { name: files[i].name })
+                  .then((translation) => {
+                    this.notificationService.error(translation);
+                  });
               }
             }
           }),
@@ -250,8 +250,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     try {
       await lastValueFrom(forkJoin(observables));
+      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-uploaded-successfully'));
     } catch (error) {
-      console.error('Error uploading files', error);
+      this.logger.error('Error uploading files', error);
     }
 
     this.fileModal.close();
@@ -284,7 +285,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async addTag([fileName, tag]: [string, string]) {
-    await this.tagService.addFileTag(this.currentPath, fileName, tag);
+    await this.notificationService.awaitAndNotifyError(this.tagService.addFileTag(this.currentPath, fileName, tag), {
+      default: await getTranslation(this.translateService, 'error.add-file-tag'),
+    });
+
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
@@ -292,7 +296,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async removeTag([fileName, tag]: [string, string]) {
-    await this.tagService.removeFileTag(this.currentPath, fileName, tag);
+    await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.currentPath, fileName, tag), {
+      default: await getTranslation(this.translateService, 'error.remove-file-tag'),
+    });
+
     const file = this.currentFolder?.files.find((f) => f.name === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
@@ -342,7 +349,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     try {
-      await this.moveFileService.moveFiles(this.currentPath);
+      await this.notificationService.awaitAndNotifyError(this.moveFileService.moveFiles(this.currentPath), {
+        default: await getTranslation(this.translateService, 'error.move-files'),
+      });
     } finally {
       await this.refreshRoute();
     }

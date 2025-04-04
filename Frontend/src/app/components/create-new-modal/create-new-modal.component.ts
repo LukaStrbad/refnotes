@@ -22,14 +22,14 @@ type ModalType = 'file' | 'folder';
   styleUrl: './create-new-modal.component.css',
 })
 export class CreateNewModalComponent {
-  @Input('modalType')
+  @Input()
   modalType: ModalType = 'file';
-  @Output('onCreate')
+  @Output()
   onCreate = new EventEmitter<string>();
-  @Output('onUpload')
+  @Output()
   onUpload = new EventEmitter<FileList>();
-  @Input('uploadProgress')
-  uploadProgress: { [key: string]: number | null } = {};
+  @Input()
+  uploadProgress: Record<string, number | null> = {};
 
   @ViewChild('modal')
   modal!: ElementRef<HTMLDialogElement>;

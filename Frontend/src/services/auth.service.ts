@@ -143,9 +143,9 @@ export class AuthService {
     }
 
     await this.router.navigate(['/login'], {
-      info: <LoginInfo>{
+      info: {
         message: reason
-      }
+      } as LoginInfo
     });
   }
 

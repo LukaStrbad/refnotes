@@ -1,8 +1,12 @@
-import { TranslateService, Translation, TranslationObject } from "@ngx-translate/core";
+import { InterpolationParameters, TranslateService, Translation, TranslationObject } from "@ngx-translate/core";
 import { firstValueFrom } from "rxjs";
 
-export async function getTranslation(translateService: TranslateService, key: string): Promise<string> {
-  const value = await firstValueFrom(translateService.get(key)) as Promise<Translation | TranslationObject>;
+export async function getTranslation(
+  translateService: TranslateService,
+  key: string,
+  interpolateParams?: InterpolationParameters
+): Promise<string> {
+  const value = await firstValueFrom(translateService.get(key, interpolateParams)) as Promise<Translation | TranslationObject>;
 
   // If the translation is not a string, throw an error
   if (typeof value !== 'string') {

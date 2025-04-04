@@ -64,7 +64,8 @@
     "file-created": "Datoteka stvorena",
     "folder-created": "Mapa kreirana",
     "file-deleted": "Datoteka izbrisana",
-    "folder-deleted": "Mapa izbrisana"
+    "folder-deleted": "Mapa izbrisana",
+    "files-uploaded-successfully": "Datoteke uspješno prenesene"
   },
   "editor": {
     "viewType": {
@@ -140,6 +141,10 @@
     "file-already-exists": "Datoteka s istim imenom već postoji",
     "folder-already-exists": "Mapa s istim imenom već postoji",
     "file-not-found": "Datoteka nije pronađena",
-    "folder-not-found": "Mapa nije pronađena"
+    "folder-not-found": "Mapa nije pronađena",
+    "uploading-file": "Pogreška u prijenosu datoteke '{{name}}'",
+    "remove-file-tag": "Greška prilikom uklanjanja oznake datoteke",
+    "add-file-tag": "Greška prilikom dodavanja oznake datoteke",
+    "move-files": "Pogreška u premještanju datoteka"
   }
 }

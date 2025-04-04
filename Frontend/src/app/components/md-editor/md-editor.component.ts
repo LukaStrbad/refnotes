@@ -61,7 +61,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('editorRef') editorElementRef!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
-  isMobile: boolean = false;
+  isMobile = false;
   syncPreview = true;
   previewedTokens: PreviewToken[] = [];
 
@@ -160,7 +160,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       .lexer(text)
       .filter((t) => t.type !== 'space') as TokensList;
 
-    let tokenHashes: {
+    const tokenHashes: {
       key: number;
       raw: string;
       token: Token;
@@ -367,7 +367,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let i = 0; i < textLines.length; i++) {
       const child = tempDiv.children[i] as HTMLElement;
       const rect = child.getBoundingClientRect();
-      let wrappedLinesCount = Math.ceil(rect.height / lineHeight) || 1;
+      const wrappedLinesCount = Math.ceil(rect.height / lineHeight) || 1;
 
       if (i > 0) {
         const prevLine = lines[i - 1];

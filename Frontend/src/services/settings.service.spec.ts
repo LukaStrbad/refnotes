@@ -12,7 +12,7 @@ import {MdEditorSettings, Theme} from '../model/settings';
 describe('SettingsService', () => {
   let service: SettingsService;
   let translate: TranslateService;
-  let storage: { [key: string]: string } = {};
+  let storage: Record<string, string> = {};
 
   beforeEach(() => {
     spyOn(localStorage, 'getItem').and.callFake((key: string) => storage[key] ?? null);
@@ -101,12 +101,12 @@ describe('SettingsService', () => {
   });
 
   it('should return stored mdEditor settings if settings are stored', () => {
-    const settings = JSON.stringify(<MdEditorSettings>{
+    const settings = JSON.stringify(({
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
       experimentalFastRender: true,
-    });
+    } as MdEditorSettings));
     localStorage.setItem('mdEditorSettings', settings);
     service = new SettingsService(translate);
 
