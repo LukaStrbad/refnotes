@@ -1,4 +1,4 @@
-name: Angular tests
+name: Angular
 permissions:
   contents: read
   pull-requests: write
@@ -6,10 +6,34 @@ permissions:
 on:
   pull_request:
     branches: [ "main" ]
-    paths: 
+    paths:
       - 'Frontend/**'
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: './Frontend/pnpm-lock.yaml'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Run linting
+        run: pnpm run lint
+  
   test:
     runs-on: ubuntu-latest
     defaults:
@@ -20,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         name: Install pnpm
-        with: 
+        with:
           version: 10
           run_install: false
       - name: Setup Node.js
