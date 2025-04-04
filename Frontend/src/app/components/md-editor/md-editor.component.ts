@@ -22,11 +22,9 @@ import { EditorLineSize } from './editor-line.size';
 import { EditorIndex } from './editor.index';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { LoggerService } from '../../../services/logger.service';
-import { splitDirAndName } from '../../../utils/path-utils';
 import { NgClass } from '@angular/common';
 import { FileService } from '../../../services/file.service';
 import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
-import { getImageBlobUrl } from '../../../utils/image-utils';
 
 @Component({
   selector: 'app-md-editor',
@@ -116,7 +114,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         // Only render preview on mobile when it's visible
         // When it's not mobile, then effect in the constructor will take care of it
         if (this.isMobile && entry.isIntersecting) {
-          console.log('rendering preview');
           this.renderPreview(this.value());
           this.syncScrolls(true, true);
         }
@@ -132,7 +129,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   renderPreview(text: string) {
     if (this.previewContentElement?.nativeElement == null) {
-      this.log.error('Preview element is not available');
       return;
     }
     if (this.settings.mdEditor().experimentalFastRender) {

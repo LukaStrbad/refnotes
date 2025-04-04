@@ -2,13 +2,15 @@ import { AfterViewInit, ChangeDetectorRef, Component, effect, ElementRef, OnDest
 import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as fileUtils from '../../utils/file-utils';
 import { MarkdownHighlighter } from '../../utils/markdown-highlighter';
 import { SettingsService } from '../../services/settings.service';
 import { NgClass } from '@angular/common';
 import { getImageBlobUrl } from '../../utils/image-utils';
 import { TestTagDirective } from '../../directives/test-tag.directive';
+import { NotificationService } from '../../services/notification.service';
+import { getTranslation } from '../../utils/translation-utils';
 
 @Component({
   selector: 'app-file-preview',
@@ -36,7 +38,9 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     private fileService: FileService,
     private tagService: TagService,
     public settings: SettingsService,
-    private changeDetector: ChangeDetectorRef
+    private changeDetector: ChangeDetectorRef,
+    private translate: TranslateService,
+    private notificationService: NotificationService,
   ) {
     this.directoryPath = route.snapshot.queryParamMap.get(
       'directory',
@@ -84,22 +88,30 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
           this.loading = false;
           this.previewContentElement.nativeElement.innerHTML = text;
         }
+      }, async () => {
+        this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
       });
 
-    this.tagService.listFileTags(this.directoryPath, this.fileName).then((tags) => {
-      this.tags = tags;
-    });
+    this.tagService.listFileTags(this.directoryPath, this.fileName)
+      .then((tags) => {
+        this.tags = tags;
+      }, async () => {
+        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
+      });
   }
 
   loadImage() {
-    this.fileService.getImage(this.directoryPath, this.fileName).then((data) => {
-      if (!data) {
-        return;
-      }
+    this.fileService.getImage(this.directoryPath, this.fileName)
+      .then((data) => {
+        if (!data) {
+          return;
+        }
 
-      this.imageSrc = getImageBlobUrl(this.fileName, data);
-      this.loading = false;
-    });
+        this.imageSrc = getImageBlobUrl(this.fileName, data);
+        this.loading = false;
+      }, async () => {
+        this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
+      });
   }
 
   /**

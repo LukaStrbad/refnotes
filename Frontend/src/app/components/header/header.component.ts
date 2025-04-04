@@ -4,7 +4,9 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SettingsService } from '../../../services/settings.service';
 import { Theme } from '../../../model/settings';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { NotificationService } from '../../../services/notification.service';
+import { getTranslation } from '../../../utils/translation-utils';
 
 @Component({
   selector: 'app-header',
@@ -18,7 +20,9 @@ export class HeaderComponent implements AfterViewInit {
 
   constructor(
     public auth: AuthService,
-    public settings: SettingsService
+    public settings: SettingsService,
+    private translate: TranslateService,
+    private notificationService: NotificationService,
   ) { }
 
   ngAfterViewInit(): void {
@@ -39,5 +43,6 @@ export class HeaderComponent implements AfterViewInit {
 
   async logout() {
     await this.auth.logout();
+    this.notificationService.info(await getTranslation(this.translate, 'header.logout'));
   }
 }

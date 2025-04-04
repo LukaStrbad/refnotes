@@ -77,7 +77,8 @@
     "editingFile": "Uređivanje {{fileName}}",
     "save": "Spremi",
     "buttonEditTags": "Uredi oznake",
-    "labelTags": "Oznake:"
+    "labelTags": "Oznake:",
+    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'"
   },
   "modals": {
     "create": {
@@ -145,6 +146,11 @@
     "uploading-file": "Pogreška u prijenosu datoteke '{{name}}'",
     "remove-file-tag": "Greška prilikom uklanjanja oznake datoteke",
     "add-file-tag": "Greška prilikom dodavanja oznake datoteke",
-    "move-files": "Pogreška u premještanju datoteka"
+    "move-files": "Pogreška u premještanju datoteka",
+    "rename-file": "Greška prilikom preimenovanja datoteke",
+    "save-file": "Pogreška u spremanju datoteke",
+    "load-file": "Pogreška u učitavanje datoteke",
+    "load-image": "Pogreška učitavanje slike",
+    "load-file-tags": "Pogreška kod učitavanja oznaka datoteka"
   }
 }
