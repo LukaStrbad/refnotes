@@ -14,7 +14,15 @@ export class AskModalService {
    * @param translate Whether to translate the title and message using ngx-translate.
    * @returns A promise that resolves to true if the confirm button is clicked, false otherwise.
    */
-  async show(title: string, message: string, translate = false): Promise<boolean> {
+  async prompt(title: string, message: string, { translate = false, body = undefined }: { translate: boolean, body?: string } = { translate: false }): Promise<boolean> {
+    return await this.show(title, message, translate, body, false);
+  }
+
+  async confirm(title: string, message: string, { translate = false, body = undefined }: { translate: boolean, body?: string } = { translate: false }): Promise<boolean> {
+    return await this.show(title, message, translate, body, true);
+  }
+
+  private async show(title: string, message: string, translate: boolean, body: string | undefined, useYesNo: boolean) {
     if (!this.viewContainer) {
       throw new Error('ViewContainerRef is not set. Please set it before using the AskModalService.');
     }
@@ -22,6 +30,8 @@ export class AskModalService {
     const askModal = this.viewContainer.createComponent(AskModalComponent);
 
     askModal.instance.setText(title, message, translate);
+    askModal.instance.setBody(body);
+    askModal.instance.useYesNo = useYesNo;
     askModal.changeDetectorRef.detectChanges();
     askModal.instance.show();
 

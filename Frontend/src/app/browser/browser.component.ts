@@ -24,10 +24,11 @@ import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edi
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
-import { joinPaths } from '../../utils/path-utils';
+import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { MoveFileService } from '../../services/move-file.service';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
+import { AskModalService } from '../../services/ask-modal.service';
 
 @Component({
   selector: 'app-browser',
@@ -95,6 +96,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private moveFileService: MoveFileService,
     private notificationService: NotificationService,
     private translateService: TranslateService,
+    private askModal: AskModalService,
   ) {
     this.filesToMove = this.moveFileService.filesToMove;
   }
@@ -184,6 +186,32 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
+  }
+
+  async deleteSelectedFiles() {
+    const files = [...this.filesToMove].join(', ');
+    const accepted = await this.askModal.confirm('browser.title.modal.delete-files', 'browser.message.modal.delete-files', { translate: true, body: files });
+
+    if (!accepted) {
+      return;
+    }
+
+    const promises = [...this.filesToMove].map((file) => {
+      const [dir, name] = splitDirAndName(file);
+      return this.fileService.deleteFile(dir, name);
+    })
+
+    try {
+      await this.notificationService.awaitAndNotifyError(Promise.all(promises), {
+        default: await getTranslation(this.translateService, 'error.deleting-files'),
+      });
+
+      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-deleted'));
+    } finally {
+      this.moveFileService.clearFilesToMove();
+      // Refresh the route to update the file list as some file might have been deleted
+      await this.refreshRoute();
+    }
   }
 
   async openFolder(name: string) {

@@ -28,7 +28,11 @@
     </div>
 
     <div class="flex gap-2">
-      <button class="btn btn-error btn-sm" (click)="cancelMove()">
+      <button class="btn btn-error btn-sm" (click)="deleteSelectedFiles()">
+        <i class="bi bi-x-circle"></i>
+        {{ "browser.deleteAll" | translate }}
+      </button>
+      <button class="btn btn-warning btn-sm" (click)="cancelMove()">
         <i class="bi bi-x-circle"></i>
         {{ "browser.cancelMove" | translate }}
       </button>

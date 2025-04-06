@@ -13,9 +13,12 @@ export class AskModalComponent {
   private _title = signal('');
   private _message = signal('');
   private _translate = signal(false);
+  private _body = signal<string | null>(null);
 
   title: Signal<Promise<string>>;
   message: Signal<Promise<string>>;
+  body: Signal<string | null> = this._body;
+  useYesNo = false;
 
   onConfirm?: () => void;
   onCancel?: () => void;
@@ -41,6 +44,10 @@ export class AskModalComponent {
     this._title.set(title);
     this._message.set(message);
     this._translate.set(translate);
+  }
+
+  setBody(body: string | null | undefined) {
+    this._body.set(body ?? null);
   }
 
   show() {
