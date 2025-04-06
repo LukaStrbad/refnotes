@@ -107,6 +107,10 @@
       "newName": "New name",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "ask": {
+      "cancel": "Cancel",
+      "accept": "Accept"
     }
   },
   "auth": {

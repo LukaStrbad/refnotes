@@ -107,6 +107,10 @@
       "newName": "Novo ime",
       "save": "Spremi",
       "title": "Preimenuj datoteku {{fileName}}"
+    },
+    "ask": {
+      "accept": "Prihvati",
+      "cancel": "Otkaži"
     }
   },
   "auth": {
