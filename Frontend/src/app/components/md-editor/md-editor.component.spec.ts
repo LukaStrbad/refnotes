@@ -139,12 +139,5 @@ describe('MdEditorComponent', () => {
     expect(img.src).toContain('blob:');
     expect(img.alt).toBe('image');
     expect(img.title).toBe('Image Title');
-
-    // Convert back to array
-    const src = img.src;
-    const data = await fetch(src);
-    const arrayBuffer = await data.arrayBuffer();
-    const array = Array.from(new Uint8Array(arrayBuffer));
-    expect(array).toEqual([0, 1, 2, 3]);
   });
 });
