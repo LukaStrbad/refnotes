@@ -149,7 +149,7 @@
                 type="checkbox"
                 [checked]="isFileToMove(file.name)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
-                (change)="toggleFileToMove(file.name, $event)"
+                (click)="toggleFileToMove(file, $event)"
                 testTag="browser.file-to-move-checkbox"
               />
 
@@ -195,14 +195,16 @@
               </div>
             </td>
             <td class="flex gap-2 justify-end">
-              <a
-                class="btn btn-sm btn-accent"
-                routerLink="/editor"
-                [queryParams]="{ directory: currentPath, file: file.name }"
-              >
-                <i class="bi bi-pencil"></i>
-                {{ "browser.edit" | translate }}
-              </a>
+              @if (isEditable(file)) {
+                <a
+                  class="btn btn-sm btn-accent"
+                  routerLink="/editor"
+                  [queryParams]="{ directory: currentPath, file: file.name }"
+                >
+                  <i class="bi bi-pencil"></i>
+                  {{ "browser.edit" | translate }}
+                </a>
+              }
               <!-- Dropdown for more actions -->
               <div class="dropdown dropdown-end">
                 <div

@@ -58,6 +58,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   currentPath = '/';
   uploadProgress: Record<string, number | null> = {};
   readonly filesToMove: ReadonlySet<string>;
+  lastCheckedFile: File | null = null;
 
   private navSubscription?: Subscription;
 
@@ -285,6 +286,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.fileModal.close();
   }
 
+  isEditable(file: File): boolean {
+    return fileUtils.isEditable(file.name);
+  }
+
   async openEdit(file: File) {
     await this.router.navigate(['/editor'], {
       queryParams: {
@@ -346,15 +351,38 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleFileToMove(filename: string, event: Event) {
+  toggleFileToMove(file: File, event: MouseEvent) {
+    // Prevent text selection when shift is pressed and the checkbox is clicked
+    document.getSelection()?.removeAllRanges();
+
     const target = event.target as HTMLInputElement;
-    const filePath = joinPaths(this.currentPath, filename);
-    if (target.checked) {
-      this.moveFileService.addFile(filePath);
+    const shiftPressed = event.shiftKey;
+
+    let files = [file];
+    // Add all files between the last checked file and the current one
+    if (shiftPressed) {
+      if (this.lastCheckedFile === null) {
+        this.lastCheckedFile = file;
+      }
+      const lastCheckedIndex = this.currentFolder?.files.findIndex(f => f === this.lastCheckedFile) ?? -1;
+      const currentIndex = this.currentFolder?.files.findIndex(f => f === file) ?? -1;
+      if (lastCheckedIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastCheckedIndex, currentIndex);
+        const end = Math.max(lastCheckedIndex, currentIndex);
+        files = this.currentFolder?.files.slice(start, end + 1) ?? [file];
+      }
     }
-    else {
-      this.moveFileService.removeFile(filePath);
-    }
+
+    files.forEach((file) => {
+      const filePath = joinPaths(this.currentPath, file.name);
+      if (target.checked) {
+        this.moveFileService.addFile(filePath);
+      } else {
+        this.moveFileService.removeFile(filePath);
+      }
+    });
+
+    this.lastCheckedFile = file;
   }
 
   isFileToMove(filename: string): boolean {
