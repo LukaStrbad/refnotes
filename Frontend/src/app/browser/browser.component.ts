@@ -25,7 +25,7 @@ import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
 import { joinPaths, splitDirAndName } from '../../utils/path-utils';
-import { MoveFileService } from '../../services/move-file.service';
+import { SelectFileService } from '../../services/select-file.service';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
@@ -57,7 +57,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   pathStack: string[] = [];
   currentPath = '/';
   uploadProgress: Record<string, number | null> = {};
-  readonly filesToMove: ReadonlySet<string>;
+  readonly selectedFiles: ReadonlySet<string>;
   lastCheckedFile: File | null = null;
 
   private navSubscription?: Subscription;
@@ -94,12 +94,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
-    private moveFileService: MoveFileService,
+    private selectFileService: SelectFileService,
     private notificationService: NotificationService,
     private translateService: TranslateService,
     private askModal: AskModalService,
   ) {
-    this.filesToMove = this.moveFileService.filesToMove;
+    this.selectedFiles = this.selectFileService.selectedFiles;
   }
 
   ngOnInit(): void {
@@ -190,14 +190,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async deleteSelectedFiles() {
-    const files = [...this.filesToMove].join(', ');
+    const files = [...this.selectedFiles].join(', ');
     const accepted = await this.askModal.confirm('browser.title.modal.delete-files', 'browser.message.modal.delete-files', { translate: true, body: files });
 
     if (!accepted) {
       return;
     }
 
-    const promises = [...this.filesToMove].map((file) => {
+    const promises = [...this.selectedFiles].map((file) => {
       const [dir, name] = splitDirAndName(file);
       return this.fileService.deleteFile(dir, name);
     })
@@ -209,7 +209,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
       this.notificationService.success(await getTranslation(this.translateService, 'browser.files-deleted'));
     } finally {
-      this.moveFileService.clearFilesToMove();
+      this.selectFileService.clearSelectedFiles();
       // Refresh the route to update the file list as some file might have been deleted
       await this.refreshRoute();
     }
@@ -376,9 +376,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     files.forEach((file) => {
       const filePath = joinPaths(this.currentPath, file.name);
       if (target.checked) {
-        this.moveFileService.addFile(filePath);
+        this.selectFileService.addFile(filePath);
       } else {
-        this.moveFileService.removeFile(filePath);
+        this.selectFileService.removeFile(filePath);
       }
     });
 
@@ -387,24 +387,24 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   isFileToMove(filename: string): boolean {
     const filePath = joinPaths(this.currentPath, filename);
-    return this.filesToMove.has(filePath);
+    return this.selectedFiles.has(filePath);
   }
 
-  cancelMove() {
-    this.moveFileService.clearFilesToMove();
+  cancelSelect() {
+    this.selectFileService.clearSelectedFiles();
   }
 
   async moveFiles() {
     const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.name)));
 
     // Find only the files that are not in the current folder
-    const filesToMove = this.filesToMove.difference(filesFromCurrentFolder);
+    const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
     if (filesToMove.size === 0) {
       return;
     }
 
     try {
-      await this.notificationService.awaitAndNotifyError(this.moveFileService.moveFiles(this.currentPath), {
+      await this.notificationService.awaitAndNotifyError(this.selectFileService.moveFiles(this.currentPath), {
         default: await getTranslation(this.translateService, 'error.move-files'),
       });
     } finally {

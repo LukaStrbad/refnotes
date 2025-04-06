@@ -1,9 +1,9 @@
-@if (filesToMove.size > 0) {
+@if (selectedFiles.size > 0) {
   <div class="m-2 flex gap-2 justify-between">
     <div class="grow flex gap-2 items-baseline">
       <h3 class="text-base">
         {{
-          "browser.label.moving-file" | translate: { count: filesToMove.size }
+          "browser.label.moving-file" | translate: { count: selectedFiles.size }
         }}
       </h3>
       <div class="dropdown dropdown-center">
@@ -19,7 +19,7 @@
           class="dropdown-content z-[1] meu p-2 shadow bg-base-100 rounded-box w-52 max-h-52"
         >
           <ul class="flex flex-col overflow-scroll">
-            @for (file of filesToMove; track file) {
+            @for (file of selectedFiles; track file) {
               <li testTag="browser.file-to-move">{{ file }}</li>
             }
           </ul>
@@ -32,7 +32,7 @@
         <i class="bi bi-x-circle"></i>
         {{ "browser.deleteAll" | translate }}
       </button>
-      <button class="btn btn-warning btn-sm" (click)="cancelMove()">
+      <button class="btn btn-warning btn-sm" (click)="cancelSelect()">
         <i class="bi bi-x-circle"></i>
         {{ "browser.cancelMove" | translate }}
       </button>

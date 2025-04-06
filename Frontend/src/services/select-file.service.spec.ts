@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 
-import { MoveFileService } from './move-file.service';
+import { SelectFileService } from './select-file.service';
 import { FileService } from './file.service';
 
-describe('MoveFileService', () => {
-  let service: MoveFileService;
+describe('SelectFileService', () => {
+  let service: SelectFileService;
   let fileService: jasmine.SpyObj<FileService>;
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('MoveFileService', () => {
         { provide: FileService, useValue: fileService },
       ],
     });
-    service = TestBed.inject(MoveFileService);
+    service = TestBed.inject(SelectFileService);
   });
 
   it('should be created', () => {
@@ -25,22 +25,22 @@ describe('MoveFileService', () => {
   it('should add file to move list', () => {
     const filePath = '/path/to/file.txt';
     service.addFile(filePath);
-    expect(service.filesToMove.has(filePath)).toBeTrue();
+    expect(service.selectedFiles.has(filePath)).toBeTrue();
   });
 
   it('should remove file from move list', () => {
     const filePath = '/path/to/file.txt';
     service.addFile(filePath);
     service.removeFile(filePath);
-    expect(service.filesToMove.has(filePath)).toBeFalse();
-    expect(service.filesToMove.size).toBe(0);
+    expect(service.selectedFiles.has(filePath)).toBeFalse();
+    expect(service.selectedFiles.size).toBe(0);
   });
 
   it('should clear move list', () => {
     service.addFile('/path/to/file1.txt');
     service.addFile('/path/to/file2.txt');
-    service.clearFilesToMove();
-    expect(service.filesToMove.size).toBe(0);
+    service.clearSelectedFiles();
+    expect(service.selectedFiles.size).toBe(0);
   });
 
   it('should move files to destination', async () => {
@@ -57,6 +57,6 @@ describe('MoveFileService', () => {
 
     expect(fileService.moveFile).toHaveBeenCalledWith(filePath1, '/new/path/file1.txt');
     expect(fileService.moveFile).toHaveBeenCalledWith(filePath2, '/new/path/file2.txt');
-    expect(service.filesToMove.size).toBe(0);
+    expect(service.selectedFiles.size).toBe(0);
   });
 });
