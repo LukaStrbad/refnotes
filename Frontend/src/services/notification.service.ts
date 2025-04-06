@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import { getErrorMessage, HttpErrorMessages } from '../utils/errorHandler';
+import { GENERIC_ERROR_CODE, getErrorMessage, HttpErrorMessages } from '../utils/errorHandler';
+import { TranslateService } from '@ngx-translate/core';
+import { getTranslation } from '../utils/translation-utils';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +12,8 @@ export class NotificationService {
   private readonly maxNotificationDuration = 5000; // 5 seconds
 
   notifications: Notification[] = [];
+
+  constructor(private translate: TranslateService) { }
 
   info(message: string, title?: string): Notification {
     return this.addNotification(message, 'info', title);
@@ -40,7 +44,11 @@ export class NotificationService {
     try {
       return await promise;
     } catch (e) {
-      const error = getErrorMessage(e, messages);
+      let error = getErrorMessage(e, messages);
+      // If the error is a generic error code, get the translation for it
+      if (error === GENERIC_ERROR_CODE) {
+        error = await getTranslation(this.translate, GENERIC_ERROR_CODE);
+      }
       this.error(error);
       throw e;
     }

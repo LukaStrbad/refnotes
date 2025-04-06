@@ -137,7 +137,17 @@
       @if (currentFolder.files.length > 0) {
         <thead>
           <tr>
-            <th colspan="3" translate>browser.table.files</th>
+            <th colspan="3">
+              <div class="flex gap-2 items-center">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm checkbox-accent"
+                  [checked]="areAllFilesSelected"
+                  (click)="toggleSelectAllFiles()"
+                />
+                <span translate>browser.table.files</span>
+              </div>
+            </th>
           </tr>
         </thead>
       }
@@ -147,9 +157,9 @@
             <td class="w-20">
               <input
                 type="checkbox"
-                [checked]="isFileToMove(file.name)"
+                [checked]="isFileSelected(file.name)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
-                (click)="toggleFileToMove(file, $event)"
+                (click)="toggleFileSelect(file, $event)"
                 testTag="browser.file-to-move-checkbox"
               />
 

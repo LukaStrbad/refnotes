@@ -59,6 +59,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   uploadProgress: Record<string, number | null> = {};
   readonly selectedFiles: ReadonlySet<string>;
   lastCheckedFile: File | null = null;
+  areAllFilesSelected = false;
 
   private navSubscription?: Subscription;
 
@@ -136,6 +137,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // From server
     this.refreshRouteInnerPromise = lastValueFrom(observable);
     this.currentFolder = await this.refreshRouteInnerPromise;
+
+    this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
   }
 
   async createNewFile(filename: string) {
@@ -351,7 +354,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleFileToMove(file: File, event: MouseEvent) {
+  toggleFileSelect(file: File, event: MouseEvent) {
     // Prevent text selection when shift is pressed and the checkbox is clicked
     document.getSelection()?.removeAllRanges();
 
@@ -383,11 +386,43 @@ export class BrowserComponent implements OnInit, OnDestroy {
     });
 
     this.lastCheckedFile = file;
+    this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
   }
 
-  isFileToMove(filename: string): boolean {
+  toggleSelectAllFiles() {
+    if (this.currentFolder === null) {
+      return;
+    }
+
+    // If all files are selected, deselect them
+    if (this.areAllFilesSelected) {
+      this.currentFolder.files.forEach((file) => {
+        const filePath = joinPaths(this.currentPath, file.name);
+        this.selectFileService.removeFile(filePath);
+      });
+      this.areAllFilesSelected = false;
+      return;
+    }
+
+    // If not all files are selected, select them
+    this.currentFolder.files.forEach((file) => {
+      const filePath = joinPaths(this.currentPath, file.name);
+      this.selectFileService.addFile(filePath);
+    });
+    this.areAllFilesSelected = true;
+  }
+
+  isFileSelected(filename: string): boolean {
     const filePath = joinPaths(this.currentPath, filename);
     return this.selectedFiles.has(filePath);
+  }
+
+  private checkIfAllFilesAreSelected(): boolean {
+    if (this.currentFolder === null) {
+      return false;
+    }
+    const allFiles = this.currentFolder.files.map(f => joinPaths(this.currentPath, f.name));
+    return allFiles.every(file => this.selectedFiles.has(file));
   }
 
   cancelSelect() {
