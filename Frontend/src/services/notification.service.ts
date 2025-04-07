@@ -18,6 +18,7 @@ export class NotificationService {
   info(message: string, title?: string): Notification {
     return this.addNotification(message, 'info', title);
   }
+
   success(message: string, title?: string): Notification {
     return this.addNotification(message, 'success', title);
   }

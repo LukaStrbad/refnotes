@@ -6,16 +6,15 @@ import { SettingsService } from '../services/settings.service';
 import { NotificationService } from '../services/notification.service';
 import { NgClass } from '@angular/common';
 import { AskModalService } from '../services/ask-modal.service';
+import { TestTagDirective } from '../directives/test-tag.directive';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, NgClass],
+  imports: [RouterOutlet, HeaderComponent, NgClass, TestTagDirective],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'Frontend';
-
   constructor(
     translate: TranslateService,
     settings: SettingsService,

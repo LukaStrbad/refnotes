@@ -6,9 +6,15 @@ import {
   TranslateModule,
   TranslateService,
 } from '@ngx-translate/core';
+import { NotificationService } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
+import { ActivatedRoute } from '@angular/router';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
+    const authService = jasmine.createSpyObj<AuthService>('AuthService', ['isUserLoggedIn']);
+    authService.isUserLoggedIn.and.returnValue(true);
+
     await TestBed.configureTestingModule({
       imports: [
         AppComponent,
@@ -19,14 +25,13 @@ describe('AppComponent', () => {
           },
         }),
       ],
-      providers: [TranslateService],
-    })
-      .overrideComponent(AppComponent, {
-        set: {
-          template: '<div></div>',
-        },
-      })
-      .compileComponents();
+      providers: [
+        TranslateService,
+        NotificationService,
+        { provide: AuthService, useValue: authService },
+        { provide: ActivatedRoute, useValue: { snapshot: {} } }
+      ],
+    }).compileComponents();
   });
 
   it('should create the app', () => {
@@ -35,9 +40,21 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'Frontend' title`, () => {
+  it('should show notification when notification is added', () => {
+    const notificationService = TestBed.inject(NotificationService);
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('Frontend');
+
+    const message = 'Test notification message';
+    const title = 'Test notification title';
+    notificationService.info(message, title);
+
+    fixture.detectChanges();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    const notificationTitle = nativeElement.querySelector('[data-test="notification.title"]');
+    const notificationMessage = nativeElement.querySelector('[data-test="notification.message"]');
+
+    expect(notificationTitle?.innerHTML).toContain(title);
+    expect(notificationMessage?.textContent).toContain(message);
   });
 });
