@@ -65,7 +65,19 @@
     "folder-created": "Mapa kreirana",
     "file-deleted": "Datoteka izbrisana",
     "folder-deleted": "Mapa izbrisana",
-    "files-uploaded-successfully": "Datoteke uspješno prenesene"
+    "files-uploaded-successfully": "Datoteke uspješno prenesene",
+    "deleteAll": "Izbriši sve",
+    "message": {
+      "modal": {
+        "delete-files": "Jeste li sigurni da želite izbrisati sljedeće datoteke?"
+      }
+    },
+    "title": {
+      "modal": {
+        "delete-files": "Izbrisati odabrane datoteke?"
+      }
+    },
+    "files-deleted": "Datoteke izbrisane"
   },
   "editor": {
     "viewType": {
@@ -107,6 +119,12 @@
       "newName": "Novo ime",
       "save": "Spremi",
       "title": "Preimenuj datoteku {{fileName}}"
+    },
+    "ask": {
+      "accept": "Prihvati",
+      "cancel": "Otkaži",
+      "no": "Ne",
+      "yes": "Da"
     }
   },
   "auth": {
@@ -151,6 +169,7 @@
     "save-file": "Pogreška u spremanju datoteke",
     "load-file": "Pogreška u učitavanje datoteke",
     "load-image": "Pogreška učitavanje slike",
-    "load-file-tags": "Pogreška kod učitavanja oznaka datoteka"
+    "load-file-tags": "Pogreška kod učitavanja oznaka datoteka",
+    "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka"
   }
 }

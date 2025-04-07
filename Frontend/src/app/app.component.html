@@ -36,12 +36,12 @@
 
           <div class="flex flex-col gap-1">
             @if (notification.title) {
-              <span class="text-base font-bold">
+              <span class="text-base font-bold" testTag="notification.title">
                 {{ notification.title }}
               </span>
             }
 
-            <span>{{ notification.message }}</span>
+            <span testTag="notification.message">{{ notification.message }}</span>
           </div>
         </div>
       }

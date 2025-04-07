@@ -11,6 +11,10 @@ export function isImage(filename: string) {
     return imageExtensions.some(ext => filename.endsWith(ext));
 }
 
+export function isEditable(filename: string) {
+    return isTextFile(filename) || isMarkdownFile(filename);
+}
+
 export type FileType = 'text' | 'markdown' | 'image' | 'unknown';
 
 export function getFileType(filename: string): FileType {

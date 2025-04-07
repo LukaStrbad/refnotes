@@ -65,7 +65,19 @@
     "folder-created": "Folder created",
     "file-deleted": "File deleted",
     "folder-deleted": "Folder deleted",
-    "files-uploaded-successfully": "Files uploaded successfully"
+    "files-uploaded-successfully": "Files uploaded successfully",
+    "deleteAll": "Delete all",
+    "title": {
+      "modal": {
+        "delete-files": "Deleted selected files?"
+      }
+    },
+    "message": {
+      "modal": {
+        "delete-files": "Are you sure you want to deleted the following files?"
+      }
+    },
+    "files-deleted": "Files deleted"
   },
   "editor": {
     "viewType": {
@@ -107,6 +119,12 @@
       "newName": "New name",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "ask": {
+      "cancel": "Cancel",
+      "accept": "Accept",
+      "no": "No",
+      "yes": "Yes"
     }
   },
   "auth": {
@@ -151,6 +169,7 @@
     "save-file": "Error saving file",
     "load-file": "Error loading file",
     "load-image": "Error loading image",
-    "load-file-tags": "Error loading file tags"
+    "load-file-tags": "Error loading file tags",
+    "deleting-files": "An error occurred deleting some files"
   }
 }

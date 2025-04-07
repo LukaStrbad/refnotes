@@ -1,9 +1,9 @@
-@if (filesToMove.size > 0) {
+@if (selectedFiles.size > 0) {
   <div class="m-2 flex gap-2 justify-between">
     <div class="grow flex gap-2 items-baseline">
       <h3 class="text-base">
         {{
-          "browser.label.moving-file" | translate: { count: filesToMove.size }
+          "browser.label.moving-file" | translate: { count: selectedFiles.size }
         }}
       </h3>
       <div class="dropdown dropdown-center">
@@ -19,7 +19,7 @@
           class="dropdown-content z-[1] meu p-2 shadow bg-base-100 rounded-box w-52 max-h-52"
         >
           <ul class="flex flex-col overflow-scroll">
-            @for (file of filesToMove; track file) {
+            @for (file of selectedFiles; track file) {
               <li testTag="browser.file-to-move">{{ file }}</li>
             }
           </ul>
@@ -28,7 +28,11 @@
     </div>
 
     <div class="flex gap-2">
-      <button class="btn btn-error btn-sm" (click)="cancelMove()">
+      <button class="btn btn-error btn-sm" (click)="deleteSelectedFiles()">
+        <i class="bi bi-x-circle"></i>
+        {{ "browser.deleteAll" | translate }}
+      </button>
+      <button class="btn btn-warning btn-sm" (click)="cancelSelect()">
         <i class="bi bi-x-circle"></i>
         {{ "browser.cancelMove" | translate }}
       </button>
@@ -133,7 +137,17 @@
       @if (currentFolder.files.length > 0) {
         <thead>
           <tr>
-            <th colspan="3" translate>browser.table.files</th>
+            <th colspan="3">
+              <div class="flex gap-2 items-center">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm checkbox-accent"
+                  [checked]="areAllFilesSelected"
+                  (click)="toggleSelectAllFiles()"
+                />
+                <span translate>browser.table.files</span>
+              </div>
+            </th>
           </tr>
         </thead>
       }
@@ -143,9 +157,9 @@
             <td class="w-20">
               <input
                 type="checkbox"
-                [checked]="isFileToMove(file.name)"
+                [checked]="isFileSelected(file.name)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
-                (change)="toggleFileToMove(file.name, $event)"
+                (click)="toggleFileSelect(file, $event)"
                 testTag="browser.file-to-move-checkbox"
               />
 
@@ -191,14 +205,16 @@
               </div>
             </td>
             <td class="flex gap-2 justify-end">
-              <a
-                class="btn btn-sm btn-accent"
-                routerLink="/editor"
-                [queryParams]="{ directory: currentPath, file: file.name }"
-              >
-                <i class="bi bi-pencil"></i>
-                {{ "browser.edit" | translate }}
-              </a>
+              @if (isEditable(file)) {
+                <a
+                  class="btn btn-sm btn-accent"
+                  routerLink="/editor"
+                  [queryParams]="{ directory: currentPath, file: file.name }"
+                >
+                  <i class="bi bi-pencil"></i>
+                  {{ "browser.edit" | translate }}
+                </a>
+              }
               <!-- Dropdown for more actions -->
               <div class="dropdown dropdown-end">
                 <div

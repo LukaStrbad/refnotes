@@ -24,10 +24,11 @@ import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edi
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
-import { joinPaths } from '../../utils/path-utils';
-import { MoveFileService } from '../../services/move-file.service';
+import { joinPaths, splitDirAndName } from '../../utils/path-utils';
+import { SelectFileService } from '../../services/select-file.service';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
+import { AskModalService } from '../../services/ask-modal.service';
 
 @Component({
   selector: 'app-browser',
@@ -56,7 +57,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
   pathStack: string[] = [];
   currentPath = '/';
   uploadProgress: Record<string, number | null> = {};
-  readonly filesToMove: ReadonlySet<string>;
+  readonly selectedFiles: ReadonlySet<string>;
+  lastCheckedFile: File | null = null;
+  areAllFilesSelected = false;
 
   private navSubscription?: Subscription;
 
@@ -92,11 +95,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private router: Router,
     private auth: AuthService,
-    private moveFileService: MoveFileService,
+    private selectFileService: SelectFileService,
     private notificationService: NotificationService,
     private translateService: TranslateService,
+    private askModal: AskModalService,
   ) {
-    this.filesToMove = this.moveFileService.filesToMove;
+    this.selectedFiles = this.selectFileService.selectedFiles;
   }
 
   ngOnInit(): void {
@@ -133,6 +137,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // From server
     this.refreshRouteInnerPromise = lastValueFrom(observable);
     this.currentFolder = await this.refreshRouteInnerPromise;
+
+    this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
   }
 
   async createNewFile(filename: string) {
@@ -184,6 +190,32 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
+  }
+
+  async deleteSelectedFiles() {
+    const files = [...this.selectedFiles].join(', ');
+    const accepted = await this.askModal.confirm('browser.title.modal.delete-files', 'browser.message.modal.delete-files', { translate: true, body: files });
+
+    if (!accepted) {
+      return;
+    }
+
+    const promises = [...this.selectedFiles].map((file) => {
+      const [dir, name] = splitDirAndName(file);
+      return this.fileService.deleteFile(dir, name);
+    })
+
+    try {
+      await this.notificationService.awaitAndNotifyError(Promise.all(promises), {
+        default: await getTranslation(this.translateService, 'error.deleting-files'),
+      });
+
+      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-deleted'));
+    } finally {
+      this.selectFileService.clearSelectedFiles();
+      // Refresh the route to update the file list as some file might have been deleted
+      await this.refreshRoute();
+    }
   }
 
   async openFolder(name: string) {
@@ -257,6 +289,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.fileModal.close();
   }
 
+  isEditable(file: File): boolean {
+    return fileUtils.isEditable(file.name);
+  }
+
   async openEdit(file: File) {
     await this.router.navigate(['/editor'], {
       queryParams: {
@@ -318,37 +354,92 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleFileToMove(filename: string, event: Event) {
+  toggleFileSelect(file: File, event: MouseEvent) {
+    // Prevent text selection when shift is pressed and the checkbox is clicked
+    document.getSelection()?.removeAllRanges();
+
     const target = event.target as HTMLInputElement;
-    const filePath = joinPaths(this.currentPath, filename);
-    if (target.checked) {
-      this.moveFileService.addFile(filePath);
+    const shiftPressed = event.shiftKey;
+
+    let files = [file];
+    // Add all files between the last checked file and the current one
+    if (shiftPressed) {
+      if (this.lastCheckedFile === null) {
+        this.lastCheckedFile = file;
+      }
+      const lastCheckedIndex = this.currentFolder?.files.findIndex(f => f === this.lastCheckedFile) ?? -1;
+      const currentIndex = this.currentFolder?.files.findIndex(f => f === file) ?? -1;
+      if (lastCheckedIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastCheckedIndex, currentIndex);
+        const end = Math.max(lastCheckedIndex, currentIndex);
+        files = this.currentFolder?.files.slice(start, end + 1) ?? [file];
+      }
     }
-    else {
-      this.moveFileService.removeFile(filePath);
-    }
+
+    files.forEach((file) => {
+      const filePath = joinPaths(this.currentPath, file.name);
+      if (target.checked) {
+        this.selectFileService.addFile(filePath);
+      } else {
+        this.selectFileService.removeFile(filePath);
+      }
+    });
+
+    this.lastCheckedFile = file;
+    this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
   }
 
-  isFileToMove(filename: string): boolean {
-    const filePath = joinPaths(this.currentPath, filename);
-    return this.filesToMove.has(filePath);
+  toggleSelectAllFiles() {
+    if (this.currentFolder === null) {
+      return;
+    }
+
+    // If all files are selected, deselect them
+    if (this.areAllFilesSelected) {
+      this.currentFolder.files.forEach((file) => {
+        const filePath = joinPaths(this.currentPath, file.name);
+        this.selectFileService.removeFile(filePath);
+      });
+      this.areAllFilesSelected = false;
+      return;
+    }
+
+    // If not all files are selected, select them
+    this.currentFolder.files.forEach((file) => {
+      const filePath = joinPaths(this.currentPath, file.name);
+      this.selectFileService.addFile(filePath);
+    });
+    this.areAllFilesSelected = true;
   }
 
-  cancelMove() {
-    this.moveFileService.clearFilesToMove();
+  isFileSelected(filename: string): boolean {
+    const filePath = joinPaths(this.currentPath, filename);
+    return this.selectedFiles.has(filePath);
+  }
+
+  private checkIfAllFilesAreSelected(): boolean {
+    if (this.currentFolder === null) {
+      return false;
+    }
+    const allFiles = this.currentFolder.files.map(f => joinPaths(this.currentPath, f.name));
+    return allFiles.every(file => this.selectedFiles.has(file));
+  }
+
+  cancelSelect() {
+    this.selectFileService.clearSelectedFiles();
   }
 
   async moveFiles() {
     const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.name)));
 
     // Find only the files that are not in the current folder
-    const filesToMove = this.filesToMove.difference(filesFromCurrentFolder);
+    const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
     if (filesToMove.size === 0) {
       return;
     }
 
     try {
-      await this.notificationService.awaitAndNotifyError(this.moveFileService.moveFiles(this.currentPath), {
+      await this.notificationService.awaitAndNotifyError(this.selectFileService.moveFiles(this.currentPath), {
         default: await getTranslation(this.translateService, 'error.move-files'),
       });
     } finally {

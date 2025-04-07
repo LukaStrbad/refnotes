@@ -5,6 +5,8 @@ export interface HttpErrorMessages {
   default?: string;
 };
 
+export const GENERIC_ERROR_CODE = "generic.error";
+
 export function getErrorMessage(e: unknown, messages: HttpErrorMessages): string {
   if (e instanceof HttpErrorResponse) {
     for (const [status, message] of Object.entries(messages)) {
@@ -18,7 +20,7 @@ export function getErrorMessage(e: unknown, messages: HttpErrorMessages): string
     return messages.default;
   }
 
-  return "generic.error";
+  return GENERIC_ERROR_CODE;
 }
 
 export function getStatusCode(e: unknown): number | null {
