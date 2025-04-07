@@ -76,4 +76,16 @@ public class FileStorageServiceTests : BaseTests
 
         await _fileStorageService.DeleteFile(fileName);
     }
+    
+    [Fact]
+    public async Task GetFileSize_ReturnsFileSize()
+    {
+        var fileContent = "test content"u8.ToArray();
+        await using var inputStream = new MemoryStream(fileContent);
+        await _fileStorageService.SaveFileAsync(_fileName, inputStream);
+
+        var fileSize = await _fileStorageService.GetFileSize(_fileName);
+
+        Assert.Equal(fileContent.LongLength, fileSize);
+    }
 }

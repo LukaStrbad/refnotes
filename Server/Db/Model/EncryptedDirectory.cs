@@ -32,16 +32,21 @@ public class EncryptedDirectory
     public User Owner { get; init; }
     public EncryptedDirectory? Parent { get; init; }
 
-    public DirectoryDto Decrypt(IEncryptionService encryptionService)
+    public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService, IFileStorageService fileStorageService)
     {
         var name = DecryptedName(encryptionService);
-        var files = Files.Select(file =>
+        var filesTasks = Files.Select(async file =>
         {
             var fileName = file.DecryptedName(encryptionService);
             var tags = file.Tags.Select(tag => tag.DecryptedName(encryptionService));
-            return new FileDto(fileName, tags);
+            var size = await fileStorageService.GetFileSize(file.FilesystemName);
+            return new FileDto(fileName, tags, size, file.Created, file.Modified);
         });
-        var directories = Directories.Select(directory => directory.Decrypt(encryptionService).Name);
+        var files = await Task.WhenAll(filesTasks);
+        
+        var directoriesTasks = Directories.Select(async directory => (await directory.Decrypt(encryptionService, fileStorageService)).Name);
+        var directories = await Task.WhenAll(directoriesTasks);
+        
         return new DirectoryDto(name, files, directories);
     }
     

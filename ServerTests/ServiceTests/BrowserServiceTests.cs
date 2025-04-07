@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
@@ -31,8 +32,9 @@ public class BrowserServiceTests : BaseTests
         {
             HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
         };
+        var fileStorageService = Substitute.For<IFileStorageService>();
         var serviceUtils = new ServiceUtils(_context, _encryptionService, cache, httpContextAccessor);
-        _browserService = new BrowserService(_context, _encryptionService, serviceUtils);
+        _browserService = new BrowserService(_context, _encryptionService, fileStorageService, serviceUtils);
 
         rndString = RandomString(32);
         _newDirectoryPath = $"/new_{rndString}";

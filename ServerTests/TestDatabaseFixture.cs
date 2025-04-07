@@ -12,8 +12,9 @@ public class TestDatabaseFixture : IAsyncLifetime
 {
     private readonly MySqlContainer _mysqlContainer = new MySqlBuilder()
         .WithImage("mysql:8.4")
+        .WithReuse(true)
         .Build();
-    
+
     private string? _connectionString;
 
     public RefNotesContext CreateContext()

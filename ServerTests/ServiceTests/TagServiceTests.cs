@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using Server.Db;
 using Server.Db.Model;
 using Server.Services;
@@ -30,10 +31,11 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         {
             HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
         };
+        var fileStorageService = Substitute.For<IFileStorageService>();
         var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
         _fileService = new FileService(_context, encryptionService, AppConfig, serviceUtils);
         _tagService = new TagService(_context, encryptionService, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, serviceUtils);
+        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
 
         rndString = RandomString(32);
         _directoryPath = $"/tag_service_test_{rndString}";

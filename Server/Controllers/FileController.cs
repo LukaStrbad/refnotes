@@ -148,6 +148,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
             }
 
             await fileStorageService.SaveFileAsync(fileName, Request.Body);
+            await fileService.UpdateTimestamp(directoryPath, name);
             return Ok();
         }
         catch (DirectoryNotFoundException e)
