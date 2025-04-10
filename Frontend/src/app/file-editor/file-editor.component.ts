@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TestTagDirective } from '../../directives/test-tag.directive';
@@ -10,6 +10,7 @@ import { RenameFileModalComponent } from "../components/modals/rename-file-modal
 import { joinPaths } from '../../utils/path-utils';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-file-editor',
@@ -37,6 +38,8 @@ export class FileEditorComponent {
     private tagService: TagService,
     private translate: TranslateService,
     private notificationService: NotificationService,
+    private router: Router,
+    private location: Location,
   ) {
     this.directoryPath = route.snapshot.queryParamMap.get(
       'directory',
@@ -93,6 +96,14 @@ export class FileEditorComponent {
     await this.notificationService.awaitAndNotifyError(this.fileService.moveFile(oldFilePath, newFilePath), {
       default: await getTranslation(this.translate, 'error.rename-file'),
     });
+
+    const newUrl = this.router.createUrlTree(['/editor'], {
+      queryParams: {
+        directory: this.directoryPath,
+        file: newFileName,
+      }
+    });
+    this.location.replaceState(newUrl.toString());
 
     const oldName = this.fileName;
     this.fileName = newFileName;
