@@ -13,9 +13,13 @@ public class EncryptedFile(string filesystemName, string name)
     [MaxLength(255)]
     public string Name { get; set; } = name;
     public List<FileTag> Tags { get; init; } = [];
+    
+    public DateTime Created { get; init; } = DateTime.UtcNow;
+
+    public DateTime Modified { get; set; } = DateTime.UtcNow;
 
     public string DecryptedName(IEncryptionService encryptionService)
     {
         return encryptionService.DecryptAesStringBase64(Name);
-    } 
+    }
 }

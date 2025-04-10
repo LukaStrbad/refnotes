@@ -32,6 +32,7 @@ public interface IBrowserService
 public class BrowserService(
     RefNotesContext context,
     IEncryptionService encryptionService,
+    IFileStorageService fileStorageService,
     ServiceUtils utils) : IBrowserService
 {
     public async Task<DirectoryDto?> List(string path = "/")
@@ -51,7 +52,12 @@ public class BrowserService(
 
         var directory = await utils.GetDirectory(path, true);
 
-        return directory?.Decrypt(encryptionService);
+        if (directory is null)
+        {
+            return null;
+        }
+
+        return await directory.Decrypt(encryptionService, fileStorageService);
     }
 
     public async Task AddDirectory(string path)

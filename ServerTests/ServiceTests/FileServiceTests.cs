@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 using Server.Db;
 using Server.Exceptions;
 using Server.Services;
@@ -29,9 +30,10 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         {
             HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
         };
+        var fileStorageService = Substitute.For<IFileStorageService>();
         var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
         _fileService = new FileService(_context, encryptionService, AppConfig, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, serviceUtils);
+        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
@@ -91,17 +93,26 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string newFileName = "testfile2.txt";
 
         await _fileService.AddFile(_directoryPath, fileName);
-        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}");
-
+        
         var oldDirectory = await _context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        Assert.NotNull(oldDirectory);
+        var file = oldDirectory.Files.FirstOrDefault(x => x.Name == fileName);
+        Assert.NotNull(file);
+        var timestamp = file.Modified;
+        
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}");
+
+        // Re-fetch the old directory and file to ensure we have the latest data
+        await _context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
+        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
 
         var newDirectory = await _context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _newDirectoryPath, TestContext.Current.CancellationToken);
-
-        Assert.NotNull(oldDirectory);
+        
+        Assert.NotEqual(timestamp, file.Modified);
         Assert.Empty(oldDirectory.Files);
         Assert.NotNull(newDirectory);
         Assert.NotEmpty(newDirectory.Files);
@@ -216,5 +227,33 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         Assert.Single(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
         Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
+    }
+
+    [Fact]
+    public async Task UpdateTimestamp_UpdatesTimestamp()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName);
+
+        var dir = await _context.Directories
+            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        Assert.NotNull(dir);
+        Assert.NotEmpty(dir.Files);
+
+        var file = dir.Files.FirstOrDefault(f => f.Name == fileName);
+        Assert.NotNull(file);
+
+        var oldTimestamp = file.Modified;
+
+        // Ensure a sufficient delay to guarantee timestamp change
+        // await Task.Delay(100, TestContext.Current.CancellationToken);
+        await _fileService.UpdateTimestamp(_directoryPath, fileName);
+
+        // Re-fetch the file to ensure we have the latest data
+        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(file);
+        Assert.NotEqual(oldTimestamp, file.Modified);
+        Assert.True(file.Modified > oldTimestamp);
     }
 }

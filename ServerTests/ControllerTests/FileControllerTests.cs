@@ -252,6 +252,7 @@ public class FileControllerTests : BaseTests
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
+        await _fileService.Received(1).UpdateTimestamp(directoryPath, name);
     }
 
     [Fact]

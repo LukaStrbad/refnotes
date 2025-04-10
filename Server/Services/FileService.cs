@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.EntityFrameworkCore;
 using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
@@ -40,6 +38,13 @@ public interface IFileService
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to be deleted</param>
     Task DeleteFile(string directoryPath, string name);
+
+    /// <summary>
+    /// Update the timestamp of a file in the specified directory.
+    /// </summary>
+    /// <param name="directoryPath">Path of the directory containing the file</param>
+    /// <param name="name">Name of the file to update</param>
+    Task UpdateTimestamp(string directoryPath, string name);
 }
 
 public class FileService(
@@ -77,8 +82,8 @@ public class FileService(
 
         var (dir, file) = await utils.GetDirAndFile(dirName, filename);
         // If directory is the same, use the existing directory
-        var newDir = newDirName == dirName 
-            ? dir 
+        var newDir = newDirName == dirName
+            ? dir
             : await utils.GetDirectory(newDirName, true);
 
         if (newDir is null)
@@ -96,6 +101,7 @@ public class FileService(
         dir.Files.Remove(file);
         newDir.Files.Add(file);
         file.Name = encryptedName;
+        file.Modified = DateTime.UtcNow;
         await context.SaveChangesAsync();
     }
 
@@ -164,6 +170,14 @@ public class FileService(
 
         directory.Files.Remove(file);
         context.Entry(file).State = EntityState.Deleted;
+        await context.SaveChangesAsync();
+    }
+
+    public async Task UpdateTimestamp(string directoryPath, string name)
+    {
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name);
+        file.Modified = DateTime.UtcNow;
+        context.Entry(file).State = EntityState.Modified;
         await context.SaveChangesAsync();
     }
 }
