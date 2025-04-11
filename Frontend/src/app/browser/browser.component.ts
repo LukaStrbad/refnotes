@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';
-import { NgClass } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
 import { HttpEventType } from '@angular/common/http';
 import { LoggerService } from '../../services/logger.service';
@@ -19,7 +19,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
-import { File } from '../../model/file';
+import { createFromJsFile, File } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
@@ -27,8 +27,9 @@ import { RenameFileModalComponent } from "../components/modals/rename-file-modal
 import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { SelectFileService } from '../../services/select-file.service';
 import { NotificationService } from '../../services/notification.service';
-import { getTranslation } from '../../utils/translation-utils';
+import { getPluralTranslation, getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
+import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 
 @Component({
   selector: 'app-browser',
@@ -41,13 +42,15 @@ import { AskModalService } from '../../services/ask-modal.service';
     RouterLink,
     TestTagDirective,
     EditTagsModalComponent,
-    RenameFileModalComponent
+    RenameFileModalComponent,
+    ByteSizePipe,
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   protected readonly tagLimit = 3;
+  private _dateLang: string = 'en-UK';
 
   currentFolder: Directory | null = null;
   @ViewChild('fileModal')
@@ -71,8 +74,20 @@ export class BrowserComponent implements OnInit, OnDestroy {
    * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
    */
   refreshRouteInnerPromise?: Promise<Directory>;
+  updateFileTimesInterval?: number;
 
   fileUtils = fileUtils;
+
+  private get dateLang(): string {
+    return this._dateLang;
+  }
+
+  private set dateLang(value: string) {
+    if (value === 'en') {
+      value = 'en-UK';
+    }
+    this._dateLang = value;
+  }
 
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
@@ -88,6 +103,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     return breadcrumbs;
   }
 
+  get files(): FileWithTime[] {
+    return this.currentFolder?.files ?? [];
+  }
+
   constructor(
     private browser: BrowserService,
     private fileService: FileService,
@@ -101,6 +120,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private askModal: AskModalService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
+
+    this.dateLang = this.translateService.currentLang;
+    this.translateService.onLangChange.subscribe((event) => {
+      this.dateLang = event.lang;
+    });
   }
 
   ngOnInit(): void {
@@ -139,6 +163,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.currentFolder = await this.refreshRouteInnerPromise;
 
     this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
+
+    await this.updateFileTimes();
+    clearInterval(this.updateFileTimesInterval);
+    // Update file times every minute
+    this.updateFileTimesInterval = setInterval(() => {
+      this.updateFileTimes();
+    }, 1000 * 60);
   }
 
   async createNewFile(filename: string) {
@@ -262,10 +293,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.currentFolder?.files.push({
-                  name: file.name,
-                  tags: [],
-                });
+                this.currentFolder?.files.push(createFromJsFile(file));
               } else {
                 getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
                   .then((translation) => {
@@ -351,6 +379,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
     if (file) {
       file.name = newFileName;
+      file.modified = new Date();
     }
   }
 
@@ -446,10 +475,57 @@ export class BrowserComponent implements OnInit, OnDestroy {
       await this.refreshRoute();
     }
   }
+
+  private async updateFileTimes() {
+    for (const file of this.files) {
+      const modified = file.modified;
+      file.modifiedLong = await this.formatDate(modified, true);
+      file.modifiedShort = await this.formatDate(modified, false);
+    }
+  }
+
+  private async formatDate(date: Date, long = false): Promise<string> {
+    const now = new Date();
+
+    if (long) {
+      return date.toLocaleString(this.dateLang);
+    }
+
+    // Check if it's less than 60 seconds ago
+    if (now.getTime() - date.getTime() < 60 * 1000) {
+      return await getTranslation(this.translateService, 'time.just-now');
+    }
+
+    // Check if it's less than 60 minutes ago
+    if (now.getTime() - date.getTime() < 60 * 60 * 1000) {
+      const minutes = Math.floor((now.getTime() - date.getTime()) / (60 * 1000));
+      return await getPluralTranslation(this.translateService, 'time.minutes-ago', minutes, { n: minutes });
+    }
+
+    // Check if it's less than 24 hours ago
+    if (now.getTime() - date.getTime() < 24 * 60 * 60 * 1000) {
+      const hours = Math.floor((now.getTime() - date.getTime()) / (60 * 60 * 1000));
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    }
+
+    // Check if it's less than 7 days ago
+    if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      const days = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+
+    // Otherwise, return the date in the format "dd/mm/yyyy"
+    return date.toLocaleDateString(this.dateLang);
+  }
 }
 
 interface BreadcrumbItem {
   name: string;
   path: string;
   icon: string;
+}
+
+interface FileWithTime extends File {
+  modifiedLong?: string;
+  modifiedShort?: string;
 }

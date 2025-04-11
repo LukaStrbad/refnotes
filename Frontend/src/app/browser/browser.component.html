@@ -97,7 +97,7 @@
         <tr>
           <!-- For icons-->
           <th></th>
-          <th class="text-start" translate>browser.table.name</th>
+          <th class="text-start" colspan="3" translate>browser.table.name</th>
           <th class="text-end" translate>browser.table.actions</th>
         </tr>
       </thead>
@@ -105,7 +105,7 @@
       @if (currentFolder.directories.length > 0) {
         <thead>
           <tr>
-            <th colspan="3" translate>browser.table.folders</th>
+            <th colspan="7" translate>browser.table.folders</th>
           </tr>
         </thead>
       }
@@ -115,12 +115,15 @@
             <td>
               <i class="bi bi-folder"></i>
             </td>
+
             <td
+              colspan="3"
               class="text-start cursor-pointer"
               (click)="openFolder(folderName)"
             >
               {{ folderName }}
             </td>
+
             <td class="flex gap-2 justify-end">
               <button
                 class="btn btn-sm btn-error"
@@ -137,7 +140,7 @@
       @if (currentFolder.files.length > 0) {
         <thead>
           <tr>
-            <th colspan="3">
+            <th>
               <div class="flex gap-2 items-center">
                 <input
                   type="checkbox"
@@ -148,11 +151,16 @@
                 <span translate>browser.table.files</span>
               </div>
             </th>
+
+            <th class="text-start" translate>browser.table.name</th>
+            <th class="text-end" translate>browser.table.file-size</th>
+            <th class="text-end" translate>browser.table.modified</th>
+            <th class="text-end" translate>browser.table.actions</th>
           </tr>
         </thead>
       }
       <tbody>
-        @for (file of currentFolder.files; track file.name) {
+        @for (file of files; track file.name) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
@@ -202,6 +210,15 @@
                   <i class="bi bi-pencil"></i>
                   <span translate>browser.table.buttonEditTags</span>
                 </button>
+              </div>
+            </td>
+            <td class="text-end">{{ file.size | byteSize }}</td>
+            <td class="text-end">
+              <div class="tooltip">
+                <div class="tooltip-content">
+                  {{ file.modifiedLong }}
+                </div>
+                {{ file.modifiedShort }}
               </div>
             </td>
             <td class="flex gap-2 justify-end">

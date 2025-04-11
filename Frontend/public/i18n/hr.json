@@ -49,7 +49,9 @@
       "actions": "Radnje",
       "folders": "Mape",
       "files": "Datoteke",
-      "buttonEditTags": "oznake"
+      "buttonEditTags": "oznake",
+      "file-size": "Veličina datoteke",
+      "modified": "Zadnja izmjena"
     },
     "delete": "Izbriši",
     "edit": "Uredi",
@@ -57,7 +59,8 @@
     "rename": "Preimenuj",
     "label": {
       "more-actions": "Više opcija",
-      "moving-file": "Premještanje {{count}} datoteka"
+      "moving-file": "Premještanje {{count}} datoteka",
+      "created": "Stvoreno:"
     },
     "cancelMove": "Poništi",
     "moveHere": "Premjesti ovdje",
@@ -171,5 +174,11 @@
     "load-image": "Pogreška učitavanje slike",
     "load-file-tags": "Pogreška kod učitavanja oznaka datoteka",
     "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka"
+  },
+  "time": {
+    "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
+    "just-now": "Upravo sada",
+    "hours-ago": "Prije jedan sat | Prije {{n}} sata | Prije {{n}} sati",
+    "days-ago": "Prije jednog dana | Prije {{n}} dana | Prije {{n}} dana"
   }
 }

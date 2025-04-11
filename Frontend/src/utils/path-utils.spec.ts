@@ -1,4 +1,4 @@
-import {resolveRelativeFolderPath, splitDirAndName} from './path-utils';
+import { resolveRelativeFolderPath, splitDirAndName } from './path-utils';
 
 describe('PathUtils', () => {
   [
