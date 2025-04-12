@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Exceptions;
+using Server.Model;
 using Server.Services;
 
 namespace Server.Controllers;
@@ -181,5 +182,25 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         }
 
         return Ok();
+    }
+    
+    [HttpGet("getFileInfo")]
+    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<FileDto>> GetFileInfo(string filePath)
+    {
+        try
+        {
+            var fileInfo = await fileService.GetFileInfo(filePath);
+            return Ok(fileInfo);
+        }
+        catch (DirectoryNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+        catch (FileNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
     }
 }

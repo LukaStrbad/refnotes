@@ -33,7 +33,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         };
         var fileStorageService = Substitute.For<IFileStorageService>();
         var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
-        _fileService = new FileService(_context, encryptionService, AppConfig, serviceUtils);
+        _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
         _tagService = new TagService(_context, encryptionService, serviceUtils);
         _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
 
