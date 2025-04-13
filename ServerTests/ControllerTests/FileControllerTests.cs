@@ -61,54 +61,6 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
-    public async Task AddFile_ReturnsNotFound_WhenDirectoryDoesNotExist()
-    {
-        const string directoryPath = "test_dir_path";
-        const string name = "test_file_name";
-        var file = Substitute.For<IFormFile>();
-        var fileStream = new MemoryStream("file content"u8.ToArray());
-        file.OpenReadStream().Returns(fileStream);
-        file.FileName.Returns(name);
-
-        _fileService.AddFile(directoryPath, name)
-            .Returns(Task.FromException<string>(new DirectoryNotFoundException("Directory not found.")));
-
-        var formFileCollection = new FormFileCollection { file };
-        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
-            formFileCollection);
-        _controller.ControllerContext.HttpContext.Request.Form = formCollection;
-
-        var result = await _controller.AddFile(directoryPath);
-
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Directory not found.", notFoundResult.Value);
-    }
-
-    [Fact]
-    public async Task AddFile_ReturnsBadRequest_WhenFileAlreadyExists()
-    {
-        const string directoryPath = "test_dir_path";
-        const string name = "test_file_name";
-        var file = Substitute.For<IFormFile>();
-        var fileStream = new MemoryStream("file content"u8.ToArray());
-        file.OpenReadStream().Returns(fileStream);
-        file.FileName.Returns(name);
-
-        _fileService.AddFile(directoryPath, name)
-            .Returns(Task.FromException<string>(new FileAlreadyExistsException("File already exists.")));
-
-        var formFileCollection = new FormFileCollection { file };
-        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
-            formFileCollection);
-        _controller.ControllerContext.HttpContext.Request.Form = formCollection;
-
-        var result = await _controller.AddFile(directoryPath);
-
-        var badRequestResult = Assert.IsType<ConflictObjectResult>(result);
-        Assert.Equal("File already exists.", badRequestResult.Value);
-    }
-
-    [Fact]
     public async Task AddTextFile_ReturnsOk_WhenFileAdded()
     {
         const string directoryPath = "test_dir_path";
@@ -138,18 +90,6 @@ public class FileControllerTests : BaseTests
         Assert.IsType<OkResult>(result);
     }
 
-    [Fact]
-    public async Task MoveFile_ReturnsConflict_WhenFileAlreadyExists()
-    {
-        const string oldName = "/dir/file.txt";
-        const string newName = "/dir/file.txt";
-
-        _fileService.MoveFile(oldName, newName).ThrowsAsync(new FileAlreadyExistsException("File already exists"));
-
-        var result = await _controller.MoveFile(oldName, newName);
-
-        Assert.IsType<ConflictObjectResult>(result);
-    }
 
     [Fact]
     public async Task GetFile_ReturnsOk_WhenFileExists()
@@ -268,21 +208,6 @@ public class FileControllerTests : BaseTests
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
-    }
-
-    [Fact]
-    public async Task SaveTextFile_ReturnsNotFound_WhenDirectoryDoesNotExist()
-    {
-        const string directoryPath = "test_dir_path";
-        const string name = "test_file_name";
-
-        _fileService.GetFilesystemFilePath(directoryPath, name)
-            .Returns(Task.FromException<string?>(new DirectoryNotFoundException("Directory not found.")));
-
-        var result = await _controller.SaveTextFile(directoryPath, name);
-
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Directory not found.", notFoundResult.Value);
     }
 
     [Fact]

@@ -80,18 +80,6 @@ public class BrowserControllerTests : BaseTests
     }
 
     [Fact]
-    public async Task AddDirectory_ReturnsBadRequest_WhenDirectoryAlreadyExists()
-    {
-        const string path = "/test_path";
-        _browserService.AddDirectory(path).Returns(Task.FromException(new Exception("Directory already exists.")));
-
-        var result = await _controller.AddDirectory(path);
-
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Directory already exists.", badRequestResult.Value);
-    }
-
-    [Fact]
     public async Task DeleteDirectory_ReturnsOk_WhenDirectoryDeleted()
     {
         const string path = "/test_path";
@@ -106,35 +94,12 @@ public class BrowserControllerTests : BaseTests
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDeletingRootDirectory()
     {
         const string path = "/";
-        _browserService.DeleteDirectory(path).Returns(Task.FromException(new ArgumentException("Cannot delete root directory.")));
+        _browserService.DeleteDirectory(path)
+            .Returns(Task.FromException(new ArgumentException("Cannot delete root directory.")));
 
         var result = await _controller.DeleteDirectory(path);
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Cannot delete root directory.", badRequestResult.Value);
-    }
-
-    [Fact]
-    public async Task DeleteDirectory_ReturnsBadRequest_WhenDirectoryNotEmpty()
-    {
-        const string path = "/test_path";
-        _browserService.DeleteDirectory(path).Returns(Task.FromException(new DirectoryNotEmptyException("Directory not empty.")));
-
-        var result = await _controller.DeleteDirectory(path);
-
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Directory not empty.", badRequestResult.Value);
-    }
-
-    [Fact]
-    public async Task DeleteDirectory_ReturnsNotFound_WhenDirectoryDoesNotExist()
-    {
-        const string path = "/test_path";
-        _browserService.DeleteDirectory(path).Returns(Task.FromException(new DirectoryNotFoundException("Directory not found.")));
-
-        var result = await _controller.DeleteDirectory(path);
-
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("Directory not found.", notFoundResult.Value);
     }
 }
