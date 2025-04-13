@@ -157,7 +157,12 @@
   },
   "preview": {
     "viewingFile": "Viewing {{fileName}}",
-    "labelTags": "Tags:"
+    "labelTags": "Tags:",
+    "tooltip": {
+      "file-created": "Created: {{time}}",
+      "file-modified": "Modified: {{time}}",
+      "file-size": "Size"
+    }
   },
   "error": {
     "file-already-exists": "File with same name already exists",

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
 import { HttpEventType } from '@angular/common/http';
 import { LoggerService } from '../../services/logger.service';
@@ -19,7 +19,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
-import { createFromJsFile, File } from '../../model/file';
+import { createFromJsFile, File, FileWithTime } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
@@ -27,9 +27,10 @@ import { RenameFileModalComponent } from "../components/modals/rename-file-modal
 import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { SelectFileService } from '../../services/select-file.service';
 import { NotificationService } from '../../services/notification.service';
-import { getPluralTranslation, getTranslation } from '../../utils/translation-utils';
+import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
+import { updateFileTime } from '../../utils/date-utils';
 
 @Component({
   selector: 'app-browser',
@@ -50,7 +51,7 @@ import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   protected readonly tagLimit = 3;
-  private _dateLang: string = 'en-UK';
+  private _dateLang = 'en-UK';
 
   currentFolder: Directory | null = null;
   @ViewChild('fileModal')
@@ -478,44 +479,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   private async updateFileTimes() {
     for (const file of this.files) {
-      const modified = file.modified;
-      file.modifiedLong = await this.formatDate(modified, true);
-      file.modifiedShort = await this.formatDate(modified, false);
+      updateFileTime(file, this.translateService, this.dateLang)
     }
-  }
-
-  private async formatDate(date: Date, long = false): Promise<string> {
-    const now = new Date();
-
-    if (long) {
-      return date.toLocaleString(this.dateLang);
-    }
-
-    // Check if it's less than 60 seconds ago
-    if (now.getTime() - date.getTime() < 60 * 1000) {
-      return await getTranslation(this.translateService, 'time.just-now');
-    }
-
-    // Check if it's less than 60 minutes ago
-    if (now.getTime() - date.getTime() < 60 * 60 * 1000) {
-      const minutes = Math.floor((now.getTime() - date.getTime()) / (60 * 1000));
-      return await getPluralTranslation(this.translateService, 'time.minutes-ago', minutes, { n: minutes });
-    }
-
-    // Check if it's less than 24 hours ago
-    if (now.getTime() - date.getTime() < 24 * 60 * 60 * 1000) {
-      const hours = Math.floor((now.getTime() - date.getTime()) / (60 * 60 * 1000));
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    }
-
-    // Check if it's less than 7 days ago
-    if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
-      const days = Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
-      return `${days} day${days > 1 ? 's' : ''} ago`;
-    }
-
-    // Otherwise, return the date in the format "dd/mm/yyyy"
-    return date.toLocaleDateString(this.dateLang);
   }
 }
 
@@ -523,9 +488,4 @@ interface BreadcrumbItem {
   name: string;
   path: string;
   icon: string;
-}
-
-interface FileWithTime extends File {
-  modifiedLong?: string;
-  modifiedShort?: string;
 }

@@ -1,7 +1,33 @@
 <div class="flex flex-col gap-4 h-full">
-  <h1 class="font-bold text-2xl">
-    {{ "preview.viewingFile" | translate: { fileName } }}
-  </h1>
+  <div class="flex gap-2 items-center">
+    <h1 class="font-bold text-2xl">
+      {{ "preview.viewingFile" | translate: { fileName } }}
+    </h1>
+
+    @if (fileInfo) {
+      <div class="tooltip tooltip-bottom">
+        <div class="tooltip-content z-100 text-left">
+          <p>
+            {{
+              "preview.tooltip.file-created"
+                | translate: { time: fileInfo.createdLong }
+            }}
+          </p>
+          <p>
+            {{
+              "preview.tooltip.file-modified"
+                | translate: { time: fileInfo.modifiedLong }
+            }}
+          </p>
+          <p>
+            {{ "preview.tooltip.file-size" | translate }}:
+            {{ fileInfo.size | byteSize }}
+          </p>
+        </div>
+        <i class="bi bi-info-circle text-base"></i>
+      </div>
+    }
+  </div>
 
   @if (tags.length > 0) {
     <div

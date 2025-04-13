@@ -11,10 +11,14 @@ import { getImageBlobUrl } from '../../utils/image-utils';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
+import { FileWithTime } from '../../model/file';
+import { joinPaths } from '../../utils/path-utils';
+import { ByteSizePipe } from '../../pipes/byte-size.pipe';
+import { updateFileTime } from '../../utils/date-utils';
 
 @Component({
   selector: 'app-file-preview',
-  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective],
+  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective, ByteSizePipe],
   templateUrl: './file-preview.component.html',
   styleUrl: './file-preview.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -28,6 +32,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   tags: string[] = [];
   fileType: fileUtils.FileType = 'unknown';
   imageSrc: string | null = null;
+  fileInfo: FileWithTime | null = null;
 
   fileUtils = fileUtils;
 
@@ -66,6 +71,20 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     } else if (this.fileType === 'markdown' || this.fileType === 'text') {
       this.loadFile();
     }
+
+    this.tagService.listFileTags(this.directoryPath, this.fileName)
+      .then((tags) => {
+        this.tags = tags;
+      }, async () => {
+        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
+      });
+
+    const dateLang = this.translate.currentLang;
+
+    this.fileService.getFileInfo(joinPaths(this.directoryPath, this.fileName))
+      .then(async (fileInfo) => {
+        this.fileInfo = await updateFileTime(fileInfo, this.translate, dateLang);
+      });
   }
 
   ngOnDestroy(): void {
@@ -90,13 +109,6 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
         }
       }, async () => {
         this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
-      });
-
-    this.tagService.listFileTags(this.directoryPath, this.fileName)
-      .then((tags) => {
-        this.tags = tags;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
       });
   }
 

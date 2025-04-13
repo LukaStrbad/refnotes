@@ -21,7 +21,7 @@ describe('Translation utils', () => {
 
       const countNum = count as number;
 
-      let result = await getPluralTranslation(translateService, 'test.key', countNum, { n: countNum });
+      const result = await getPluralTranslation(translateService, 'test.key', countNum, { n: countNum });
       expect(result).toBe(expected.toString());
     });
   });
@@ -55,7 +55,7 @@ describe('Translation utils', () => {
 
       const countNum = count as number;
 
-      let result = await getPluralTranslation(translateService, 'test.key', countNum, { n: countNum });
+      const result = await getPluralTranslation(translateService, 'test.key', countNum, { n: countNum });
       expect(result).toBe(expected.toString());
     });
   });

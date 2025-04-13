@@ -6,6 +6,15 @@ export interface File {
   modified: Date;
 }
 
+export type FileInfo = File;
+
+export interface FileWithTime extends File {
+  createdLong?: string;
+  createdShort?: string;
+  modifiedLong?: string;
+  modifiedShort?: string;
+}
+
 export function createFromJsFile(file: globalThis.File): File {
   return {
     name: file.name,

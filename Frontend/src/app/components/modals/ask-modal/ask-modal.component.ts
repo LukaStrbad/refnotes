@@ -2,11 +2,10 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, ElementRef, Signal, signal, ViewChild } from '@angular/core';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { TestTagDirective } from '../../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-ask-modal',
-  imports: [AsyncPipe, TranslateDirective, TestTagDirective],
+  imports: [AsyncPipe, TranslateDirective],
   templateUrl: './ask-modal.component.html',
   styleUrl: './ask-modal.component.css'
 })

@@ -157,7 +157,12 @@
   },
   "preview": {
     "labelTags": "Oznake:",
-    "viewingFile": "Pregled {{fileName}}"
+    "viewingFile": "Pregled {{fileName}}",
+    "tooltip": {
+      "file-created": "Stvoreno: {{time}}",
+      "file-modified": "Zadnja izmjena: {{time}}",
+      "file-size": "Veličina"
+    }
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",

@@ -12,7 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
-import { lastValueFrom } from 'rxjs';
 import { Location } from '@angular/common';
 
 @Component({

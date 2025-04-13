@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom, map, merge, Observable, of, tap } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
 import { LRUCache } from 'lru-cache';
-import { File } from '../model/file';
+import { mapFileDates } from '../utils/date-utils';
 
 const apiUrl = environment.apiUrl + '/browser';
 
@@ -22,7 +22,7 @@ export class BrowserService {
     const network = this.http
       .get<Directory>(`${apiUrl}/list?path=${path}`)
       .pipe(tap((value) => {
-        value.files = value.files.map(this.mapFileDates);
+        value.files = value.files.map(mapFileDates);
         this.listCache.set(path, value);
       }));
 
@@ -39,13 +39,5 @@ export class BrowserService {
     return firstValueFrom(
       this.http.delete(`${apiUrl}/deleteDirectory?path=${path}`),
     );
-  }
-
-  private mapFileDates(file: File): File {
-    // + 'Z' is added to make the date interpreted as UTC
-    // without this, the date is interpreted as local time
-    file.modified = new Date(file.modified + 'Z');
-    file.created = new Date(file.created + 'Z');
-    return file;
   }
 }
