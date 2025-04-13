@@ -19,7 +19,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { FileService } from '../../services/file.service';
-import { File } from '../../model/file';
+import { createFromJsFile, File, FileWithTime } from '../../model/file';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { TagService } from '../../services/tag.service';
 import * as fileUtils from '../../utils/file-utils';
@@ -29,6 +29,8 @@ import { SelectFileService } from '../../services/select-file.service';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
+import { ByteSizePipe } from '../../pipes/byte-size.pipe';
+import { updateFileTime } from '../../utils/date-utils';
 
 @Component({
   selector: 'app-browser',
@@ -41,13 +43,15 @@ import { AskModalService } from '../../services/ask-modal.service';
     RouterLink,
     TestTagDirective,
     EditTagsModalComponent,
-    RenameFileModalComponent
+    RenameFileModalComponent,
+    ByteSizePipe,
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   protected readonly tagLimit = 3;
+  private _dateLang = 'en-UK';
 
   currentFolder: Directory | null = null;
   @ViewChild('fileModal')
@@ -71,8 +75,20 @@ export class BrowserComponent implements OnInit, OnDestroy {
    * For testing purposes, this property is used to store the promise from inside the refreshRoute method.
    */
   refreshRouteInnerPromise?: Promise<Directory>;
+  updateFileTimesInterval?: number;
 
   fileUtils = fileUtils;
+
+  private get dateLang(): string {
+    return this._dateLang;
+  }
+
+  private set dateLang(value: string) {
+    if (value === 'en') {
+      value = 'en-UK';
+    }
+    this._dateLang = value;
+  }
 
   get breadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
@@ -88,6 +104,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     return breadcrumbs;
   }
 
+  get files(): FileWithTime[] {
+    return this.currentFolder?.files ?? [];
+  }
+
   constructor(
     private browser: BrowserService,
     private fileService: FileService,
@@ -101,6 +121,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private askModal: AskModalService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
+
+    this.dateLang = this.translateService.currentLang;
+    this.translateService.onLangChange.subscribe((event) => {
+      this.dateLang = event.lang;
+    });
   }
 
   ngOnInit(): void {
@@ -139,6 +164,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.currentFolder = await this.refreshRouteInnerPromise;
 
     this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
+
+    await this.updateFileTimes();
+    clearInterval(this.updateFileTimesInterval);
+    // Update file times every minute
+    this.updateFileTimesInterval = setInterval(() => {
+      this.updateFileTimes();
+    }, 1000 * 60);
   }
 
   async createNewFile(filename: string) {
@@ -262,10 +294,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.currentFolder?.files.push({
-                  name: file.name,
-                  tags: [],
-                });
+                this.currentFolder?.files.push(createFromJsFile(file));
               } else {
                 getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
                   .then((translation) => {
@@ -351,6 +380,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
     if (file) {
       file.name = newFileName;
+      file.modified = new Date();
     }
   }
 
@@ -444,6 +474,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
       });
     } finally {
       await this.refreshRoute();
+    }
+  }
+
+  private async updateFileTimes() {
+    for (const file of this.files) {
+      updateFileTime(file, this.translateService, this.dateLang)
     }
   }
 }

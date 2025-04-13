@@ -2,6 +2,7 @@
 using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
+using Server.Model;
 using Server.Utils;
 
 namespace Server.Services;
@@ -45,11 +46,19 @@ public interface IFileService
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to update</param>
     Task UpdateTimestamp(string directoryPath, string name);
+
+    /// <summary>
+    /// Get information about a file at the specified path.
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <returns></returns>
+    Task<FileDto> GetFileInfo(string filePath);
 }
 
 public class FileService(
     RefNotesContext context,
     IEncryptionService encryptionService,
+    IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
     ServiceUtils utils) : IFileService
 {
@@ -179,5 +188,18 @@ public class FileService(
         file.Modified = DateTime.UtcNow;
         context.Entry(file).State = EntityState.Modified;
         await context.SaveChangesAsync();
+    }
+
+    public async Task<FileDto> GetFileInfo(string filePath)
+    {
+        var (directoryPath, name) = ServiceUtils.SplitDirAndFile(filePath);
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, includeTags: true);
+        var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
+
+        return new FileDto(file.DecryptedName(encryptionService),
+            file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
+            fileSize,
+            file.Created,
+            file.Modified);
     }
 }

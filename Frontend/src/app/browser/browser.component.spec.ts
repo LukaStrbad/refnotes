@@ -18,7 +18,7 @@ import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
 
 function createFile(name: string): File {
-  return { name, tags: [] };
+  return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 describe('BrowserComponent', () => {
@@ -169,7 +169,8 @@ describe('BrowserComponent', () => {
     );
 
     expect(fileTrs.length).toBe(1);
-    expect(component.currentFolder!.files).toContain(createFile('test.txt'));
+    const fileNames = component.currentFolder!.files.map((f) => f.name);
+    expect(fileNames).toContain('test.txt');
     expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '');
   });
 

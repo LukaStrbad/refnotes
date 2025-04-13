@@ -12,6 +12,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-md-editor',
@@ -192,6 +193,9 @@ describe('FileEditorComponent', () => {
     fileService.moveFile.and.resolveTo();
     fileService.getFile.and.resolveTo(new ArrayBuffer(0));
     tagService.listFileTags.and.resolveTo([]);
+    const location = TestBed.inject(Location);
+    let newPath = '';
+    spyOn(location, 'replaceState').and.callFake((path) => (newPath = path));
 
     fixture = TestBed.createComponent(FileEditorComponent);
     const component = fixture.componentInstance;
@@ -204,6 +208,7 @@ describe('FileEditorComponent', () => {
       "/test/test.txt",
       "/test/new-name.txt",
     );
+    expect(newPath).toContain('file=new-name.txt');
   });
 
   it('should rename file in root directory', async () => {

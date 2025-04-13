@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import { FileInfo } from '../model/file';
+import { mapFileDates } from '../utils/date-utils';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -85,5 +87,12 @@ export class FileService {
         content,
       ),
     );
+  }
+
+  async getFileInfo(path: string): Promise<FileInfo> {
+    const fileInfo = await firstValueFrom(
+      this.http.get<FileInfo>(`${apiUrl}/getFileInfo?filePath=${path}`),
+    );
+    return mapFileDates(fileInfo);
   }
 }

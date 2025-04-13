@@ -14,7 +14,7 @@ import { File } from '../model/file';
 const apiUrl = environment.apiUrl + '/browser';
 
 function createFile(name: string): File {
-  return { name, tags: [] };
+  return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 describe('BrowserService', () => {

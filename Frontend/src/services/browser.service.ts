@@ -4,6 +4,7 @@ import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 import { Directory } from '../model/directory';
 import { environment } from '../environments/environment';
 import { LRUCache } from 'lru-cache';
+import { mapFileDates } from '../utils/date-utils';
 
 const apiUrl = environment.apiUrl + '/browser';
 
@@ -20,7 +21,10 @@ export class BrowserService {
 
     const network = this.http
       .get<Directory>(`${apiUrl}/list?path=${path}`)
-      .pipe(tap((value) => this.listCache.set(path, value)));
+      .pipe(tap((value) => {
+        value.files = value.files.map(mapFileDates);
+        this.listCache.set(path, value);
+      }));
 
     return cached ? merge(of(cached), network) : network;
   }

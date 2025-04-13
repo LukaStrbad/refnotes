@@ -21,7 +21,7 @@ describe('FilePreviewComponent', () => {
   }
 
   beforeEach(async () => {
-    fileService = jasmine.createSpyObj('FileService', ['getFile', 'getImage']);
+    fileService = jasmine.createSpyObj('FileService', ['getFile', 'getImage', 'getFileInfo']);
     tagService = jasmine.createSpyObj('TagService', ['listFileTags']);
 
     await TestBed.configureTestingModule({
@@ -55,6 +55,13 @@ describe('FilePreviewComponent', () => {
     });
 
     tagService.listFileTags.and.resolveTo(['tag1', 'tag2']);
+    fileService.getFileInfo.and.resolveTo({
+      name: 'test.md',
+      size: 1234,
+      modified: new Date(),
+      created: new Date(),
+      tags: ['tag1', 'tag2'],
+    });
   });
 
   it('should create', () => {

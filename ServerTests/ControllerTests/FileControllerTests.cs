@@ -6,6 +6,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
 using Server.Exceptions;
+using Server.Model;
 using Server.Services;
 
 namespace ServerTests.ControllerTests;
@@ -282,5 +283,21 @@ public class FileControllerTests : BaseTests
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFileInfo_ReturnsFileInfo()
+    {
+        const string filePath = "/file.txt";
+
+        _fileService.GetFileInfo(filePath).Returns(Task.FromResult(
+            new FileDto("file.txt", ["tag1", "tag2"], 1024, DateTime.UtcNow, DateTime.UtcNow))
+        );
+
+        var result = await _controller.GetFileInfo(filePath);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var fileInfo = Assert.IsType<FileDto>(okResult.Value);
+        Assert.Equal("file.txt", fileInfo.Name);
     }
 }
