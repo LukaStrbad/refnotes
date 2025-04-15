@@ -34,7 +34,6 @@ public class ExceptionHandlerMiddleware(RequestDelegate next)
                 await httpContext.Response.WriteAsync(e.Message);
                 break;
             default:
-                Console.Error.WriteLine(e);
                 httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await httpContext.Response.WriteAsync("An error occurred");
                 break;
