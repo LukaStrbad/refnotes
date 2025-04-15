@@ -50,8 +50,7 @@ public static class Configuration
 
         builder.Services.AddControllersWithViews();
 
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddOpenApi();
 
         builder.Services.Configure<KestrelServerOptions>(options =>
         {
@@ -79,8 +78,7 @@ public static class Configuration
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.MapOpenApi();
         }
 
         app.UseCors(builder => builder

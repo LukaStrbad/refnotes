@@ -77,7 +77,7 @@ public class BrowserServiceTests : BaseTests
     {
         await _browserService.AddDirectory(_newDirectoryPath);
 
-        await Assert.ThrowsAsync<DirectoryAlreadyExists>(() => _browserService.AddDirectory(_newDirectoryPath));
+        await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() => _browserService.AddDirectory(_newDirectoryPath));
     }
 
     [Fact]

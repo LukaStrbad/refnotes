@@ -12,39 +12,16 @@ namespace Server.Controllers;
 [Authorize]
 public class FileController(IFileService fileService, IFileStorageService fileStorageService) : ControllerBase
 {
-    private async Task<ActionResult?> AddFileResult(string directoryPath, string name, Stream stream)
-    {
-        try
-        {
-            var fileName = await fileService.AddFile(directoryPath, name);
-            await fileStorageService.SaveFileAsync(fileName, stream);
-            return null;
-        }
-        catch (DirectoryNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        catch (FileAlreadyExistsException e)
-        {
-            return Conflict(e.Message);
-        }
-    }
-
     [HttpPost("addFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddFile(string directoryPath)
     {
         var files = Request.Form.Files;
         foreach (var file in files)
         {
             var name = file.FileName;
-            var result = await AddFileResult(directoryPath, name, file.OpenReadStream());
-            if (result is not null)
-            {
-                return result;
-            }
+            var fileName = await fileService.AddFile(directoryPath, name);
+            await fileStorageService.SaveFileAsync(fileName, file.OpenReadStream());
         }
 
         return Ok();
@@ -52,36 +29,21 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
     [HttpPost("addTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddTextFile(string directoryPath, string name)
     {
         using var sr = new StreamReader(Request.Body);
         var content = await sr.ReadToEndAsync();
-        var result = await AddFileResult(directoryPath, name, new MemoryStream(Encoding.UTF8.GetBytes(content)));
+        var fileName = await fileService.AddFile(directoryPath, name);
+        await fileStorageService.SaveFileAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)));
 
-        return result ?? Ok();
+        return Ok();
     }
 
     [HttpPost("moveFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> MoveFile(string oldName, string newName)
     {
-        try
-        {
-            await fileService.MoveFile(oldName, newName);
-        }
-        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
-        {
-            return NotFound(e.Message);
-        }
-        catch (FileAlreadyExistsException e)
-        {
-            return Conflict(e.Message);
-        }
-
+        await fileService.MoveFile(oldName, newName);
         return Ok();
     }
 
@@ -90,25 +52,18 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name)
     {
-        try
+        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
+        if (fileName is null)
         {
-            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
-            if (fileName is null)
-            {
-                return NotFound("File not found.");
-            }
-
-            var stream = fileStorageService.GetFile(fileName);
-
-            var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
-                ? "text/markdown"
-                : "application/octet-stream";
-            return File(stream, contentType, name);
+            return NotFound("File not found.");
         }
-        catch (DirectoryNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
+
+        var stream = fileStorageService.GetFile(fileName);
+
+        var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
+            ? "text/markdown"
+            : "application/octet-stream";
+        return File(stream, contentType, name);
     }
 
     [HttpGet("getImage")]
@@ -140,22 +95,15 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> SaveTextFile(string directoryPath, string name)
     {
-        try
+        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
+        if (fileName is null)
         {
-            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
-            if (fileName is null)
-            {
-                return NotFound("File not found.");
-            }
+            return NotFound("File not found.");
+        }
 
-            await fileStorageService.SaveFileAsync(fileName, Request.Body);
-            await fileService.UpdateTimestamp(directoryPath, name);
-            return Ok();
-        }
-        catch (DirectoryNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
+        await fileStorageService.SaveFileAsync(fileName, Request.Body);
+        await fileService.UpdateTimestamp(directoryPath, name);
+        return Ok();
     }
 
     [HttpDelete("deleteFile")]
@@ -183,24 +131,12 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
         return Ok();
     }
-    
+
     [HttpGet("getFileInfo")]
     [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FileDto>> GetFileInfo(string filePath)
     {
-        try
-        {
-            var fileInfo = await fileService.GetFileInfo(filePath);
-            return Ok(fileInfo);
-        }
-        catch (DirectoryNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        catch (FileNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
+        var fileInfo = await fileService.GetFileInfo(filePath);
+        return Ok(fileInfo);
     }
 }

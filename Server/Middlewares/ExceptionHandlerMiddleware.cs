@@ -17,18 +17,26 @@ public class ExceptionHandlerMiddleware(RequestDelegate next)
         }
     }
 
-    private static async Task HandleException(Exception ex, HttpContext httpContext)
+    private static async Task HandleException(Exception e, HttpContext httpContext)
     {
-        if (ex is NoNameException noNameException)
+        switch (e)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsync(noNameException.Message);
-        }
-        else
-        {
-            Console.Error.WriteLine(ex);
-            httpContext.Response.StatusCode = 500;
-            await httpContext.Response.WriteAsync("An error occurred");
+            case NoNameException noNameException:
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await httpContext.Response.WriteAsync(noNameException.Message);
+                break;
+            case DirectoryAlreadyExistsException or FileAlreadyExistsException:
+                httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+                await httpContext.Response.WriteAsync(e.Message);
+                break;
+            case DirectoryNotFoundException or FileNotFoundException:
+                httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+                await httpContext.Response.WriteAsync(e.Message);
+                break;
+            default:
+                httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await httpContext.Response.WriteAsync("An error occurred");
+                break;
         }
     }
 }

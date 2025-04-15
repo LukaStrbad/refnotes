@@ -28,28 +28,15 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
 
     [HttpPost("addDirectory")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> AddDirectory(string path)
     {
-        try
-        {
-            await browserService.AddDirectory(path);
-            return Ok();
-        }
-        catch (DirectoryAlreadyExists e)
-        {
-            return Conflict(e.Message);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+        await browserService.AddDirectory(path);
+        return Ok();
     }
 
     [HttpDelete("deleteDirectory")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> DeleteDirectory(string path)
     {
         try
@@ -60,14 +47,6 @@ public class BrowserController(IBrowserService browserService) : ControllerBase
         catch (ArgumentException e)
         {
             return BadRequest(e.Message);
-        }
-        catch (DirectoryNotEmptyException e)
-        {
-            return BadRequest(e.Message);
-        }
-        catch (DirectoryNotFoundException e)
-        {
-            return NotFound(e.Message);
         }
     }
 }
