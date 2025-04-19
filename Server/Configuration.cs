@@ -44,13 +44,25 @@ public static class Configuration
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.FromMinutes(1)
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    context.Token = context.Request.Cookies["accessToken"];
+                    return Task.CompletedTask;
+                }
+            };
         });
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("admin", p => p.RequireRole("administrator"));
 
         builder.Services.AddControllersWithViews();
 
-        builder.Services.AddOpenApi();
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddOpenApi();
+        }
 
         builder.Services.Configure<KestrelServerOptions>(options =>
         {
@@ -81,10 +93,15 @@ public static class Configuration
             app.MapOpenApi();
         }
 
+        var allowedOrigins = app.Configuration.GetSection("CorsOrigin").Get<string>();
+        if (allowedOrigins is null)
+        {
+            throw new Exception("CorsOrigin not found in configuration.");
+        }
+
         app.UseCors(builder => builder
             .AllowCredentials()
-            // TODO: Add a way to configure allowed origins
-            .WithOrigins("http://localhost:4200")
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
         );

@@ -10,31 +10,52 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController : ControllerBase
 {
-    /// <summary>
-    /// Gets the cookie options for the refresh token.
-    /// </summary>
-    private static readonly CookieOptions HttpOnlyCookieOptions = new()
+    private readonly IAuthService _authService;
+    private readonly string _cookieDomain;
+    private readonly bool _cookieSecure;
+
+    public AuthController(IAuthService authService, IConfiguration configuration)
     {
-        Domain = "localhost",
-        SameSite = SameSiteMode.Strict,
-        IsEssential = true,
-        HttpOnly = true,
-        Secure = false
-    };
+        _authService = authService;
+
+        var cookieDomain = configuration["CookieDomain"];
+
+        _cookieDomain = cookieDomain ?? throw new Exception("CookieDomain not set in configuration");
+        _cookieSecure = configuration.GetValue<bool?>("CookieSecure") ?? false;
+    }
+
+    private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
+    {
+        var options = new CookieOptions
+        {
+            Domain = _cookieDomain,
+            SameSite = SameSiteMode.Strict,
+            IsEssential = true,
+            HttpOnly = httpOnly,
+            Secure = _cookieSecure
+        };
+
+        if (expires is not null)
+        {
+            options.Expires = expires;
+        }
+
+        return options;
+    }
 
     [HttpPost("login")]
-    [ProducesResponseType<Ok<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
     [ProducesResponseType<NotFound>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<UnauthorizedHttpResult>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<string>> Login(UserCredentials credentials)
     {
         try
         {
-            var tokens = await authService.Login(credentials);
-            AddRefreshTokenCookie(tokens);
-            return Ok(tokens.AccessToken);
+            var tokens = await _authService.Login(credentials);
+            AddTokenCookies(tokens);
+            return Ok();
         }
         catch (UserNotFoundException e)
         {
@@ -47,36 +68,33 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("register")]
-    [ProducesResponseType<Ok<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
     [ProducesResponseType<BadRequest>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<string>> Register(User newUser)
     {
         try
         {
-            var tokens = await authService.Register(newUser);
-            AddRefreshTokenCookie(tokens);
-            return Ok(tokens.AccessToken);
-        } catch (UserExistsException e)
+            var tokens = await _authService.Register(newUser);
+            AddTokenCookies(tokens);
+            return Ok();
+        }
+        catch (UserExistsException e)
         {
             return BadRequest(e.Message);
         }
     }
 
     [HttpPost("refreshAccessToken")]
-    [ProducesResponseType<Ok<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<NotFound>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<string>> RefreshToken()
     {
+        var accessToken = HttpContext.Request.Cookies["accessToken"];
         var refreshToken = HttpContext.Request.Cookies["refreshToken"];
-        using var sr = new StreamReader(Request.Body);
-        string accessToken;
-        try
+        if (accessToken is null)
         {
-            accessToken = await sr.ReadToEndAsync();
-        } catch
-        {
-            return BadRequest("Error reading access token from request body");
+            return BadRequest("No access token provided");
         }
 
         if (refreshToken is null)
@@ -86,9 +104,9 @@ public class AuthController(IAuthService authService) : ControllerBase
 
         try
         {
-            var tokens = await authService.RefreshAccessToken(accessToken, refreshToken);
-            AddRefreshTokenCookie(tokens);
-            return Ok(tokens.AccessToken);
+            var tokens = await _authService.RefreshAccessToken(accessToken, refreshToken);
+            AddTokenCookies(tokens);
+            return Ok();
         }
         catch (UserNotFoundException e)
         {
@@ -104,10 +122,11 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
     }
 
-    private void AddRefreshTokenCookie(Tokens tokens)
+    private void AddTokenCookies(Tokens tokens)
     {
-        var options = HttpOnlyCookieOptions;
-        options.Expires = tokens.RefreshToken.ExpiryTime;
-        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, HttpOnlyCookieOptions);
+        // Set an access token cookie (set the same expiration time as the refresh token)
+        HttpContext.Response.Cookies.Append("accessToken", tokens.AccessToken, GetCookieOptions(false, tokens.RefreshToken.ExpiryTime));
+        // Set refresh token cookie   
+        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, GetCookieOptions(true, tokens.RefreshToken.ExpiryTime));
     }
 }
