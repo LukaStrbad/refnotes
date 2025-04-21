@@ -10,6 +10,22 @@ public interface IFileStorageService
 
 public class FileStorageService(IEncryptionService encryptionService, AppConfiguration appConfig) : IFileStorageService
 {
+    private static readonly Dictionary<string, SemaphoreSlim> FileLocks = new();
+    private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
+
+    private static SemaphoreSlim GetFileLock(string fileName)
+    {
+        lock (FileLocks)
+        {
+            if (FileLocks.TryGetValue(fileName, out var fileLock))
+                return fileLock;
+            
+            fileLock = new SemaphoreSlim(1);
+            FileLocks.Add(fileName, fileLock);
+            return fileLock;
+        }
+    }
+
     public async Task SaveFileAsync(string fileName, Stream inputStream)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -17,37 +33,83 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
             throw new ArgumentException("File name cannot be empty.");
         }
 
-        var filePath = Path.Combine(appConfig.DataDir, fileName);
-        await using var stream = new FileStream(filePath, FileMode.Create);
-        await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
+        var fileLock = GetFileLock(fileName);
+        if (!await fileLock.WaitAsync(LockTimeout))
+            throw new TimeoutException("File lock timeout.");
+
+        try
+        {
+            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
     public Stream GetFile(string fileName)
     {
-        var filePath = Path.Combine(appConfig.DataDir, fileName);
-        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        var decryptedStream = new MemoryStream();
-        encryptionService.DecryptAesToStream(stream, decryptedStream);
-        decryptedStream.Position = 0;
-        return decryptedStream;
+        var fileLock = GetFileLock(fileName);
+
+        if (!fileLock.Wait(LockTimeout))
+            throw new TimeoutException("File lock timeout.");
+
+        try
+        {
+            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var decryptedStream = new MemoryStream();
+            encryptionService.DecryptAesToStream(stream, decryptedStream);
+            decryptedStream.Position = 0;
+            return decryptedStream;
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
-    public Task DeleteFile(string fileName)
+    public async Task DeleteFile(string fileName)
     {
-        var filePath = Path.Combine(appConfig.DataDir, fileName);
-        File.Delete(filePath);
-        return Task.CompletedTask;
+        var fileLock = GetFileLock(fileName);
+
+        if (!await fileLock.WaitAsync(LockTimeout))
+            throw new TimeoutException("File lock timeout.");
+
+        try
+        {
+            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            File.Delete(filePath);
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 
-    public Task<long> GetFileSize(string fileName)
+    public async Task<long> GetFileSize(string fileName)
     {
         var filePath = Path.Combine(appConfig.DataDir, fileName);
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"File '{fileName}' not found.");
         }
-        
-        var fileInfo = new FileInfo(filePath);
-        return Task.FromResult(fileInfo.Length);
+
+        var fileLock = GetFileLock(fileName);
+
+        if (!await fileLock.WaitAsync(LockTimeout))
+            throw new TimeoutException("File lock timeout.");
+
+        try
+        {
+            var fileInfo = new FileInfo(filePath);
+            return fileInfo.Length;
+        }
+        finally
+        {
+            fileLock.Release();
+        }
     }
 }

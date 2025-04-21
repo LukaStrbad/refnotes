@@ -123,7 +123,7 @@ public class EncryptionService : IEncryptionService
 
         // Create the streams used for decryption.
         using var csDecrypt = new CryptoStream(encryptedInputStream, decryptor, CryptoStreamMode.Read);
-
+        
         csDecrypt.CopyTo(decryptedOutputStream);
     }
 
