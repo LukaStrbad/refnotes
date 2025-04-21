@@ -9,31 +9,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => from(authHandle
 
 async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Promise<HttpEvent<unknown>> {
   const authService = inject(AuthService);
-  let accessToken = authService.accessToken;
 
-  if (accessToken === null) {
-    return await lastValueFrom(next(req));
-  }
+  // Allow cookies to be sent with the request
+  req = req.clone({
+    withCredentials: true,
+  });
 
-  if (authService.isTokenExpired()) {
+  const accessToken = authService.accessToken;
+
+  if (accessToken && authService.isTokenExpired()) {
     // Check if we are already refreshing the token to avoid multiple requests
     if (refreshTokenPromise === null) {
       refreshTokenPromise = authService.tryToRefreshTokens();
     }
 
-    const result = await refreshTokenPromise;
+    await refreshTokenPromise;
     refreshTokenPromise = null;
-
-    if (result) {
-      accessToken = authService.accessToken;
-    } else {
-      return await lastValueFrom(next(req));
-    }
   }
 
-  const newReq = req.clone({
-    headers: req.headers.set('Authorization', `Bearer ${accessToken}`)
-  });
-
-  return await lastValueFrom(next(newReq));
+  return await lastValueFrom(next(req));
 }

@@ -4,21 +4,43 @@ import { Router } from '@angular/router';
 import { HttpBackend, HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { createExpiredAccessToken, createValidAccessToken } from '../tests/token-utils';
 import { of } from 'rxjs';
+import { CookieService } from './cookie.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let http: jasmine.SpyObj<HttpClient>;
   let router: jasmine.SpyObj<Router>;
+  let cookieService: jasmine.SpyObj<CookieService>;
+
+  function setAccessTokenCookie(token: string) {
+    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour from now
+    cookieService.setCookie('accessToken', token, expires);
+  }
 
   beforeEach(() => {
     http = jasmine.createSpyObj('HttpClient', ['get', 'post']);
     router = jasmine.createSpyObj('Router', ['navigate']);
+    router.navigate.and.resolveTo(true);
+
+    const cookies: Record<string, string> = {};
+    cookieService = jasmine.createSpyObj('CookieService', ['getCookie', 'setCookie']);
+    cookieService.getCookie.and.callFake((name: string) => {
+      return cookies[name] ?? null;
+    });
+    cookieService.setCookie.and.callFake((name: string, value: string, expires: Date) => {
+      if (expires.getTime() < Date.now()) {
+        delete cookies[name];
+        return;
+      }
+      cookies[name] = value;
+    });
 
     localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         { provide: HttpBackend },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: CookieService, useValue: cookieService }
       ]
     });
     service = TestBed.inject(AuthService);
@@ -34,32 +56,31 @@ describe('AuthService', () => {
   });
 
   it('should set user logged in if token is present and not expired', () => {
-    localStorage.setItem('accessToken', createValidAccessToken());
+    setAccessTokenCookie(createValidAccessToken());
     service.init();
     expect(service.isUserLoggedIn()).toBeTrue();
   });
 
   it('should not set user logged in if token is expired', () => {
-    localStorage.setItem('accessToken', createExpiredAccessToken());
+    setAccessTokenCookie(createExpiredAccessToken());
     service.init();
     expect(service.isUserLoggedIn()).toBeFalse();
   });
 
   it('should set logout if tokens cannot be refreshed', async () => {
-    localStorage.setItem('accessToken', createExpiredAccessToken());
+    setAccessTokenCookie(createExpiredAccessToken());
     service.init();
 
     await service.tryToRefreshTokens();
 
     expect(service.isUserLoggedIn()).toBeFalse();
     expect(service.accessToken).toBeNull();
-    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('should login user if credentials are correct', async () => {
     const accessToken = createValidAccessToken();
-    // httpBackend.handle.and.returnValue(of(httpResponse));
-    http.post.and.returnValue(of(accessToken));
+    setAccessTokenCookie(accessToken);
+    http.post.and.returnValue(of(undefined));
 
     await service.login('admin', 'admin');
 
@@ -75,12 +96,13 @@ describe('AuthService', () => {
 
     expect(service.accessToken).toBeNull();
     expect(service.isUserLoggedIn()).toBeFalse();
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalledWith(['/browser']);
   });
 
   it('should register user if request succeeds', async () => {
     const accessToken = createValidAccessToken();
-    http.post.and.returnValue(of(accessToken));
+    setAccessTokenCookie(accessToken);
+    http.post.and.returnValue(of(undefined));
 
     await service.register('admin', 'admin', 'admin@admin.com', 'admin');
 
@@ -96,7 +118,7 @@ describe('AuthService', () => {
 
     expect(service.accessToken).toBeNull();
     expect(service.isUserLoggedIn()).toBeFalse();
-    expect(router.navigate).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalledWith(['/browser']);
   });
 
   it('should logout user', async () => {
