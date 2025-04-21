@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { jwtDecode, JwtPayload } from "jwt-decode";
 import { LoginInfo } from "../app/login/login.component";
 import { getStatusCode } from '../utils/errorHandler';
+import { CookieService } from './cookie.service';
 
 const apiUrl = environment.apiUrl + '/auth';
 
@@ -27,26 +28,14 @@ export class AuthService {
 
   private http!: HttpClient;
 
-  get accessToken() {
-    const accessToken = localStorage.getItem('accessToken');
-    return accessToken;
-  }
-
-  set accessToken(accessToken: string | null) {
-    if (accessToken) {
-      this.setUserAndToken(accessToken);
-      this._isUserLoggedIn.set(true);
-    } else {
-      this.user = null;
-      this.token = null;
-      localStorage.removeItem('accessToken');
-      this._isUserLoggedIn.set(false);
-    }
+  get accessToken(): string | null {
+    return this.cookieService.getCookie('accessToken');
   }
 
   constructor(
     private httpBackend: HttpBackend,
-    private router: Router
+    private router: Router,
+    private cookieService: CookieService
   ) {
     this.init();
   }
@@ -57,13 +46,8 @@ export class AuthService {
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
     this.http = new HttpClient(this.httpBackend);
 
-    const accessToken = this.accessToken;
-    if (accessToken) {
-      this.setUserAndToken(accessToken);
-
-      if (!this.isTokenExpired()) {
-        this._isUserLoggedIn.set(true);
-      }
+    if (!this.setUserAndToken()) {
+      this.router.navigate(['/login']).then();
     }
   }
 
@@ -82,7 +66,7 @@ export class AuthService {
 
   async tryToRefreshTokens() {
     return this.refreshTokens().then(() => {
-      this._isUserLoggedIn.set(true);
+      this.setUserAndToken();
       return true;
     }, (reason) => {
       const status = getStatusCode(reason);
@@ -98,32 +82,47 @@ export class AuthService {
   }
 
   async login(username: string, password: string) {
-    this.accessToken = await firstValueFrom(
-      this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true, responseType: 'text' })
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true })
     );
-    console.log("Navigating to browser");
+    this.setUserAndToken();
     await this.router.navigate(['/browser']);
   }
 
   async register(username: string, name: string, email: string, password: string) {
-    this.accessToken = await firstValueFrom(
-      this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true, responseType: 'text' })
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true })
     );
+    this.setUserAndToken();
     await this.router.navigate(['/browser']);
   }
 
-  private setUserAndToken(accessToken: string) {
+  private setUserAndToken() {
+    const accessToken = this.accessToken;
+    if (!accessToken) {
+      this.unsetUserAndToken();
+      return false;
+    }
+
     const decodedToken = jwtDecode(accessToken);
     // Check if token has the required fields (role is optional)
     if ("id" in decodedToken && "unique_name" in decodedToken && "given_name" in decodedToken && "email" in decodedToken) {
       this.token = decodedToken as DecodedToken;
       this.setUser(this.token);
-      localStorage.setItem('accessToken', accessToken);
 
-      return this.token;
+      this._isUserLoggedIn.set(!this.isTokenExpired());
+      return true;
     } else {
       throw new Error(`Invalid access token: ${accessToken}`);
     }
+  }
+
+  private unsetUserAndToken() {
+    this.user = null;
+    this.token = null;
+    this._isUserLoggedIn.set(false);
+    // Remove the access token cookie
+    this.cookieService.setCookie('accessToken', '', new Date(0));
   }
 
   private setUser(token: DecodedToken) {
@@ -137,7 +136,7 @@ export class AuthService {
   }
 
   async logout(reason: undefined | string = undefined, navigateToLogin = true) {
-    this.accessToken = null;
+    this.unsetUserAndToken();
     if (!navigateToLogin) {
       return;
     }
@@ -150,9 +149,8 @@ export class AuthService {
   }
 
   async refreshTokens() {
-    this.accessToken = await firstValueFrom(
-      this.http.post(`${apiUrl}/refreshAccessToken`, this.accessToken,
-        { withCredentials: true, responseType: 'text' })
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/refreshAccessToken`, this.accessToken, { withCredentials: true })
     );
   }
 

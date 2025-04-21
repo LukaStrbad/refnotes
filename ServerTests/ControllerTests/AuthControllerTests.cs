@@ -1,6 +1,6 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -9,6 +9,7 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using ServerTests.Mocks;
 
 namespace ServerTests.ControllerTests;
 
@@ -16,19 +17,22 @@ public class AuthControllerTests : BaseTests
 {
     private readonly IAuthService _authService;
     private readonly AuthController _controller;
-    private readonly IRequestCookieCollection _requestCookies;
-    private readonly IResponseCookies _responseCookies;
+    private readonly RequestCookieCollection _requestCookies;
+    private readonly ResponseCookies _responseCookies;
     private readonly HttpContext _httpContext;
 
     public AuthControllerTests()
     {
         _authService = Substitute.For<IAuthService>();
-        _requestCookies = Substitute.For<IRequestCookieCollection>();
-        _responseCookies = Substitute.For<IResponseCookies>();
+        _requestCookies = new RequestCookieCollection();
+        _responseCookies = new ResponseCookies();
         _httpContext = Substitute.For<HttpContext>();
         _httpContext.Request.Cookies.Returns(_requestCookies);
         _httpContext.Response.Cookies.Returns(_responseCookies);
-        _controller = new AuthController(_authService)
+        var configuration = new ConfigurationManager();
+        configuration["CookieDomain"] = "localhost";
+
+        _controller = new AuthController(_authService, configuration)
         {
             ControllerContext = new ControllerContext
             {
@@ -37,23 +41,23 @@ public class AuthControllerTests : BaseTests
         };
     }
 
-    private void AssertCookieContainsRefreshToken(string refreshToken)
+    private void AssertCookiesContainTokens(string accessToken, string refreshToken)
     {
-        var cookiesCall = _responseCookies.ReceivedCalls()
-            .FirstOrDefault(x => x.GetMethodInfo().Name == nameof(IResponseCookies.Append));
-        Assert.NotNull(cookiesCall);
-        var cookiesArgs = cookiesCall.GetArguments();
-        Assert.Equal(3, cookiesArgs.Length);
-        Assert.Equal("refreshToken", cookiesArgs[0]);
-        Assert.Equal(refreshToken, cookiesArgs[1]);
-        var thirdArg = Assert.IsType<CookieOptions>(cookiesArgs[2]);
-        Assert.True(thirdArg.HttpOnly);
-    }
+        var hasAccessTokenCookie = _responseCookies.Cookies.TryGetValue("accessToken", out var accessTokenCookie);
+        Assert.True(hasAccessTokenCookie);
+        Assert.NotNull(accessTokenCookie);
+        Assert.Equal(accessToken, accessTokenCookie);
 
-    private void SetBody(string value)
-    {
-        var stream = new MemoryStream(Encoding.UTF8.GetBytes(value));
-        _httpContext.Request.Body.Returns(stream);
+        var hasRefreshTokenCookie = _responseCookies.Cookies.TryGetValue("refreshToken", out var refreshTokenCookie);
+        Assert.True(hasRefreshTokenCookie);
+        Assert.NotNull(refreshTokenCookie);
+        Assert.Equal(refreshToken, refreshTokenCookie);
+
+        var hasRefreshTokenCookieOptions =
+            _responseCookies.Options.TryGetValue("refreshToken", out var refreshTokenCookieOptions);
+        Assert.True(hasRefreshTokenCookieOptions);
+        Assert.NotNull(refreshTokenCookieOptions);
+        Assert.True(refreshTokenCookieOptions.HttpOnly);
     }
 
     [Fact]
@@ -64,10 +68,9 @@ public class AuthControllerTests : BaseTests
         _authService.Login(credentials).Returns(tokens);
 
         var result = await _controller.Login(credentials);
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.IsType<OkResult>(result.Result);
 
-        AssertCookieContainsRefreshToken(tokens.RefreshToken.Token);
-        Assert.Equal(tokens.AccessToken, okResult.Value);
+        AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
     }
 
     [Fact]
@@ -101,10 +104,9 @@ public class AuthControllerTests : BaseTests
         _authService.Register(newUser).Returns(tokens);
 
         var result = await _controller.Register(newUser);
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.IsType<OkResult>(result.Result);
 
-        AssertCookieContainsRefreshToken(tokens.RefreshToken.Token);
-        Assert.Equal(tokens.AccessToken, okResult.Value);
+        AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
     }
 
     [Fact]
@@ -127,24 +129,21 @@ public class AuthControllerTests : BaseTests
         const string initialRefreshToken = "refresh1";
         const string refreshToken = "refresh2";
 
-        _requestCookies["refreshToken"].Returns(initialRefreshToken);
+        _requestCookies["accessToken"] = initialAccessToken;
+        _requestCookies["refreshToken"] = initialRefreshToken;
         var tokens = new Tokens(accessToken, new RefreshToken(refreshToken, DateTime.Now));
         _authService.RefreshAccessToken(initialAccessToken, initialRefreshToken).Returns(tokens);
-        
-        SetBody(initialAccessToken);
-        var result = await _controller.RefreshToken();
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
 
-        Assert.Equal(accessToken, okResult.Value);
-        AssertCookieContainsRefreshToken(refreshToken);
+        var result = await _controller.RefreshToken();
+        Assert.IsType<OkResult>(result.Result);
+
+        AssertCookiesContainTokens(accessToken, refreshToken);
     }
 
     [Fact]
     public async Task RefreshToken_ReturnsBadRequest_WhenNoRefreshTokenIsProvided()
     {
-        _requestCookies["refreshToken"].Returns((string?)null);
-
-        SetBody("access");
+        _requestCookies["accessToken"] = "access";
         var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("No refresh token provided", badRequestResult.Value);
@@ -153,10 +152,10 @@ public class AuthControllerTests : BaseTests
     [Fact]
     public async Task RefreshToken_ReturnsNotFound_WhenUserDoesNotExist()
     {
-        _requestCookies["refreshToken"].Returns("refresh");
+        _requestCookies["accessToken"] = "access";
+        _requestCookies["refreshToken"] = "refresh";
         _authService.RefreshAccessToken("access", "refresh").ThrowsAsync(new UserNotFoundException("User not found"));
 
-        SetBody("access");
         var result = await _controller.RefreshToken();
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("User not found", notFoundResult.Value);
@@ -165,11 +164,11 @@ public class AuthControllerTests : BaseTests
     [Fact]
     public async Task RefreshToken_ReturnsBadRequest_WhenRefreshTokenIsInvalid()
     {
-        _requestCookies["refreshToken"].Returns("refresh");
+        _requestCookies["accessToken"] = "access";
+        _requestCookies["refreshToken"] = "refresh";
         _authService.RefreshAccessToken("access", "refresh")
             .ThrowsAsync(new RefreshTokenInvalid("Invalid refresh token"));
 
-        SetBody("access");
         var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Invalid refresh token", badRequestResult.Value);
@@ -178,11 +177,11 @@ public class AuthControllerTests : BaseTests
     [Fact]
     public async Task RefreshToken_ReturnsBadRequest_WhenAccessTokenIsMalformed()
     {
-        _requestCookies["refreshToken"].Returns("refresh");
+        _requestCookies["refreshToken"] = "refresh";
+        _requestCookies["accessToken"] = "access";
         _authService.RefreshAccessToken("access", "refresh")
             .ThrowsAsync(new SecurityTokenMalformedException("Malformed access token"));
 
-        SetBody("access");
         var result = await _controller.RefreshToken();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Malformed access token", badRequestResult.Value);
