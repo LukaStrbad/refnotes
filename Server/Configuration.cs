@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -10,6 +11,7 @@ using Server.Utils;
 
 namespace Server;
 
+[ExcludeFromCodeCoverage]
 public static class Configuration
 {
     private const string RootDir = "RefNotes";

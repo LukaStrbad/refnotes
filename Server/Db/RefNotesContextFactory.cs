@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace Server.Db;
@@ -8,6 +9,7 @@ namespace Server.Db;
 /// Used only for setting up the connection string.
 /// This is necessary because, typically, the path is specified by AppConfiguration, which is not available at design time.
 /// </summary>
+[ExcludeFromCodeCoverage]
 // ReSharper disable once UnusedType.Global
 public class RefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContext>
 {
