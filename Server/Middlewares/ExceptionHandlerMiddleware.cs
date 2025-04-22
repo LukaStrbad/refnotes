@@ -2,7 +2,7 @@
 
 namespace Server.Middlewares;
 
-public class ExceptionHandlerMiddleware(RequestDelegate next)
+public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
 {
 
     public async Task Invoke(HttpContext httpContext)
@@ -17,25 +17,29 @@ public class ExceptionHandlerMiddleware(RequestDelegate next)
         }
     }
 
-    private static async Task HandleException(Exception e, HttpContext httpContext)
+    private async Task HandleException(Exception e, HttpContext httpContext)
     {
         switch (e)
         {
             case NoNameException noNameException:
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsync(noNameException.Message);
+                logger.LogError(e, "No name exception");
                 break;
             case DirectoryAlreadyExistsException or FileAlreadyExistsException:
                 httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
                 await httpContext.Response.WriteAsync(e.Message);
+                logger.LogWarning(e, "Directory or file already exists");
                 break;
             case DirectoryNotFoundException or FileNotFoundException:
                 httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
                 await httpContext.Response.WriteAsync(e.Message);
+                logger.LogWarning(e, "Directory or file not found");
                 break;
             default:
                 httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await httpContext.Response.WriteAsync("An error occurred");
+                logger.LogError(e, "An error occurred");
                 break;
         }
     }

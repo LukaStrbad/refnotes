@@ -59,8 +59,8 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         {
             return NotFound("File not found.");
         }
-
-        await using var stream = fileStorageService.GetFile(fileName);
+        
+        var stream = fileStorageService.GetFile(fileName);
 
         var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
             ? "text/markdown"
@@ -80,7 +80,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
                 return File([], "application/octet-stream");
             }
 
-            await using var stream = fileStorageService.GetFile(fileName);
+            var stream = fileStorageService.GetFile(fileName);
 
             const string contentType = "application/octet-stream";
             return File(stream, contentType, name);
@@ -141,7 +141,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         var fileInfo = await fileService.GetFileInfo(filePath);
         return Ok(fileInfo);
     }
-    
+
     [HttpGet("downloadFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> DownloadFile(string path)
@@ -152,9 +152,9 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         {
             return NotFound("File not found.");
         }
-        
+
         new FileExtensionContentTypeProvider().TryGetContentType(path, out var contentType);
-        await using var stream = fileStorageService.GetFile(fileName);
+        var stream = fileStorageService.GetFile(fileName);
         return File(stream, contentType ?? "application/octet-stream", name);
     }
 }

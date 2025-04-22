@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Server.Exceptions;
 using Server.Middlewares;
 
@@ -6,11 +8,17 @@ namespace ServerTests.MiddlewareTests;
 
 public class ExceptionHandlerMiddlewareTests : BaseTests
 {
+    private readonly ILogger<ExceptionHandlerMiddleware> _logger;
     private readonly HttpContext _httpContext;
     private readonly MemoryStream _stream;
 
     public ExceptionHandlerMiddlewareTests()
     {
+        var serviceProvider = new ServiceCollection()
+            .AddLogging()
+            .BuildServiceProvider();
+        var factory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        _logger = factory.CreateLogger<ExceptionHandlerMiddleware>();
         _stream = new MemoryStream();
         _httpContext = new DefaultHttpContext
         {
@@ -28,7 +36,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     [Fact]
     public async Task Invoke_SetsBadRequest_WhenNoNameExceptionIsThrown()
     {
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 
@@ -44,7 +52,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     {
         const string message = "Exception";
 
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 
@@ -60,7 +68,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     {
         const string message = "Exception";
         
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 
@@ -76,7 +84,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     {
         const string message = "Exception";
 
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 
@@ -92,7 +100,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     {
         const string message = "Exception";
 
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 
@@ -106,7 +114,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     [Fact]
     public async Task Invoke_SetsInternalServerError_WhenOtherExceptionIsThrown()
     {
-        var middleware = new ExceptionHandlerMiddleware(Next);
+        var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
 

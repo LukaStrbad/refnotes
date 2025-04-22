@@ -1,5 +1,6 @@
 ﻿using Server;
 using Server.Services;
+using ServerTests.Extensions;
 
 namespace ServerTests.ServiceTests;
 
@@ -114,11 +115,10 @@ public class EncryptionServiceTests : BaseTests
     {
         var bytes = "test data"u8.ToArray();
         var encryptedBytes = _encryptionService.EncryptAes(bytes);
-
+        
         using var encryptedInputStream = new MemoryStream(encryptedBytes);
-        using var outputStream = new MemoryStream();
 
-        _encryptionService.DecryptAesToStream(encryptedInputStream, outputStream);
+        using var outputStream = _encryptionService.DecryptAesToStream(encryptedInputStream);
 
         var decryptedBytes = outputStream.ToArray();
         Assert.Equal(bytes, decryptedBytes);

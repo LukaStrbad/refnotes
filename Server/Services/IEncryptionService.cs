@@ -46,8 +46,8 @@ public interface IEncryptionService
     /// Decrypts the given stream using AES decryption and writes the result to the output stream.
     /// </summary>
     /// <param name="encryptedInputStream">The encrypted input stream</param>
-    /// <param name="decryptedOutputStream">The decrypted output stream</param>
-    public void DecryptAesToStream(Stream encryptedInputStream, Stream decryptedOutputStream);
+    /// <returns>The decrypted output stream</returns>
+    public Stream DecryptAesToStream(Stream encryptedInputStream);
 
     /// <summary>
     /// Decrypts the given encrypted byte array using AES decryption and returns the result as a string.

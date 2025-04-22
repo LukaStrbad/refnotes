@@ -1,4 +1,6 @@
-﻿namespace Server.Services;
+﻿using Server.Streams;
+
+namespace Server.Services;
 
 public interface IFileStorageService
 {
@@ -56,18 +58,26 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
         if (!fileLock.Wait(LockTimeout))
             throw new TimeoutException("File lock timeout.");
 
+        LockReleasingStream? lockReleasingStream = null;
+        
         try
         {
             var filePath = Path.Combine(appConfig.DataDir, fileName);
-            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            var decryptedStream = new MemoryStream();
-            encryptionService.DecryptAesToStream(stream, decryptedStream);
-            decryptedStream.Position = 0;
-            return decryptedStream;
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var decryptedStream = encryptionService.DecryptAesToStream(stream);
+            
+            lockReleasingStream = new LockReleasingStream(decryptedStream, fileLock);
+            return lockReleasingStream;
         }
-        finally
+        catch
         {
-            fileLock.Release();
+            // Manually release the lock as the stream is not initialized
+            if (lockReleasingStream is null)
+                fileLock.Release();
+            else
+                lockReleasingStream.Dispose();
+
+            throw;
         }
     }
 
