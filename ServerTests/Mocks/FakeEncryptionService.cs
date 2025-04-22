@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Server.Services;
+using ServerTests.Extensions;
 
 namespace ServerTests.Mocks;
 
@@ -30,9 +31,10 @@ public class FakeEncryptionService : IEncryptionService
         return encryptedBytes;
     }
 
-    public void DecryptAesToStream(Stream encryptedInputStream, Stream decryptedOutputStream)
+    public Stream DecryptAesToStream(Stream encryptedInputStream)
     {
-        encryptedInputStream.CopyTo(decryptedOutputStream);
+        // Wrapper stream
+        return new BufferedStream(encryptedInputStream);
     }
 
     public string DecryptAesString(byte[] encryptedBytes)

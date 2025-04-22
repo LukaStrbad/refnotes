@@ -1,9 +1,11 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using Server.Utils;
 
 namespace Server.Controllers;
 
@@ -57,7 +59,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
         {
             return NotFound("File not found.");
         }
-
+        
         var stream = fileStorageService.GetFile(fileName);
 
         var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
@@ -138,5 +140,21 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     {
         var fileInfo = await fileService.GetFileInfo(filePath);
         return Ok(fileInfo);
+    }
+
+    [HttpGet("downloadFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> DownloadFile(string path)
+    {
+        var (directoryPath, name) = ServiceUtils.SplitDirAndFile(path);
+        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name);
+        if (fileName is null)
+        {
+            return NotFound("File not found.");
+        }
+
+        new FileExtensionContentTypeProvider().TryGetContentType(path, out var contentType);
+        var stream = fileStorageService.GetFile(fileName);
+        return File(stream, contentType ?? "application/octet-stream", name);
     }
 }

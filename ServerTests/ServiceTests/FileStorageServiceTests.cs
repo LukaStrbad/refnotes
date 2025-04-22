@@ -1,4 +1,6 @@
-﻿using Server.Services;
+﻿using System.Text;
+using Server.Services;
+using ServerTests.Extensions;
 using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
@@ -44,8 +46,10 @@ public class FileStorageServiceTests : BaseTests
         await _fileStorageService.SaveFileAsync(_fileName, inputStream);
 
         await using var stream = _fileStorageService.GetFile(_fileName);
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
 
+        using var sr = new StreamReader(stream);
+        var content = await sr.ReadToEndAsync(TestContext.Current.CancellationToken);
+        
         Assert.Equal("test content", content);
     }
 
@@ -76,7 +80,7 @@ public class FileStorageServiceTests : BaseTests
 
         await _fileStorageService.DeleteFile(fileName);
     }
-    
+
     [Fact]
     public async Task GetFileSize_ReturnsFileSize()
     {

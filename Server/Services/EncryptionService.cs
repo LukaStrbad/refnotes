@@ -112,7 +112,7 @@ public class EncryptionService : IEncryptionService
         }
     }
 
-    public void DecryptAesToStream(Stream encryptedInputStream, Stream decryptedOutputStream)
+    public Stream DecryptAesToStream(Stream encryptedInputStream)
     {
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
@@ -122,9 +122,7 @@ public class EncryptionService : IEncryptionService
         var decryptor = aesAlg.CreateDecryptor();
 
         // Create the streams used for decryption.
-        using var csDecrypt = new CryptoStream(encryptedInputStream, decryptor, CryptoStreamMode.Read);
-
-        csDecrypt.CopyTo(decryptedOutputStream);
+        return new CryptoStream(encryptedInputStream, decryptor, CryptoStreamMode.Read);
     }
 
     public string DecryptAesString(byte[] encryptedBytes) =>

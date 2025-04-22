@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +12,7 @@ using Server.Utils;
 
 namespace Server;
 
+[ExcludeFromCodeCoverage]
 public static class Configuration
 {
     private const string RootDir = "RefNotes";
@@ -63,11 +66,22 @@ public static class Configuration
         {
             builder.Services.AddOpenApi();
         }
+        
+        var maxFileSize = builder.Configuration.GetValue<long>("MaxFileSize");
+        // Set 1 MB as the minimum max file size
+        if (maxFileSize < 1024 * 1024) 
+            maxFileSize = 1024 * 1024;
 
         builder.Services.Configure<KestrelServerOptions>(options =>
         {
-            options.Limits.MaxRequestBodySize = 1024 * 1024 * 1024; // 1 GB
+            options.Limits.MaxRequestBodySize = maxFileSize;
         });
+        
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = maxFileSize;
+        });
+
 
         builder.Services.AddMemoryCache();
     }
