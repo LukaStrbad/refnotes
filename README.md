@@ -16,10 +16,10 @@ RefNotes is a note-taking application built with .NET and Angular.
 - Preview for image files
 - File operations (rename, move)
 - Alerts for errors and other actions
+- File downloads
 
 ## Planned Features
 
-- File downloads
 - File and folder search
 - User groups
 - File sharing

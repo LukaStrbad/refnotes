@@ -80,7 +80,8 @@
         "delete-files": "Are you sure you want to deleted the following files?"
       }
     },
-    "files-deleted": "Files deleted"
+    "files-deleted": "Files deleted",
+    "download": "Download"
   },
   "editor": {
     "viewType": {

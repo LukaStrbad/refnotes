@@ -95,4 +95,15 @@ export class FileService {
     );
     return mapFileDates(fileInfo);
   }
+
+  downloadFile(path: string) {
+    const requestUrl = `${apiUrl}/downloadFile?path=${encodeURIComponent(path)}`;
+
+    const a = document.createElement('a');
+    a.href = requestUrl;
+    a.setAttribute('download', '');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }

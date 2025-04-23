@@ -482,6 +482,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
       updateFileTime(file, this.translateService, this.dateLang)
     }
   }
+
+  downloadFile(file: File) {
+    const filePath = joinPaths(this.currentPath, file.name);
+    this.fileService.downloadFile(filePath);
+  }
 }
 
 interface BreadcrumbItem {
