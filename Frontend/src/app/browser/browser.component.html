@@ -248,12 +248,21 @@
                   <h1 translate>browser.label.more-actions</h1>
 
                   <button
-                    class="btn btn-sm btn-secondary"
+                    class="btn btn-sm btn-accent"
                     (click)="renameFileModal.show(file.name)"
                   >
                     <i class="bi bi-pencil"></i>
                     {{ "browser.rename" | translate }}
                   </button>
+
+                  <button
+                    class="btn btn-sm btn-accent"
+                    (click)="downloadFile(file)"
+                  >
+                    <i class="bi bi-download"></i>
+                    {{ "browser.download" | translate }}
+                  </button>
+
                   <button
                     class="btn btn-sm btn-error"
                     (click)="deleteFile(file)"
