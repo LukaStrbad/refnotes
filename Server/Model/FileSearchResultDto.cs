@@ -1,3 +1,10 @@
-﻿namespace Server.Model;
+﻿using System.Text.Json.Serialization;
 
-public record FileSearchResultDto(string Path, List<string> Tags, bool FoundByFullText = false);
+namespace Server.Model;
+
+public record FileSearchResultDto(
+    string Path,
+    List<string> Tags,
+    [property: JsonIgnore] string FilesystemName,
+    bool FoundByFullText = false
+);

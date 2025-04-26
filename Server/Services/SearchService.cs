@@ -21,11 +21,22 @@ public interface ISearchService
 public sealed class SearchService(
     RefNotesContext context,
     IEncryptionService encryptionService,
+    IFileStorageService fileStorageService,
     ServiceUtils utils,
     IMemoryCache cache) : ISearchService
 {
+    private async Task<bool> ShouldIncludeInFullText(FileSearchResultDto file)
+    {
+        if (!FileUtils.IsTextFile(file.Path) && !FileUtils.IsMarkdownFile(file.Path))
+            return false;
+
+        var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
+        return fileSize <= 1024 * 1024 * 10; // 10 MB
+    }
+
     private async IAsyncEnumerable<FileSearchResultDto> SearchFilesInDirectory(User user,
-        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, List<string> tags)
+        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, List<string> tags,
+        bool includeFullText)
     {
         var directoryPath = directory.DecryptedPath(encryptionService);
         List<FileSearchResultDto> directoryFiles;
@@ -44,18 +55,37 @@ public sealed class SearchService(
             cache.Set(cacheKey, directoryFiles, TimeSpan.FromMinutes(1));
         }
 
-        var filesEnumerable = directoryFiles.Where(file => file.Path.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase));
-
-        // Only filter by tags if there are any tags to filter by
-        if (tags.Count > 0)
+        foreach (var file in directoryFiles.Where(file =>
+                     tags.Count <= 0 ||
+                     file.Tags.Any(tag => tags.Contains(tag, StringComparer.InvariantCultureIgnoreCase))))
         {
-            // Match the full string, not just a substring
-            filesEnumerable = filesEnumerable.Where(file => file.Tags.Any(tag => tags.Contains(tag, StringComparer.InvariantCultureIgnoreCase)));
-        }
+            if (file.Path.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
+            {
+                yield return file;
+                continue;
+            }
 
-        foreach (var file in filesEnumerable)
-        {
-            yield return file;
+            if (!includeFullText || !await ShouldIncludeInFullText(file)) continue;
+
+            string fileText;
+            
+            var fileCacheKey = $"{nameof(SearchFilesInDirectory)}-{file.FilesystemName}-{user.Id}";
+            if (cache.TryGetValue(fileCacheKey, out string? cachedFileText) && cachedFileText is not null)
+            {
+                fileText = cachedFileText;
+            }
+            else
+            {
+                var fileContent = fileStorageService.GetFile(file.FilesystemName);
+                using var sr = new StreamReader(fileContent);
+                fileText = await sr.ReadToEndAsync();
+                cache.Set(fileCacheKey, fileText, TimeSpan.FromMinutes(1));
+            }
+
+            if (fileText.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
+            {
+                yield return file with { FoundByFullText = true };
+            }
         }
     }
 
@@ -78,7 +108,7 @@ public sealed class SearchService(
                 .OrderBy(file => file.Id);
 
             await foreach (var file in SearchFilesInDirectory(user, filesQuery, directory,
-                               searchOptions.SearchTerm.ToLowerInvariant(), tags))
+                               searchOptions.SearchTerm.ToLowerInvariant(), tags, searchOptions.IncludeFullText))
             {
                 yield return file;
             }
