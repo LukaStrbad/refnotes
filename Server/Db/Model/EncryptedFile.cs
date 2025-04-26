@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Server.Services;
 
 namespace Server.Db.Model;
 
 [Table("encrypted_files")]
+[Index(nameof(EncryptedDirectoryId))]
 public class EncryptedFile(string filesystemName, string name)
 {
     public int Id { get; set; }
@@ -17,6 +20,12 @@ public class EncryptedFile(string filesystemName, string name)
     public DateTime Created { get; init; } = DateTime.UtcNow;
 
     public DateTime Modified { get; set; } = DateTime.UtcNow;
+    
+    [ForeignKey("EncryptedDirectoryId")]
+    public EncryptedDirectory? EncryptedDirectory { get; init; }
+    
+    [ForeignKey("EncryptedDirectoryId")]
+    public int EncryptedDirectoryId { get; init; }
 
     public string DecryptedName(IEncryptionService encryptionService)
     {

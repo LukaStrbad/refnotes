@@ -23,16 +23,19 @@ public static class Configuration
     {
         builder.Services.AddControllersWithViews();
         builder.AddDatabase(appConfig);
+        
         builder.Services.AddSingleton(appConfig);
+        builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+        
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();
         builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<ITagService, TagService>();
-        builder.Services.AddScoped<IEncryptionService, EncryptionService>();
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ServiceUtils>();
+        builder.Services.AddScoped<ISearchService, SearchService>();
 
         builder.Services.AddAuthentication(x =>
         {

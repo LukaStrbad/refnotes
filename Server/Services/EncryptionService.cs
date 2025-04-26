@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Buffers;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Server.Services;
@@ -71,7 +72,7 @@ public class EncryptionService : IEncryptionService
         var encryptor = aesAlg.CreateEncryptor();
 
         // Create the streams used for encryption.
-        using var csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
+        await using var csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
         await inputStream.CopyToAsync(csEncrypt);
     }
 
@@ -87,28 +88,34 @@ public class EncryptionService : IEncryptionService
         aesAlg.IV = AesIv;
 
         // Create a decryptor to perform the stream transform.
-        var decryptor = aesAlg.CreateDecryptor();
+        using var decryptor = aesAlg.CreateDecryptor();
 
         // Create the streams used for decryption.
         using var msDecrypt = new MemoryStream(encryptedBytes);
         using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-        using var srDecrypt = new StreamReader(csDecrypt);
         // Read the decrypted bytes from the decrypting stream
         // and place them in a string.
-        var buffer = new byte[1024];
-        while (csDecrypt.CanRead)
+        var buffer = ArrayPool<byte>.Shared.Rent(1024);
+        try
         {
-            var bytesRead = csDecrypt.Read(buffer);
-
-            if (bytesRead == 0)
+            while (csDecrypt.CanRead)
             {
-                yield break;
-            }
+                var bytesRead = csDecrypt.Read(buffer);
 
-            for (var i = 0; i < bytesRead; i++)
-            {
-                yield return buffer[i];
+                if (bytesRead == 0)
+                {
+                    yield break;
+                }
+
+                for (var i = 0; i < bytesRead; i++)
+                {
+                    yield return buffer[i];
+                }
             }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 

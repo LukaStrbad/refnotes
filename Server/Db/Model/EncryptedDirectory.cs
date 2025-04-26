@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using Server.Model;
 using Server.Services;
 
 namespace Server.Db.Model;
 
 [Table("encrypted_directories")]
+[Index(nameof(OwnerId))]
 public class EncryptedDirectory
 {
     public EncryptedDirectory(string path, User owner)
@@ -30,6 +32,7 @@ public class EncryptedDirectory
     public List<EncryptedFile> Files { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
     public User Owner { get; init; }
+    public int OwnerId { get; init; }
     public EncryptedDirectory? Parent { get; init; }
 
     public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService, IFileStorageService fileStorageService)
