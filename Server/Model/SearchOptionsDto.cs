@@ -5,5 +5,9 @@ public record SearchOptionsDto(
     int Page,
     int PageSize,
     List<string>? Tags = null,
-    bool IncludeFullText = false
+    bool IncludeFullText = false,
+    string DirectoryPath = "/",
+    List<string>? FileTypes = null,
+    DateTime? ModifiedFrom = null,
+    DateTime? ModifiedTo = null
 );

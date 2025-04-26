@@ -12,6 +12,7 @@ public static class EncryptedFileExtensions
         return new FileSearchResultDto(
             $"{directoryPath}/{file.DecryptedName(encryptionService)}".Replace("//", "/"),
             file.Tags.Select(tag => tag.DecryptedName(encryptionService)).ToList(),
-            file.FilesystemName);
+            file.FilesystemName,
+            file.Modified);
     }
 }

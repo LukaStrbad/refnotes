@@ -35,8 +35,8 @@ public sealed class SearchService(
     }
 
     private async IAsyncEnumerable<FileSearchResultDto> SearchFilesInDirectory(User user,
-        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, List<string> tags,
-        bool includeFullText)
+        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, bool includeFullText,
+        Func<IEnumerable<FileSearchResultDto>, IEnumerable<FileSearchResultDto>> filesFilter)
     {
         var directoryPath = directory.DecryptedPath(encryptionService);
         List<FileSearchResultDto> directoryFiles;
@@ -55,9 +55,7 @@ public sealed class SearchService(
             cache.Set(cacheKey, directoryFiles, TimeSpan.FromMinutes(1));
         }
 
-        foreach (var file in directoryFiles.Where(file =>
-                     tags.Count <= 0 ||
-                     file.Tags.Any(tag => tags.Contains(tag, StringComparer.InvariantCultureIgnoreCase))))
+        foreach (var file in filesFilter(directoryFiles))
         {
             if (file.Path.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -68,7 +66,7 @@ public sealed class SearchService(
             if (!includeFullText || !await ShouldIncludeInFullText(file)) continue;
 
             string fileText;
-            
+
             var fileCacheKey = $"{nameof(SearchFilesInDirectory)}-{file.FilesystemName}-{user.Id}";
             if (cache.TryGetValue(fileCacheKey, out string? cachedFileText) && cachedFileText is not null)
             {
@@ -97,8 +95,12 @@ public sealed class SearchService(
             .Where(dir => dir.OwnerId == user.Id)
             .ToListAsync();
 
-        var tags = searchOptions.Tags ?? [];
-        tags = tags.Where(tag => !string.IsNullOrWhiteSpace(tag)).ToList();
+        // Filter directories by starting path
+        directories = directories.Where(dir =>
+                dir.DecryptedPath(encryptionService).StartsWith(searchOptions.DirectoryPath))
+            .ToList();
+
+        var filesFilter = GetFilesFilter(searchOptions);
 
         foreach (var directory in directories)
         {
@@ -108,10 +110,52 @@ public sealed class SearchService(
                 .OrderBy(file => file.Id);
 
             await foreach (var file in SearchFilesInDirectory(user, filesQuery, directory,
-                               searchOptions.SearchTerm.ToLowerInvariant(), tags, searchOptions.IncludeFullText))
+                               searchOptions.SearchTerm.ToLowerInvariant(), searchOptions.IncludeFullText, filesFilter))
             {
                 yield return file;
             }
+        }
+    }
+
+    private static Func<IEnumerable<FileSearchResultDto>, IEnumerable<FileSearchResultDto>> GetFilesFilter(
+        SearchOptionsDto searchOptions)
+    {
+        var tags = searchOptions.Tags ?? [];
+        tags = tags.Where(tag => !string.IsNullOrWhiteSpace(tag)).ToList();
+
+        var fileTypes = searchOptions.FileTypes ?? [];
+        fileTypes = fileTypes
+            .Where(type => !string.IsNullOrWhiteSpace(type))
+            .Select(type => type.TrimStart('.')).ToList();
+
+        var modifiedFrom = searchOptions.ModifiedFrom ?? DateTime.MinValue;
+        var modifiedTo = searchOptions.ModifiedTo ?? DateTime.MaxValue;
+
+        return FilterFunc;
+
+        IEnumerable<FileSearchResultDto> FilterFunc(IEnumerable<FileSearchResultDto> files)
+        {
+            var filesEnumerable = files;
+
+            if (tags.Count > 0)
+            {
+                filesEnumerable = filesEnumerable.Where(file =>
+                    file.Tags.Any(tag => tags.Contains(tag, StringComparer.InvariantCultureIgnoreCase)));
+            }
+
+            if (searchOptions.ModifiedFrom is not null || searchOptions.ModifiedTo is not null)
+            {
+                filesEnumerable =
+                    filesEnumerable.Where(file => file.Modified >= modifiedFrom && file.Modified <= modifiedTo);
+            }
+
+            if (fileTypes.Count > 0)
+            {
+                filesEnumerable = filesEnumerable.Where(file =>
+                    fileTypes.Contains(Path.GetExtension(file.Path)[1..], StringComparer.InvariantCultureIgnoreCase));
+            }
+
+            return filesEnumerable;
         }
     }
 }
