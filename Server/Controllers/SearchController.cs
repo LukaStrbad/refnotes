@@ -14,7 +14,7 @@ public class SearchController(ISearchService searchService) : ControllerBase
     [ProducesResponseType<IEnumerable<FileSearchResultDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> SearchFiles(SearchOptionsDto options)
     {
-        var files = await searchService.SearchFiles(options.SearchTerm)
+        var files = await searchService.SearchFiles(options)
             .Skip(options.Page * options.PageSize)
             .Take(options.PageSize)
             .ToListAsync();

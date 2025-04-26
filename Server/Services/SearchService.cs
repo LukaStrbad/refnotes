@@ -13,9 +13,9 @@ public interface ISearchService
     /// <summary>
     /// Searches for files where the path or tags contain the specified search term.
     /// </summary>
-    /// <param name="searchTerm">Search term</param>
+    /// <param name="searchOptions">Search options</param>
     /// <returns>Enumerable of all files that match the options</returns>
-    IAsyncEnumerable<FileSearchResultDto> SearchFiles(string searchTerm);
+    IAsyncEnumerable<FileSearchResultDto> SearchFiles(SearchOptionsDto searchOptions);
 }
 
 public sealed class SearchService(
@@ -25,11 +25,13 @@ public sealed class SearchService(
     IMemoryCache cache) : ISearchService
 {
     private async IAsyncEnumerable<FileSearchResultDto> SearchFilesInDirectory(User user,
-        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm)
+        IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, List<string> tags)
     {
         var directoryPath = directory.DecryptedPath(encryptionService);
-        var cacheKey = $"{nameof(SearchFilesInDirectory)}-{user.Id}-{directoryPath}-{searchTerm}";
         List<FileSearchResultDto> directoryFiles;
+
+        // Search term should not be included because searchTerm is only used after the directory files are fetched
+        var cacheKey = $"{nameof(SearchFilesInDirectory)}-{directoryPath}-{user.Id}";
 
         if (cache.TryGetValue(cacheKey, out List<FileSearchResultDto>? cachedFiles) && cachedFiles is not null)
         {
@@ -42,20 +44,31 @@ public sealed class SearchService(
             cache.Set(cacheKey, directoryFiles, TimeSpan.FromMinutes(1));
         }
 
-        foreach (var file in directoryFiles.Where(file =>
-                     file.Path.Contains(searchTerm) || file.Tags.Any(tag => tag.Contains(searchTerm))))
+        var filesEnumerable = directoryFiles.Where(file => file.Path.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase));
+
+        // Only filter by tags if there are any tags to filter by
+        if (tags.Count > 0)
+        {
+            // Match the full string, not just a substring
+            filesEnumerable = filesEnumerable.Where(file => file.Tags.Any(tag => tags.Contains(tag, StringComparer.InvariantCultureIgnoreCase)));
+        }
+
+        foreach (var file in filesEnumerable)
         {
             yield return file;
         }
     }
 
-    public async IAsyncEnumerable<FileSearchResultDto> SearchFiles(string searchTerm)
+    public async IAsyncEnumerable<FileSearchResultDto> SearchFiles(SearchOptionsDto searchOptions)
     {
         var user = await utils.GetUser();
 
         var directories = await context.Directories
             .Where(dir => dir.OwnerId == user.Id)
-            .ToListAsync();  
+            .ToListAsync();
+
+        var tags = searchOptions.Tags ?? [];
+        tags = tags.Where(tag => !string.IsNullOrWhiteSpace(tag)).ToList();
 
         foreach (var directory in directories)
         {
@@ -64,7 +77,8 @@ public sealed class SearchService(
                 .Where(file => file.EncryptedDirectoryId == directory.Id)
                 .OrderBy(file => file.Id);
 
-            await foreach (var file in SearchFilesInDirectory(user, filesQuery, directory, searchTerm))
+            await foreach (var file in SearchFilesInDirectory(user, filesQuery, directory,
+                               searchOptions.SearchTerm.ToLowerInvariant(), tags))
             {
                 yield return file;
             }

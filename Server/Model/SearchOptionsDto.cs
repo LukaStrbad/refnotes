@@ -4,5 +4,6 @@ public record SearchOptionsDto(
     string SearchTerm,
     int Page,
     int PageSize,
+    List<string>? Tags = null,
     bool IncludeFullText = false
 );
