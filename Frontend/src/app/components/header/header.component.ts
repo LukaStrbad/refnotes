@@ -7,10 +7,11 @@ import { Theme } from '../../../model/settings';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService } from '../../../services/notification.service';
 import { getTranslation } from '../../../utils/translation-utils';
+import { SearchComponent } from "../search/search.component";
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, RouterModule, TranslateDirective, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslateDirective, TranslatePipe, SearchComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })

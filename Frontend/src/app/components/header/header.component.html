@@ -60,6 +60,10 @@
 
     <div class="navbar-end w-full">
       @if (auth.isUserLoggedIn()) {
+        <div class="mr-4">
+          <app-search></app-search>
+        </div>
+
         <button
           id="logout-button"
           class="btn btn-secondary btn-outline btn-sm mr-4"
