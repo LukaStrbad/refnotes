@@ -15,6 +15,10 @@ export function isEditable(filename: string) {
     return isTextFile(filename) || isMarkdownFile(filename);
 }
 
+export function isViewable(filename: string) {
+    return isTextFile(filename) || isMarkdownFile(filename) || isImage(filename);
+}
+
 export type FileType = 'text' | 'markdown' | 'image' | 'unknown';
 
 export function getFileType(filename: string): FileType {

@@ -2,17 +2,24 @@ import { Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/co
 import { SearchService } from '../../../services/search.service';
 import { FileSearchResult } from '../../../model/file-search-result';
 import { FormsModule } from '@angular/forms';
+import { SearchOptions } from '../../../model/search-options';
+import { SearchResultItemComponent } from "./search-result-item/search-result-item.component";
 
 @Component({
   selector: 'app-search',
-  imports: [FormsModule],
+  imports: [FormsModule, SearchResultItemComponent],
   templateUrl: './search.component.html',
   styleUrl: './search.component.css'
 })
 export class SearchComponent implements OnInit, OnDestroy {
-  searchTerm: string = 'test';
+  searchOptions: SearchOptions = {
+    searchTerm: 'test',
+    page: 0,
+    pageSize: 100,
+  };
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('searchInputContainer') searchInputContainer!: ElementRef<HTMLElement>;
   results: FileSearchResult[] | null = null;
   private inputTimeout: number | null = null;
 
@@ -24,12 +31,18 @@ export class SearchComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.searchInput?.nativeElement.focus();
     }
+
+    if (event.key === 'Escape' && document.activeElement instanceof HTMLElement
+      && this.searchInputContainer?.nativeElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+
   };
 
   ngOnInit() {
     window.addEventListener('keydown', this.keydownHandler);
 
-    this.searchService.searchFiles({ searchTerm: this.searchTerm, page: 0, pageSize: 100 })
+    this.searchService.searchFiles({ searchTerm: this.searchOptions.searchTerm, page: 0, pageSize: 100 })
       .then((results) => {
         this.results = results;
       });
@@ -40,7 +53,7 @@ export class SearchComponent implements OnInit, OnDestroy {
   }
 
   async onSearchInput() {
-    if (this.searchTerm === '') {
+    if (this.searchOptions.searchTerm === '') {
       this.results = null;
       return;
     }
@@ -51,7 +64,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 
     // Set a timeout to delay the search request
     this.inputTimeout = setTimeout(async () => {
-      this.results = await this.searchService.searchFiles({ searchTerm: this.searchTerm, page: 0, pageSize: 100 });
+      this.results = await this.searchService.searchFiles(this.searchOptions);
     }, 100);
   }
 }

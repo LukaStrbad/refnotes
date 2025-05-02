@@ -1,23 +1,40 @@
-<div class="relative">
+<div
+  class="relative w-72 focus-within:w-[calc(var(--spacing)*112)] transition-all duration-300 group/search"
+  #searchInputContainer
+>
   <label class="input w-full" #searchInput>
     <i class="bi bi-search text-xs"></i>
     <input
       type="search"
       class="grow"
       placeholder="Search"
-      [(ngModel)]="searchTerm"
+      [(ngModel)]="searchOptions.searchTerm"
       (input)="onSearchInput()"
     />
-    <kbd class="kbd kbd-sm">Ctrl</kbd>
-    <kbd class="kbd kbd-sm">K</kbd>
+
+    <div class="group-focus-within/search:hidden">
+      <kbd class="kbd kbd-sm">Ctrl</kbd>
+      <kbd class="kbd kbd-sm">K</kbd>
+    </div>
+
+    <!-- Expand for more options button -->
+    <button class="btn btn-circle btn-xs hidden group-focus-within/search:block">
+      <i class="bi bi-arrows-angle-expand"></i>
+    </button>
   </label>
 
   @if (results) {
     <div
-      class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2"
+      class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block"
     >
       @for (result of results; track result.path) {
-        <div>{{ result.path }}</div>
+        <div>
+          <app-search-result-item
+            [item]="result"
+            [searchOptions]="searchOptions"
+          >
+          </app-search-result-item>
+        </div>
       }
     </div>
   }

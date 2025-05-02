@@ -1,0 +1,43 @@
+<div class="flex gap-2 items-baseline">
+  <div
+    class="flex items-center gap-1 min-w-0 flex-shrink cursor-pointer"
+    [routerLink]="isViewable ? '/preview' : null"
+    [queryParams]="{ directory: dirPath, file: filename }"
+  >
+    <span
+      class="overflow-hidden whitespace-nowrap text-ellipsis min-w-0 block"
+      >{{ filename }}</span
+    >
+    <span class="badge badge-xs">{{ dirPath }}</span>
+  </div>
+
+  <!-- Only show results if tags intersect -->
+  <div>
+    @if (searchOptions.tags && tagIntersection.length > 0) {
+      @for (tag of tagIntersection; track tag) {
+        <span class="badge badge-sm badge-primary">{{ tag }}</span>
+      }
+    }
+  </div>
+
+  <div class="ml-auto flex gap-2">
+    <!-- Edit icon -->
+    @if (isEditable) {
+      <a
+        class="btn btn-primary btn-soft btn-xs btn-circle"
+        routerLink="/editor"
+        [queryParams]="{ directory: dirPath, file: filename }"
+      >
+        <i class="bi bi-pencil"></i>
+      </a>
+    }
+
+    <!-- Folder icon -->
+    <a
+      class="btn btn-secondary btn-soft btn-xs btn-circle"
+      routerLink="/browser{{ dirPath }}"
+    >
+      <i class="bi bi-folder"></i>
+    </a>
+  </div>
+</div>

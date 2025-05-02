@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { authInterceptor } from '../interceptors/auth.interceptor';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { provideTranslateService, TranslateLoader } from "@ngx-translate/core";
+import { CustomRouteReuseStrategy } from './route-reuse-strategy';
 
 const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (http: HttpClient) =>
   new TranslateHttpLoader(http, './i18n/', '.json');
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
         useFactory: httpLoaderFactory,
         deps: [HttpClient]
       }
-    })
+    }),
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy }
   ]
 };
