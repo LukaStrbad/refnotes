@@ -186,5 +186,16 @@
     "minutes-ago": "1 minute ago | {{n}} minutes ago",
     "hours-ago": "1 hour ago | {{n}} hours ago",
     "days-ago": "1 day ago | {{n}} days ago"
+  },
+  "search": {
+    "button": {
+      "select-tags": "Select tags"
+    },
+    "label": {
+      "include-fulltext": "Include text content",
+      "only-search-current-directory": "Search this directory only",
+      "modified-from": "Modified after",
+      "modified-to": "Modified before"
+    }
   }
 }

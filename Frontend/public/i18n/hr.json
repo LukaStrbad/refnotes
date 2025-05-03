@@ -80,7 +80,8 @@
         "delete-files": "Izbrisati odabrane datoteke?"
       }
     },
-    "files-deleted": "Datoteke izbrisane"
+    "files-deleted": "Datoteke izbrisane",
+    "download": "Preuzmi"
   },
   "editor": {
     "viewType": {
@@ -185,5 +186,16 @@
     "just-now": "Upravo sada",
     "hours-ago": "Prije jedan sat | Prije {{n}} sata | Prije {{n}} sati",
     "days-ago": "Prije jednog dana | Prije {{n}} dana | Prije {{n}} dana"
+  },
+  "search": {
+    "button": {
+      "select-tags": "Odaberite oznake"
+    },
+    "label": {
+      "include-fulltext": "Uključi tekstualni sadržaj",
+      "modified-from": "Izmijenjeno nakon",
+      "modified-to": "Izmijenjeno prije",
+      "only-search-current-directory": "Pretraži samo ovaj direktorij"
+    }
   }
 }

@@ -9,3 +9,8 @@ export interface MdEditorSettings {
     wrapLines: boolean;
     experimentalFastRender: boolean;
 }
+
+export interface SearchSettings {
+  fullTextSearch: boolean;
+  onlySearchCurrentDir: boolean;
+}

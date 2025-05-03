@@ -1,5 +1,6 @@
 <div
-  class="relative w-72 focus-within:w-[calc(var(--spacing)*112)] transition-all duration-300 group/search"
+  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:w-[calc(var(--spacing)*132)] [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20"
+  [ngClass]="{ 'full-size': fullSize }"
   #searchInputContainer
 >
   <label class="input w-full" #searchInput>
@@ -12,20 +13,27 @@
       (input)="onSearchInput()"
     />
 
-    <div class="group-focus-within/search:hidden">
+    <div class="group-focus-within/search:hidden group-hover/search:hidden">
       <kbd class="kbd kbd-sm">Ctrl</kbd>
       <kbd class="kbd kbd-sm">K</kbd>
     </div>
 
     <!-- Expand for more options button -->
-    <button class="btn btn-circle btn-xs hidden group-focus-within/search:block">
-      <i class="bi bi-arrows-angle-expand"></i>
+    <button
+      class="btn btn-soft btn-circle btn-xs hidden group-focus-within/search:block group-hover/search:block"
+      (click)="fullSize = !fullSize; searchInputContainer.focus()"
+    >
+      @if (fullSize) {
+        <i class="bi bi-arrows-angle-contract"></i>
+      } @else {
+        <i class="bi bi-arrows-angle-expand"></i>
+      }
     </button>
   </label>
 
   @if (results) {
     <div
-      class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block"
+      class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block"
     >
       @for (result of results; track result.path) {
         <div>
@@ -38,4 +46,82 @@
       }
     </div>
   }
+
+  <aside
+    class="absolute -translate-x-[calc(100%+var(--spacing)*4)] top-0 hidden group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
+  >
+    <!-- Tags -->
+    <div class="dropdown">
+      <div tabindex="0" role="button" class="btn m-1" translate>
+        search.button.select-tags
+      </div>
+      <ul
+        tabindex="0"
+        class="dropdown-content menu bg-base-100/90 backdrop-blur-2xl rounded-box z-1 w-52 p-2 shadow-md"
+      >
+        @for (tag of allTags; track tag) {
+          <li>
+            <label class="label" for="tag-{{ tag.name }}">
+              <input
+                type="checkbox"
+                [checked]="tag.checked"
+                class="checkbox checkbox-xs"
+                id="tag-{{ tag.name }}"
+              />
+              {{ tag.name }}
+            </label>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Fulltext -->
+    <label class="label select-none mt-4" for="includeFullText">
+      <input
+        type="checkbox"
+        id="includeFullText"
+        class="checkbox checkbox-md"
+        [(ngModel)]="searchOptions.includeFullText"
+        (change)="updateSearchSettings()"
+      />
+      <span translate>search.label.include-fulltext</span>
+    </label>
+
+    <!-- Search only this dir -->
+    <label class="label select-none" for="onlySearchCurrentDirectory">
+      <input
+        type="checkbox"
+        id="onlySearchCurrentDirectory"
+        class="checkbox checkbox-md"
+        [(ngModel)]="onlySearchCurrentDirectory"
+        (change)="updateSearchSettings()"
+      />
+      <span translate>search.label.only-search-current-directory</span>
+    </label>
+
+    <!-- Modified after -->
+    <label for="modified-from" class="mt-4" translate>
+      search.label.modified-from
+    </label>
+    <input
+      type="datetime-local"
+      class="input"
+      id="modified-from"
+      [max]="today"
+    />
+
+    <!-- Modified before -->
+    <label for="modified-to" translate>search.label.modified-to </label>
+    <input
+      type="datetime-local"
+      class="input"
+      id="modified-to"
+      [max]="today"
+    />
+  </aside>
 </div>
+
+<div
+  class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-950/40 z-[19] hidden peer-[.full-size]/search:block"
+  (click)="fullSize = false; searchInputContainer.blur()"
+></div>
