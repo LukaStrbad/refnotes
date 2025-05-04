@@ -7,7 +7,7 @@ import { SearchResultItemComponent } from './search-result-item/search-result-it
 import { NgClass } from '@angular/common';
 import { TagService } from '../../../services/tag.service';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SettingsService } from '../../../services/settings.service';
 import { joinPaths, splitDirAndName } from '../../../utils/path-utils';
 import Pikaday, { PikadayOptions } from 'pikaday';
@@ -45,7 +45,8 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     public searchService: SearchService,
     private tagService: TagService,
-    public settings: SettingsService
+    public settings: SettingsService,
+    private translate: TranslateService,
   ) {
     this.refreshTags().then();
 
@@ -115,12 +116,41 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.setPikadayOptions(this.translate.currentLang);
+
+    this.translate.onLangChange.subscribe((event) => {
+      this.setPikadayOptions(event.lang);
+    })
+  }
+
+  setPikadayOptions(lang: string) {
+    let dateFormat = 'DD/MM/YYYY';
+    if (lang === 'hr') {
+      dateFormat = 'DD.MM.YYYY';
+    }
+
     const options: PikadayOptions = {
       firstDay: 1,
       maxDate: new Date(),
-      format: 'DD/MM/YYYY',
+      format: dateFormat,
     }
 
+    if (lang === 'hr') {
+      options.i18n = {
+        previousMonth: 'Prošli mjesec',
+        nextMonth: 'Sljedeći mjesec',
+        months: [
+          'Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj',
+          'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'
+        ],
+        weekdays: [
+          'Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'
+        ],
+        weekdaysShort: ['Ned.', 'Pon.', 'Uto.', 'Sri.', 'Čet.', 'Pet.', 'Sub.']
+      }
+    }
+
+    this.pickerFrom?.destroy();
     this.pickerFrom = new Pikaday({
       ...options,
       field: this.dateFromPicker.nativeElement,
@@ -130,6 +160,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       },
     });
 
+    this.pickerTo?.destroy();
     this.pickerTo = new Pikaday({
       ...options,
       field: this.dateToPicker.nativeElement,
