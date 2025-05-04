@@ -1,54 +1,10 @@
 <div
-  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:w-[calc(var(--spacing)*132)] [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20"
+  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20 [&.full-size]:flex gap-2 [&.full-size]:w-auto"
   [ngClass]="{ 'full-size': fullSize }"
   #searchInputContainer
 >
-  <label class="input w-full" #searchInput>
-    <i class="bi bi-search text-xs"></i>
-    <input
-      type="search"
-      class="grow"
-      placeholder="Search"
-      [(ngModel)]="searchOptions.searchTerm"
-      (input)="onSearch()"
-    />
-
-    <div class="group-focus-within/search:hidden group-hover/search:hidden">
-      <kbd class="kbd kbd-sm">Ctrl</kbd>
-      <kbd class="kbd kbd-sm">K</kbd>
-    </div>
-
-    <!-- Expand for more options button -->
-    <button
-      class="btn btn-soft btn-circle btn-xs hidden group-focus-within/search:block group-hover/search:block"
-      (click)="fullSize = !fullSize; searchInputContainer.focus()"
-    >
-      @if (fullSize) {
-        <i class="bi bi-arrows-angle-contract"></i>
-      } @else {
-        <i class="bi bi-arrows-angle-expand"></i>
-      }
-    </button>
-  </label>
-
-  @if (results) {
-    <div
-      class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block"
-    >
-      @for (result of results; track result.path) {
-        <div>
-          <app-search-result-item
-            [item]="result"
-            [searchOptions]="searchOptions"
-          >
-          </app-search-result-item>
-        </div>
-      }
-    </div>
-  }
-
   <aside
-    class="absolute -translate-x-[calc(100%+var(--spacing)*4)] top-0 hidden group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
+    class="hidden group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
   >
     <!-- Tags -->
     <div class="dropdown">
@@ -127,11 +83,57 @@
         #dateToPicker
         placeholder="{{ 'search.label.modified-to' | translate }}"
       />
-      <button class="btn btn-ghost join-item" (click)="clearDateTo()">
+      <button class="btn join-item" (click)="clearDateTo()">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
   </aside>
+
+  <div class="relative group-[.full-size]/search:w-[calc(var(--spacing)*132)]">
+    <label class="input w-full" #searchInput>
+      <i class="bi bi-search text-xs"></i>
+      <input
+        type="search"
+        class="grow"
+        placeholder="Search"
+        [(ngModel)]="searchOptions.searchTerm"
+        (input)="onSearch()"
+      />
+
+      <div class="group-focus-within/search:hidden group-hover/search:hidden">
+        <kbd class="kbd kbd-sm">Ctrl</kbd>
+        <kbd class="kbd kbd-sm">K</kbd>
+      </div>
+
+      <!-- Expand for more options button -->
+      <button
+        class="btn btn-soft btn-circle btn-xs hidden group-focus-within/search:block group-hover/search:block"
+        (click)="fullSize = !fullSize; searchInputContainer.focus()"
+      >
+        @if (fullSize) {
+          <i class="bi bi-arrows-angle-contract"></i>
+        } @else {
+          <i class="bi bi-arrows-angle-expand"></i>
+        }
+      </button>
+    </label>
+
+    @if (results) {
+      <div
+        class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block max-h-96 overflow-y-auto"
+      >
+        @for (result of results; track result.path) {
+          <div>
+            <app-search-result-item
+              [item]="result"
+              [searchOptions]="searchOptions"
+            >
+            </app-search-result-item>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>
 
 <div

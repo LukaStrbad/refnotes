@@ -20,7 +20,7 @@ import Pikaday, { PikadayOptions } from 'pikaday';
 })
 export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   searchOptions: SearchOptions = {
-    searchTerm: 'test',
+    searchTerm: '',
     page: 0,
     pageSize: 100,
     includeFullText: this.settings.search().fullTextSearch
@@ -99,9 +99,21 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
       this.searchInput?.nativeElement.focus();
     }
 
-    if (event.key === 'Escape' && document.activeElement instanceof HTMLElement
-      && this.searchInputContainer?.nativeElement.contains(document.activeElement)) {
+    if (!(document.activeElement instanceof HTMLElement
+      && this.searchInputContainer?.nativeElement.contains(document.activeElement))) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
       document.activeElement.blur();
+
+      if (this.fullSize) {
+        this.fullSize = false;
+      }
+    }
+
+    if (event.key === 'Enter' && !this.fullSize) {
+      this.fullSize = true;
     }
 
   };
