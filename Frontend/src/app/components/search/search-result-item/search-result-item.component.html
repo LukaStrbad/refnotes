@@ -1,4 +1,4 @@
-<div class="flex gap-2 items-baseline">
+<div class="flex gap-2 items-center">
   <div
     class="flex items-center gap-1 min-w-0 flex-shrink cursor-pointer"
     [routerLink]="isViewable ? '/preview' : null"
@@ -12,11 +12,13 @@
   </div>
 
   <!-- Only show results if tags intersect -->
-  <div>
-    @if (searchOptions.tags && tagIntersection.length > 0) {
-      @for (tag of tagIntersection; track tag) {
-        <span class="badge badge-sm badge-primary">{{ tag }}</span>
-      }
+  <div class="flex gap-1 items-center">
+    @for (tag of calculateTagIntersection(); track tag) {
+      <span class="badge badge-xs badge-primary">{{ tag }}</span>
+    }
+
+    @if (item.foundByFullText) {
+      <span class="badge badge-xs badge-primary badge-soft">text</span>
     }
   </div>
 

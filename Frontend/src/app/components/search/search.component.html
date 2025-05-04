@@ -10,7 +10,7 @@
       class="grow"
       placeholder="Search"
       [(ngModel)]="searchOptions.searchTerm"
-      (input)="onSearchInput()"
+      (input)="onSearch()"
     />
 
     <div class="group-focus-within/search:hidden group-hover/search:hidden">
@@ -64,9 +64,10 @@
             <label class="label" for="tag-{{ tag.name }}">
               <input
                 type="checkbox"
-                [checked]="tag.checked"
+                [(ngModel)]="tag.checked"
                 class="checkbox checkbox-xs"
                 id="tag-{{ tag.name }}"
+                (change)="onSearch()"
               />
               {{ tag.name }}
             </label>
@@ -82,7 +83,7 @@
         id="includeFullText"
         class="checkbox checkbox-md"
         [(ngModel)]="searchOptions.includeFullText"
-        (change)="updateSearchSettings()"
+        (change)="updateSearchSettings(); onSearch()"
       />
       <span translate>search.label.include-fulltext</span>
     </label>
@@ -94,7 +95,7 @@
         id="onlySearchCurrentDirectory"
         class="checkbox checkbox-md"
         [(ngModel)]="onlySearchCurrentDirectory"
-        (change)="updateSearchSettings()"
+        (change)="updateSearchSettings(); onSearch()"
       />
       <span translate>search.label.only-search-current-directory</span>
     </label>
@@ -103,25 +104,39 @@
     <label for="modified-from" class="mt-4" translate>
       search.label.modified-from
     </label>
-    <input
-      type="datetime-local"
-      class="input"
-      id="modified-from"
-      [max]="today"
-    />
+    <div class="join w-full">
+      <input
+        type="text"
+        id="modified-from"
+        class="input pika-single join-item grow"
+        #dateFromPicker
+        placeholder="{{ 'search.label.modified-from' | translate }}"
+      />
+      <button class="btn join-item" (click)="clearDateFrom()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
 
     <!-- Modified before -->
-    <label for="modified-to" translate>search.label.modified-to </label>
-    <input
-      type="datetime-local"
-      class="input"
-      id="modified-to"
-      [max]="today"
-    />
+    <label for="modified-to" translate>search.label.modified-to</label>
+    <div class="join w-full">
+      <input
+        type="text"
+        id="modified-to"
+        class="input pika-single join-item grow"
+        #dateToPicker
+        placeholder="{{ 'search.label.modified-to' | translate }}"
+      />
+      <button class="btn btn-ghost join-item" (click)="clearDateTo()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
   </aside>
 </div>
 
 <div
+  tabindex="0"
   class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-950/40 z-[19] hidden peer-[.full-size]/search:block"
   (click)="fullSize = false; searchInputContainer.blur()"
+  (keyup.enter)="fullSize = false; searchInputContainer.blur()"
 ></div>

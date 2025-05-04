@@ -225,8 +225,7 @@
               @if (isEditable(file)) {
                 <a
                   class="btn btn-sm btn-accent"
-                  routerLink="/editor"
-                  [queryParams]="{ directory: currentPath, file: file.name }"
+                  [routerLink]="['/file', getFilePath(file), 'edit']"
                 >
                   <i class="bi bi-pencil"></i>
                   {{ "browser.edit" | translate }}

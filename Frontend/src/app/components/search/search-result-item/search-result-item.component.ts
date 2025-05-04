@@ -15,23 +15,20 @@ export class SearchResultItemComponent implements OnInit {
   @Input({ required: true }) item!: FileSearchResult;
   @Input({ required: true }) searchOptions!: SearchOptions;
 
-  tagIntersection: string[] = [];
   filename = '';
   dirPath = '';
   isEditable = false;
   isViewable = false;
 
   ngOnInit(): void {
-    this.tagIntersection = this.calculateTagIntersection(this.item);
-
     [this.dirPath, this.filename] = splitDirAndName(this.item.path);
     this.isEditable = isEditable(this.filename);
     this.isViewable = isViewable(this.filename);
   }
 
-  calculateTagIntersection(result: FileSearchResult) {
+  calculateTagIntersection() {
     const searchTags = this.searchOptions.tags || [];
-    const resultTags = result.tags || [];
+    const resultTags = this.item.tags || [];
     return resultTags.filter(tag => searchTags.includes(tag));
   }
 }

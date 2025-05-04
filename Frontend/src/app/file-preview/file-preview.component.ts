@@ -12,7 +12,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { FileWithTime } from '../../model/file';
-import { joinPaths } from '../../utils/path-utils';
+import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
 
@@ -47,10 +47,8 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     private translate: TranslateService,
     private notificationService: NotificationService,
   ) {
-    this.directoryPath = route.snapshot.queryParamMap.get(
-      'directory',
-    ) as string;
-    this.fileName = route.snapshot.queryParamMap.get('file') as string;
+    const path = route.snapshot.paramMap.get('path') as string;
+    [this.directoryPath, this.fileName] = splitDirAndName(path);
     this.fileType = fileUtils.getFileType(this.fileName);
 
     this.markdownHighlighter = new MarkdownHighlighter(

@@ -1,28 +1,29 @@
-import { Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { SearchService } from '../../../services/search.service';
 import { FileSearchResult } from '../../../model/file-search-result';
 import { FormsModule } from '@angular/forms';
 import { SearchOptions } from '../../../model/search-options';
-import { SearchResultItemComponent } from "./search-result-item/search-result-item.component";
+import { SearchResultItemComponent } from './search-result-item/search-result-item.component';
 import { NgClass } from '@angular/common';
 import { TagService } from '../../../services/tag.service';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
-import { TranslateDirective } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { SettingsService } from '../../../services/settings.service';
+import { joinPaths, splitDirAndName } from '../../../utils/path-utils';
+import Pikaday, { PikadayOptions } from 'pikaday';
 
 @Component({
   selector: 'app-search',
-  imports: [FormsModule, SearchResultItemComponent, NgClass, TranslateDirective],
+  imports: [FormsModule, SearchResultItemComponent, NgClass, TranslateDirective, TranslatePipe],
   templateUrl: './search.component.html',
   styleUrl: './search.component.css'
 })
-export class SearchComponent implements OnInit, OnDestroy {
+export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   searchOptions: SearchOptions = {
     searchTerm: 'test',
     page: 0,
     pageSize: 100,
-    includeFullText: this.settings.search().fullTextSearch,
+    includeFullText: this.settings.search().fullTextSearch
   };
 
   fullSize = false;
@@ -32,13 +33,19 @@ export class SearchComponent implements OnInit, OnDestroy {
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   @ViewChild('searchInputContainer') searchInputContainer!: ElementRef<HTMLElement>;
+  @ViewChild('dateFromPicker') dateFromPicker!: ElementRef<HTMLInputElement>;
+  @ViewChild('dateToPicker') dateToPicker!: ElementRef<HTMLInputElement>;
+
   results: FileSearchResult[] | null = null;
   private inputTimeout: number | null = null;
+
+  private pickerFrom?: Pikaday;
+  private pickerTo?: Pikaday;
 
   constructor(
     public searchService: SearchService,
     private tagService: TagService,
-    public settings: SettingsService,
+    public settings: SettingsService
   ) {
     this.refreshTags().then();
 
@@ -46,6 +53,31 @@ export class SearchComponent implements OnInit, OnDestroy {
     date.setHours(23, 59, 59, 999);
     this.today = date.toISOString().replace(/\..*/, '');
   }
+
+  private getCurrentDirectoryPath(): string | null {
+    const url = window.location.pathname;
+    // Match /file/:path/edit or /file/:path/preview
+    const fileRouteMatch = url.match(/^\/file\/(.+)\/(edit|preview)/);
+    // Match /browser/... or /browser
+    const browserRouteMatch = url.match(/^\/browser(?:\/(.+))?/);
+
+    let fullPath: string | null = null;
+
+    if (fileRouteMatch) {
+      fullPath = decodeURIComponent(fileRouteMatch[1]);
+      const [dirPath] = splitDirAndName(fullPath);
+      // If splitting results in an empty string (e.g., file at root), return '/'
+      return dirPath || '/';
+    } else if (browserRouteMatch) {
+      // If group 1 exists (path after /browser/), return it decoded.
+      // Otherwise (if it's just /browser), return '/' for the root.
+      const dirPath = browserRouteMatch[1] ? decodeURIComponent(browserRouteMatch[1]) : '/';
+      return joinPaths('/', dirPath);
+    }
+
+    return null;
+  }
+
 
   async refreshTags() {
     const observable = this.tagService.listAllCached();
@@ -76,17 +108,45 @@ export class SearchComponent implements OnInit, OnDestroy {
   ngOnInit() {
     window.addEventListener('keydown', this.keydownHandler);
 
-    this.searchService.searchFiles({ searchTerm: this.searchOptions.searchTerm, page: 0, pageSize: 100 })
+    this.searchService.searchFiles(this.searchOptions)
       .then((results) => {
         this.results = results;
       });
   }
 
-  ngOnDestroy() {
-    window.removeEventListener('keydown', this.keydownHandler);
+  ngAfterViewInit(): void {
+    const options: PikadayOptions = {
+      firstDay: 1,
+      maxDate: new Date(),
+      format: 'DD/MM/YYYY',
+    }
+
+    this.pickerFrom = new Pikaday({
+      ...options,
+      field: this.dateFromPicker.nativeElement,
+      onSelect: (date) => {
+        this.searchOptions.modifiedFrom = date;
+        this.onSearch();
+      },
+    });
+
+    this.pickerTo = new Pikaday({
+      ...options,
+      field: this.dateToPicker.nativeElement,
+      onSelect: (date) => {
+        this.searchOptions.modifiedTo = date;
+        this.onSearch();
+      },
+    });
   }
 
-  async onSearchInput() {
+  ngOnDestroy() {
+    window.removeEventListener('keydown', this.keydownHandler);
+    this.pickerFrom?.destroy();
+    this.pickerTo?.destroy();
+  }
+
+  async onSearch() {
     // If all search options are empty, set results to null and return
     if (this.searchOptions.searchTerm === '' && this.searchOptions.tags?.length === 0
       && this.searchOptions.fileTypes?.length === 0 && this.searchOptions.modifiedFrom === undefined
@@ -95,7 +155,13 @@ export class SearchComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // this.searchOptions.directoryPath = this.onlySearchCurrentDirectory ? this.
+    this.searchOptions.directoryPath = this.onlySearchCurrentDirectory ? this.getCurrentDirectoryPath() ?? undefined : '/';
+    const enableTags = this.allTags.filter(tag => tag.checked).map(tag => tag.name);
+    if (enableTags.length > 0) {
+      this.searchOptions.tags = enableTags;
+    } else {
+      this.searchOptions.tags = undefined;
+    }
 
     if (this.inputTimeout) {
       clearTimeout(this.inputTimeout);
@@ -107,13 +173,23 @@ export class SearchComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
-  updateSearchSettings()
-  {
-    console.log('updateSearchSettings', this.searchOptions.includeFullText, this.onlySearchCurrentDirectory);
+  updateSearchSettings() {
     this.settings.setSearchSettings({
       fullTextSearch: this.searchOptions.includeFullText ?? false,
       onlySearchCurrentDir: this.onlySearchCurrentDirectory
     });
+  }
+
+  clearDateFrom() {
+    this.searchOptions.modifiedFrom = undefined;
+    this.pickerFrom?.clear();
+    this.onSearch();
+  }
+
+  clearDateTo() {
+    this.searchOptions.modifiedTo = undefined;
+    this.pickerTo?.clear();
+    this.onSearch();
   }
 }
 

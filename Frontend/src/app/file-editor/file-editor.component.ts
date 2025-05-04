@@ -7,7 +7,7 @@ import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
-import { joinPaths } from '../../utils/path-utils';
+import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { Location } from '@angular/common';
@@ -41,10 +41,8 @@ export class FileEditorComponent {
     private router: Router,
     private location: Location,
   ) {
-    this.directoryPath = route.snapshot.queryParamMap.get(
-      'directory',
-    ) as string;
-    this.fileName = route.snapshot.queryParamMap.get('file') as string;
+    const path = route.snapshot.paramMap.get('path') as string;
+    [this.directoryPath, this.fileName] = splitDirAndName(path);
 
     fileService.getFile(this.directoryPath, this.fileName)
       .then((content) => {

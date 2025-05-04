@@ -21,11 +21,11 @@ export const routes: Routes = [
     component: RegisterComponent,
   },
   {
-    path: "editor",
+    path: "file/:path/edit",
     component: FileEditorComponent,
   },
   {
-    path: "preview",
+    path: "file/:path/preview",
     component: FilePreviewComponent,
   },
   {
