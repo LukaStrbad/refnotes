@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, output, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -16,6 +16,8 @@ import { SearchComponent } from "../search/search.component";
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements AfterViewInit {
+  openMobileSearch = output<void>();
+
   @ViewChild('header', { static: true })
   private headerRef!: ElementRef<HTMLElement>;
 
@@ -45,5 +47,13 @@ export class HeaderComponent implements AfterViewInit {
   async logout() {
     await this.auth.logout();
     this.notificationService.info(await getTranslation(this.translate, 'header.logout'));
+  }
+
+  onOpenMobileSearch() {
+    // Clear the active element to remove focus from header dropdown
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    this.openMobileSearch.emit()
   }
 }

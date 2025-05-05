@@ -1,14 +1,13 @@
 <div class="flex gap-2 items-center">
   <div
     class="flex items-center gap-1 min-w-0 flex-shrink cursor-pointer"
-    [routerLink]="isViewable ? '/preview' : null"
-    [queryParams]="{ directory: dirPath, file: filename }"
+    [routerLink]="isViewable ? ['file', item.path, 'preview'] : null"
   >
     <span
       class="overflow-hidden whitespace-nowrap text-ellipsis min-w-0 block"
       >{{ filename }}</span
     >
-    <span class="badge badge-xs">{{ dirPath }}</span>
+    <span class="badge badge-xs whitespace-nowrap">{{ dirPath }}</span>
   </div>
 
   <!-- Only show results if tags intersect -->
@@ -27,8 +26,7 @@
     @if (isEditable) {
       <a
         class="btn btn-primary btn-soft btn-xs btn-circle"
-        routerLink="/editor"
-        [queryParams]="{ directory: dirPath, file: filename }"
+        [routerLink]="['file', item.path, 'edit']"
       >
         <i class="bi bi-pencil"></i>
       </a>

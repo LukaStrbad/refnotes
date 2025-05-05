@@ -34,6 +34,14 @@
               {{ "header.routes.settings" | translate }}
             </a>
           </li>
+          <li class="mt-2">
+            <button class="btn btn-xs btn-primary btn-soft" (click)="onOpenMobileSearch()">Search</button>
+          </li>
+          <li class="mt-2">
+            <button class="btn btn-xs btn-secondary btn-outline btn-soft" (click)="logout()" translate>
+              header.logout
+            </button>
+          </li>
         </ul>
       </div>
       <a class="btn btn-ghost text-xl" routerLink="" translate>app.title</a>
@@ -60,13 +68,13 @@
 
     <div class="navbar-end w-full">
       @if (auth.isUserLoggedIn()) {
-        <div class="mr-4">
-          <app-search></app-search>
+        <div class="mr-4 hidden lg:block">
+          <app-search [isMobile]="false"></app-search>
         </div>
 
         <button
           id="logout-button"
-          class="btn btn-secondary btn-outline btn-sm mr-4"
+          class="btn btn-secondary btn-outline btn-sm mr-4 hidden lg:block"
           (click)="logout()"
           translate
         >

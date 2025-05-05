@@ -1,10 +1,10 @@
 <div
-  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20 [&.full-size]:flex gap-2 [&.full-size]:w-auto"
-  [ngClass]="{ 'full-size': fullSize }"
+  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20 [&.full-size]:flex gap-2 [&.full-size]:w-auto [&.is-mobile]:flex-col-reverse [&.is-mobile]:bottom-2 [&.is-mobile]:!w-full px-2"
+  [ngClass]="{ 'full-size': fullSize, 'is-mobile': isMobile }"
   #searchInputContainer
 >
   <aside
-    class="hidden group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
+    class="hidden relative group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
   >
     <!-- Tags -->
     <div class="dropdown">
@@ -67,6 +67,7 @@
         class="input pika-single join-item grow"
         #dateFromPicker
         placeholder="{{ 'search.label.modified-from' | translate }}"
+        readonly="true"
       />
       <button class="btn join-item" (click)="clearDateFrom()">
         <i class="bi bi-x-lg"></i>
@@ -82,6 +83,7 @@
         class="input pika-single join-item grow"
         #dateToPicker
         placeholder="{{ 'search.label.modified-to' | translate }}"
+        readonly="true"
       />
       <button class="btn join-item" (click)="clearDateTo()">
         <i class="bi bi-x-lg"></i>
@@ -89,7 +91,9 @@
     </div>
   </aside>
 
-  <div class="relative group-[.full-size]/search:w-[calc(var(--spacing)*132)]">
+  <div
+    class="group-[.is-mobile]/search:hidden group-[.full-size.is-mobile]/search:!flex group-[.is-mobile]/search:flex-col-reverse group-[.is-mobile]/search:gap-2 relative md:group-[.full-size]/search:w-96 lg:group-[.full-size]/search:w-[calc(var(--spacing)*132)] z-20"
+  >
     <label class="input w-full" #searchInput>
       <i class="bi bi-search text-xs"></i>
       <input
@@ -100,10 +104,12 @@
         (input)="onSearch()"
       />
 
-      <div class="group-focus-within/search:hidden group-hover/search:hidden">
-        <kbd class="kbd kbd-sm">Ctrl</kbd>
-        <kbd class="kbd kbd-sm">K</kbd>
-      </div>
+      @if (!isMobile) {
+        <div class="group-focus-within/search:hidden group-hover/search:hidden">
+          <kbd class="kbd kbd-sm">Ctrl</kbd>
+          <kbd class="kbd kbd-sm">K</kbd>
+        </div>
+      }
 
       <!-- Expand for more options button -->
       <button
@@ -120,7 +126,7 @@
 
     @if (results) {
       <div
-        class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block max-h-96 overflow-y-auto"
+        class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute group-[.is-mobile]/search:static w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block max-h-96 group-[.is-mobile]/search:max-h-64 overflow-y-auto"
       >
         @for (result of results; track result.path) {
           <div>

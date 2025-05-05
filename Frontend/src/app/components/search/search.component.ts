@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy, AfterViewInit, input, Input } from '@angular/core';
 import { SearchService } from '../../../services/search.service';
 import { FileSearchResult } from '../../../model/file-search-result';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +19,8 @@ import Pikaday, { PikadayOptions } from 'pikaday';
   styleUrl: './search.component.css'
 })
 export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
+  @Input() isMobile = false;
+
   searchOptions: SearchOptions = {
     searchTerm: '',
     page: 0,
@@ -118,8 +120,18 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   };
 
+  private popstateHandler = (event: PopStateEvent) => {
+    if (!history.state?.fullSearchOpen && this.fullSize) {
+      this.fullSize = false;
+    }
+  }
+
   ngOnInit() {
     window.addEventListener('keydown', this.keydownHandler);
+
+    if (this.isMobile) {
+      window.addEventListener('popstate', this.popstateHandler);
+    }
 
     this.searchService.searchFiles(this.searchOptions)
       .then((results) => {
@@ -233,6 +245,15 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     this.searchOptions.modifiedTo = undefined;
     this.pickerTo?.clear();
     this.onSearch();
+  }
+
+  expand() {
+    this.fullSize = true;
+    history.pushState({ fullSearchOpen: true }, '');
+  }
+
+  focus() {
+    this.searchInput?.nativeElement.focus();
   }
 }
 
