@@ -10,9 +10,13 @@ import {
 import { AuthService } from '../../../services/auth.service';
 import { provideRouter } from '@angular/router';
 import { SettingsService } from '../../../services/settings.service';
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import {click} from "../../../tests/click-utils";
+import { click } from "../../../tests/click-utils";
+import { SearchService } from '../../../services/search.service';
+import { TagService } from '../../../services/tag.service';
+
+@Component({ selector: 'app-search', template: '' }) class SearchStubComponent { }
 
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
@@ -24,11 +28,16 @@ describe('HeaderComponent', () => {
     auth = jasmine.createSpyObj('AuthService', ['logout', 'isUserLoggedIn']);
     settings = jasmine.createSpyObj('SettingsService', ['setTheme'], {
       theme: signal('auto'),
+      search: signal({})
     });
+    const searchService = jasmine.createSpyObj<SearchService>('SearchService', ['searchFiles']);
+    searchService.searchFiles.and.resolveTo([]);
+    const tagService = jasmine.createSpyObj<TagService>('TagService', ['listAllCached']);
 
     await TestBed.configureTestingModule({
       imports: [
         HeaderComponent,
+        SearchStubComponent,
         TranslateModule.forRoot({
           loader: {
             provide: TranslateLoader,
@@ -41,6 +50,8 @@ describe('HeaderComponent', () => {
         TranslateService,
         { provide: AuthService, useValue: auth },
         { provide: SettingsService, useValue: settings },
+        { provide: SearchService, useValue: searchService },
+        { provide: TagService, useValue: tagService },
       ],
     }).compileComponents();
 

@@ -9,15 +9,24 @@ import {
 import { NotificationService } from '../services/notification.service';
 import { AuthService } from '../services/auth.service';
 import { ActivatedRoute } from '@angular/router';
+import { Component } from '@angular/core';
+import { SearchService } from '../services/search.service';
+import { TagService } from '../services/tag.service';
+
+@Component({ selector: 'app-search', template: '' }) class SearchStubComponent { }
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     const authService = jasmine.createSpyObj<AuthService>('AuthService', ['isUserLoggedIn']);
     authService.isUserLoggedIn.and.returnValue(true);
+    const searchService = jasmine.createSpyObj<SearchService>('SearchService', ['searchFiles']);
+    searchService.searchFiles.and.resolveTo([]);
+    const tagService = jasmine.createSpyObj<TagService>('TagService', ['listAllCached']);
 
     await TestBed.configureTestingModule({
       imports: [
         AppComponent,
+        SearchStubComponent,
         TranslateModule.forRoot({
           loader: {
             provide: TranslateLoader,
@@ -29,7 +38,9 @@ describe('AppComponent', () => {
         TranslateService,
         NotificationService,
         { provide: AuthService, useValue: authService },
-        { provide: ActivatedRoute, useValue: { snapshot: {} } }
+        { provide: ActivatedRoute, useValue: { snapshot: {} } },
+        { provide: SearchService, useValue: searchService },
+        { provide: TagService, useValue: tagService },
       ],
     }).compileComponents();
   });

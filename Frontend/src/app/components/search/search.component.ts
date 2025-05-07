@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, OnInit, OnDestroy, AfterViewInit, input, Input } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { SearchService } from '../../../services/search.service';
 import { FileSearchResult } from '../../../model/file-search-result';
 import { FormsModule } from '@angular/forms';
@@ -120,7 +120,7 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
 
   };
 
-  private popstateHandler = (event: PopStateEvent) => {
+  private popstateHandler = () => {
     if (!history.state?.fullSearchOpen && this.fullSize) {
       this.fullSize = false;
     }
@@ -202,18 +202,21 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async onSearch() {
+    const enabledTags = this.allTags.filter(tag => tag.checked).map(tag => tag.name);
+
     // If all search options are empty, set results to null and return
-    if (this.searchOptions.searchTerm === '' && this.searchOptions.tags?.length === 0
-      && this.searchOptions.fileTypes?.length === 0 && this.searchOptions.modifiedFrom === undefined
+    if (this.searchOptions.searchTerm === ''
+      && enabledTags.length === 0
+      && (this.searchOptions.fileTypes?.length ?? 0) === 0
+      && this.searchOptions.modifiedFrom === undefined
       && this.searchOptions.modifiedTo === undefined) {
       this.results = null;
       return;
     }
 
     this.searchOptions.directoryPath = this.onlySearchCurrentDirectory ? this.getCurrentDirectoryPath() ?? undefined : '/';
-    const enableTags = this.allTags.filter(tag => tag.checked).map(tag => tag.name);
-    if (enableTags.length > 0) {
-      this.searchOptions.tags = enableTags;
+    if (enabledTags.length > 0) {
+      this.searchOptions.tags = enabledTags;
     } else {
       this.searchOptions.tags = undefined;
     }
@@ -223,8 +226,10 @@ export class SearchComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Set a timeout to delay the search request
-    this.inputTimeout = setTimeout(async () => {
-      this.results = await this.searchService.searchFiles(this.searchOptions);
+    this.inputTimeout = setTimeout(() => {
+      this.searchService.searchFiles(this.searchOptions).then((results) => {
+        this.results = results;
+      });
     }, 100);
   }
 

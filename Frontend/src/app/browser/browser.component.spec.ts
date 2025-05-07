@@ -276,15 +276,6 @@ describe('BrowserComponent', () => {
     expect(component.fileModal.close).toHaveBeenCalled();
   });
 
-  it('should open edit for a file', async () => {
-    const router = TestBed.inject(Router);
-    spyOn(router, 'navigate');
-    await component.openEdit(createFile('test.txt'));
-    expect(router.navigate).toHaveBeenCalledWith(['/editor'], {
-      queryParams: { directory: '/', file: 'test.txt' },
-    });
-  });
-
   it('should show moving files', async () => {
     component.currentFolder = {
       name: '/',

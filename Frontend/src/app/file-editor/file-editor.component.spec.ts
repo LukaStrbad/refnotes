@@ -53,7 +53,7 @@ describe('FileEditorComponent', () => {
         TranslateService,
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: {} } },
+          useValue: { snapshot: { paramMap: {} } },
         },
         { provide: FileService, useValue: fileService },
         { provide: TagService, useValue: tagService },

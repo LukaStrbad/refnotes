@@ -5,19 +5,20 @@
   >
     <span
       class="overflow-hidden whitespace-nowrap text-ellipsis min-w-0 block"
+      testTag="search.result.filename"
       >{{ filename }}</span
     >
-    <span class="badge badge-xs whitespace-nowrap">{{ dirPath }}</span>
+    <span class="badge badge-xs whitespace-nowrap" testTag="search.result.dir">{{ dirPath }}</span>
   </div>
 
   <!-- Only show results if tags intersect -->
   <div class="flex gap-1 items-center">
     @for (tag of calculateTagIntersection(); track tag) {
-      <span class="badge badge-xs badge-primary">{{ tag }}</span>
+      <span class="badge badge-xs badge-primary" testTag="search.result.tag">{{ tag }}</span>
     }
 
     @if (item.foundByFullText) {
-      <span class="badge badge-xs badge-primary badge-soft">text</span>
+      <span class="badge badge-xs badge-primary badge-soft" testTag="search.result.text-badge">text</span>
     }
   </div>
 
@@ -27,6 +28,7 @@
       <a
         class="btn btn-primary btn-soft btn-xs btn-circle"
         [routerLink]="['file', item.path, 'edit']"
+        testTag="search.result.edit"
       >
         <i class="bi bi-pencil"></i>
       </a>
@@ -36,6 +38,7 @@
     <a
       class="btn btn-secondary btn-soft btn-xs btn-circle"
       routerLink="/browser{{ dirPath }}"
+      testTag="search.result.open-folder"
     >
       <i class="bi bi-folder"></i>
     </a>

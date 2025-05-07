@@ -4,10 +4,11 @@ import { SearchOptions } from '../../../../model/search-options';
 import { splitDirAndName } from '../../../../utils/path-utils';
 import { isEditable, isViewable } from '../../../../utils/file-utils';
 import { RouterLink } from '@angular/router';
+import { TestTagDirective } from '../../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-search-result-item',
-  imports: [RouterLink],
+  imports: [RouterLink, TestTagDirective],
   templateUrl: './search-result-item.component.html',
   styleUrl: './search-result-item.component.css'
 })
