@@ -322,22 +322,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
     return fileUtils.isEditable(file.name);
   }
 
-  async openEdit(file: File) {
-    await this.router.navigate(['/editor'], {
-      queryParams: {
-        directory: this.currentPath,
-        file: file.name,
-      },
-    });
+  getFilePath(file: File): string {
+    return joinPaths(this.currentPath, file.name);
   }
 
   async openPreview(file: File) {
-    await this.router.navigate(['/preview'], {
-      queryParams: {
-        directory: this.currentPath,
-        file: file.name,
-      },
-    });
+    const path = joinPaths(this.currentPath, file.name);
+    await this.router.navigate(['/file', path, 'preview']);
   }
 
   limitTags(tags: string[]): string[] {

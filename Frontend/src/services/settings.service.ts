@@ -1,5 +1,5 @@
 import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { EditorMode, MdEditorSettings, Theme } from '../model/settings';
+import { EditorMode, MdEditorSettings, SearchSettings, Theme } from '../model/settings';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
@@ -9,6 +9,7 @@ export class SettingsService {
   private readonly _language: WritableSignal<string>;
   private readonly _theme: WritableSignal<Theme>;
   private readonly _mdEditor: WritableSignal<MdEditorSettings>;
+  private readonly _search: WritableSignal<SearchSettings>;
 
   public get language(): Signal<string> {
     return this._language;
@@ -26,12 +27,18 @@ export class SettingsService {
     return this._mdEditor;
   }
 
+  public get search(): Signal<SearchSettings> {
+    return this._search;
+  }
+
+
   constructor(
     private translate: TranslateService
   ) {
     this._language = signal(this.loadLanguage());
     this._mdEditor = signal(this.loadMdEditorSettings());
     this._theme = signal(this.loadTheme());
+    this._search = signal(this.loadSearchSettings());
   }
 
   private loadLanguage(): string {
@@ -70,6 +77,22 @@ export class SettingsService {
     };
   }
 
+  private loadSearchSettings(): SearchSettings {
+    const settings = localStorage.getItem('searchSettings');
+    if (settings) {
+      const s = JSON.parse(settings);
+      // Check if the settings are valid
+      return {
+        fullTextSearch: s.fullTextSearch ?? false,
+        onlySearchCurrentDir: s.onlySearchCurrentDir ?? false
+      };
+    }
+    return {
+      fullTextSearch: false,
+      onlySearchCurrentDir: false
+    };
+  }
+
   public setLanguage(language: string) {
     this._language.set(language);
     localStorage.setItem('language', language);
@@ -101,4 +124,10 @@ export class SettingsService {
     this._mdEditor.set(settings);
     localStorage.setItem('mdEditorSettings', JSON.stringify(settings));
   }
+
+  public setSearchSettings(settings: SearchSettings) {
+    this._search.set(settings);
+    localStorage.setItem('searchSettings', JSON.stringify(settings));
+  }
+
 }

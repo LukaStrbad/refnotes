@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, output, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -7,14 +7,17 @@ import { Theme } from '../../../model/settings';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService } from '../../../services/notification.service';
 import { getTranslation } from '../../../utils/translation-utils';
+import { SearchComponent } from "../search/search.component";
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, RouterModule, TranslateDirective, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslateDirective, TranslatePipe, SearchComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements AfterViewInit {
+  openMobileSearch = output<void>();
+
   @ViewChild('header', { static: true })
   private headerRef!: ElementRef<HTMLElement>;
 
@@ -44,5 +47,13 @@ export class HeaderComponent implements AfterViewInit {
   async logout() {
     await this.auth.logout();
     this.notificationService.info(await getTranslation(this.translate, 'header.logout'));
+  }
+
+  onOpenMobileSearch() {
+    // Clear the active element to remove focus from header dropdown
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    this.openMobileSearch.emit()
   }
 }

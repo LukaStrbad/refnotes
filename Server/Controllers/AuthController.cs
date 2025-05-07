@@ -13,7 +13,7 @@ namespace Server.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    private readonly string _cookieDomain;
+    private readonly string[] _cookieDomains;
     private readonly bool _cookieSecure;
 
     public AuthController(IAuthService authService, IConfiguration configuration)
@@ -21,16 +21,30 @@ public class AuthController : ControllerBase
         _authService = authService;
 
         var cookieDomain = configuration["CookieDomain"];
+        if (cookieDomain is null)
+        {
+            throw new Exception("CookieDomain not set in configuration");
+        }
 
-        _cookieDomain = cookieDomain ?? throw new Exception("CookieDomain not set in configuration");
+        var cookieDomains = cookieDomain.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (cookieDomains.Length == 0)
+            throw new Exception("CookieDomain list is empty");
+
+        _cookieDomains = cookieDomains;
         _cookieSecure = configuration.GetValue<bool?>("CookieSecure") ?? false;
     }
 
     private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
     {
+        // Check if the request domain is in the list of cookie domains, if not, use the first one in the list
+        var requestDomain = HttpContext.Request.Host.Host;
+        var cookieDomain = _cookieDomains.FirstOrDefault(domain => requestDomain.EndsWith(domain)) 
+                           ?? (_cookieDomains.FirstOrDefault() ?? "localhost");
+
         var options = new CookieOptions
         {
-            Domain = _cookieDomain,
+            Domain = cookieDomain,
             SameSite = SameSiteMode.Strict,
             IsEssential = true,
             HttpOnly = httpOnly,

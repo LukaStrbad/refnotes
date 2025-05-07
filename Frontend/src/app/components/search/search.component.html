@@ -1,0 +1,150 @@
+<div
+  class="relative top-0 translate-x-0 w-72 focus-within:w-[calc(var(--spacing)*112)] transition-[width] duration-300 group/search peer/search [&.full-size]:absolute [&.full-size]:left-1/2 [&.full-size]:top-20 [&.full-size]:-translate-x-1/2 z-20 [&.full-size]:flex gap-2 [&.full-size]:w-auto [&.is-mobile]:flex-col-reverse [&.is-mobile]:bottom-2 [&.is-mobile]:!w-full px-2"
+  [ngClass]="{ 'full-size': fullSize, 'is-mobile': isMobile }"
+  #searchInputContainer
+>
+  <aside
+    class="hidden relative group-[.full-size]/search:flex bg-base-100/90 backdrop-blur-2xl rounded-lg z-[19] flex-col gap-2 p-4"
+  >
+    <!-- Tags -->
+    <div class="dropdown">
+      <div tabindex="0" role="button" class="btn m-1" translate>
+        search.button.select-tags
+      </div>
+      <ul
+        tabindex="0"
+        class="dropdown-content menu bg-base-100/90 backdrop-blur-2xl rounded-box z-1 w-52 p-2 shadow-md"
+      >
+        @for (tag of allTags; track tag) {
+          <li>
+            <label class="label" for="tag-{{ tag.name }}">
+              <input
+                type="checkbox"
+                [(ngModel)]="tag.checked"
+                class="checkbox checkbox-xs"
+                id="tag-{{ tag.name }}"
+                (change)="onSearch()"
+              />
+              {{ tag.name }}
+            </label>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <!-- Fulltext -->
+    <label class="label select-none mt-4" for="includeFullText">
+      <input
+        type="checkbox"
+        id="includeFullText"
+        class="checkbox checkbox-md"
+        [(ngModel)]="searchOptions.includeFullText"
+        (change)="updateSearchSettings(); onSearch()"
+      />
+      <span translate>search.label.include-fulltext</span>
+    </label>
+
+    <!-- Search only this dir -->
+    <label class="label select-none" for="onlySearchCurrentDirectory">
+      <input
+        type="checkbox"
+        id="onlySearchCurrentDirectory"
+        class="checkbox checkbox-md"
+        [(ngModel)]="onlySearchCurrentDirectory"
+        (change)="updateSearchSettings(); onSearch()"
+      />
+      <span translate>search.label.only-search-current-directory</span>
+    </label>
+
+    <!-- Modified after -->
+    <label for="modified-from" class="mt-4" translate>
+      search.label.modified-from
+    </label>
+    <div class="join w-full">
+      <input
+        type="text"
+        id="modified-from"
+        class="input pika-single join-item grow"
+        #dateFromPicker
+        placeholder="{{ 'search.label.modified-from' | translate }}"
+        readonly="true"
+      />
+      <button class="btn join-item" (click)="clearDateFrom()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Modified before -->
+    <label for="modified-to" translate>search.label.modified-to</label>
+    <div class="join w-full">
+      <input
+        type="text"
+        id="modified-to"
+        class="input pika-single join-item grow"
+        #dateToPicker
+        placeholder="{{ 'search.label.modified-to' | translate }}"
+        readonly="true"
+      />
+      <button class="btn join-item" (click)="clearDateTo()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </aside>
+
+  <div
+    class="group-[.is-mobile]/search:hidden group-[.full-size.is-mobile]/search:!flex group-[.is-mobile]/search:flex-col-reverse group-[.is-mobile]/search:gap-2 relative md:group-[.full-size]/search:w-96 lg:group-[.full-size]/search:w-[calc(var(--spacing)*132)] z-20"
+  >
+    <label class="input w-full" #searchInput>
+      <i class="bi bi-search text-xs"></i>
+      <input
+        type="search"
+        class="grow"
+        placeholder="Search"
+        [(ngModel)]="searchOptions.searchTerm"
+        (input)="onSearch()"
+      />
+
+      @if (!isMobile) {
+        <div class="group-focus-within/search:hidden group-hover/search:hidden">
+          <kbd class="kbd kbd-sm">Ctrl</kbd>
+          <kbd class="kbd kbd-sm">K</kbd>
+        </div>
+      }
+
+      <!-- Expand for more options button -->
+      <button
+        class="btn btn-soft btn-circle btn-xs hidden group-focus-within/search:block group-hover/search:block"
+        (click)="fullSize = !fullSize; searchInputContainer.focus()"
+      >
+        @if (fullSize) {
+          <i class="bi bi-arrows-angle-contract"></i>
+        } @else {
+          <i class="bi bi-arrows-angle-expand"></i>
+        }
+      </button>
+    </label>
+
+    @if (results) {
+      <div
+        class="bg-base-100/90 backdrop-blur-2xl rounded-lg absolute group-[.is-mobile]/search:static w-full z-10 mt-2 p-2 hidden group-focus-within/search:block group-[.full-size]/search:block max-h-96 group-[.is-mobile]/search:max-h-64 overflow-y-auto"
+      >
+        @for (result of results; track result.path) {
+          <div>
+            <app-search-result-item
+              [item]="result"
+              [searchOptions]="searchOptions"
+            >
+            </app-search-result-item>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<div
+  tabindex="0"
+  class="absolute left-0 top-0 right-0 bottom-0 bg-neutral-950/40 z-[19] hidden peer-[.full-size]/search:block"
+  (click)="fullSize = false; searchInputContainer.blur()"
+  (keyup.enter)="fullSize = false; searchInputContainer.blur()"
+></div>

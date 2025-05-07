@@ -7,10 +7,11 @@ import { NotificationService } from '../services/notification.service';
 import { NgClass } from '@angular/common';
 import { AskModalService } from '../services/ask-modal.service';
 import { TestTagDirective } from '../directives/test-tag.directive';
+import { SearchComponent } from "./components/search/search.component";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, NgClass, TestTagDirective],
+  imports: [RouterOutlet, HeaderComponent, NgClass, TestTagDirective, SearchComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

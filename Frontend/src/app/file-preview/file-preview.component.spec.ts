@@ -38,7 +38,7 @@ describe('FilePreviewComponent', () => {
         TranslateService,
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { queryParamMap: { get: () => 'test' } } },
+          useValue: { snapshot: { paramMap: { get: () => '/test' } } },
         },
         { provide: FileService, useValue: fileService },
         { provide: TagService, useValue: tagService },

@@ -10,7 +10,7 @@ namespace Server.Controllers;
 [Authorize]
 public class SearchController(ISearchService searchService) : ControllerBase
 {
-    [HttpGet]
+    [HttpPost]
     [ProducesResponseType<IEnumerable<FileSearchResultDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> SearchFiles(SearchOptionsDto options)
     {
