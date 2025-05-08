@@ -10,6 +10,8 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<EncryptedDirectory> Directories { get; set; }
     public DbSet<EncryptedFile> Files { get; set; }
     public DbSet<FileTag> FileTags { get; set; }
+    public DbSet<UserGroup> UserGroups { get; set; }
+    public DbSet<UserGroupRole> UserGroupRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,5 +19,7 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
             .HasMany(left => left.Tags)
             .WithMany(right => right.Files)
             .UsingEntity(join => join.ToTable("encrypted_files_file_tags"));
+        
+        new UserGroupRoleConfiguration().Configure(modelBuilder.Entity<UserGroupRole>());
     }
 }
