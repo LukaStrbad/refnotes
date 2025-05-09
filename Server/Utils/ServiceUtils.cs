@@ -8,11 +8,36 @@ using Server.Services;
 
 namespace Server.Utils;
 
+public interface IServiceUtils
+{
+    /// <summary>
+    /// Gets the directory from the provided path
+    /// </summary>
+    /// <param name="path">Path to the directory</param>
+    /// <param name="includeFiles">Whether the directory should be filled with files</param>
+    Task<EncryptedDirectory?> GetDirectory(string path, bool includeFiles);
+    /// <summary>
+    /// Gets currently logged-in user
+    /// </summary>
+    Task<User> GetUser();
+
+    /// <summary>
+    /// Gets directory and file from the given path
+    /// </summary>
+    /// <param name="directoryPath">Directory path</param>
+    /// <param name="name">Filename</param>
+    /// <param name="includeTags">Whether to include file tags</param>
+    /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
+    /// <exception cref="FileNotFoundException">Thrown when file doesn't exist</exception>
+    Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
+        bool includeTags = false);
+}
+
 public class ServiceUtils(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IMemoryCache cache,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor) : IServiceUtils
 {
     private readonly MemoryCacheEntryOptions _cacheOptions = new()
     {
