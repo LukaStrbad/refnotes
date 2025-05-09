@@ -1,3 +1,5 @@
-﻿namespace Server.Model;
+﻿using Server.Db.Model;
 
-public record GroupDto(int Id, string? Name);
+namespace Server.Model;
+
+public record GroupDto(int Id, string? Name, UserGroupRoleType Role);

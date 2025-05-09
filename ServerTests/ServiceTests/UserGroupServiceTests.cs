@@ -14,7 +14,8 @@ public class UserGroupServiceTests : BaseTests
 {
     private readonly RefNotesContext _context;
     private readonly User _user;
-    private readonly User _otherUser;
+    private readonly User _secondUser;
+    private readonly User _thirdUser;
     private readonly UserGroupService _userGroupService;
     private readonly IServiceUtils _serviceUtils;
 
@@ -23,7 +24,8 @@ public class UserGroupServiceTests : BaseTests
         _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
         (_user, _) = CreateUser(_context, $"test_{rndString}");
-        (_otherUser, _) = CreateUser(_context, $"test_other_{rndString}");
+        (_secondUser, _) = CreateUser(_context, $"test_second_{rndString}");
+        (_thirdUser, _) = CreateUser(_context, $"test_third_{rndString}");
 
         var encryptionService = new FakeEncryptionService();
         _serviceUtils = Substitute.For<IServiceUtils>();
@@ -89,7 +91,7 @@ public class UserGroupServiceTests : BaseTests
         var group3 = await CreateRandomGroup();
 
         // Create a group as another user
-        _serviceUtils.GetUser().Returns(_otherUser);
+        _serviceUtils.GetUser().Returns(_secondUser);
         var group4 = await CreateRandomGroup();
 
         // Check groups for the first user
@@ -109,30 +111,86 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        await _userGroupService.AssignRole(dbGroup.Id, _otherUser.Id, UserGroupRoleType.Member);
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
         var roles = await _context.UserGroupRoles
             .Where(role => role.UserGroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, roles.Count);
-        var otherUserRole = roles.Single(role => role.UserId == _otherUser.Id);
+        var otherUserRole = roles.Single(role => role.UserId == _secondUser.Id);
         Assert.Equal(UserGroupRoleType.Member, otherUserRole.Role);
 
         // Change role
-        await _userGroupService.AssignRole(dbGroup.Id, _otherUser.Id, UserGroupRoleType.Admin);
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
         roles = await _context.UserGroupRoles
             .Where(role => role.UserGroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, roles.Count);
-        otherUserRole = roles.Single(role => role.UserId == _otherUser.Id);
+        otherUserRole = roles.Single(role => role.UserId == _secondUser.Id);
         Assert.Equal(UserGroupRoleType.Admin, otherUserRole.Role);
 
         // Try to change to an owner role
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _userGroupService.AssignRole(dbGroup.Id, _otherUser.Id, UserGroupRoleType.Owner));
+            _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Owner));
+    }
+
+    [Fact]
+    public async Task AssignRole_ThrowsIfAdminDemotesAdmin()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
+        await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
+        
+        // Admin cannot demote other admins
+        _serviceUtils.GetUser().Returns(_secondUser);
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Member));
+        
+        var role = await _context.UserGroupRoles.Where(role =>
+                role.UserGroupId == dbGroup.Id && role.UserId == _thirdUser.Id)
+            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+        
+        // Assert that the third user is still an admin
+        Assert.Equal(UserGroupRoleType.Admin, role?.Role);
+    }
+
+    [Fact]
+    public async Task AssignRole_DemotesAdminIfUserIsOwner()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
+        
+        var role = await _context.UserGroupRoles.Where(role =>
+            role.UserGroupId == dbGroup.Id && role.UserId == _secondUser.Id)
+            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+        
+        // Assert that the second user is demoted to a member
+        Assert.Equal(UserGroupRoleType.Member, role?.Role);
+    }
+
+    [Fact]
+    public async Task AssignRole_DemotesSelfIfUserIsAdmin()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
+        
+        // Second user demotes to member
+        _serviceUtils.GetUser().Returns(_secondUser);
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
+        
+        var role = await _context.UserGroupRoles.Where(role =>
+                role.UserGroupId == dbGroup.Id && role.UserId == _secondUser.Id)
+            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+        
+        // Assert that the second user is demoted to a member
+        Assert.Equal(UserGroupRoleType.Member, role?.Role);
     }
 
     [Fact]
@@ -149,10 +207,10 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
         
-        _serviceUtils.GetUser().Returns(_otherUser);
+        _serviceUtils.GetUser().Returns(_secondUser);
         
         await Assert.ThrowsAsync<ForbiddenException>(() => 
-            _userGroupService.AssignRole(dbGroup.Id, _otherUser.Id, UserGroupRoleType.Member));
+            _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member));
     }
 
     [Fact]
@@ -160,14 +218,14 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
         
-        await _userGroupService.AssignRole(dbGroup.Id, _otherUser.Id, UserGroupRoleType.Member);
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
         
         var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
         
         var memberIds = members.Select(m => m.Id).ToList();
         Assert.Equal(2, members.Count);
         Assert.Contains(_user.Id, memberIds);
-        Assert.Contains(_otherUser.Id, memberIds);
+        Assert.Contains(_secondUser.Id, memberIds);
     }
 
     [Fact]
@@ -175,9 +233,85 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
         
-        _serviceUtils.GetUser().Returns(_otherUser);
+        _serviceUtils.GetUser().Returns(_secondUser);
         
         await Assert.ThrowsAsync<ForbiddenException>(() => 
             _userGroupService.GetGroupMembers(dbGroup.Id));
+    }
+
+    [Fact]
+    public async Task RemoveUser_RemovesUser()
+    {
+        var dbGroup = await CreateRandomGroup();
+        
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
+        await _userGroupService.RemoveUser(dbGroup.Id, _secondUser.Id);
+
+        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
+
+        Assert.Single(members);
+        Assert.DoesNotContain(members, user => user.Id == _secondUser.Id);
+    }
+
+    [Fact]
+    public async Task RemoveUser_ThrowsIfUserIsOwner()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await Assert.ThrowsAsync<UserIsOwnerException>(() =>
+            _userGroupService.RemoveUser(dbGroup.Id, _user.Id));
+        
+        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
+
+        Assert.Single(members);
+        Assert.Contains(members, user => user.Id == _user.Id);
+    }
+    
+    [Fact]
+    public async Task RemoveUser_ThrowsIfUserIsNotPartOfGroup()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _userGroupService.RemoveUser(dbGroup.Id, _secondUser.Id));
+        
+        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
+        
+        Assert.Single(members);
+        Assert.Contains(members, user => user.Id == _user.Id);
+    }
+    
+    [Fact]
+    public async Task RemoveUser_ThrowsIfAdminRemovesAdmin()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
+        await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
+
+        _serviceUtils.GetUser().Returns(_secondUser);
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _userGroupService.RemoveUser(dbGroup.Id, _thirdUser.Id));
+        
+        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
+        
+        Assert.Equal(3, members.Count);
+    }
+    
+    [Fact]
+    public async Task RemoveUser_RemovesSelf()
+    {
+        var dbGroup = await CreateRandomGroup();
+
+        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
+
+        _serviceUtils.GetUser().Returns(_secondUser);
+        await _userGroupService.RemoveUser(dbGroup.Id, _secondUser.Id);
+
+        _serviceUtils.GetUser().Returns(_user);
+        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
+        
+        Assert.Single(members);
+        Assert.Contains(members, user => user.Id == _user.Id);
     }
 }

@@ -17,7 +17,7 @@ public class UserGroupRole
     public required UserGroup UserGroup { get; init; }
     public int UserGroupId { get; init; }
 
-    public required UserGroupRoleType Role { get; init; }
+    public required UserGroupRoleType Role { get; set; }
 }
 
 public enum UserGroupRoleType
