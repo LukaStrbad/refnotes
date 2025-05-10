@@ -76,7 +76,7 @@ public class UserGroupServiceTests : BaseTests
         var dbGroup = await CreateRandomGroup(initialName);
 
         var newName = $"test_group_updated_{rnd}";
-        await _userGroupService.Update(new UpdateGroupDto(dbGroup.Id, newName));
+        await _userGroupService.Update(dbGroup.Id, new UpdateGroupDto(newName));
 
         await _context.Entry(dbGroup).ReloadAsync(TestContext.Current.CancellationToken);
 

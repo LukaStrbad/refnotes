@@ -84,6 +84,11 @@ public class ServiceUtils(
         {
             throw new UserNotFoundException($"User ${name} not found.");
         }
+        
+        if (context.Entry(user).State == EntityState.Detached)
+        {
+            context.Users.Attach(user);
+        }
 
         return user;
     }

@@ -1,3 +1,3 @@
 ﻿namespace Server.Model;
 
-public record UpdateGroupDto(int GroupId, string? Name);
+public record UpdateGroupDto(string? Name);

@@ -27,6 +27,17 @@ public class TokenService
         return new RefreshToken(token, expiryTime);
     }
 
+    /// <summary>
+    /// Generates a new <see cref="GroupAccessCode"/> for the specified user and user group
+    /// with a defined expiry time. Ensures the expiry time does not exceed a pre-defined limit.
+    /// </summary>
+    /// <param name="sender">The user generating the group access code.</param>
+    /// <param name="group">The user group for which the access code is being created.</param>
+    /// <param name="expiryTime">The expiration time for the access code.</param>
+    /// <returns>A new instance of <see cref="GroupAccessCode"/> containing the generated access code details.</returns>
+    /// <exception cref="ExpiryTimeTooLongException">
+    /// Thrown when the specified expiry time exceeds the maximum allowed limit.
+    /// </exception>
     public static GroupAccessCode GenerateGroupAccessCode(User sender, UserGroup group, DateTime expiryTime)
     {
         var maxExpiryTime = DateTime.UtcNow.AddDays(MaxGroupAccessCodeExpiryTimeDays);
