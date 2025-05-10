@@ -12,6 +12,7 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<FileTag> FileTags { get; set; }
     public DbSet<UserGroup> UserGroups { get; set; }
     public DbSet<UserGroupRole> UserGroupRoles { get; set; }
+    public DbSet<GroupAccessCode> GroupAccessCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

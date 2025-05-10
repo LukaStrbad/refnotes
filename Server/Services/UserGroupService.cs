@@ -178,9 +178,59 @@ public class UserGroupService(
         await context.SaveChangesAsync();
     }
 
+    public async Task<string> GenerateGroupAccessCode(int groupId, DateTime expiryTime)
+    {
+        var currentUser = await utils.GetUser();
+        var currentUserRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
+        if (currentUserRole?.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
+        {
+            throw new ForbiddenException("You cannot invite other users to the group");
+        }
+
+        var group = await GetGroupAsync(groupId);
+
+        var groupAccessCode = TokenService.GenerateGroupAccessCode(currentUser, group, expiryTime);
+        
+        await context.GroupAccessCodes.AddAsync(groupAccessCode);
+        await context.SaveChangesAsync();
+        
+        return groupAccessCode.Value;
+    }
+
     public async Task AddCurrentUserToGroup(int groupId, string accessCode)
     {
-        throw new NotImplementedException();
+        var currentUser = await utils.GetUser();
+        var existingRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
+
+        if (existingRole is not null)
+        {
+            throw new InvalidOperationException("User is already a member of the group");
+        }
+        
+        var dbAccessCode = await context.GroupAccessCodes
+            .Where(code => code.GroupId == groupId && code.Value == accessCode)
+            .FirstOrDefaultAsync();
+
+        if (dbAccessCode is null)
+        {
+            throw new AccessCodeInvalidException("Access code is invalid");
+        }
+
+        if (dbAccessCode.IsExpired)
+        {
+            throw new AccessCodeInvalidException("Access code has expired");
+        }
+
+        var group = await GetGroupAsync(groupId);
+        
+        await context.UserGroupRoles.AddAsync(new UserGroupRole
+        {
+            User = currentUser,
+            UserGroup = group,
+            Role = UserGroupRoleType.Member
+        });
+
+        await context.SaveChangesAsync();
     }
 
     private async Task<UserGroup> GetGroupAsync(int id)
