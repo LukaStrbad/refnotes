@@ -21,6 +21,6 @@ public class User(
     [StringLength(1024)] public string Email { get; init; } = email;
 
     [StringLength(4096)] public string Password { get; set; } = password;
-    
+
     public string[] Roles { get; set; } = [];
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Db;
 
@@ -11,9 +12,11 @@ using Server.Db;
 namespace Server.Migrations
 {
     [DbContext(typeof(RefNotesContext))]
-    partial class RefNotesContextModelSnapshot : ModelSnapshot
+    [Migration("20250508203007_AddUserGroups")]
+    partial class AddUserGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -125,39 +128,6 @@ namespace Server.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("file_tags");
-                });
-
-            modelBuilder.Entity("Server.Db.Model.GroupAccessCode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiryTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("varchar(128)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExpiryTime");
-
-                    b.HasIndex("SenderId");
-
-                    b.HasIndex("GroupId", "Value");
-
-                    b.ToTable("group_access_codes");
                 });
 
             modelBuilder.Entity("Server.Db.Model.User", b =>
@@ -325,25 +295,6 @@ namespace Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("Server.Db.Model.GroupAccessCode", b =>
-                {
-                    b.HasOne("Server.Db.Model.UserGroup", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Server.Db.Model.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Group");
-
-                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Server.Db.Model.UserGroupRole", b =>

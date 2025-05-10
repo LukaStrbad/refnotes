@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Server.Model;
@@ -7,6 +8,7 @@ namespace Server.Db.Model;
 
 [Table("encrypted_directories")]
 [Index(nameof(OwnerId))]
+[Index(nameof(GroupId))]
 public class EncryptedDirectory
 {
     public EncryptedDirectory(string path, User owner)
@@ -17,6 +19,15 @@ public class EncryptedDirectory
         Directories = [];
         Owner = owner;
     }
+
+    public EncryptedDirectory(string path, UserGroup group)
+    {
+        Id = 0;
+        Path = path;
+        Files = [];
+        Directories = [];
+        Group = group;
+    }
     
     public EncryptedDirectory()
     {
@@ -24,16 +35,18 @@ public class EncryptedDirectory
         Path = "";
         Files = [];
         Directories = [];
-        Owner = null!;
     }
 
     public int Id { get; init; }
+    [StringLength(1024)]
     public string Path { get; init; }
     public List<EncryptedFile> Files { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
-    public User Owner { get; init; }
-    public int OwnerId { get; init; }
+    public User? Owner { get; init; }
+    public int? OwnerId { get; init; }
     public EncryptedDirectory? Parent { get; init; }
+    public UserGroup? Group { get; init; }
+    public int? GroupId { get; init; }
 
     public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService, IFileStorageService fileStorageService)
     {

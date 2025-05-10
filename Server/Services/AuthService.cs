@@ -44,7 +44,6 @@ public interface IAuthService
 
 public class AuthService(RefNotesContext context, AppConfiguration appConfig) : IAuthService
 {
-    private const int RefreshTokenExpirationDays = 7;
     private readonly byte[] _privateKey = appConfig.JwtPrivateKeyBytes;
 
     public async Task<Tokens> Login(UserCredentials credentials)
@@ -80,6 +79,7 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
         {
             throw new UserExistsException("User already exists");
         }
+
         newUser.Roles = [];
 
         var passwordHasher = new PasswordHasher<UserCredentials>();
@@ -134,18 +134,8 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
 
         var token = handler.CreateToken(tokenDescriptor);
         var accessToken = handler.WriteToken(token);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = TokenService.GenerateRefreshToken();
         return new Tokens(accessToken, refreshToken);
-    }
-
-    private static RefreshToken GenerateRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        var token = Convert.ToBase64String(randomNumber);
-        var expiryTime = DateTime.UtcNow.AddDays(RefreshTokenExpirationDays);
-        return new RefreshToken(token, expiryTime);
     }
 
     private static ClaimsIdentity GenerateClaims(User user)

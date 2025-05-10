@@ -36,6 +36,11 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
                 await httpContext.Response.WriteAsync(e.Message);
                 logger.LogWarning(e, "Directory or file not found");
                 break;
+            case ForbiddenException:
+                httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await httpContext.Response.WriteAsync(e.Message);
+                logger.LogWarning(e, "Forbidden");
+                break;
             default:
                 httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await httpContext.Response.WriteAsync("An error occurred");
