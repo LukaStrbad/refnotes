@@ -14,8 +14,10 @@ public interface IServiceUtils
     /// Gets the directory from the provided path
     /// </summary>
     /// <param name="path">Path to the directory</param>
-    /// <param name="includeFiles">Whether the directory should be filled with files</param>
-    Task<EncryptedDirectory?> GetDirectory(string path, bool includeFiles);
+    /// <param name="includeFilesAndDirs">Whether the directory should be filled with files</param>
+    /// <param name="groupId">Group where the directory belongs to</param>
+    Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId);
+
     /// <summary>
     /// Gets currently logged-in user
     /// </summary>
@@ -26,10 +28,11 @@ public interface IServiceUtils
     /// </summary>
     /// <param name="directoryPath">Directory path</param>
     /// <param name="name">Filename</param>
+    /// <param name="groupId">Group where the directory belongs to</param>
     /// <param name="includeTags">Whether to include file tags</param>
     /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
     /// <exception cref="FileNotFoundException">Thrown when file doesn't exist</exception>
-    Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
+    Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name, int? groupId,
         bool includeTags = false);
 }
 
@@ -44,22 +47,33 @@ public class ServiceUtils(
         AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
     };
 
-    public async Task<EncryptedDirectory?> GetDirectory(string path, bool includeFiles)
+    public async Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId)
     {
         var user = await GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
-        if (includeFiles)
+
+        var directoryQueryable = context.Directories.Where(x => x.Owner == user);
+
+        // Override check with groups instead of the user if groupId is provided
+        if (groupId is not null)
         {
-            return await context.Directories
+            directoryQueryable = from dir in context.Directories
+                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                where groupRole.UserId == user.Id && dir.GroupId == groupId
+                select dir;
+        }
+
+        if (includeFilesAndDirs)
+        {
+            return await directoryQueryable
                 .Include(dir => dir.Files)
                 .ThenInclude(file => file.Tags)
                 .Include(dir => dir.Directories)
-                .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
+                .FirstOrDefaultAsync(x => x.Path == encryptedPath);
         }
 
-        return await context.Directories
-            .Include(dir => dir.Directories)
-            .FirstOrDefaultAsync(x => x.Owner == user && x.Path == encryptedPath);
+        return await directoryQueryable
+            .FirstOrDefaultAsync(x => x.Path == encryptedPath);
     }
 
     public async Task<User> GetUser()
@@ -84,7 +98,7 @@ public class ServiceUtils(
         {
             throw new UserNotFoundException($"User ${name} not found.");
         }
-        
+
         if (context.Entry(user).State == EntityState.Detached)
         {
             context.Users.Attach(user);
@@ -93,29 +107,32 @@ public class ServiceUtils(
         return user;
     }
 
-    /// <summary>
-    /// Gets directory and file from the given path
-    /// </summary>
-    /// <param name="directoryPath">Directory path</param>
-    /// <param name="name">Filename</param>
-    /// <param name="includeTags">Whether to include file tags</param>
-    /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
-    /// <exception cref="FileNotFoundException">Thrown when file doesn't exist</exception>
     public async Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
-        bool includeTags = false)
+        int? groupId, bool includeTags = false)
     {
         var user = await GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
+
         var query = context.Directories
-            .Include(dir => dir.Files)
-            .AsQueryable();
+            .Where(x => x.Owner == user);
+
+        if (groupId is not null)
+        {
+            query = from dir in context.Directories
+                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                where groupRole.UserId == user.Id && dir.GroupId == groupId
+                select dir;
+        }
+
+        query = query.Include(dir => dir.Files);
+
         if (includeTags)
         {
             query = query.Include(dir => dir.Files)
                 .ThenInclude(file => file.Tags);
         }
 
-        var directory = query.FirstOrDefault(x => x.Owner == user && x.Path == encryptedPath);
+        var directory = query.FirstOrDefault(x => x.Path == encryptedPath);
 
         if (directory is null)
         {

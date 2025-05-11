@@ -107,6 +107,10 @@ public interface IUserGroupService
     /// Thrown when the access code is invalid or has expired.
     /// </exception>
     Task AddCurrentUserToGroup(int groupId, string accessCode);
+
+    public Task<UserGroup> GetGroupAsync(int id);
+
+    public Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId);
 }
 
 public class UserGroupService(
@@ -336,7 +340,7 @@ public class UserGroupService(
         await context.SaveChangesAsync();
     }
 
-    private async Task<UserGroup> GetGroupAsync(int id)
+    public async Task<UserGroup> GetGroupAsync(int id)
     {
         var group = await context.UserGroups.FirstOrDefaultAsync(x => x.Id == id);
 
@@ -348,7 +352,7 @@ public class UserGroupService(
         return group;
     }
 
-    private async Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId)
+    public async Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId)
     {
         var role = await context.UserGroupRoles
             .Where(group => group.UserGroupId == groupId && group.UserId == userId)
