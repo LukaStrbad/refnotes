@@ -11,7 +11,6 @@ namespace ServerTests.ServiceTests;
 
 public class SearchServiceTests : BaseTests, IAsyncLifetime
 {
-    private readonly RefNotesContext _context;
     private readonly SearchService _searchService;
     private readonly BrowserService _browserService;
     private readonly FileService _fileService;
@@ -20,22 +19,21 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
 
     public SearchServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
 
         var encryptionService = new FakeEncryptionService();
         var fileStorageService = Substitute.For<IFileStorageService>();
         var cache = new MemoryCache();
         var rndString = RandomString(32);
-        var (user, _) = CreateUser(_context, $"test_{rndString}");
-        var userService = Substitute.For<IUserService>();
-        userService.GetUser().Returns(user);
+        var (user, _) = CreateUser(Context, $"test_{rndString}");
+        SetUser(user);
 
-        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
-        _searchService = new SearchService(_context, encryptionService, fileStorageService, serviceUtils, cache, userService);
-        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils, userService);
-        _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
-        var userGroupService = new UserGroupService(_context, encryptionService, userService);
-        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils, userService);
+        var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        _searchService = new SearchService(Context, encryptionService, fileStorageService, serviceUtils, cache, UserService);
+        _browserService = new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService);
+        _fileService = new FileService(Context, encryptionService, fileStorageService, AppConfig, serviceUtils);
+        var userGroupService = new UserGroupService(Context, encryptionService, UserService);
+        _tagService = new TagService(Context, encryptionService, userGroupService, serviceUtils, UserService);
 
         rndString = RandomString(32);
         _directoryPath = $"/search_service_test_{rndString}";
@@ -48,7 +46,7 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
 
     public ValueTask DisposeAsync()
     {
-        _context.Dispose();
+        Context.Dispose();
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
@@ -138,7 +136,7 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         await _fileService.AddFile(_directoryPath, "date3.txt", null);
 
         // Set file modified dates using direct DbContext modification (simulate file modified dates)
-        var dbDirectory = await _context.Directories
+        var dbDirectory = await Context.Directories
             .Where(dir => dir.Path == _directoryPath)
             .Include(dir => dir.Files)
             .FirstOrDefaultAsync(cancellationToken: TestContext.Current.CancellationToken);
@@ -154,7 +152,7 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         dbFiles.Find(f => f.Name == "date1.txt")!.Modified = file1Modified;
         dbFiles.Find(f => f.Name == "date2.txt")!.Modified = file2Modified;
         dbFiles.Find(f => f.Name == "date3.txt")!.Modified = file3Modified;
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // This should return all files between "2025-01-15" and "2025-02-15"
         var options = new SearchOptionsDto("", 0, 100,
@@ -201,9 +199,9 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         await _fileService.AddFile(_directoryPath, "special2.md", null);
         await _tagService.AddFileTag(_directoryPath, "special1.md", "projectA", null);
 
-        var dbFile = _context.Files.First(f => f.Name == "special1.md");
+        var dbFile = Context.Files.First(f => f.Name == "special1.md");
         dbFile.Modified = DateTime.UtcNow.AddDays(-5);
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var options = new SearchOptionsDto(
             SearchTerm: "special1",

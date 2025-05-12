@@ -12,7 +12,6 @@ namespace ServerTests.ServiceTests;
 
 public class TagServiceTests : BaseTests, IAsyncLifetime
 {
-    private readonly RefNotesContext _context;
     private readonly FileService _fileService;
     private readonly TagService _tagService;
     private readonly BrowserService _browserService;
@@ -23,19 +22,18 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
     public TagServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var userService = Substitute.For<IUserService>();
-        userService.GetUser().Returns(_testUser);
+        (_testUser, _claimsPrincipal) = CreateUser(Context, $"test_{rndString}");
+        SetUser(_testUser);
 
         var fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
-        _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
-        var userGroupService = new UserGroupService(_context, encryptionService, userService);
-        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils, userService);
+        var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        _fileService = new FileService(Context, encryptionService, fileStorageService, AppConfig, serviceUtils);
+        var userGroupService = new UserGroupService(Context, encryptionService, UserService);
+        _tagService = new TagService(Context, encryptionService, userGroupService, serviceUtils, UserService);
         _browserService =
-            new BrowserService(_context, encryptionService, fileStorageService, serviceUtils, userService);
+            new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService);
 
         rndString = RandomString(32);
         _directoryPath = $"/tag_service_test_{rndString}";
@@ -57,7 +55,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         var fileName = $"{RandomString(16)}.txt";
         await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var file = await _context.Files
+        var file = await Context.Files
             .Include(f => f.Tags)
             .FirstOrDefaultAsync(f => f.Name == fileName);
 
@@ -66,7 +64,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
             Name = t,
             Owner = _testUser
         }));
-        await _context.SaveChangesAsync();
+        await Context.SaveChangesAsync();
 
         return fileName;
     }
@@ -108,7 +106,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         const string tag = "test_tag";
         await _tagService.AddFileTag(_directoryPath, fileName, tag, null);
 
-        var file = await _context.Files
+        var file = await Context.Files
             .Include(f => f.Tags)
             .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 
@@ -127,7 +125,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         await _tagService.AddFileTag(_directoryPath, fileName, tag, null);
         await _tagService.AddFileTag(_directoryPath, fileName, tag, null);
 
-        var file = await _context.Files
+        var file = await Context.Files
             .Include(f => f.Tags)
             .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 
@@ -156,7 +154,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
 
         await _tagService.RemoveFileTag(_directoryPath, fileName, tag, null);
 
-        var file = await _context.Files
+        var file = await Context.Files
             .Include(f => f.Tags)
             .FirstOrDefaultAsync(f => f.Name == fileName, TestContext.Current.CancellationToken);
 

@@ -12,7 +12,6 @@ namespace ServerTests.ServiceTests;
 
 public class FileServiceTests : BaseTests, IAsyncLifetime
 {
-    private readonly RefNotesContext _context;
     private readonly FileService _fileService;
     private readonly IFileStorageService _fileStorageService;
     private readonly BrowserService _browserService;
@@ -22,15 +21,14 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     public FileServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        var (user, _) = CreateUser(_context, $"test_{rndString}");
-        var userService = Substitute.For<IUserService>();
-        userService.GetUser().Returns(user);
+        var (user, _) = CreateUser(Context, $"test_{rndString}");
+        SetUser(user);
         _fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
-        _fileService = new FileService(_context, encryptionService, _fileStorageService, AppConfig, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, _fileStorageService, serviceUtils, userService);
+        var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        _fileService = new FileService(Context, encryptionService, _fileStorageService, AppConfig, serviceUtils);
+        _browserService = new BrowserService(Context, encryptionService, _fileStorageService, serviceUtils, UserService);
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
@@ -55,7 +53,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var directory = await _context.Directories
+        var directory = await Context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
 
@@ -91,7 +89,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var oldDirectory = await _context.Directories
+        var oldDirectory = await Context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
         Assert.NotNull(oldDirectory);
@@ -102,10 +100,10 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}", null);
 
         // Re-fetch the old directory and file to ensure we have the latest data
-        await _context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
-        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
 
-        var newDirectory = await _context.Directories
+        var newDirectory = await Context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _newDirectoryPath, TestContext.Current.CancellationToken);
 
@@ -125,7 +123,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         await _fileService.AddFile(_directoryPath, fileName, null);
         await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", null);
 
-        var directory = await _context.Directories
+        var directory = await Context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
 
@@ -165,7 +163,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         await _fileService.DeleteFile(_directoryPath, fileName, null);
 
-        var directory = await _context.Directories
+        var directory = await Context.Directories
             .Include(x => x.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
 
@@ -232,7 +230,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var dir = await _context.Directories
+        var dir = await Context.Directories
             .Include(encryptedDirectory => encryptedDirectory.Files)
             .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
         Assert.NotNull(dir);
@@ -248,7 +246,7 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         await _fileService.UpdateTimestamp(_directoryPath, fileName, null);
 
         // Re-fetch the file to ensure we have the latest data
-        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(file);
         Assert.NotEqual(oldTimestamp, file.Modified);

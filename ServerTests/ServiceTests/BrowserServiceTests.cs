@@ -13,7 +13,6 @@ namespace ServerTests.ServiceTests;
 
 public class BrowserServiceTests : BaseTests
 {
-    private readonly RefNotesContext _context;
     private readonly BrowserService _browserService;
     private readonly User _testUser;
     private readonly ClaimsPrincipal _claimsPrincipal;
@@ -24,15 +23,14 @@ public class BrowserServiceTests : BaseTests
     public BrowserServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         _encryptionService = new EncryptionService(AesKey, AesIv);
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var userService = Substitute.For<IUserService>();
-        userService.GetUser().Returns(_testUser);
+        (_testUser, _claimsPrincipal) = CreateUser(Context, $"test_{rndString}");
+        SetUser(_testUser);
         var fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new FileServiceUtils(_context, _encryptionService, userService);
+        var serviceUtils = new FileServiceUtils(Context, _encryptionService, UserService);
         _browserService =
-            new BrowserService(_context, _encryptionService, fileStorageService, serviceUtils, userService);
+            new BrowserService(Context, _encryptionService, fileStorageService, serviceUtils, UserService);
 
         rndString = RandomString(32);
         _newDirectoryPath = $"/new_{rndString}";
@@ -43,7 +41,7 @@ public class BrowserServiceTests : BaseTests
     {
         await _browserService.AddDirectory("/", null);
 
-        var directory = await _context.Directories.FirstOrDefaultAsync(
+        var directory = await Context.Directories.FirstOrDefaultAsync(
             d => d.Path == _encryptionService.EncryptAesStringBase64("/"), TestContext.Current.CancellationToken);
         Assert.NotNull(directory);
     }
@@ -55,7 +53,7 @@ public class BrowserServiceTests : BaseTests
 
         var encryptedPath = _encryptionService.EncryptAesStringBase64(_newDirectoryPath);
         var directory =
-            await _context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath,
+            await Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath,
                 TestContext.Current.CancellationToken);
         Assert.NotNull(directory);
     }
@@ -70,7 +68,7 @@ public class BrowserServiceTests : BaseTests
 
         var encryptedPath = _encryptionService.EncryptAesStringBase64(subPath);
         var directory =
-            await _context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath,
+            await Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath,
                 TestContext.Current.CancellationToken);
         Assert.NotNull(directory);
     }
@@ -91,7 +89,7 @@ public class BrowserServiceTests : BaseTests
 
         await _browserService.DeleteDirectory(_newDirectoryPath, null);
 
-        var directory = await _context.Directories.FirstOrDefaultAsync(
+        var directory = await Context.Directories.FirstOrDefaultAsync(
             d => d.Path == _encryptionService.EncryptAesStringBase64(_newDirectoryPath),
             TestContext.Current.CancellationToken);
         Assert.Null(directory);

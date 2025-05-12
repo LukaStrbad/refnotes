@@ -1,55 +1,31 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NSubstitute;
-using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using ServerTests.Mocks;
 using Server.Services;
-using Server.Utils;
 
 namespace ServerTests.ServiceTests;
 
 public class UserGroupServiceTests : BaseTests
 {
-    private readonly RefNotesContext _context;
     private readonly User _user;
     private readonly User _secondUser;
     private readonly User _thirdUser;
     private readonly UserGroupService _userGroupService;
-    private readonly IUserService _userService;
 
     public UserGroupServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        (_user, _) = CreateUser(_context, $"test_{rndString}");
-        (_secondUser, _) = CreateUser(_context, $"test_second_{rndString}");
-        (_thirdUser, _) = CreateUser(_context, $"test_third_{rndString}");
+        (_user, _) = CreateUser(Context, $"test_{rndString}");
+        (_secondUser, _) = CreateUser(Context, $"test_second_{rndString}");
+        (_thirdUser, _) = CreateUser(Context, $"test_third_{rndString}");
 
         var encryptionService = new FakeEncryptionService();
-        _userService = Substitute.For<IUserService>();
-        _userService.GetUser().Returns(_user);
+        SetUser(_user);
 
-        _userGroupService = new UserGroupService(_context, encryptionService, _userService);
-    }
-
-    private async Task<UserGroup> CreateRandomGroup(string? groupName = null)
-    {
-        if (groupName is null)
-        {
-            var rnd = RandomString(32);
-            groupName = $"test_group_{rnd}";
-        }
-
-        await _userGroupService.Create(groupName);
-
-        var dbGroup = await _context.UserGroups
-            .Where(group => group.Name == groupName)
-            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
-
-        Assert.NotNull(dbGroup);
-        return dbGroup;
+        _userGroupService = new UserGroupService(Context, encryptionService, UserService);
     }
 
     [Fact]
@@ -57,7 +33,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        var roles = await _context.UserGroupRoles
+        var roles = await Context.UserGroupRoles
             .Where(role => role.UserGroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -78,7 +54,7 @@ public class UserGroupServiceTests : BaseTests
         var newName = $"test_group_updated_{rnd}";
         await _userGroupService.Update(dbGroup.Id, new UpdateGroupDto(newName));
 
-        await _context.Entry(dbGroup).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(dbGroup).ReloadAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(newName, dbGroup.Name);
     }
@@ -91,11 +67,11 @@ public class UserGroupServiceTests : BaseTests
         var group3 = await CreateRandomGroup();
 
         // Create a group as another user
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
         var group4 = await CreateRandomGroup();
 
         // Check groups for the first user
-        _userService.GetUser().Returns(_user);
+        SetUser(_user);
         var groups = await _userGroupService.GetUserGroups();
 
         var groupIds = groups.Select(g => g.Id).ToList();
@@ -113,7 +89,7 @@ public class UserGroupServiceTests : BaseTests
 
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
-        var roles = await _context.UserGroupRoles
+        var roles = await Context.UserGroupRoles
             .Where(role => role.UserGroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -124,7 +100,7 @@ public class UserGroupServiceTests : BaseTests
         // Change role
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
-        roles = await _context.UserGroupRoles
+        roles = await Context.UserGroupRoles
             .Where(role => role.UserGroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -146,11 +122,11 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
 
         // Admin cannot demote other admins
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Member));
 
-        var role = await _context.UserGroupRoles.Where(role =>
+        var role = await Context.UserGroupRoles.Where(role =>
                 role.UserGroupId == dbGroup.Id && role.UserId == _thirdUser.Id)
             .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
 
@@ -166,7 +142,7 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
-        var role = await _context.UserGroupRoles.Where(role =>
+        var role = await Context.UserGroupRoles.Where(role =>
                 role.UserGroupId == dbGroup.Id && role.UserId == _secondUser.Id)
             .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
 
@@ -182,10 +158,10 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
         // Second user demotes to member
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
-        var role = await _context.UserGroupRoles.Where(role =>
+        var role = await Context.UserGroupRoles.Where(role =>
                 role.UserGroupId == dbGroup.Id && role.UserId == _secondUser.Id)
             .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
 
@@ -207,7 +183,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member));
@@ -233,7 +209,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.GetGroupMembers(dbGroup.Id));
@@ -289,7 +265,7 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
         await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.RemoveUser(dbGroup.Id, _thirdUser.Id));
 
@@ -305,10 +281,10 @@ public class UserGroupServiceTests : BaseTests
 
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
         await _userGroupService.RemoveUser(dbGroup.Id, _secondUser.Id);
 
-        _userService.GetUser().Returns(_user);
+        SetUser(_user);
         var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
 
         Assert.Single(members);
@@ -322,7 +298,7 @@ public class UserGroupServiceTests : BaseTests
 
         var code = await _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1));
 
-        var dbCode = await _context.GroupAccessCodes
+        var dbCode = await Context.GroupAccessCodes
             .FirstOrDefaultAsync(groupCode => groupCode.Value == code, TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(code);
@@ -338,7 +314,7 @@ public class UserGroupServiceTests : BaseTests
         await Assert.ThrowsAsync<ExpiryTimeTooLongException>(() =>
             _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(8)));
 
-        var dbCodes = await _context.GroupAccessCodes
+        var dbCodes = await Context.GroupAccessCodes
             .Where(groupCode => groupCode.GroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -352,12 +328,12 @@ public class UserGroupServiceTests : BaseTests
 
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1)));
 
-        var dbCodes = await _context.GroupAccessCodes
+        var dbCodes = await Context.GroupAccessCodes
             .Where(groupCode => groupCode.GroupId == dbGroup.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -370,7 +346,7 @@ public class UserGroupServiceTests : BaseTests
         var dbGroup = await CreateRandomGroup();
         var code = await _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1));
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
 
         await _userGroupService.AddCurrentUserToGroup(dbGroup.Id, code);
 
@@ -385,22 +361,22 @@ public class UserGroupServiceTests : BaseTests
         var dbGroup = await CreateRandomGroup();
         var code = await _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1));
 
-        _userService.GetUser().Returns(_secondUser);
+        SetUser(_secondUser);
 
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             _userGroupService.AddCurrentUserToGroup(dbGroup.Id, "non-existing-code"));
 
-        var dbCode = await _context.GroupAccessCodes
+        var dbCode = await Context.GroupAccessCodes
             .FirstOrDefaultAsync(groupCode => groupCode.GroupId == dbGroup.Id && groupCode.Value == code,
                 TestContext.Current.CancellationToken);
         Assert.NotNull(dbCode);
         dbCode.ExpiryTime = DateTime.UtcNow.AddDays(-1);
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
         
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             _userGroupService.AddCurrentUserToGroup(dbGroup.Id, code));
 
-        _userService.GetUser().Returns(_user);
+        SetUser(_user);
         var groupMembers = await _userGroupService.GetGroupMembers(dbGroup.Id);
 
         Assert.Single(groupMembers);
