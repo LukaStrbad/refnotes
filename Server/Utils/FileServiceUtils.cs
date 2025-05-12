@@ -1,14 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.EntityFrameworkCore;
 using Server.Db;
 using Server.Db.Model;
-using Server.Exceptions;
 using Server.Services;
 
 namespace Server.Utils;
 
-public interface IServiceUtils
+public interface IFileServiceUtils
 {
     /// <summary>
     /// Gets the directory from the provided path
@@ -17,11 +14,6 @@ public interface IServiceUtils
     /// <param name="includeFilesAndDirs">Whether the directory should be filled with files</param>
     /// <param name="groupId">Group where the directory belongs to</param>
     Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId);
-
-    /// <summary>
-    /// Gets currently logged-in user
-    /// </summary>
-    Task<User> GetUser();
 
     /// <summary>
     /// Gets directory and file from the given path
@@ -36,20 +28,14 @@ public interface IServiceUtils
         bool includeTags = false);
 }
 
-public class ServiceUtils(
+public class FileServiceUtils(
     RefNotesContext context,
     IEncryptionService encryptionService,
-    IMemoryCache cache,
-    IHttpContextAccessor httpContextAccessor) : IServiceUtils
+    IUserService userService) : IFileServiceUtils
 {
-    private readonly MemoryCacheEntryOptions _cacheOptions = new()
-    {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
-    };
-
     public async Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId)
     {
-        var user = await GetUser();
+        var user = await userService.GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
 
         var directoryQueryable = context.Directories.Where(x => x.Owner == user);
@@ -76,41 +62,10 @@ public class ServiceUtils(
             .FirstOrDefaultAsync(x => x.Path == encryptedPath);
     }
 
-    public async Task<User> GetUser()
-    {
-        var claimsPrincipal = httpContextAccessor.HttpContext?.User;
-        if (claimsPrincipal?.Identity?.Name is not { } name || name == "")
-        {
-            throw new NoNameException();
-        }
-
-        if (!claimsPrincipal.Identity.IsAuthenticated)
-        {
-            throw new UnauthorizedException();
-        }
-
-        var cacheKey = $"user-{name}";
-
-        var user = await cache.GetOrCreateAsync(cacheKey,
-            _ => context.Users.FirstOrDefaultAsync(u => u.Username == name), _cacheOptions);
-
-        if (user is null)
-        {
-            throw new UserNotFoundException($"User ${name} not found.");
-        }
-
-        if (context.Entry(user).State == EntityState.Detached)
-        {
-            context.Users.Attach(user);
-        }
-
-        return user;
-    }
-
     public async Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
         int? groupId, bool includeTags = false)
     {
-        var user = await GetUser();
+        var user = await userService.GetUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
 
         var query = context.Directories

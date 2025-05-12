@@ -17,7 +17,7 @@ public class UserGroupServiceTests : BaseTests
     private readonly User _secondUser;
     private readonly User _thirdUser;
     private readonly UserGroupService _userGroupService;
-    private readonly IServiceUtils _serviceUtils;
+    private readonly IUserService _userService;
 
     public UserGroupServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
@@ -28,10 +28,10 @@ public class UserGroupServiceTests : BaseTests
         (_thirdUser, _) = CreateUser(_context, $"test_third_{rndString}");
 
         var encryptionService = new FakeEncryptionService();
-        _serviceUtils = Substitute.For<IServiceUtils>();
-        _serviceUtils.GetUser().Returns(_user);
+        _userService = Substitute.For<IUserService>();
+        _userService.GetUser().Returns(_user);
 
-        _userGroupService = new UserGroupService(_context, encryptionService, _serviceUtils);
+        _userGroupService = new UserGroupService(_context, encryptionService, _userService);
     }
 
     private async Task<UserGroup> CreateRandomGroup(string? groupName = null)
@@ -91,11 +91,11 @@ public class UserGroupServiceTests : BaseTests
         var group3 = await CreateRandomGroup();
 
         // Create a group as another user
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
         var group4 = await CreateRandomGroup();
 
         // Check groups for the first user
-        _serviceUtils.GetUser().Returns(_user);
+        _userService.GetUser().Returns(_user);
         var groups = await _userGroupService.GetUserGroups();
 
         var groupIds = groups.Select(g => g.Id).ToList();
@@ -146,7 +146,7 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
 
         // Admin cannot demote other admins
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Member));
 
@@ -182,7 +182,7 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
         // Second user demotes to member
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
         var role = await _context.UserGroupRoles.Where(role =>
@@ -207,7 +207,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member));
@@ -233,7 +233,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var dbGroup = await CreateRandomGroup();
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.GetGroupMembers(dbGroup.Id));
@@ -289,7 +289,7 @@ public class UserGroupServiceTests : BaseTests
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
         await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.RemoveUser(dbGroup.Id, _thirdUser.Id));
 
@@ -305,10 +305,10 @@ public class UserGroupServiceTests : BaseTests
 
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
         await _userGroupService.RemoveUser(dbGroup.Id, _secondUser.Id);
 
-        _serviceUtils.GetUser().Returns(_user);
+        _userService.GetUser().Returns(_user);
         var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
 
         Assert.Single(members);
@@ -352,7 +352,7 @@ public class UserGroupServiceTests : BaseTests
 
         await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1)));
@@ -370,7 +370,7 @@ public class UserGroupServiceTests : BaseTests
         var dbGroup = await CreateRandomGroup();
         var code = await _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1));
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
 
         await _userGroupService.AddCurrentUserToGroup(dbGroup.Id, code);
 
@@ -385,7 +385,7 @@ public class UserGroupServiceTests : BaseTests
         var dbGroup = await CreateRandomGroup();
         var code = await _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1));
 
-        _serviceUtils.GetUser().Returns(_secondUser);
+        _userService.GetUser().Returns(_secondUser);
 
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             _userGroupService.AddCurrentUserToGroup(dbGroup.Id, "non-existing-code"));
@@ -400,7 +400,7 @@ public class UserGroupServiceTests : BaseTests
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             _userGroupService.AddCurrentUserToGroup(dbGroup.Id, code));
 
-        _serviceUtils.GetUser().Returns(_user);
+        _userService.GetUser().Returns(_user);
         var groupMembers = await _userGroupService.GetGroupMembers(dbGroup.Id);
 
         Assert.Single(groupMembers);

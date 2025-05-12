@@ -52,11 +52,12 @@ public class TagService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IUserGroupService userGroupService,
-    ServiceUtils utils) : ITagService
+    IFileServiceUtils utils,
+    IUserService userService) : ITagService
 {
     public async Task<List<string>> ListAllTags()
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
         return await context.FileTags
             .Where(t => t.OwnerId == user.Id)
             .Select(t => t.DecryptedName(encryptionService))
@@ -65,7 +66,7 @@ public class TagService(
 
     public async Task<List<string>> ListAllGroupTags(int groupId)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
         var groupRole = await userGroupService.GetUserGroupRoleAsync(user.Id, groupId);
 
         if (groupRole is null)
@@ -87,7 +88,7 @@ public class TagService(
 
     public async Task AddFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         if (groupId is not null)
         {

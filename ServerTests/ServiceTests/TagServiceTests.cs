@@ -26,17 +26,16 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
         (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var cache = new MemoryCache();
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
-        };
+        var userService = Substitute.For<IUserService>();
+        userService.GetUser().Returns(_testUser);
+
         var fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
+        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
         _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
-        var userGroupService = new UserGroupService(_context, encryptionService, serviceUtils);
-        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
+        var userGroupService = new UserGroupService(_context, encryptionService, userService);
+        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils, userService);
+        _browserService =
+            new BrowserService(_context, encryptionService, fileStorageService, serviceUtils, userService);
 
         rndString = RandomString(32);
         _directoryPath = $"/tag_service_test_{rndString}";

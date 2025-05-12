@@ -36,7 +36,8 @@ public class BrowserService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
-    ServiceUtils utils) : IBrowserService
+    IFileServiceUtils utils,
+    IUserService userService) : IBrowserService
 {
     public async Task<DirectoryDto?> List(int? groupId, string path = "/")
     {
@@ -62,7 +63,7 @@ public class BrowserService(
 
     public async Task AddDirectory(string path, int? groupId)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         path = NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
@@ -103,7 +104,7 @@ public class BrowserService(
 
     public async Task DeleteDirectory(string path, int? groupId)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         path = NormalizePath(path);
 

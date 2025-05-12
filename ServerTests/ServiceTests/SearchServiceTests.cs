@@ -26,18 +26,16 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         var fileStorageService = Substitute.For<IFileStorageService>();
         var cache = new MemoryCache();
         var rndString = RandomString(32);
-        var (_, claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
-        };
+        var (user, _) = CreateUser(_context, $"test_{rndString}");
+        var userService = Substitute.For<IUserService>();
+        userService.GetUser().Returns(user);
 
-        var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
-        _searchService = new SearchService(_context, encryptionService, fileStorageService, serviceUtils, cache);
-        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
+        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
+        _searchService = new SearchService(_context, encryptionService, fileStorageService, serviceUtils, cache, userService);
+        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils, userService);
         _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
-        var userGroupService = new UserGroupService(_context, encryptionService, serviceUtils);
-        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils);
+        var userGroupService = new UserGroupService(_context, encryptionService, userService);
+        _tagService = new TagService(_context, encryptionService, userGroupService, serviceUtils, userService);
 
         rndString = RandomString(32);
         _directoryPath = $"/search_service_test_{rndString}";

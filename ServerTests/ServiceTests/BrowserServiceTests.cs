@@ -27,14 +27,12 @@ public class BrowserServiceTests : BaseTests
         _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
         (_testUser, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var cache = new MemoryCache();
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
-        };
+        var userService = Substitute.For<IUserService>();
+        userService.GetUser().Returns(_testUser);
         var fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new ServiceUtils(_context, _encryptionService, cache, httpContextAccessor);
-        _browserService = new BrowserService(_context, _encryptionService, fileStorageService, serviceUtils);
+        var serviceUtils = new FileServiceUtils(_context, _encryptionService, userService);
+        _browserService =
+            new BrowserService(_context, _encryptionService, fileStorageService, serviceUtils, userService);
 
         rndString = RandomString(32);
         _newDirectoryPath = $"/new_{rndString}";

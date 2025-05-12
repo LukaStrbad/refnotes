@@ -146,7 +146,7 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> DownloadFile(string path, int? groupId)
     {
-        var (directoryPath, name) = ServiceUtils.SplitDirAndFile(path);
+        var (directoryPath, name) = FileServiceUtils.SplitDirAndFile(path);
         var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
         if (fileName is null)
         {

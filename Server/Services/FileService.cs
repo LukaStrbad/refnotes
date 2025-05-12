@@ -66,7 +66,7 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    ServiceUtils utils) : IFileService
+    IFileServiceUtils utils) : IFileService
 {
     public async Task<string> AddFile(string directoryPath, string name, int? groupId)
     {
@@ -92,8 +92,8 @@ public class FileService(
 
     public async Task MoveFile(string oldName, string newName, int? groupId)
     {
-        var (dirName, filename) = ServiceUtils.SplitDirAndFile(oldName);
-        var (newDirName, newFilename) = ServiceUtils.SplitDirAndFile(newName);
+        var (dirName, filename) = FileServiceUtils.SplitDirAndFile(oldName);
+        var (newDirName, newFilename) = FileServiceUtils.SplitDirAndFile(newName);
 
         var (dir, file) = await utils.GetDirAndFile(dirName, filename, groupId);
         // If directory is the same, use the existing directory
@@ -166,7 +166,7 @@ public class FileService(
 
     public async Task<FileDto> GetFileInfo(string filePath, int? groupId)
     {
-        var (directoryPath, name) = ServiceUtils.SplitDirAndFile(filePath);
+        var (directoryPath, name) = FileServiceUtils.SplitDirAndFile(filePath);
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 

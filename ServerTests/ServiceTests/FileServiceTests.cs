@@ -16,7 +16,6 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     private readonly FileService _fileService;
     private readonly IFileStorageService _fileStorageService;
     private readonly BrowserService _browserService;
-    private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly string _directoryPath;
     private readonly string _newDirectoryPath;
 
@@ -25,16 +24,13 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         var encryptionService = new FakeEncryptionService();
         _context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        var cache = new MemoryCache();
-        (_, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
-        };
+        var (user, _) = CreateUser(_context, $"test_{rndString}");
+        var userService = Substitute.For<IUserService>();
+        userService.GetUser().Returns(user);
         _fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
+        var serviceUtils = new FileServiceUtils(_context, encryptionService, userService);
         _fileService = new FileService(_context, encryptionService, _fileStorageService, AppConfig, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, _fileStorageService, serviceUtils);
+        _browserService = new BrowserService(_context, encryptionService, _fileStorageService, serviceUtils, userService);
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
