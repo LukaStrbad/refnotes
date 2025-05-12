@@ -33,7 +33,7 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         var userGroupService = new UserGroupService(Context, encryptionService, UserService);
         _tagService = new TagService(Context, encryptionService, userGroupService, serviceUtils, UserService);
         _browserService =
-            new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService);
+            new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService, userGroupService);
 
         rndString = RandomString(32);
         _directoryPath = $"/tag_service_test_{rndString}";

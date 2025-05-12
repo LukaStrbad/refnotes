@@ -27,8 +27,9 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         SetUser(user);
         _fileStorageService = Substitute.For<IFileStorageService>();
         var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        var userGroupService = new UserGroupService(Context, encryptionService, UserService);
         _fileService = new FileService(Context, encryptionService, _fileStorageService, AppConfig, serviceUtils);
-        _browserService = new BrowserService(Context, encryptionService, _fileStorageService, serviceUtils, UserService);
+        _browserService = new BrowserService(Context, encryptionService, _fileStorageService, serviceUtils, UserService, userGroupService);
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";

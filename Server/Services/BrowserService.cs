@@ -37,7 +37,8 @@ public class BrowserService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     IFileServiceUtils utils,
-    IUserService userService) : IBrowserService
+    IUserService userService,
+    IUserGroupService userGroupService) : IBrowserService
 {
     public async Task<DirectoryDto?> List(int? groupId, string path = "/")
     {
@@ -70,9 +71,28 @@ public class BrowserService(
 
         var existingDir = await utils.GetDirectory(path, false, groupId);
 
+        EncryptedDirectory newDirectory;
+        if (groupId is null)
+        {
+            newDirectory = new EncryptedDirectory(encryptedPath, user);
+        }
+        else
+        {
+            var groupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
+            if (groupRole is null)
+            {
+                throw new ForbiddenException("User is not a member of the specified group");
+            }
+
+            var group = await userGroupService.GetGroupAsync((int)groupId);
+            
+            newDirectory = new EncryptedDirectory(encryptedPath, group);
+        }
+
+
         if (path is "/")
         {
-            context.Directories.Add(new EncryptedDirectory(encryptedPath, user));
+            context.Directories.Add(newDirectory);
             await context.SaveChangesAsync();
             return;
         }
@@ -83,7 +103,6 @@ public class BrowserService(
         }
 
         var (baseDir, _) = SplitDirPathName(path);
-        var newDirectory = new EncryptedDirectory(encryptedPath, user);
         var parentDir = await utils.GetDirectory(baseDir, false, groupId);
 
         // Recursively create parent directories if they don't exist
@@ -126,6 +145,10 @@ public class BrowserService(
         }
         else
         {
+            var userGroupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
+            if (userGroupRole is null)
+                throw new ForbiddenException("User is not a member of the specified group");
+            
             directoryQuery = from dir in directoryQuery
                 join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
                 where groupRole.UserId == user.Id && dir.GroupId == groupId
