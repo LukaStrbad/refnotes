@@ -9,6 +9,7 @@ using Server.Exceptions;
 
 namespace ServerTests.ControllerTests;
 
+[Trait("Category", "Group")]
 public class UserGroupControllerTests
 {
     private readonly IUserGroupService _service;

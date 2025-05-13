@@ -7,6 +7,7 @@ using Server.Services;
 
 namespace ServerTests.ServiceTests;
 
+[Trait("Category", "Group")]
 public class UserGroupServiceTests : BaseTests
 {
     private readonly User _user;

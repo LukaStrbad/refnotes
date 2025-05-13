@@ -63,6 +63,7 @@ public class BrowserServiceTests : BaseTests
     }
 
     [Fact]
+    [Trait("Category", "Group")]
     public async Task AddRootDirectory_AddsDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -82,6 +83,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task AddDirectoryToRoot_AddsDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -104,6 +106,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task AddDirectoryToSubdirectory_AddsDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -126,6 +129,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -149,6 +153,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task DeleteDirectory_RemovesDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -168,6 +173,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -176,6 +182,7 @@ public class BrowserServiceTests : BaseTests
     }
 
     [Fact]
+    [Trait("Category", "Group")]
     public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty()
     {
         await _browserService.AddDirectory(_newDirectoryPath, null);
@@ -188,6 +195,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -212,6 +220,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task List_ReturnsRootDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -244,6 +253,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task List_ReturnsDirectory_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -273,6 +283,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task List_ReturnsNull_WhenDirectoryDoesNotExist_ForGroup()
     {
         var group = await CreateRandomGroup();
@@ -282,6 +293,7 @@ public class BrowserServiceTests : BaseTests
     }
     
     [Fact]
+    [Trait("Category", "Group")]
     public async Task AddDirectory_ThrowsIfUserLacksGroupPermission()
     {
         var group = await CreateRandomGroup();
@@ -294,6 +306,7 @@ public class BrowserServiceTests : BaseTests
     }
 
     [Fact]
+    [Trait("Category", "Group")]
     public async Task DeleteDirectory_ThrowsIfUserLacksGroupPermission()
     {
         var group = await CreateRandomGroup();
@@ -307,6 +320,7 @@ public class BrowserServiceTests : BaseTests
     }
 
     [Fact]
+    [Trait("Category", "Group")]
     public async Task List_ThrowsIfUserLacksGroupPermission()
     {
         var group = await CreateRandomGroup();
