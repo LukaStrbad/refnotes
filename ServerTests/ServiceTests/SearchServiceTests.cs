@@ -30,9 +30,12 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
 
         var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
         var userGroupService = new UserGroupService(Context, encryptionService, UserService);
-        _searchService = new SearchService(Context, encryptionService, fileStorageService, serviceUtils, cache, UserService);
-        _browserService = new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService, userGroupService);
-        _fileService = new FileService(Context, encryptionService, fileStorageService, AppConfig, serviceUtils);
+        _searchService = new SearchService(Context, encryptionService, fileStorageService, serviceUtils, cache,
+            UserService);
+        _browserService = new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService,
+            userGroupService);
+        _fileService = new FileService(Context, encryptionService, fileStorageService, AppConfig, serviceUtils,
+            UserService, userGroupService);
         _tagService = new TagService(Context, encryptionService, userGroupService, serviceUtils, UserService);
 
         rndString = RandomString(32);
