@@ -34,10 +34,10 @@ public static class Configuration
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
         builder.Services.AddScoped<IAdminService, AdminService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<ServiceUtils>();
-        builder.Services.AddScoped<IServiceUtils, ServiceUtils>();
+        builder.Services.AddScoped<IFileServiceUtils, FileServiceUtils>();
         builder.Services.AddScoped<ISearchService, SearchService>();
         builder.Services.AddScoped<IUserGroupService, UserGroupService>();
+        builder.Services.AddScoped<IUserService, UserService>();
 
         builder.Services.AddAuthentication(x =>
         {

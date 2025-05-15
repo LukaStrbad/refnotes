@@ -4,7 +4,6 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Extensions;
 using Server.Model;
-using Server.Utils;
 
 namespace Server.Services;
 
@@ -107,16 +106,20 @@ public interface IUserGroupService
     /// Thrown when the access code is invalid or has expired.
     /// </exception>
     Task AddCurrentUserToGroup(int groupId, string accessCode);
+
+    public Task<UserGroup> GetGroupAsync(int id);
+
+    public Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId);
 }
 
 public class UserGroupService(
     RefNotesContext context,
     IEncryptionService encryptionService,
-    IServiceUtils utils) : IUserGroupService
+    IUserService userService) : IUserGroupService
 {
     public async Task<int> Create(string? name = null)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         string? encryptedName = null;
         if (name is not null)
@@ -147,7 +150,7 @@ public class UserGroupService(
 
     public async Task Update(int groupId, UpdateGroupDto updateGroup)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
         var role = await GetUserGroupRoleAsync(groupId, user.Id);
 
         if (role is null)
@@ -160,7 +163,7 @@ public class UserGroupService(
 
     public async Task<List<GroupDto>> GetUserGroups()
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         var groups = from groupRole in context.UserGroupRoles
             join userGroup in context.UserGroups on groupRole.UserGroupId equals userGroup.Id
@@ -172,7 +175,7 @@ public class UserGroupService(
 
     public async Task<List<GroupUserDto>> GetGroupMembers(int groupId)
     {
-        var currentUser = await utils.GetUser();
+        var currentUser = await userService.GetUser();
         var role = await GetUserGroupRoleAsync(groupId, currentUser.Id);
 
         if (role is null)
@@ -193,7 +196,7 @@ public class UserGroupService(
             throw new InvalidOperationException("Cannot change role to Owner");
         }
 
-        var currentUser = await utils.GetUser();
+        var currentUser = await userService.GetUser();
         var currentUserRole = (await GetUserGroupRoleAsync(groupId, currentUser.Id))?.Role;
 
         if (currentUserRole is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
@@ -254,7 +257,7 @@ public class UserGroupService(
             throw new UserIsOwnerException("Owner cannot be removed from the group");
         }
 
-        var currentUser = await utils.GetUser();
+        var currentUser = await userService.GetUser();
 
         // Users can always remove themselves from the group, except in the case of owners
         if (currentUser.Id == userId)
@@ -283,7 +286,7 @@ public class UserGroupService(
 
     public async Task<string> GenerateGroupAccessCode(int groupId, DateTime expiryTime)
     {
-        var currentUser = await utils.GetUser();
+        var currentUser = await userService.GetUser();
         var currentUserRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
         if (currentUserRole?.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
         {
@@ -302,7 +305,7 @@ public class UserGroupService(
 
     public async Task AddCurrentUserToGroup(int groupId, string accessCode)
     {
-        var currentUser = await utils.GetUser();
+        var currentUser = await userService.GetUser();
         var existingRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
 
         if (existingRole is not null)
@@ -336,7 +339,7 @@ public class UserGroupService(
         await context.SaveChangesAsync();
     }
 
-    private async Task<UserGroup> GetGroupAsync(int id)
+    public async Task<UserGroup> GetGroupAsync(int id)
     {
         var group = await context.UserGroups.FirstOrDefaultAsync(x => x.Id == id);
 
@@ -348,7 +351,7 @@ public class UserGroupService(
         return group;
     }
 
-    private async Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId)
+    public async Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId)
     {
         var role = await context.UserGroupRoles
             .Where(group => group.UserGroupId == groupId && group.UserId == userId)

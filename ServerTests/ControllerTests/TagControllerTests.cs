@@ -47,10 +47,10 @@ public class TagControllerTests : BaseTests
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
 
-        _tagService.ListFileTags(directoryPath, name)
+        _tagService.ListFileTags(directoryPath, name, null)
             .Returns(Task.FromResult(new List<string> { "tag1", "tag2" }));
 
-        var result = await _controller.ListFileTags(directoryPath, name);
+        var result = await _controller.ListFileTags(directoryPath, name, null);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var tags = Assert.IsType<List<string>>(okResult.Value);
@@ -64,9 +64,9 @@ public class TagControllerTests : BaseTests
         const string name = "test_file_name";
         const string tag = "test_tag";
 
-        _tagService.AddFileTag(directoryPath, name, tag).Returns(Task.CompletedTask);
+        _tagService.AddFileTag(directoryPath, name, tag, null).Returns(Task.CompletedTask);
 
-        var result = await _controller.AddFileTag(directoryPath, name, tag);
+        var result = await _controller.AddFileTag(directoryPath, name, tag, null);
 
         Assert.IsType<OkResult>(result);
     }
@@ -78,9 +78,9 @@ public class TagControllerTests : BaseTests
         const string name = "test_file_name";
         const string tag = "test_tag";
 
-        _tagService.RemoveFileTag(directoryPath, name, tag).Returns(Task.CompletedTask);
+        _tagService.RemoveFileTag(directoryPath, name, tag, null).Returns(Task.CompletedTask);
 
-        var result = await _controller.RemoveFileTag(directoryPath, name, tag);
+        var result = await _controller.RemoveFileTag(directoryPath, name, tag, null);
 
         Assert.IsType<OkResult>(result);
     }

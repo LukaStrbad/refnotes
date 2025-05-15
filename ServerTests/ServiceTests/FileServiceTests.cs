@@ -1,8 +1,6 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using Server.Db;
+using Server.Db.Model;
 using Server.Exceptions;
 using Server.Services;
 using Server.Utils;
@@ -12,29 +10,28 @@ namespace ServerTests.ServiceTests;
 
 public class FileServiceTests : BaseTests, IAsyncLifetime
 {
-    private readonly RefNotesContext _context;
     private readonly FileService _fileService;
     private readonly IFileStorageService _fileStorageService;
     private readonly BrowserService _browserService;
-    private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly string _directoryPath;
     private readonly string _newDirectoryPath;
+    private readonly User _user;
+    private UserGroup _group = null!;
 
     public FileServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
         var encryptionService = new FakeEncryptionService();
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
         var rndString = RandomString(32);
-        var cache = new MemoryCache();
-        (_, _claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
-        };
+        (_user, _) = CreateUser(Context, $"test_{rndString}");
+        SetUser(_user);
         _fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
-        _fileService = new FileService(_context, encryptionService, _fileStorageService, AppConfig, serviceUtils);
-        _browserService = new BrowserService(_context, encryptionService, _fileStorageService, serviceUtils);
+        var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        var userGroupService = new UserGroupService(Context, encryptionService, UserService);
+        _fileService = new FileService(Context, encryptionService, _fileStorageService, AppConfig, serviceUtils,
+            UserService, userGroupService);
+        _browserService = new BrowserService(Context, encryptionService, _fileStorageService, serviceUtils, UserService,
+            userGroupService);
 
         rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
@@ -43,8 +40,12 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _browserService.AddDirectory(_directoryPath);
-        await _browserService.AddDirectory(_newDirectoryPath);
+        await _browserService.AddDirectory(_directoryPath, null);
+        await _browserService.AddDirectory(_newDirectoryPath, null);
+
+        _group = await CreateRandomGroup();
+        await _browserService.AddDirectory(_directoryPath, _group.Id);
+        await _browserService.AddDirectory(_newDirectoryPath, _group.Id);
     }
 
     public ValueTask DisposeAsync()
@@ -53,15 +54,43 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         return ValueTask.CompletedTask;
     }
 
+    private async Task<EncryptedDirectory?> GetDirectory(string path, UserGroup? group = null)
+    {
+        if (group is null)
+        {
+            return await Context.Directories
+                .Include(d => d.Files)
+                .FirstOrDefaultAsync(d => d.Path == path && d.OwnerId == _user.Id,
+                    TestContext.Current.CancellationToken);
+        }
+
+        return await Context.Directories
+            .Include(d => d.Files)
+            .FirstOrDefaultAsync(d => d.Path == path && d.GroupId == group.Id,
+                TestContext.Current.CancellationToken);
+    }
+
     [Fact]
     public async Task AddFile_AddsFile()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var directory = await _context.Directories
-            .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        var directory = await GetDirectory(_directoryPath);
+
+        Assert.NotNull(directory);
+        Assert.Single(directory.Files);
+        Assert.Equal(fileName, directory.Files[0].Name);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task AddFile_AddsFile_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        var directory = await GetDirectory(_directoryPath, _group);
 
         Assert.NotNull(directory);
         Assert.Single(directory.Files);
@@ -72,10 +101,21 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     public async Task AddFile_ThrowsIfFileAlreadyExists()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
         await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
-            _fileService.AddFile(_directoryPath, fileName));
+            _fileService.AddFile(_directoryPath, fileName, null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task AddFile_ThrowsIfFileAlreadyExists_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
+            _fileService.AddFile(_directoryPath, fileName, _group.Id));
     }
 
     [Fact]
@@ -84,7 +124,17 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
 
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.AddFile("/nonexistent", fileName));
+            _fileService.AddFile("/nonexistent", fileName, null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task AddFile_ThrowsIfDirectoryDoesNotExist_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
+            _fileService.AddFile("/nonexistent", fileName, _group.Id));
     }
 
     [Fact]
@@ -93,25 +143,51 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         const string newFileName = "testfile2.txt";
 
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var oldDirectory = await _context.Directories
-            .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        var oldDirectory = await GetDirectory(_directoryPath);
         Assert.NotNull(oldDirectory);
         var file = oldDirectory.Files.FirstOrDefault(x => x.Name == fileName);
         Assert.NotNull(file);
         var timestamp = file.Modified;
 
-        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}");
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}", null);
 
         // Re-fetch the old directory and file to ensure we have the latest data
-        await _context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
-        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
 
-        var newDirectory = await _context.Directories
-            .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _newDirectoryPath, TestContext.Current.CancellationToken);
+        var newDirectory = await GetDirectory(_newDirectoryPath);
+
+        Assert.NotEqual(timestamp, file.Modified);
+        Assert.Empty(oldDirectory.Files);
+        Assert.NotNull(newDirectory);
+        Assert.NotEmpty(newDirectory.Files);
+        Assert.Equal(newFileName, newDirectory.Files[0].Name);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task MoveFile_MovesFile_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        var oldDirectory = await GetDirectory(_directoryPath, _group);
+        Assert.NotNull(oldDirectory);
+        var file = oldDirectory.Files.FirstOrDefault(x => x.Name == fileName);
+        Assert.NotNull(file);
+        var timestamp = file.Modified;
+
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}", _group.Id);
+
+        // Re-fetch the old directory and file to ensure we have the latest data
+        await Context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+
+        var newDirectory = await GetDirectory(_newDirectoryPath, _group);
 
         Assert.NotEqual(timestamp, file.Modified);
         Assert.Empty(oldDirectory.Files);
@@ -126,12 +202,27 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         const string newFileName = "testfile2.txt";
 
-        await _fileService.AddFile(_directoryPath, fileName);
-        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}");
+        await _fileService.AddFile(_directoryPath, fileName, null);
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", null);
 
-        var directory = await _context.Directories
-            .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        var directory = await GetDirectory(_directoryPath);
+
+        Assert.NotNull(directory);
+        Assert.Single(directory.Files);
+        Assert.Equal(newFileName, directory.Files[0].Name);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task MoveFile_RenamesFile_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+        await _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", _group.Id);
+
+        var directory = await GetDirectory(_directoryPath, _group);
 
         Assert.NotNull(directory);
         Assert.Single(directory.Files);
@@ -145,9 +236,22 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string newFileName = "testfile2.txt";
         const string nonExistentDirectory = "/file_service_test_new_nonexistent";
 
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{nonExistentDirectory}/{newFileName}"));
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{nonExistentDirectory}/{newFileName}", null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task MoveFile_ThrowsExceptionIfNewDirectoryDoesntExist_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile2.txt";
+        const string nonExistentDirectory = "/file_service_test_new_nonexistent";
+
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{nonExistentDirectory}/{newFileName}", _group.Id));
     }
 
     [Fact]
@@ -156,22 +260,47 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
         const string newFileName = "testfile.txt";
 
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
         await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
-            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}"));
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task MoveFile_ThrowsExceptionIfFileAlreadyExists_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        const string newFileName = "testfile.txt";
+
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+        await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", _group.Id));
     }
 
     [Fact]
     public async Task DeleteFile_RemovesFile()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
-        await _fileService.DeleteFile(_directoryPath, fileName);
+        await _fileService.DeleteFile(_directoryPath, fileName, null);
 
-        var directory = await _context.Directories
-            .Include(x => x.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        var directory = await GetDirectory(_directoryPath);
+
+        Assert.NotNull(directory);
+        Assert.Empty(directory.Files);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task DeleteFile_RemovesFile_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        await _fileService.DeleteFile(_directoryPath, fileName, _group.Id);
+
+        var directory = await GetDirectory(_directoryPath, _group);
 
         Assert.NotNull(directory);
         Assert.Empty(directory.Files);
@@ -183,16 +312,39 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         const string fileName = "testfile.txt";
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _fileService.DeleteFile(_directoryPath, fileName));
+            _fileService.DeleteFile(_directoryPath, fileName, null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task DeleteFile_ThrowsIfFileDoesNotExist_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+
+        await Assert.ThrowsAsync<FileNotFoundException>(() =>
+            _fileService.DeleteFile(_directoryPath, fileName, _group.Id));
     }
 
     [Fact]
     public async Task GetFilesystemFilePath_ReturnsFilePath()
     {
         const string fileName = "testfile.txt";
-        var addedFilePath = await _fileService.AddFile(_directoryPath, fileName);
+        var addedFilePath = await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, fileName);
+        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, fileName, null);
+
+        Assert.NotNull(filePath);
+        Assert.Equal(addedFilePath, filePath);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task GetFilesystemFilePath_ReturnsFilePath_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        var addedFilePath = await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, fileName, _group.Id);
 
         Assert.NotNull(filePath);
         Assert.Equal(addedFilePath, filePath);
@@ -201,7 +353,16 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task GetFilesystemFilePath_ReturnsNull_WhenFileDoesNotExist()
     {
-        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, "nonexistent.txt");
+        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, "nonexistent.txt", null);
+
+        Assert.Null(filePath);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task GetFilesystemFilePath_ReturnsNull_WhenFileDoesNotExist_ForGroup()
+    {
+        var filePath = await _fileService.GetFilesystemFilePath(_directoryPath, "nonexistent.txt", _group.Id);
 
         Assert.Null(filePath);
     }
@@ -211,16 +372,42 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     {
         const string nonExistentPath = "/nonexistent";
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _fileService.GetFilesystemFilePath(nonExistentPath, "testfile.txt"));
+            _fileService.GetFilesystemFilePath(nonExistentPath, "testfile.txt", null));
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task GetFilesystemPath_ThrowsIfDirectoryDoesNotExist_ForGroup()
+    {
+        const string nonExistentPath = "/nonexistent";
+        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
+            _fileService.GetFilesystemFilePath(nonExistentPath, "testfile.txt", _group.Id));
     }
 
     [Fact]
     public async Task BrowserService_List_ReturnsFile()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var responseDirectory = await _browserService.List(_directoryPath);
+        var responseDirectory = await _browserService.List(null, _directoryPath);
+
+        Assert.NotNull(responseDirectory);
+        // Remove the leading slash
+        Assert.Equal(_directoryPath[1..], responseDirectory.Name);
+        Assert.Single(responseDirectory.Files);
+        Assert.Empty(responseDirectory.Directories);
+        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task BrowserService_List_ReturnsFile_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        var responseDirectory = await _browserService.List(_group.Id, _directoryPath);
 
         Assert.NotNull(responseDirectory);
         // Remove the leading slash
@@ -234,11 +421,9 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     public async Task UpdateTimestamp_UpdatesTimestamp()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
-        var dir = await _context.Directories
-            .Include(encryptedDirectory => encryptedDirectory.Files)
-            .FirstOrDefaultAsync(d => d.Path == _directoryPath, TestContext.Current.CancellationToken);
+        var dir = await GetDirectory(_directoryPath);
         Assert.NotNull(dir);
         Assert.NotEmpty(dir.Files);
 
@@ -249,10 +434,36 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
 
         // Ensure a sufficient delay to guarantee timestamp change
         // await Task.Delay(100, TestContext.Current.CancellationToken);
-        await _fileService.UpdateTimestamp(_directoryPath, fileName);
+        await _fileService.UpdateTimestamp(_directoryPath, fileName, null);
 
         // Re-fetch the file to ensure we have the latest data
-        await _context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(file);
+        Assert.NotEqual(oldTimestamp, file.Modified);
+        Assert.True(file.Modified > oldTimestamp);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task UpdateTimestamp_UpdatesTimestamp_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        var dir = await GetDirectory(_directoryPath, _group);
+        Assert.NotNull(dir);
+        Assert.NotEmpty(dir.Files);
+
+        var file = dir.Files.FirstOrDefault(f => f.Name == fileName);
+        Assert.NotNull(file);
+
+        var oldTimestamp = file.Modified;
+
+        await _fileService.UpdateTimestamp(_directoryPath, fileName, _group.Id);
+
+        // Re-fetch the file to ensure we have the latest data
+        await Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(file);
         Assert.NotEqual(oldTimestamp, file.Modified);
@@ -263,17 +474,138 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
     public async Task GetFileInfo_ReturnsFileInfo()
     {
         const string fileName = "testfile.txt";
-        await _fileService.AddFile(_directoryPath, fileName);
+        await _fileService.AddFile(_directoryPath, fileName, null);
 
         _fileStorageService.GetFileSize(Arg.Any<string>())
             .Returns(Task.FromResult(1024L));
 
-        var fileInfo = await _fileService.GetFileInfo($"{_directoryPath}/{fileName}");
+        var fileInfo = await _fileService.GetFileInfo($"{_directoryPath}/{fileName}", null);
 
         Assert.NotNull(fileInfo);
         Assert.Equal(fileName, fileInfo.Name);
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
+    }
+
+    [Fact]
+    [Trait("Category", "Group")]
+    public async Task GetFileInfo_ReturnsFileInfo_ForGroup()
+    {
+        const string fileName = "testfile.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        _fileStorageService.GetFileSize(Arg.Any<string>())
+            .Returns(Task.FromResult(1024L));
+
+        var fileInfo = await _fileService.GetFileInfo($"{_directoryPath}/{fileName}", _group.Id);
+
+        Assert.NotNull(fileInfo);
+        Assert.Equal(fileName, fileInfo.Name);
+        Assert.Equal(1024L, fileInfo.Size);
+        Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
+        Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task AddFile_ThrowsWhenUserNotInGroup()
+    {
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to add a file to a group the user doesn't belong to
+        const string fileName = "unauthorized.txt";
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.AddFile(_directoryPath, fileName, _group.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task MoveFile_ThrowsWhenUserNotInGroup()
+    {
+        // Set up a file in the group directory
+        const string fileName = "test_move.txt";
+        const string newFileName = "moved.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to move a file in a group the user doesn't belong to
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", _group.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task DeleteFile_ThrowsWhenUserNotInGroup()
+    {
+        // Set up a file in the group directory
+        const string fileName = "test_delete.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to delete a file in a group the user doesn't belong to
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.DeleteFile(_directoryPath, fileName, _group.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task GetFilesystemFilePath_ThrowsWhenUserNotInGroup()
+    {
+        // Set up a file in the group directory
+        const string fileName = "test_path.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to get the file path in a group the user doesn't belong to
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.GetFilesystemFilePath(_directoryPath, fileName, _group.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task GetFileInfo_ThrowsWhenUserNotInGroup()
+    {
+        // Set up a file in the group directory
+        const string fileName = "test_info.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to get file info in a group the user doesn't belong to
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.GetFileInfo($"{_directoryPath}/{fileName}", _group.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Permission")]
+    public async Task UpdateTimestamp_ThrowsWhenUserNotInGroup()
+    {
+        // Set up a file in the group directory
+        const string fileName = "test_timestamp.txt";
+        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
+
+        // Create a different user and set it as current user
+        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
+        SetUser(unauthorizedUser);
+
+        // Try to update timestamp of a file in a group the user doesn't belong to
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            _fileService.UpdateTimestamp(_directoryPath, fileName, _group.Id));
     }
 }

@@ -22,8 +22,9 @@ public sealed class SearchService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
-    ServiceUtils utils,
-    IMemoryCache cache) : ISearchService
+    IFileServiceUtils utils,
+    IMemoryCache cache,
+    IUserService userService) : ISearchService
 {
     private async Task<bool> ShouldIncludeInFullText(FileSearchResultDto file)
     {
@@ -89,7 +90,7 @@ public sealed class SearchService(
 
     public async IAsyncEnumerable<FileSearchResultDto> SearchFiles(SearchOptionsDto searchOptions)
     {
-        var user = await utils.GetUser();
+        var user = await userService.GetUser();
 
         var directories = await context.Directories
             .Where(dir => dir.OwnerId == user.Id)

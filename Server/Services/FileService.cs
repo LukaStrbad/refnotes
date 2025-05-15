@@ -14,45 +14,51 @@ public interface IFileService
     /// </summary>
     /// <param name="directoryPath">Path of the directory where the file will be added</param>
     /// <param name="name">Name of the file to be added</param>
+    /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns>Filesystem name of the added file</returns>
-    Task<string> AddFile(string directoryPath, string name);
+    Task<string> AddFile(string directoryPath, string name, int? groupId);
 
     /// <summary>
     /// Moves the existing file
     /// </summary>
     /// <param name="oldName">Full path of the old file</param>
     /// <param name="newName">Full path of the new file</param>
+    /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns></returns>
-    Task MoveFile(string oldName, string newName);
+    Task MoveFile(string oldName, string newName, int? groupId);
 
     /// <summary>
     /// Get the filesystem path of a file in the specified directory.
     /// </summary>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file</param>
+    /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns>Filesystem path of the file, or null if not found</returns>
-    Task<string?> GetFilesystemFilePath(string directoryPath, string name);
+    Task<string?> GetFilesystemFilePath(string directoryPath, string name, int? groupId);
 
     /// <summary>
     /// Delete a file from the specified directory.
     /// </summary>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to be deleted</param>
-    Task DeleteFile(string directoryPath, string name);
+    /// <param name="groupId">ID of the group where the file belongs to</param>
+    Task DeleteFile(string directoryPath, string name, int? groupId);
 
     /// <summary>
     /// Update the timestamp of a file in the specified directory.
     /// </summary>
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to update</param>
-    Task UpdateTimestamp(string directoryPath, string name);
+    /// <param name="groupId">ID of the group where the file belongs to</param>
+    Task UpdateTimestamp(string directoryPath, string name, int? groupId);
 
     /// <summary>
     /// Get information about a file at the specified path.
     /// </summary>
     /// <param name="filePath"></param>
+    /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns></returns>
-    Task<FileDto> GetFileInfo(string filePath);
+    Task<FileDto> GetFileInfo(string filePath, int? groupId);
 }
 
 public class FileService(
@@ -60,11 +66,23 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    ServiceUtils utils) : IFileService
+    IFileServiceUtils utils,
+    IUserService userService,
+    IUserGroupService userGroupService) : IFileService
 {
-    public async Task<string> AddFile(string directoryPath, string name)
+    private async Task CheckGroupPermission(int groupId)
     {
-        var directory = await utils.GetDirectory(directoryPath, true);
+        var user = await userService.GetUser();
+        var role = await userGroupService.GetUserGroupRoleAsync(groupId, user.Id);
+        if (role is null)
+            throw new ForbiddenException("User is not a member of the specified group");
+    }
+
+    public async Task<string> AddFile(string directoryPath, string name, int? groupId)
+    {
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
+
+        var directory = await utils.GetDirectory(directoryPath, true, groupId);
 
         if (directory is null)
         {
@@ -84,16 +102,18 @@ public class FileService(
         return encryptedFile.FilesystemName;
     }
 
-    public async Task MoveFile(string oldName, string newName)
+    public async Task MoveFile(string oldName, string newName, int? groupId)
     {
-        var (dirName, filename) = ServiceUtils.SplitDirAndFile(oldName);
-        var (newDirName, newFilename) = ServiceUtils.SplitDirAndFile(newName);
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
 
-        var (dir, file) = await utils.GetDirAndFile(dirName, filename);
+        var (dirName, filename) = FileServiceUtils.SplitDirAndFile(oldName);
+        var (newDirName, newFilename) = FileServiceUtils.SplitDirAndFile(newName);
+
+        var (dir, file) = await utils.GetDirAndFile(dirName, filename, groupId);
         // If directory is the same, use the existing directory
         var newDir = newDirName == dirName
             ? dir
-            : await utils.GetDirectory(newDirName, true);
+            : await utils.GetDirectory(newDirName, true, groupId);
 
         if (newDir is null)
         {
@@ -128,11 +148,13 @@ public class FileService(
         throw new Exception("Failed to generate unique filesystem name.");
     }
 
-    public async Task<string?> GetFilesystemFilePath(string directoryPath, string name)
+    public async Task<string?> GetFilesystemFilePath(string directoryPath, string name, int? groupId)
     {
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
+
         try
         {
-            var (_, file) = await utils.GetDirAndFile(directoryPath, name);
+            var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
             return file.FilesystemName;
         }
         catch (FileNotFoundException)
@@ -141,59 +163,33 @@ public class FileService(
         }
     }
 
-    private async Task<(EncryptedDirectory, EncryptedFile, User)> GetDirAndFile(string directoryPath, string name,
-        bool includeTags = false)
+    public async Task DeleteFile(string directoryPath, string name, int? groupId)
     {
-        var user = await utils.GetUser();
-        var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
-        var query = context.Directories
-            .Include(dir => dir.Files)
-            .AsQueryable();
-        if (includeTags)
-        {
-            query = query.Include(dir => dir.Files)
-                .ThenInclude(file => file.Tags);
-        }
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
 
-        var directory = query.FirstOrDefault(x => x.Owner == user && x.Path == encryptedPath);
-
-        if (directory is null)
-        {
-            throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
-        }
-
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
-        var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
-
-        if (file is null)
-        {
-            throw new FileNotFoundException($"File with name ${name} not found in directory ${directoryPath}.");
-        }
-
-        return (directory, file, user);
-    }
-
-    public async Task DeleteFile(string directoryPath, string name)
-    {
-        var (directory, file, _) = await GetDirAndFile(directoryPath, name);
+        var (directory, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
 
         directory.Files.Remove(file);
         context.Entry(file).State = EntityState.Deleted;
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateTimestamp(string directoryPath, string name)
+    public async Task UpdateTimestamp(string directoryPath, string name, int? groupId)
     {
-        var (_, file) = await utils.GetDirAndFile(directoryPath, name);
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
+
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
         file.Modified = DateTime.UtcNow;
         context.Entry(file).State = EntityState.Modified;
         await context.SaveChangesAsync();
     }
 
-    public async Task<FileDto> GetFileInfo(string filePath)
+    public async Task<FileDto> GetFileInfo(string filePath, int? groupId)
     {
-        var (directoryPath, name) = ServiceUtils.SplitDirAndFile(filePath);
-        var (_, file) = await utils.GetDirAndFile(directoryPath, name, includeTags: true);
+        if (groupId is not null) await CheckGroupPermission((int)groupId);
+
+        var (directoryPath, name) = FileServiceUtils.SplitDirAndFile(filePath);
+        var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 
         return new FileDto(file.DecryptedName(encryptionService),

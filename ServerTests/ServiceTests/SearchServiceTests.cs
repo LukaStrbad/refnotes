@@ -11,7 +11,6 @@ namespace ServerTests.ServiceTests;
 
 public class SearchServiceTests : BaseTests, IAsyncLifetime
 {
-    private readonly RefNotesContext _context;
     private readonly SearchService _searchService;
     private readonly BrowserService _browserService;
     private readonly FileService _fileService;
@@ -20,23 +19,24 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
 
     public SearchServiceTests(TestDatabaseFixture testDatabaseFixture)
     {
-        _context = testDatabaseFixture.CreateContext();
+        Context = testDatabaseFixture.CreateContext();
 
         var encryptionService = new FakeEncryptionService();
         var fileStorageService = Substitute.For<IFileStorageService>();
         var cache = new MemoryCache();
         var rndString = RandomString(32);
-        var (_, claimsPrincipal) = CreateUser(_context, $"test_{rndString}");
-        var httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
-        };
+        var (user, _) = CreateUser(Context, $"test_{rndString}");
+        SetUser(user);
 
-        var serviceUtils = new ServiceUtils(_context, encryptionService, cache, httpContextAccessor);
-        _searchService = new SearchService(_context, encryptionService, fileStorageService, serviceUtils, cache);
-        _browserService = new BrowserService(_context, encryptionService, fileStorageService, serviceUtils);
-        _fileService = new FileService(_context, encryptionService, fileStorageService, AppConfig, serviceUtils);
-        _tagService = new TagService(_context, encryptionService, serviceUtils);
+        var serviceUtils = new FileServiceUtils(Context, encryptionService, UserService);
+        var userGroupService = new UserGroupService(Context, encryptionService, UserService);
+        _searchService = new SearchService(Context, encryptionService, fileStorageService, serviceUtils, cache,
+            UserService);
+        _browserService = new BrowserService(Context, encryptionService, fileStorageService, serviceUtils, UserService,
+            userGroupService);
+        _fileService = new FileService(Context, encryptionService, fileStorageService, AppConfig, serviceUtils,
+            UserService, userGroupService);
+        _tagService = new TagService(Context, encryptionService, userGroupService, serviceUtils, UserService);
 
         rndString = RandomString(32);
         _directoryPath = $"/search_service_test_{rndString}";
@@ -44,12 +44,12 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _browserService.AddDirectory(_directoryPath);
+        await _browserService.AddDirectory(_directoryPath, null);
     }
 
     public ValueTask DisposeAsync()
     {
-        _context.Dispose();
+        Context.Dispose();
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
@@ -57,10 +57,10 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_SearchesFilesByName()
     {
-        await _fileService.AddFile(_directoryPath, "foo.txt");
-        await _fileService.AddFile(_directoryPath, "bar.txt");
-        await _fileService.AddFile(_directoryPath, "baz.txt");
-        await _fileService.AddFile(_directoryPath, "foo2.txt");
+        await _fileService.AddFile(_directoryPath, "foo.txt", null);
+        await _fileService.AddFile(_directoryPath, "bar.txt", null);
+        await _fileService.AddFile(_directoryPath, "baz.txt", null);
+        await _fileService.AddFile(_directoryPath, "foo2.txt", null);
 
         var options = new SearchOptionsDto("foo", 0, 100);
 
@@ -76,14 +76,14 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_FiltersFilesByTags()
     {
-        await _fileService.AddFile(_directoryPath, "foo.txt");
-        await _fileService.AddFile(_directoryPath, "bar.txt");
-        await _fileService.AddFile(_directoryPath, "baz.txt");
+        await _fileService.AddFile(_directoryPath, "foo.txt", null);
+        await _fileService.AddFile(_directoryPath, "bar.txt", null);
+        await _fileService.AddFile(_directoryPath, "baz.txt", null);
 
-        await _tagService.AddFileTag(_directoryPath, "foo.txt", "tag1");
-        await _tagService.AddFileTag(_directoryPath, "bar.txt", "tag2");
-        await _tagService.AddFileTag(_directoryPath, "baz.txt", "tag2");
-        await _tagService.AddFileTag(_directoryPath, "baz.txt", "tag3");
+        await _tagService.AddFileTag(_directoryPath, "foo.txt", "tag1", null);
+        await _tagService.AddFileTag(_directoryPath, "bar.txt", "tag2", null);
+        await _tagService.AddFileTag(_directoryPath, "baz.txt", "tag2", null);
+        await _tagService.AddFileTag(_directoryPath, "baz.txt", "tag3", null);
 
         var options = new SearchOptionsDto("", 0, 100, Tags: ["tag2"]);
 
@@ -99,9 +99,9 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_NoSearchTermOrFilters_ReturnsAllFiles()
     {
-        await _fileService.AddFile(_directoryPath, "foo.txt");
-        await _fileService.AddFile(_directoryPath, "bar.md");
-        await _fileService.AddFile(_directoryPath, "baz.pdf");
+        await _fileService.AddFile(_directoryPath, "foo.txt", null);
+        await _fileService.AddFile(_directoryPath, "bar.md", null);
+        await _fileService.AddFile(_directoryPath, "baz.pdf", null);
 
         var options = new SearchOptionsDto("", 0, 100);
         var files = await _searchService.SearchFiles(options)
@@ -117,9 +117,9 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_FiltersFilesByType()
     {
-        await _fileService.AddFile(_directoryPath, "one.md");
-        await _fileService.AddFile(_directoryPath, "two.txt");
-        await _fileService.AddFile(_directoryPath, "three.pdf");
+        await _fileService.AddFile(_directoryPath, "one.md", null);
+        await _fileService.AddFile(_directoryPath, "two.txt", null);
+        await _fileService.AddFile(_directoryPath, "three.pdf", null);
 
         var options = new SearchOptionsDto("", 0, 100, FileTypes: ["txt", ".pdf"]);
         var files = await _searchService.SearchFiles(options)
@@ -134,12 +134,12 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_FiltersFilesByModifiedDateRange()
     {
-        await _fileService.AddFile(_directoryPath, "date1.txt");
-        await _fileService.AddFile(_directoryPath, "date2.txt");
-        await _fileService.AddFile(_directoryPath, "date3.txt");
+        await _fileService.AddFile(_directoryPath, "date1.txt", null);
+        await _fileService.AddFile(_directoryPath, "date2.txt", null);
+        await _fileService.AddFile(_directoryPath, "date3.txt", null);
 
         // Set file modified dates using direct DbContext modification (simulate file modified dates)
-        var dbDirectory = await _context.Directories
+        var dbDirectory = await Context.Directories
             .Where(dir => dir.Path == _directoryPath)
             .Include(dir => dir.Files)
             .FirstOrDefaultAsync(cancellationToken: TestContext.Current.CancellationToken);
@@ -155,7 +155,7 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         dbFiles.Find(f => f.Name == "date1.txt")!.Modified = file1Modified;
         dbFiles.Find(f => f.Name == "date2.txt")!.Modified = file2Modified;
         dbFiles.Find(f => f.Name == "date3.txt")!.Modified = file3Modified;
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // This should return all files between "2025-01-15" and "2025-02-15"
         var options = new SearchOptionsDto("", 0, 100,
@@ -185,8 +185,8 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_UnmatchedCriteria_ReturnsEmpty()
     {
-        await _fileService.AddFile(_directoryPath, "abc.txt");
-        await _fileService.AddFile(_directoryPath, "def.md");
+        await _fileService.AddFile(_directoryPath, "abc.txt", null);
+        await _fileService.AddFile(_directoryPath, "def.md", null);
 
         var options = new SearchOptionsDto("xyz", 0, 100, FileTypes: ["pdf"], Tags: ["notag"]);
         var files = await _searchService.SearchFiles(options)
@@ -198,13 +198,13 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
     [Fact]
     public async Task SearchFiles_ComplexFiltering_OnlyCorrectFileReturned()
     {
-        await _fileService.AddFile(_directoryPath, "special1.md");
-        await _fileService.AddFile(_directoryPath, "special2.md");
-        await _tagService.AddFileTag(_directoryPath, "special1.md", "projectA");
+        await _fileService.AddFile(_directoryPath, "special1.md", null);
+        await _fileService.AddFile(_directoryPath, "special2.md", null);
+        await _tagService.AddFileTag(_directoryPath, "special1.md", "projectA", null);
 
-        var dbFile = _context.Files.First(f => f.Name == "special1.md");
+        var dbFile = Context.Files.First(f => f.Name == "special1.md");
         dbFile.Modified = DateTime.UtcNow.AddDays(-5);
-        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await Context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var options = new SearchOptionsDto(
             SearchTerm: "special1",
@@ -222,11 +222,11 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         Assert.Single(filePaths);
         Assert.Contains($"{_directoryPath}/special1.md", filePaths);
     }
-    
+
     [Fact]
     public async Task SearchFiles_FileName_MatchingIsCaseInsensitive()
     {
-        await _fileService.AddFile(_directoryPath, "FOO.TXT");
+        await _fileService.AddFile(_directoryPath, "FOO.TXT", null);
         var options = new SearchOptionsDto("foo", 0, 100);
 
         var files = await _searchService.SearchFiles(options)
@@ -235,5 +235,4 @@ public class SearchServiceTests : BaseTests, IAsyncLifetime
         Assert.Single(files);
         Assert.EndsWith("FOO.TXT", files[0].Path);
     }
-
 }
