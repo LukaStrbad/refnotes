@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { UserGroupService } from './user-group.service';
 import { environment } from '../environments/environment';
-import { AssignRoleDto, GroupDto, GroupUserDto, UpdateGroupDto } from '../model/user-group';
+import { AssignRoleDto, GroupDto, GroupUserDto, UpdateGroupDto, UserGroupRole } from '../model/user-group';
 import { provideHttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 describe('UserGroupService', () => {
   let service: UserGroupService;
@@ -25,18 +26,19 @@ describe('UserGroupService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
   it('should create a group', async () => {
     const groupName = 'Test Group';
-    const expectedId = 123;
+    const expectedGroup: GroupDto = { id: 1, name: groupName, role: UserGroupRole.Owner };
 
     const promise = service.create(groupName);
 
     const req = httpMock.expectOne(`${apiUrl}/create?name=${groupName}`);
     expect(req.request.method).toBe('POST');
-    req.flush(expectedId);
+    req.flush(expectedGroup);
 
-    const id = await promise;
-    expect(id).toBe(expectedId);
+    const group = await promise;
+    expect(group).toEqual(expectedGroup);
   });
 
   it('should update a group', async () => {
@@ -57,11 +59,11 @@ describe('UserGroupService', () => {
 
   it('should get user groups', async () => {
     const mockGroups: GroupDto[] = [
-      { id: 1, name: 'Group 1', role: 'owner' },
-      { id: 2, name: 'Group 2', role: 'member' }
+      { id: 1, name: 'Group 1', role: UserGroupRole.Owner },
+      { id: 2, name: 'Group 2', role: UserGroupRole.Member }
     ];
 
-    const promise = service.getUserGroups();
+    const promise = lastValueFrom(service.getUserGroupsCached());
 
     const req = httpMock.expectOne(`${apiUrl}/getUserGroups`);
     expect(req.request.method).toBe('GET');
@@ -74,11 +76,11 @@ describe('UserGroupService', () => {
   it('should get group members', async () => {
     const groupId = 123;
     const mockMembers: GroupUserDto[] = [
-      { id: 1, username: 'user1', role: 'member' },
-      { id: 2, username: 'user2', role: 'admin' }
+      { id: 1, username: 'user1', role: UserGroupRole.Member },
+      { id: 2, username: 'user2', role: UserGroupRole.Admin }
     ];
 
-    const promise = service.getGroupMembers(groupId);
+    const promise = lastValueFrom(service.getGroupMembersCached(groupId));
 
     const req = httpMock.expectOne(`${apiUrl}/${groupId}/members`);
     expect(req.request.method).toBe('GET');
@@ -92,7 +94,7 @@ describe('UserGroupService', () => {
     const groupId = 123;
     const assignRole: AssignRoleDto = {
       userId: 456,
-      role: 'admin'
+      role: UserGroupRole.Admin
     };
 
     const promise = service.assignRole(groupId, assignRole);

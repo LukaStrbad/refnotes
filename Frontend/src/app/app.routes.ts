@@ -5,6 +5,7 @@ import { BrowserComponent } from './browser/browser.component';
 import { RegisterComponent } from './register/register.component';
 import { FileEditorComponent } from './file-editor/file-editor.component';
 import { FilePreviewComponent } from './file-preview/file-preview.component';
+import { GroupsComponent } from './groups/groups.component';
 
 export const routes: Routes = [
   {
@@ -41,5 +42,9 @@ export const routes: Routes = [
   {
     path: "settings",
     component: SettingsComponent,
-  }
+  },
+  {
+    path: "groups",
+    component: GroupsComponent,
+  },
 ];

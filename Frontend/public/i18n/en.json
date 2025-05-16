@@ -28,7 +28,8 @@
     "logout": "Logout",
     "routes": {
       "home": "Home",
-      "settings": "Settings"
+      "settings": "Settings",
+      "groups": "Groups"
     }
   },
   "login": {
@@ -129,6 +130,12 @@
       "accept": "Accept",
       "no": "No",
       "yes": "Yes"
+    },
+    "createGroup": {
+      "title": "Create group",
+      "groupName": "Group name",
+      "cancel": "Cancel",
+      "create": "Create"
     }
   },
   "auth": {
@@ -197,5 +204,14 @@
       "modified-from": "Modified after",
       "modified-to": "Modified before"
     }
+  },
+  "groups": {
+    "new-group": "New group",
+    "no-groups": "You are not a member of any group"
+  },
+  "group": {
+    "member-count": "Member count: {{count}}",
+    "view-members": "View members",
+    "invite-members": "Invite"
   }
 }

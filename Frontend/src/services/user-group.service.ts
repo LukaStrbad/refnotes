@@ -2,7 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { AssignRoleDto, GroupDto, GroupUserDto, UpdateGroupDto } from '../model/user-group';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
+import { LRUCache } from 'lru-cache';
+import { AuthService } from './auth.service';
 
 const apiUrl = environment.apiUrl + '/UserGroup';
 
@@ -10,22 +12,48 @@ const apiUrl = environment.apiUrl + '/UserGroup';
   providedIn: 'root'
 })
 export class UserGroupService {
-  constructor(private http: HttpClient) { }
+  private readonly membersCache = new LRUCache<number, GroupDto[]>({
+    max: 100,
+  });
+  private readonly groupMembersCache = new LRUCache<number, GroupUserDto[]>({
+    max: 100,
+  });
 
-  async create(name?: string): Promise<number> {
-    return firstValueFrom(this.http.post<number>(`${apiUrl}/create?name=${name}`, null));
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService
+  ) { }
+
+  async create(name?: string): Promise<GroupDto> {
+    return firstValueFrom(this.http.post<GroupDto>(`${apiUrl}/create?name=${name}`, null));
   }
 
   async update(groupId: number, updateGroup: UpdateGroupDto): Promise<void> {
     return firstValueFrom(this.http.post<void>(`${apiUrl}/${groupId}/update`, updateGroup));
   }
 
-  async getUserGroups(): Promise<GroupDto[]> {
-    return firstValueFrom(this.http.get<GroupDto[]>(`${apiUrl}/getUserGroups`));
+  getUserGroupsCached(): Observable<GroupDto[]> {
+    const userId = this.auth.user?.id ?? -1;
+    const cached = this.membersCache.get(userId);
+
+    const network = this.http.get<GroupDto[]>(`${apiUrl}/getUserGroups`).pipe(
+      tap((groups) => {
+        this.membersCache.set(userId, groups);
+      })
+    );
+
+    return cached ? merge(of(cached), network) : network;
   }
 
-  async getGroupMembers(groupId: number): Promise<GroupUserDto[]> {
-    return firstValueFrom(this.http.get<GroupUserDto[]>(`${apiUrl}/${groupId}/members`));
+  getGroupMembersCached(groupId: number): Observable<GroupUserDto[]> {
+    const cached = this.groupMembersCache.get(groupId);
+    const network = this.http.get<GroupUserDto[]>(`${apiUrl}/${groupId}/members`).pipe(
+      tap((members) => {
+        this.groupMembersCache.set(groupId, members);
+      })
+    );
+
+    return cached ? merge(of(cached), network) : network;
   }
 
   async assignRole(groupId: number, assignRole: AssignRoleDto): Promise<void> {

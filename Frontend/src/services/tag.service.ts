@@ -11,7 +11,7 @@ const apiUrl = environment.apiUrl + '/tag';
 })
 export class TagService {
   private listCache: string[] | null = null;
-  private listGroupCache: { [key: number]: string[] } = {};
+  private listGroupCache: Record<number, string[]> = {};
 
   constructor(private http: HttpClient) { }
 
