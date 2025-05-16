@@ -52,6 +52,36 @@ describe('TagService', () => {
     expect(await lastValue).toEqual(newResponse);
   });
 
+  it('should list group tags with cache', async () => {
+    const mockResponse = ['tag1', 'tag2'];
+    const groupId = 1;
+
+    const listPromise = firstValueFrom(service.listAllGroupCached(groupId));
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/listAllGroupTags?groupId=${groupId}`,
+    );
+    req.flush(mockResponse);
+    await listPromise;
+
+    const observable = service.listAllGroupCached(groupId);
+
+    // First value should be cached
+    const firstValue = firstValueFrom(observable);
+    httpMock.expectNone(`${apiUrl}/listAllGroupTags`);
+    expect(await firstValue).toEqual(mockResponse);
+
+    const newResponse = ['tag1', 'tag2', 'tag3'];
+
+    // Second value should be a new value
+    const lastValue = lastValueFrom(observable);
+    const req2 = httpMock.expectOne(
+      `${apiUrl}/listAllGroupTags?groupId=${groupId}`,
+    );
+    req2.flush(newResponse);
+    expect(await lastValue).toEqual(newResponse);
+  });
+
   it('should list file tags', async () => {
     const mockResponse = ['tag1', 'tag2'];
     const promise = service.listFileTags('/', 'test.txt');
