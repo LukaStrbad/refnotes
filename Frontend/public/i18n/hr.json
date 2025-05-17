@@ -28,7 +28,8 @@
     "logout": "Odjava",
     "routes": {
       "home": "Početna",
-      "settings": "Postavke"
+      "settings": "Postavke",
+      "groups": "Grupe"
     }
   },
   "login": {
@@ -129,6 +130,12 @@
       "cancel": "Otkaži",
       "no": "Ne",
       "yes": "Da"
+    },
+    "createGroup": {
+      "cancel": "Otkaži",
+      "create": "Stvori",
+      "groupName": "Naziv grupe",
+      "title": "Stvori grupu"
     }
   },
   "auth": {
@@ -179,7 +186,9 @@
     "load-file": "Pogreška u učitavanje datoteke",
     "load-image": "Pogreška učitavanje slike",
     "load-file-tags": "Pogreška kod učitavanja oznaka datoteka",
-    "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka"
+    "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka",
+    "access-code-not-allowed": "Nemaš dopuštenje za kreiranje pristupnih kodova za ovu grupu",
+    "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda"
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
@@ -197,5 +206,21 @@
       "modified-to": "Izmijenjeno prije",
       "only-search-current-directory": "Pretraži samo ovaj direktorij"
     }
+  },
+  "group": {
+    "invite-members": "Pozvati",
+    "member-count": "Članovi: {{count}}",
+    "view-members": "Pogledaj članove"
+  },
+  "groups": {
+    "link-created": {
+      "copied-to-clipboard": "Veza kopirana u međuspremnik",
+      "copy": "Kopiraj vezu",
+      "copy-failed": "Greška prilikom kopiranja veze",
+      "description": "Možeš podijeliti sljedeću vezu da bi pozvao druge u grupu:",
+      "title": "Stvorena grupna veza"
+    },
+    "new-group": "Nova grupa",
+    "no-groups": "Nisi član nijedne grupe"
   }
 }

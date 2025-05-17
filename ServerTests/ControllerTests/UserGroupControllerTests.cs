@@ -24,14 +24,15 @@ public class UserGroupControllerTests
     [Fact]
     public async Task Create_ReturnsOk_WithId()
     {
-        _service.Create(Arg.Any<string>()).Returns(123);
+        var createdGroup = new GroupDto(123, "TestGroup", UserGroupRoleType.Owner);
+        _service.Create(Arg.Any<string>()).Returns(createdGroup);
 
         var result = await _controller.Create("TestGroup");
         var okResult = Assert.IsType<OkObjectResult>(result);
 
         Assert.NotNull(result);
         Assert.Equal(200, okResult.StatusCode);
-        Assert.Equal(123, okResult.Value);
+        Assert.Equal(createdGroup, okResult.Value);
     }
 
     [Fact]
