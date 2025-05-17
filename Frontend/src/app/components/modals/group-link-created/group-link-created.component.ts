@@ -2,10 +2,11 @@ import { Component, ElementRef, Signal, signal, ViewChild } from '@angular/core'
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NotificationService } from '../../../../services/notification.service';
 import { getTranslation } from '../../../../utils/translation-utils';
+import { TestTagDirective } from '../../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-group-link-created',
-  imports: [TranslateDirective, TranslatePipe],
+  imports: [TranslateDirective, TranslatePipe, TestTagDirective],
   templateUrl: './group-link-created.component.html',
   styleUrl: './group-link-created.component.css'
 })

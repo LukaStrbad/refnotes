@@ -1,5 +1,5 @@
 <div class="m-2 flex gap-2 justify-end">
-  <button class="btn btn-accent btn-sm" (click)="createGroupModal.show()">
+  <button class="btn btn-accent btn-sm" (click)="createGroupModal.show()" testTag="groups.create">
     <i class="bi bi-folder-plus"></i>
     {{ "groups.new-group" | translate }}
   </button>
@@ -7,7 +7,7 @@
 
 <div class="overflow-x-auto mt-6">
   @if (groups.length === 0) {
-    <div class="alert alert-info shadow-lg max-w-md mx-auto">
+    <div class="alert alert-info shadow-lg max-w-md mx-auto" testTag="groups.no-groups">
       <div class="flex gap-2">
         <i class="bi bi-info-circle"></i>
         <span>{{ "groups.no-groups" | translate }}</span>
@@ -23,6 +23,7 @@
             class="block h-full"
             [group]="group"
             (invite)="createInviteLink($event)"
+            testTag="groups.group-card"
           ></app-group-card>
         </div>
       }

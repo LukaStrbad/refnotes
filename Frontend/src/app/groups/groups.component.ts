@@ -9,10 +9,11 @@ import { GroupLinkCreatedComponent } from "../components/modals/group-link-creat
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { LoggerService } from '../../services/logger.service';
+import { TestTagDirective } from '../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-groups',
-  imports: [TranslatePipe, GroupCardComponent, CreateGroupModalComponent, GroupLinkCreatedComponent],
+  imports: [TranslatePipe, GroupCardComponent, CreateGroupModalComponent, GroupLinkCreatedComponent, TestTagDirective],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.css'
 })
