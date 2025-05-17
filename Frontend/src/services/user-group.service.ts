@@ -65,7 +65,7 @@ export class UserGroupService {
   }
 
   async generateAccessCode(groupId: number, expiryTime?: Date): Promise<string> {
-    return firstValueFrom(this.http.post<string>(`${apiUrl}/${groupId}/generateAccessCode`, expiryTime));
+    return firstValueFrom(this.http.post(`${apiUrl}/${groupId}/generateAccessCode`, expiryTime, { responseType: 'text' }));
   }
 
   async addCurrentUserWithCode(groupId: number, accessCode: string): Promise<void> {

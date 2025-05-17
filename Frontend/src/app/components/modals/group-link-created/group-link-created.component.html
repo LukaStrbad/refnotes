@@ -1,0 +1,24 @@
+<dialog class="modal" #modal>
+  <div class="modal-box">
+    <h3 class="text-lg font-bold" translate>groups.link-created.title</h3>
+
+    <p class="py-4">
+      {{ "groups.link-created.description" | translate }}
+      <a [href]="link()" class="link link-primary break-words" target="_blank"
+        >{{ link() }}
+      </a>
+    </p>
+
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-primary" (click)="copyLink()" translate>
+          groups.link-created.copy
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button (click)="close()">close</button>
+  </form>
+</dialog>

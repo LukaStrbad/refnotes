@@ -1,6 +1,4 @@
-<div
-  class="card bg-base-300 shadow-sm h-full cursor-pointer hover:bg-base-100"
->
+<div class="card bg-base-300 shadow-sm h-full cursor-pointer hover:bg-base-100">
   <div class="card-body">
     <h2 class="card-title">{{ group.name }}</h2>
 
@@ -12,9 +10,11 @@
       <p>{{ "group.member-count" | translate: { count: members.length } }}</p>
 
       <div class="justify-end card-actions">
-        <button class="btn btn-sm btn-primary" translate>
-          group.invite-members
-        </button>
+        @if (canInviteMembers) {
+          <button class="btn btn-sm btn-primary" (click)="onInvite()" translate>
+            group.invite-members
+          </button>
+        }
         <button class="btn btn-sm btn-secondary" translate>
           group.view-members
         </button>

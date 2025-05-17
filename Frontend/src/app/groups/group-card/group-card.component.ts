@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
-import { GroupDto, GroupUserDto } from '../../../model/user-group';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { GroupDto, GroupUserDto, UserGroupRole } from '../../../model/user-group';
 import { UserGroupService } from '../../../services/user-group.service';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -14,7 +14,11 @@ import { LoggerService } from '../../../services/logger.service';
 export class GroupCardComponent implements AfterViewInit {
   @Input({ required: true }) group!: GroupDto;
 
+  @Output()
+  invite = new EventEmitter<GroupDto>();
+
   members: GroupUserDto[] | null = null;
+  canInviteMembers = false;
 
   constructor(
     private userGroupService: UserGroupService,
@@ -23,6 +27,7 @@ export class GroupCardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.fetchMembers().then();
+    this.canInviteMembers = this.canInvite();
   }
 
   async fetchMembers() {
@@ -30,5 +35,14 @@ export class GroupCardComponent implements AfterViewInit {
     const observable = this.userGroupService.getGroupMembersCached(this.group.id);
     this.members = await firstValueFrom(observable);
     this.members = await lastValueFrom(observable);
+  }
+
+  canInvite(): boolean {
+    return this.group.role === UserGroupRole.Owner || this.group.role === UserGroupRole.Admin;
+  }
+
+  onInvite() {
+    this.log.info('Inviting members to group', this.group.id);
+    this.invite.emit(this.group);
   }
 }

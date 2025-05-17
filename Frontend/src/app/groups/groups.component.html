@@ -19,7 +19,11 @@
         <div
           class="col-span-12 sm:col-span-6 lg:col-span-4 xl:col-span-3 h-full"
         >
-          <app-group-card class="block h-full" [group]="group"></app-group-card>
+          <app-group-card
+            class="block h-full"
+            [group]="group"
+            (invite)="createInviteLink($event)"
+          ></app-group-card>
         </div>
       }
     </div>
@@ -30,3 +34,5 @@
   #createGroupModal
   (create)="onGroupCreated($event)"
 ></app-create-group-modal>
+
+<app-group-link-created #groupLinkCreatedModal></app-group-link-created>

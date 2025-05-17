@@ -186,7 +186,9 @@
     "load-file": "Error loading file",
     "load-image": "Error loading image",
     "load-file-tags": "Error loading file tags",
-    "deleting-files": "An error occurred deleting some files"
+    "deleting-files": "An error occurred deleting some files",
+    "access-code-not-allowed": "You are not allowed to create group access codes",
+    "error-creating-access-code": "Error generating group access code"
   },
   "time": {
     "just-now": "Just now",
@@ -207,10 +209,17 @@
   },
   "groups": {
     "new-group": "New group",
-    "no-groups": "You are not a member of any group"
+    "no-groups": "You are not a member of any group",
+    "link-created": {
+      "title": "Group link created",
+      "description": "You can share the following link to invite others to the group:",
+      "copy": "Copy link",
+      "copied-to-clipboard": "LIink copied to clipboard",
+      "copy-failed": "Failed to copy the link to clipboard"
+    }
   },
   "group": {
-    "member-count": "Member count: {{count}}",
+    "member-count": "Members: {{count}}",
     "view-members": "View members",
     "invite-members": "Invite"
   }
