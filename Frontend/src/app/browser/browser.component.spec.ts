@@ -16,6 +16,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
 import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
+import { User } from '../../model/user';
 
 function createFile(name: string): File {
   return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
@@ -26,6 +27,7 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
+  let authService: jasmine.SpyObj<AuthService>;
   const storage: Record<string, string> = {};
 
   beforeEach(async () => {
@@ -50,6 +52,7 @@ describe('BrowserComponent', () => {
       'deleteFile',
       'addFile',
     ]);
+    authService = jasmine.createSpyObj('AuthService', [], ['user']);
 
     browserService.listCached.and.returnValue(
       of({ name: '/', files: [], directories: [] }),
@@ -75,7 +78,7 @@ describe('BrowserComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         LoggerService,
-        AuthService,
+        { provide: AuthService, useValue: authService },
         { provide: BrowserService, useValue: browserService },
         { provide: FileService, useValue: fileService },
       ],
@@ -94,8 +97,8 @@ describe('BrowserComponent', () => {
   });
 
   it('should navigate to login if user is not authenticated', () => {
-    const authService = TestBed.inject(AuthService);
-    authService.user = null;
+    const userProperty = Object.getOwnPropertyDescriptor(authService, 'user') as { get: jasmine.Spy<(this: jasmine.SpyObj<AuthService>) => User | null> };
+    userProperty.get.and.returnValue(null);
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.rejectWith(true);
     component.ngOnInit();

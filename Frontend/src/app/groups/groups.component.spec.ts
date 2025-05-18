@@ -7,6 +7,7 @@ import { LoggerService } from '../../services/logger.service';
 import { GroupDto, UserGroupRole } from '../../model/user-group';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 
 describe('GroupsComponent', () => {
   let component: GroupsComponent;
@@ -46,6 +47,10 @@ describe('GroupsComponent', () => {
       providers: [
         { provide: UserGroupService, useValue: userGroupService },
         { provide: NotificationService, useValue: notificationService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: {} } },
+        },
         LoggerService,
         TranslateService
       ]

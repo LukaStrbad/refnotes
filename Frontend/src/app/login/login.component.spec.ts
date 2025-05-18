@@ -45,7 +45,7 @@ describe('LoginComponent', () => {
     component.password = 'testPassword';
     await component.login();
 
-    expect(auth.login).toHaveBeenCalledWith('testUser', 'testPassword');
+    expect(auth.login).toHaveBeenCalledWith('testUser', 'testPassword', undefined);
   });
 
   it('should not set error on successful login', async () => {

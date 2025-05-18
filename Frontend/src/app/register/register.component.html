@@ -224,7 +224,7 @@
       >
         register.signup
       </button>
-      <a routerLink="/login">
+      <a routerLink="/login" [queryParams]="{ redirectUrl }">
         <button class="btn btn-secondary mt-4 w-full" translate>
           register.login
         </button>

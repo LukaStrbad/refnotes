@@ -47,4 +47,8 @@ export const routes: Routes = [
     path: "groups",
     component: GroupsComponent,
   },
+  {
+    path: "join-group/:id/:code",
+    component: GroupsComponent,
+  }
 ];

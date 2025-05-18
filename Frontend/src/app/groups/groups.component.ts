@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GroupDto } from '../../model/user-group';
 import { GroupCardComponent } from "./group-card/group-card.component";
@@ -10,6 +10,7 @@ import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { LoggerService } from '../../services/logger.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-groups',
@@ -17,7 +18,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.css'
 })
-export class GroupsComponent {
+export class GroupsComponent implements AfterViewInit {
   groups: GroupDto[] = [];
 
   @ViewChild('groupLinkCreatedModal')
@@ -28,8 +29,21 @@ export class GroupsComponent {
     private notificationService: NotificationService,
     private translateService: TranslateService,
     private logger: LoggerService,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {
     this.refreshGroups().then();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.router.url.startsWith('/join-group')) {
+      this.route.params.subscribe(params => {
+        const groupId = params['id'];
+        const accessCode = params['code'];
+
+        this.logger.info('Join group with ID:', groupId, 'and access code:', accessCode);
+      });
+    }
   }
 
   async refreshGroups() {

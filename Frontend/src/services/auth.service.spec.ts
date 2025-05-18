@@ -11,6 +11,7 @@ describe('AuthService', () => {
   let http: jasmine.SpyObj<HttpClient>;
   let router: jasmine.SpyObj<Router>;
   let cookieService: jasmine.SpyObj<CookieService>;
+  const windowMock = { location: { href: 'http://localhost:4200/', pathname: '/', origin: 'http://localhost:4200' } };
 
   function setAccessTokenCookie(token: string) {
     const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour from now
@@ -40,7 +41,8 @@ describe('AuthService', () => {
       providers: [
         { provide: HttpBackend },
         { provide: Router, useValue: router },
-        { provide: CookieService, useValue: cookieService }
+        { provide: CookieService, useValue: cookieService },
+        { provide: 'Window', useValue: windowMock },
       ]
     });
     service = TestBed.inject(AuthService);
@@ -134,6 +136,26 @@ describe('AuthService', () => {
     expect(router.navigate).toHaveBeenCalledWith(
       ['/login'],
       { info: { message: reason } }
+    );
+  });
+
+  it('should include redirect URL if user is not logged in', async () => {
+    router.navigate.calls.reset();
+    const url = 'http://localhost:4200/settings';
+    const redirectUrl = '/settings';
+    windowMock.location = {
+      href: url,
+      pathname: '/settings',
+      origin: 'http://localhost:4200',
+    }
+
+    await service.init();
+
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/login'],
+      {
+        queryParams: { redirectUrl },
+      }
     );
   });
 });

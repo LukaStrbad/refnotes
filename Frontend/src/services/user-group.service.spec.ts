@@ -5,15 +5,24 @@ import { environment } from '../environments/environment';
 import { AssignRoleDto, GroupDto, GroupUserDto, UpdateGroupDto, UserGroupRole } from '../model/user-group';
 import { provideHttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 
 describe('UserGroupService', () => {
   let service: UserGroupService;
   let httpMock: HttpTestingController;
+  let authService: jasmine.SpyObj<AuthService>;
   const apiUrl = environment.apiUrl + '/UserGroup';
 
   beforeEach(() => {
+    authService = jasmine.createSpyObj('AuthService', [], { user: { id: 1 } });
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), UserGroupService]
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        UserGroupService,
+        { provide: AuthService, useValue: authService }
+      ]
     });
     service = TestBed.inject(UserGroupService);
     httpMock = TestBed.inject(HttpTestingController);

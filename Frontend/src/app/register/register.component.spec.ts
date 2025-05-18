@@ -102,7 +102,7 @@ describe('RegisterComponent', () => {
 
     expect(submitButton.disabled).toBeFalse();
     submitButton.click();
-    expect(auth.register).toHaveBeenCalledWith('testuser', 'Test User', 'test@example.com', 'password123');
+    expect(auth.register).toHaveBeenCalledWith('testuser', 'Test User', 'test@example.com', 'password123', undefined);
   });
 
   it('should validate password match', () => {
