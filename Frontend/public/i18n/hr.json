@@ -221,6 +221,8 @@
       "title": "Stvorena grupna veza"
     },
     "new-group": "Nova grupa",
-    "no-groups": "Nisi član nijedne grupe"
+    "no-groups": "Nisi član nijedne grupe",
+    "invalid-join-group-link": "Link za pridruživanje grupi je nevažeći",
+    "join-group-error": "Pogreška u pridruživanju grupi"
   }
 }

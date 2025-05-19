@@ -10,7 +10,7 @@ import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { LoggerService } from '../../services/logger.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 @Component({
   selector: 'app-groups',
@@ -31,19 +31,54 @@ export class GroupsComponent implements AfterViewInit {
     private logger: LoggerService,
     private route: ActivatedRoute,
     private router: Router,
-  ) {
-    this.refreshGroups().then();
-  }
+  ) { }
 
   ngAfterViewInit(): void {
-    if (this.router.url.startsWith('/join-group')) {
-      this.route.params.subscribe(params => {
-        const groupId = params['id'];
-        const accessCode = params['code'];
+    this.refreshGroups().then(() => {
+      if (this.router.url.startsWith('/join-group')) {
+        const params = this.route.snapshot.params;
+        this.joinGroup(params).then();
+      }
+    });
+  }
 
-        this.logger.info('Join group with ID:', groupId, 'and access code:', accessCode);
-      });
+  async joinGroup(params: Params) {
+    const groupId = params['id'];
+    const accessCode = params['code'];
+
+    const groupIdValid = !isNaN(Number(groupId));
+    const accessCodeValid = typeof accessCode === 'string' && accessCode.length > 0;
+    if (!groupIdValid || !accessCodeValid) {
+      this.notificationService.error(
+        await getTranslation(this.translateService, 'groups.invalid-join-group-link')
+      );
+      return;
     }
+
+    // check if user is already in the group
+    if (this.groups.some(group => group.id === Number(groupId))) {
+      this.notificationService.info(
+        await getTranslation(this.translateService, 'groups.user-already-in-group')
+      );
+      return;
+    }
+
+    this.logger.info('Join group with ID:', groupId, 'and access code:', accessCode);
+
+    await this.notificationService.awaitAndNotifyError(
+      this.userGroupService.addCurrentUserWithCode(groupId, accessCode),
+      {
+        default: await getTranslation(this.translateService, 'groups.join-group-error')
+      },
+      this.logger,
+    );
+
+    this.notificationService.success(
+      await getTranslation(this.translateService, 'groups.join-group-success')
+    );
+
+    // Navigate to the groups page
+    this.router.navigate(['/groups']).then();
   }
 
   async refreshGroups() {

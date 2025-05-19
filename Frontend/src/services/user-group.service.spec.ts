@@ -153,7 +153,7 @@ describe('UserGroupService', () => {
 
     const req = httpMock.expectOne(`${apiUrl}/${groupId}/addCurrentUserWithCode`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toBe(accessCode);
+    expect(req.request.body).toBe(JSON.stringify(accessCode));
     req.flush(null);
 
     await promise;

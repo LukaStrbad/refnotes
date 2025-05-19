@@ -7,7 +7,7 @@ import { LoggerService } from '../../services/logger.service';
 import { GroupDto, UserGroupRole } from '../../model/user-group';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 describe('GroupsComponent', () => {
   let component: GroupsComponent;
@@ -15,6 +15,7 @@ describe('GroupsComponent', () => {
   let userGroupService: jasmine.SpyObj<UserGroupService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
   let nativeElement: HTMLElement;
+  const mockActivatedRoute = { snapshot: { paramMap: {}, params: {} as Params } };
 
   const mockGroups: GroupDto[] = [
     { id: 1, name: 'Group 1', role: UserGroupRole.Owner },
@@ -22,8 +23,8 @@ describe('GroupsComponent', () => {
   ];
 
   beforeEach(async () => {
-    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode']);
-    notificationService = jasmine.createSpyObj('NotificationService', ['awaitAndNotifyError']);
+    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode']);
+    notificationService = jasmine.createSpyObj('NotificationService', ['awaitAndNotifyError', 'success']);
 
     // Setup default spy behavior
     userGroupService.getUserGroupsCached.and.returnValue(of(mockGroups));
@@ -49,7 +50,7 @@ describe('GroupsComponent', () => {
         { provide: NotificationService, useValue: notificationService },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: {} } },
+          useValue: mockActivatedRoute,
         },
         LoggerService,
         TranslateService
@@ -117,5 +118,18 @@ describe('GroupsComponent', () => {
     groupCards.forEach((card, index) => {
       expect(card.componentInstance.group).toEqual(mockGroups[index]);
     });
+  });
+
+  it('should join group with access code', async () => {
+    const router = TestBed.inject(Router);
+    spyOnProperty(router, 'url', 'get').and.returnValue('/join-group/1/test-code');
+    mockActivatedRoute.snapshot.params = { id: 101, code: 'test-code' };
+    userGroupService.addCurrentUserWithCode.and.resolveTo();
+
+    component.ngAfterViewInit();
+    await fixture.whenStable();
+
+    expect(userGroupService.addCurrentUserWithCode).toHaveBeenCalledWith(101, 'test-code');
+    expect(notificationService.success).toHaveBeenCalledWith('groups.join-group-success');
   });
 });
