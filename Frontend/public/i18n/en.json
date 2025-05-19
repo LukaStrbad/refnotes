@@ -136,6 +136,16 @@
       "groupName": "Group name",
       "cancel": "Cancel",
       "create": "Create"
+    },
+    "editGroup": {
+      "prompt": {
+        "title": "Update group",
+        "message": "Are you sure you want to update the group?"
+      },
+      "title": "Edit group",
+      "groupName": "Group name",
+      "cancel": "Cancel",
+      "update": "Update"
     }
   },
   "auth": {
@@ -220,11 +230,14 @@
     "invalid-join-group-link": "Group join link is invalid",
     "join-group-error": "Error joining group",
     "user-already-in-group": "You are already a part of the group",
-    "join-group-success": "Successfully joined the group"
+    "join-group-success": "Successfully joined the group",
+    "update-group-error": "Error updating group",
+    "update-group-success": "Group updated successfully"
   },
   "group": {
     "member-count": "Members: {{count}}",
     "view-members": "View members",
-    "invite-members": "Invite"
+    "invite-members": "Invite",
+    "edit": "Edit"
   }
 }

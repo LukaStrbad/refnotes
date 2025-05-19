@@ -136,6 +136,16 @@
       "create": "Stvori",
       "groupName": "Naziv grupe",
       "title": "Stvori grupu"
+    },
+    "editGroup": {
+      "cancel": "Otkaži",
+      "groupName": "Naziv grupe",
+      "prompt": {
+        "message": "Jesi siguran/a da želiš urediti grupu?",
+        "title": "Uređivanje grupe"
+      },
+      "title": "Uredi grupu",
+      "update": "Potvrdi"
     }
   },
   "auth": {
@@ -210,7 +220,8 @@
   "group": {
     "invite-members": "Pozvati",
     "member-count": "Članovi: {{count}}",
-    "view-members": "Pogledaj članove"
+    "view-members": "Pogledaj članove",
+    "edit": "Uredi"
   },
   "groups": {
     "link-created": {
@@ -223,6 +234,10 @@
     "new-group": "Nova grupa",
     "no-groups": "Nisi član nijedne grupe",
     "invalid-join-group-link": "Link za pridruživanje grupi je nevažeći",
-    "join-group-error": "Pogreška u pridruživanju grupi"
+    "join-group-error": "Pogreška u pridruživanju grupi",
+    "join-group-success": "Uspješno pridruženje grupi",
+    "user-already-in-group": "Već ste dio grupe",
+    "update-group-error": "Greška prilikom uređivanja grupe",
+    "update-group-success": "Izmjene grupe uspješno spremljene"
   }
 }

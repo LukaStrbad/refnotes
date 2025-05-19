@@ -18,8 +18,12 @@ export class GroupCardComponent implements AfterViewInit {
   @Output()
   invite = new EventEmitter<GroupDto>();
 
+  @Output()
+  edit = new EventEmitter<GroupDto>();
+
   members: GroupUserDto[] | null = null;
   canInviteMembers = false;
+  canEditGroup = false;
 
   constructor(
     private userGroupService: UserGroupService,
@@ -29,6 +33,7 @@ export class GroupCardComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.fetchMembers().then();
     this.canInviteMembers = this.canInvite();
+    this.canEditGroup = this.canEdit() || true;
   }
 
   async fetchMembers() {
@@ -42,8 +47,17 @@ export class GroupCardComponent implements AfterViewInit {
     return this.group.role === UserGroupRole.Owner || this.group.role === UserGroupRole.Admin;
   }
 
+  canEdit(): boolean {
+    return this.group.role === UserGroupRole.Owner || this.group.role === UserGroupRole.Admin;
+  }
+
   onInvite() {
     this.log.info('Inviting members to group', this.group.id);
     this.invite.emit(this.group);
+  }
+
+  onEdit() {
+    this.log.info('Editing group', this.group.id);
+    this.edit.emit(this.group);
   }
 }

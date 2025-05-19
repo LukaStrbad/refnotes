@@ -81,6 +81,18 @@ describe('GroupCardComponent', () => {
     expect(component.canInvite()).toBeFalsy();
   });
 
+  it('should allow editing for Owner and Admin roles', () => {
+    component.group.role = UserGroupRole.Owner;
+    expect(component.canEdit()).toBeTruthy();
+
+    component.group.role = UserGroupRole.Admin;
+    expect(component.canEdit()).toBeTruthy();
+
+    // Members cannot edit
+    component.group.role = UserGroupRole.Member;
+    expect(component.canEdit()).toBeFalsy();
+  });
+
   it('should emit invite event when invite button is clicked', () => {
     spyOn(component.invite, 'emit');
     component.group.role = UserGroupRole.Owner; // Set role to Owner to enable invite button

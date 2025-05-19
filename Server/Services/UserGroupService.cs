@@ -156,6 +156,11 @@ public class UserGroupService(
         if (role is null)
             throw new ForbiddenException("You don't have a permission to view this group");
 
+        if (role.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
+        {
+            throw new ForbiddenException("You don't have a permission to update this group");
+        }
+
         var group = await GetGroupAsync(groupId);
         group.Name = updateGroup.Name is null ? null : encryptionService.EncryptAesStringBase64(updateGroup.Name);
         await context.SaveChangesAsync();

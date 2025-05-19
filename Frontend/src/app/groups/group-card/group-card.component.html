@@ -11,14 +11,23 @@
 
       <div class="justify-end card-actions">
         @if (canInviteMembers) {
-          <button class="btn btn-sm btn-primary" (click)="onInvite()" testTag="groups.card.invite" translate>
+          <button
+            class="btn btn-sm btn-primary"
+            (click)="onInvite()"
+            testTag="groups.card.invite"
+            translate
+          >
             group.invite-members
           </button>
         }
         <button class="btn btn-sm btn-secondary" translate>
           group.view-members
         </button>
-        <button class="btn btn-sm">Edit</button>
+        @if (canEditGroup) {
+          <button class="btn btn-sm" (click)="onEdit()" translate>
+            group.edit
+          </button>
+        }
       </div>
     }
   </div>

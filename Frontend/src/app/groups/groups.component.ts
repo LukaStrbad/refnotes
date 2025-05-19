@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { GroupDto } from '../../model/user-group';
+import { GroupDto, UpdateGroupDto } from '../../model/user-group';
 import { GroupCardComponent } from "./group-card/group-card.component";
 import { CreateGroupModalComponent } from "../components/modals/create-group-modal/create-group-modal.component";
 import { UserGroupService } from '../../services/user-group.service';
@@ -11,10 +11,11 @@ import { getTranslation } from '../../utils/translation-utils';
 import { LoggerService } from '../../services/logger.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { EditGroupModalComponent } from "../components/modals/edit-group-modal/edit-group-modal.component";
 
 @Component({
   selector: 'app-groups',
-  imports: [TranslatePipe, GroupCardComponent, CreateGroupModalComponent, GroupLinkCreatedComponent, TestTagDirective],
+  imports: [TranslatePipe, GroupCardComponent, CreateGroupModalComponent, GroupLinkCreatedComponent, TestTagDirective, EditGroupModalComponent],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.css'
 })
@@ -90,6 +91,25 @@ export class GroupsComponent implements AfterViewInit {
   async onGroupCreated(name: string) {
     const newGroup = await this.userGroupService.create(name);
     this.groups.push(newGroup);
+  }
+
+  async onGroupUpdated([groupId, updateDto]: [number, UpdateGroupDto]) {
+    await this.notificationService.awaitAndNotifyError(this.userGroupService.update(groupId, updateDto),
+      {
+        default: await getTranslation(this.translateService, 'groups.update-group-error')
+      },
+      this.logger
+    );
+
+    this.notificationService.success(
+      await getTranslation(this.translateService, 'groups.update-group-success')
+    );
+
+    // Update the group locally to avoid refetching
+    const groupIndex = this.groups.findIndex(group => group.id === groupId);
+    if (groupIndex !== -1) {
+      this.groups[groupIndex].name = updateDto.name;
+    }
   }
 
   async createInviteLink(group: GroupDto) {
