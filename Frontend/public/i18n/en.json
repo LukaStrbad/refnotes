@@ -238,6 +238,31 @@
     "member-count": "Members: {{count}}",
     "view-members": "View members",
     "invite-members": "Invite",
-    "edit": "Edit"
+    "edit": "Edit",
+    "members": {
+      "change-role": "Change role",
+      "change-role-description": "You are about to change the role of user \"{{username}}\"",
+      "cancel": "Cancel",
+      "update-role": "Update role",
+      "username": "Username",
+      "role": "Role",
+      "actions": "Actions",
+      "no-members": "There are no members in this group",
+      "remove": "Remove",
+      "confirm-remove": "Remove user",
+      "confirm-remove-description": "Are you sure you want to remove user \"{{username}}\" from the group?",
+      "user-removed": "User removed from the group",
+      "error-removing-user": "Error removing user from the group",
+      "role-updated": "User role successfully updated",
+      "error-updating-role": "Error updating user role"
+    },
+    "role": {
+      "admin": "Admin",
+      "owner": "Owner",
+      "member": "Member"
+    }
+  },
+  "button": {
+    "back": "Back"
   }
 }

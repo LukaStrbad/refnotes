@@ -20,9 +20,13 @@
             group.invite-members
           </button>
         }
-        <button class="btn btn-sm btn-secondary" translate>
-          group.view-members
-        </button>
+
+        <a routerLink="/groups/{{ group.id }}/members">
+          <button class="btn btn-sm btn-secondary" translate>
+            group.view-members
+          </button>
+        </a>
+
         @if (canEditGroup) {
           <button class="btn btn-sm" (click)="onEdit()" translate>
             group.edit

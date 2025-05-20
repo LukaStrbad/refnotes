@@ -6,6 +6,7 @@ import { RegisterComponent } from './register/register.component';
 import { FileEditorComponent } from './file-editor/file-editor.component';
 import { FilePreviewComponent } from './file-preview/file-preview.component';
 import { GroupsComponent } from './groups/groups.component';
+import { GroupMembersListComponent } from './groups/group-members-list/group-members-list.component';
 
 export const routes: Routes = [
   {
@@ -46,6 +47,10 @@ export const routes: Routes = [
   {
     path: "groups",
     component: GroupsComponent,
+  },
+  {
+    path: "groups/:id/members",
+    component: GroupMembersListComponent,
   },
   {
     path: "join-group/:id/:code",

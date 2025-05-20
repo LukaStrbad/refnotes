@@ -5,10 +5,11 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { LoggerService } from '../../../services/logger.service';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-group-card',
-  imports: [TranslatePipe, TranslateDirective, TestTagDirective],
+  imports: [TranslatePipe, TranslateDirective, TestTagDirective, RouterLink],
   templateUrl: './group-card.component.html',
   styleUrl: './group-card.component.css'
 })

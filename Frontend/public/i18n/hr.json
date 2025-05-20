@@ -221,7 +221,29 @@
     "invite-members": "Pozvati",
     "member-count": "Članovi: {{count}}",
     "view-members": "Pogledaj članove",
-    "edit": "Uredi"
+    "edit": "Uredi",
+    "members": {
+      "actions": "Radnje",
+      "cancel": "Odustani",
+      "change-role": "Promjena role",
+      "change-role-description": "Upravo ćete promijeniti rolu korisnika \"{{userName}}\"",
+      "confirm-remove": "Uklanjanje korisnika",
+      "confirm-remove-description": "Jeste li sigurni da želite ukloniti korisnika \"{{userName}}\" iz grupe?",
+      "error-removing-user": "Pogreška prilikom uklanjanja korisnika iz grupe",
+      "error-updating-role": "Pogreška prilikom ažuriranja korisničke role",
+      "no-members": "U ovoj grupi nema članova",
+      "remove": "Ukloni",
+      "role": "Rola",
+      "role-updated": "Rola korisnika je uspješno ažurirana",
+      "update-role": "Ažuriraj ulogu",
+      "user-removed": "Korisnik je uklonjen iz grupe",
+      "username": "Korisničko ime"
+    },
+    "role": {
+      "admin": "Administrator",
+      "member": "Član",
+      "owner": "Vlasnik"
+    }
   },
   "groups": {
     "link-created": {
@@ -239,5 +261,8 @@
     "user-already-in-group": "Već ste dio grupe",
     "update-group-error": "Greška prilikom uređivanja grupe",
     "update-group-success": "Izmjene grupe uspješno spremljene"
+  },
+  "button": {
+    "back": "Nazad"
   }
 }
