@@ -94,9 +94,10 @@ export class GroupMembersListComponent implements OnInit {
   }
 
   canRemoveUser(member: GroupUserDto): boolean {
-    if (!this.currentUser || !this.canManageMembers) return false;
+    if (!this.currentUser) return false;
     if (member.role === UserGroupRole.Owner) return false; // Can't remove owner
     if (member.id === this.currentUser.id) return true; // Can always remove self
+    if (!this.canManageMembers) return false;
 
     const currentUserRole = this.currentUser.role;
     const targetUserRole = member.role;

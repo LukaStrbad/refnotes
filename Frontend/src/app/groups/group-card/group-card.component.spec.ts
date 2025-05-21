@@ -5,6 +5,7 @@ import { LoggerService } from '../../../services/logger.service';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { GroupUserDto, UserGroupRole } from '../../../model/user-group';
 import { of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 describe('GroupCardComponent', () => {
   let component: GroupCardComponent;
@@ -30,7 +31,8 @@ describe('GroupCardComponent', () => {
       providers: [
         { provide: UserGroupService, useValue: userGroupService },
         LoggerService,
-        TranslateService
+        TranslateService,
+        { provide: ActivatedRoute, useValue: {} },
       ]
     }).compileComponents();
 
