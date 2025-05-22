@@ -10,10 +10,11 @@ import { NotificationService } from '../../../services/notification.service';
 import { getTranslation } from '../../../utils/translation-utils';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { AuthService } from '../../../services/auth.service';
+import { GroupBadgeComponent } from "../group-badge/group-badge.component";
 
 @Component({
   selector: 'app-group-members-list',
-  imports: [TranslatePipe, TranslateDirective, TestTagDirective, RouterLink],
+  imports: [TranslatePipe, TranslateDirective, TestTagDirective, RouterLink, GroupBadgeComponent],
   templateUrl: './group-members-list.component.html',
   styleUrl: './group-members-list.component.css'
 })

@@ -1,0 +1,10 @@
+<div
+  class="badge badge-lg font-medium"
+  [ngClass]="{
+    'badge-primary': role === UserGroupRole.Owner,
+    'badge-secondary': role === UserGroupRole.Admin,
+    'badge-neutral': role !== UserGroupRole.Owner && role !== UserGroupRole.Admin
+  }"
+>
+  {{ "group.role." + UserGroupRole[role].toLowerCase() | translate }}
+</div>

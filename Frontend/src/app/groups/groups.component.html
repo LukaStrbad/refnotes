@@ -9,7 +9,7 @@
   </button>
 </div>
 
-<div class="overflow-x-auto mt-6">
+<div class="overflow-x-auto mt-6 mb-6">
   @if (groups.length === 0) {
     <div
       class="alert alert-info shadow-lg max-w-md mx-auto"
@@ -21,7 +21,7 @@
       </div>
     </div>
   } @else {
-    <div class="grid grid-cols-12 auto-rows-fr gap-4">
+    <div class="grid grid-cols-12 sm:auto-rows-fr gap-4">
       @for (group of groups; track group.id) {
         <div
           class="col-span-12 sm:col-span-6 lg:col-span-4 xl:col-span-3 h-full"
@@ -31,6 +31,7 @@
             [group]="group"
             (invite)="createInviteLink($event)"
             (edit)="editGroupModal.show($event)"
+            (leave)="onLeaveGroup($event)"
             testTag="groups.group-card"
           ></app-group-card>
         </div>

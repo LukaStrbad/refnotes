@@ -9,29 +9,69 @@
     } @else {
       <p>{{ "group.member-count" | translate: { count: members.length } }}</p>
 
-      <div class="justify-end card-actions">
-        @if (canInviteMembers) {
-          <button
-            class="btn btn-sm btn-primary"
-            (click)="onInvite()"
-            testTag="groups.card.invite"
-            translate
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-2 justify-between">
+        <app-group-badge [role]="group.role"></app-group-badge>
+
+        <div class="justify-end card-actions flex flex-col sm:flex-row flex-nowrap">
+          @if (canInviteMembers) {
+            <div
+              class="tooltip w-full sm:w-auto"
+              [attr.data-tip]="'group.invite-members' | translate"
+            >
+              <button
+                class="btn btn-sm btn-primary btn-soft w-full"
+                (click)="onInvite()"
+                testTag="groups.card.invite"
+              >
+                <i class="bi bi-person-plus"></i>
+                <span class="sm:hidden" translate>group.invite-members</span>
+              </button>
+            </div>
+          }
+
+          <div
+            class="tooltip w-full sm:w-auto"
+            [attr.data-tip]="'group.view-members' | translate"
           >
-            group.invite-members
-          </button>
-        }
+            <a routerLink="/groups/{{ group.id }}/members">
+              <button class="btn btn-sm btn-secondary btn-soft w-full">
+                <i class="bi bi-person-lines-fill"></i>
+                <span class="sm:hidden" translate>group.view-members</span>
+              </button>
+            </a>
+          </div>
 
-        <a routerLink="/groups/{{ group.id }}/members">
-          <button class="btn btn-sm btn-secondary" translate>
-            group.view-members
-          </button>
-        </a>
+          @if (canEditGroup) {
+            <div
+              class="tooltip w-full sm:w-auto"
+              [attr.data-tip]="'group.edit' | translate"
+            >
+              <button
+                class="btn btn-sm btn-accent btn-soft w-full"
+                (click)="onEdit()"
+              >
+                <i class="bi bi-pencil-square"></i>
+                <span class="sm:hidden" translate>group.edit</span>
+              </button>
+            </div>
+          }
 
-        @if (canEditGroup) {
-          <button class="btn btn-sm" (click)="onEdit()" translate>
-            group.edit
-          </button>
-        }
+          @if (canLeaveGroup) {
+            <div
+              class="tooltip w-full sm:w-auto"
+              [attr.data-tip]="'group.leave' | translate"
+            >
+              <button
+                class="btn btn-sm btn-error btn-soft w-full"
+                (click)="onLeave()"
+                testTag="groups.card.leave"
+              >
+                <i class="bi bi-person-dash"></i>
+                <span class="sm:hidden" translate>group.leave</span>
+              </button>
+            </div>
+          }
+        </div>
       </div>
     }
   </div>

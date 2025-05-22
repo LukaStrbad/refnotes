@@ -6,10 +6,12 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { LoggerService } from '../../../services/logger.service';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { RouterLink } from '@angular/router';
+import { AskModalService } from '../../../services/ask-modal.service';
+import { GroupBadgeComponent } from "../group-badge/group-badge.component";
 
 @Component({
   selector: 'app-group-card',
-  imports: [TranslatePipe, TranslateDirective, TestTagDirective, RouterLink],
+  imports: [TranslatePipe, TranslateDirective, TestTagDirective, RouterLink, GroupBadgeComponent],
   templateUrl: './group-card.component.html',
   styleUrl: './group-card.component.css'
 })
@@ -22,19 +24,25 @@ export class GroupCardComponent implements AfterViewInit {
   @Output()
   edit = new EventEmitter<GroupDto>();
 
+  @Output()
+  leave = new EventEmitter<GroupDto>();
+
   members: GroupUserDto[] | null = null;
   canInviteMembers = false;
   canEditGroup = false;
+  canLeaveGroup = false;
 
   constructor(
     private userGroupService: UserGroupService,
     private log: LoggerService,
+    private askModal: AskModalService,
   ) { }
 
   ngAfterViewInit(): void {
     this.fetchMembers().then();
     this.canInviteMembers = this.canInvite();
-    this.canEditGroup = this.canEdit() || true;
+    this.canEditGroup = this.canEdit();
+    this.canLeaveGroup = this.canLeave();
   }
 
   async fetchMembers() {
@@ -52,6 +60,10 @@ export class GroupCardComponent implements AfterViewInit {
     return this.group.role === UserGroupRole.Owner || this.group.role === UserGroupRole.Admin;
   }
 
+  canLeave(): boolean {
+    return this.group.role !== UserGroupRole.Owner;
+  }
+
   onInvite() {
     this.log.info('Inviting members to group', this.group.id);
     this.invite.emit(this.group);
@@ -60,5 +72,20 @@ export class GroupCardComponent implements AfterViewInit {
   onEdit() {
     this.log.info('Editing group', this.group.id);
     this.edit.emit(this.group);
+  }
+
+  async onLeave() {
+    const confirmed = await this.askModal.confirm(
+      'groups.confirm.leave-group-title',
+      'groups.confirm.leave-group-message',
+      { translate: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.log.info('Leaving group', this.group.id);
+    this.leave.emit(this.group);
   }
 }

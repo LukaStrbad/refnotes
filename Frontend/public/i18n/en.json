@@ -232,7 +232,13 @@
     "user-already-in-group": "You are already a part of the group",
     "join-group-success": "Successfully joined the group",
     "update-group-error": "Error updating group",
-    "update-group-success": "Group updated successfully"
+    "update-group-success": "Group updated successfully",
+    "confirm": {
+      "leave-group-title": "Leave group",
+      "leave-group-message": "Are you sure you want to leave the group?"
+    },
+    "leave-group-error": "Error leaving group",
+    "leave-group-success": "Successfully left the group"
   },
   "group": {
     "member-count": "Members: {{count}}",
@@ -260,7 +266,8 @@
       "admin": "Admin",
       "owner": "Owner",
       "member": "Member"
-    }
+    },
+    "leave": "Leave group"
   },
   "button": {
     "back": "Back"

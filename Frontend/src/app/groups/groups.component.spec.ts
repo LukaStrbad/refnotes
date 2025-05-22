@@ -8,6 +8,8 @@ import { GroupDto, UserGroupRole } from '../../model/user-group';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../model/user';
 
 describe('GroupsComponent', () => {
   let component: GroupsComponent;
@@ -15,6 +17,7 @@ describe('GroupsComponent', () => {
   let userGroupService: jasmine.SpyObj<UserGroupService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
   let nativeElement: HTMLElement;
+  let authService: jasmine.SpyObj<AuthService>;
   const mockActivatedRoute = { snapshot: { paramMap: {}, params: {} as Params } };
 
   const mockGroups: GroupDto[] = [
@@ -22,9 +25,17 @@ describe('GroupsComponent', () => {
     { id: 2, name: 'Group 2', role: UserGroupRole.Member }
   ];
 
+  const user: User = {
+    id: 1,
+    username: 'testuser',
+    name: 'Test User',
+    email: 'testuser@example.com',
+  }
+
   beforeEach(async () => {
-    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode']);
+    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode', 'removeUser']);
     notificationService = jasmine.createSpyObj('NotificationService', ['awaitAndNotifyError', 'success']);
+    authService = jasmine.createSpyObj('AuthService', [], { user: user });
 
     // Setup default spy behavior
     userGroupService.getUserGroupsCached.and.returnValue(of(mockGroups));
@@ -52,6 +63,7 @@ describe('GroupsComponent', () => {
           provide: ActivatedRoute,
           useValue: mockActivatedRoute,
         },
+        { provide: AuthService, useValue: authService },
         LoggerService,
         TranslateService
       ]
@@ -131,5 +143,16 @@ describe('GroupsComponent', () => {
 
     expect(userGroupService.addCurrentUserWithCode).toHaveBeenCalledWith(101, 'test-code');
     expect(notificationService.success).toHaveBeenCalledWith('groups.join-group-success');
+  });
+
+  it('should leave group', async () => {
+    const groupToLeave = mockGroups[1];
+    userGroupService.removeUser.and.resolveTo();
+
+    await component.onLeaveGroup(groupToLeave);
+
+    expect(userGroupService.removeUser).toHaveBeenCalledWith(groupToLeave.id, user.id);
+    expect(notificationService.success).toHaveBeenCalledWith('groups.leave-group-success');
+    expect(component.groups).not.toContain(groupToLeave);
   });
 });

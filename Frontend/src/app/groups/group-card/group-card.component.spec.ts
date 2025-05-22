@@ -6,15 +6,18 @@ import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslatePipe, T
 import { GroupUserDto, UserGroupRole } from '../../../model/user-group';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { AskModalService } from '../../../services/ask-modal.service';
 
 describe('GroupCardComponent', () => {
   let component: GroupCardComponent;
   let fixture: ComponentFixture<GroupCardComponent>;
   let userGroupService: jasmine.SpyObj<UserGroupService>;
   let nativeElement: HTMLElement;
+  let askModal: jasmine.SpyObj<AskModalService>;
 
   beforeEach(async () => {
     userGroupService = jasmine.createSpyObj('UserGroupService', ['getGroupMembersCached']);
+    askModal = jasmine.createSpyObj('AskModalService', ['confirm']);
 
     // Mock behavior for getGroupMembersCached
     userGroupService.getGroupMembersCached.and.returnValue(of([]));
@@ -30,6 +33,7 @@ describe('GroupCardComponent', () => {
       ],
       providers: [
         { provide: UserGroupService, useValue: userGroupService },
+        { provide: AskModalService, useValue: askModal },
         LoggerService,
         TranslateService,
         { provide: ActivatedRoute, useValue: {} },
@@ -123,5 +127,34 @@ describe('GroupCardComponent', () => {
 
     const loadingElement = nativeElement.querySelector('.loading');
     expect(loadingElement).toBeTruthy();
+  });
+
+  it('should allow leaving for Admin and Member roles', () => {
+    // Only Owners cannot leave
+    component.group.role = UserGroupRole.Owner;
+    expect(component.canLeave()).toBeFalsy();
+
+    component.group.role = UserGroupRole.Admin;
+    expect(component.canLeave()).toBeTruthy();
+
+    component.group.role = UserGroupRole.Member;
+    expect(component.canLeave()).toBeTruthy();
+  });
+
+  it('should emit leave event when leave button is clicked', async () => {
+    spyOn(component.leave, 'emit');
+    component.group.role = UserGroupRole.Member; // Set role to Member to enable leave button
+    askModal.confirm.and.resolveTo(true);
+
+    component.canLeaveGroup = true;
+    fixture.detectChanges();
+
+    const leaveButton = nativeElement.querySelector('button[data-test="groups.card.leave"]') as HTMLButtonElement;
+    expect(leaveButton).toBeTruthy();
+    leaveButton.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.leave.emit).toHaveBeenCalledWith(component.group);
   });
 });

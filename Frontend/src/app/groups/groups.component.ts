@@ -12,6 +12,7 @@ import { LoggerService } from '../../services/logger.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { EditGroupModalComponent } from "../components/modals/edit-group-modal/edit-group-modal.component";
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-groups',
@@ -32,6 +33,7 @@ export class GroupsComponent implements AfterViewInit {
     private logger: LoggerService,
     private route: ActivatedRoute,
     private router: Router,
+    private authService: AuthService,
   ) { }
 
   ngAfterViewInit(): void {
@@ -129,5 +131,27 @@ export class GroupsComponent implements AfterViewInit {
     this.logger.info('Generated access link:', link);
 
     this.groupLinkCreatedModal.show(link);
+  }
+
+  async onLeaveGroup(group: GroupDto) {
+    const user = this.authService.user;
+    if (!user) {
+      this.logger.error('User not found when trying to leave group');
+      return;
+    }
+
+    await this.notificationService.awaitAndNotifyError(
+      this.userGroupService.removeUser(group.id, user.id),
+      {
+        default: await getTranslation(this.translateService, 'groups.leave-group-error')
+      },
+      this.logger,
+    );
+
+    this.groups = this.groups.filter(g => g.id !== group.id);
+    this.notificationService.success(
+      await getTranslation(this.translateService, 'groups.leave-group-success')
+    );
+    this.logger.info('Left group:', group.id);
   }
 }

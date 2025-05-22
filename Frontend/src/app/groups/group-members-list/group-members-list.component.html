@@ -78,21 +78,7 @@
         <tr>
           <td>{{ member.username }}</td>
           <td>
-            <div
-              class="badge badge-lg font-medium"
-              [class]="
-                member.role === UserGroupRole.Owner
-                  ? 'badge-primary'
-                  : member.role === UserGroupRole.Admin
-                    ? 'badge-secondary'
-                    : 'badge-ghost'
-              "
-            >
-              {{
-                "group.role." + UserGroupRole[member.role].toLowerCase()
-                  | translate
-              }}
-            </div>
+            <app-group-badge [role]="member.role"></app-group-badge>
           </td>
           @if (canManageMembers) {
             <td>

@@ -243,7 +243,8 @@
       "admin": "Administrator",
       "member": "Član",
       "owner": "Vlasnik"
-    }
+    },
+    "leave": "Napustiti grupu"
   },
   "groups": {
     "link-created": {
@@ -260,7 +261,13 @@
     "join-group-success": "Uspješno pridruženje grupi",
     "user-already-in-group": "Već ste dio grupe",
     "update-group-error": "Greška prilikom uređivanja grupe",
-    "update-group-success": "Izmjene grupe uspješno spremljene"
+    "update-group-success": "Izmjene grupe uspješno spremljene",
+    "confirm": {
+      "leave-group-message": "Jeste li sigurni da želite napustiti grupu?",
+      "leave-group-title": "Napuštenje grupe"
+    },
+    "leave-group-error": "Pogreška prilikom napuštanja grupe",
+    "leave-group-success": "Uspješno napuštenje grupe"
   },
   "button": {
     "back": "Nazad"
