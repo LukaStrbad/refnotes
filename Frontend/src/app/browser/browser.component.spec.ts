@@ -174,7 +174,7 @@ describe('BrowserComponent', () => {
     expect(fileTrs.length).toBe(1);
     const fileNames = component.currentFolder!.files.map((f) => f.name);
     expect(fileNames).toContain('test.txt');
-    expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '');
+    expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '', undefined);
   });
 
   it('should create a new folder', async () => {
@@ -191,7 +191,7 @@ describe('BrowserComponent', () => {
 
     expect(folderTrs.length).toBe(1);
     expect(component.currentFolder!.directories).toContain('newFolder');
-    expect(browserService.addDirectory).toHaveBeenCalledWith('/newFolder');
+    expect(browserService.addDirectory).toHaveBeenCalledWith('/newFolder', undefined);
   });
 
   it('should delete a file', async () => {

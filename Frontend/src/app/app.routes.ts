@@ -53,6 +53,10 @@ export const routes: Routes = [
     component: GroupMembersListComponent,
   },
   {
+    path: "groups/:groupId/browser",
+    component: BrowserComponent,
+  },
+  {
     path: "join-group/:id/:code",
     component: GroupsComponent,
   }

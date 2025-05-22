@@ -28,11 +28,11 @@ export class SelectFileService {
     this._selectedFiles.clear();
   }
 
-  async moveFiles(destination: string) {
+  async moveFiles(destination: string, groupId: number | undefined) {
     const movePromises = Array.from(this._selectedFiles).map((file) => {
       const fileName = file.split('/').pop() || '';
       const newFilePath = joinPaths(destination, fileName);
-      return this.fileService.moveFile(file, newFilePath);
+      return this.fileService.moveFile(file, newFilePath, groupId);
     });
     await Promise.all(movePromises);
     this.clearSelectedFiles();
