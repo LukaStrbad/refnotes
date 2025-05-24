@@ -55,6 +55,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   readonly selectedFiles: ReadonlySet<string>;
   readonly groupId?: number;
   readonly linkBasePath: string = '';
+  readonly breadcrumbs: BreadcrumbItem[] = [];
 
   // Public
   currentFolder: Directory | null = null;
@@ -96,20 +97,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this._dateLang = value;
   }
 
-  get breadcrumbs(): BreadcrumbItem[] {
-    const breadcrumbs: BreadcrumbItem[] = [];
-    let path = '';
-    for (const stackPart of this.pathStack) {
-      path += '/' + stackPart;
-      breadcrumbs.push({
-        name: stackPart,
-        path: path,
-        icon: 'folder',
-      });
-    }
-    return breadcrumbs;
-  }
-
   get files(): FileWithTime[] {
     return this.currentFolder?.files ?? [];
   }
@@ -149,9 +136,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.navSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.loadingPromise = this.refreshRoute();
+        this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs);
       });
-    this.loadingPromise = this.refreshRoute();
+
+    this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs);
   }
 
   ngOnDestroy(): void {
@@ -183,6 +171,28 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.updateFileTimesInterval = setInterval(() => {
       this.updateFileTimes();
     }, 1000 * 60);
+  }
+
+  private resetBreadcrumbs() {
+    this.breadcrumbs.length = 0;
+    this.breadcrumbs.push(...this.getBreadcrumbs());
+  }
+
+  private getBreadcrumbs(): BreadcrumbItem[] {
+    const breadcrumbs: BreadcrumbItem[] = [];
+
+    const path: string[] = [this.linkBasePath + '/browser'];
+
+    for (const stackPart of this.pathStack) {
+      path.push(stackPart);
+      console.log(path);
+      breadcrumbs.push({
+        name: stackPart,
+        path: [...path],
+        icon: 'folder',
+      });
+    }
+    return breadcrumbs;
   }
 
   async createNewFile(filename: string) {
@@ -494,6 +504,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
 interface BreadcrumbItem {
   name: string;
-  path: string;
+  path: string[];
   icon: string;
 }
