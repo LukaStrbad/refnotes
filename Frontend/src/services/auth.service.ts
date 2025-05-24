@@ -1,4 +1,4 @@
-import { Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { Inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -35,20 +35,55 @@ export class AuthService {
   constructor(
     private httpBackend: HttpBackend,
     private router: Router,
-    private cookieService: CookieService
+    private cookieService: CookieService,
+    @Inject('Window') private window: Window,
   ) {
-    this.init();
+    this.init().then();
   }
 
   // This method is separate for testing purposes
-  init() {
+  async init() {
     // This ignores all interceptors
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
     this.http = new HttpClient(this.httpBackend);
 
     if (!this.setUserAndToken()) {
-      this.router.navigate(['/login']).then();
+      const redirectUrl = this.getRedirectUrl();
+      const navigationUrl = this.getLoggedOutNavigationUrl();
+
+      await this.router.navigate([navigationUrl], {
+        queryParams: {
+          redirectUrl
+        }
+      });
     }
+  }
+
+  getRedirectUrl(): string | undefined {
+    const url = new URL(this.window.location.href);
+
+    // Return the redirect URL if it's already set
+    const redirectUrl = url.searchParams.get('redirectUrl');
+    if (redirectUrl) {
+      return redirectUrl;
+    }
+
+    // Don't redirect to /, /login or /signup
+    if (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup') {
+      return undefined;
+    }
+
+    return this.window.location.href.split(this.window.location.origin)[1];
+  }
+
+  getLoggedOutNavigationUrl(): string {
+    // When user refreshes on the signup page, we must redirect to the signup page
+    if (this.window.location.pathname === '/signup') {
+      return '/signup';
+    }
+
+    // In other cases, redirect to the login page
+    return '/login';
   }
 
   // For testing purposes
@@ -81,20 +116,24 @@ export class AuthService {
     });
   }
 
-  async login(username: string, password: string) {
+  async login(username: string, password: string, redirectUrl?: string) {
     await firstValueFrom(
       this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true })
     );
     this.setUserAndToken();
-    await this.router.navigate(['/browser']);
+    try {
+      await this.router.navigate([redirectUrl ?? '/browser']);
+    } catch (e) {
+      console.error('Error navigating to redirect URL:', e);
+    }
   }
 
-  async register(username: string, name: string, email: string, password: string) {
+  async register(username: string, name: string, email: string, password: string, redirectUrl?: string) {
     await firstValueFrom(
       this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true })
     );
     this.setUserAndToken();
-    await this.router.navigate(['/browser']);
+    await this.router.navigate([redirectUrl ?? '/browser']);
   }
 
   private setUserAndToken() {

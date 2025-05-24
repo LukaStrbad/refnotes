@@ -53,10 +53,10 @@ describe('SelectFileService', () => {
 
     fileService.moveFile.and.returnValue(Promise.resolve({}));
 
-    await service.moveFiles(destination);
+    await service.moveFiles(destination, undefined);
 
-    expect(fileService.moveFile).toHaveBeenCalledWith(filePath1, '/new/path/file1.txt');
-    expect(fileService.moveFile).toHaveBeenCalledWith(filePath2, '/new/path/file2.txt');
+    expect(fileService.moveFile).toHaveBeenCalledWith(filePath1, '/new/path/file1.txt', undefined);
+    expect(fileService.moveFile).toHaveBeenCalledWith(filePath2, '/new/path/file2.txt', undefined);
     expect(service.selectedFiles.size).toBe(0);
   });
 });

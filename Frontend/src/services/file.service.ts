@@ -4,6 +4,7 @@ import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { FileInfo } from '../model/file';
 import { mapFileDates } from '../utils/date-utils';
+import { generateHttpParams } from '../utils/http-utils';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -11,53 +12,86 @@ const apiUrl = environment.apiUrl + '/file';
   providedIn: 'root',
 })
 export class FileService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  addFile(directoryPath: string, file: File): Observable<HttpEvent<object>> {
+  addFile(directoryPath: string, file: File, groupId?: number): Observable<HttpEvent<object>> {
     const formData = new FormData();
     formData.append('file', file);
 
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      groupId: groupId,
+    });
+
     return this.http.post(
-      `${apiUrl}/addFile?directoryPath=${directoryPath}`,
+      `${apiUrl}/addFile`,
       formData,
       {
         reportProgress: true,
         observe: 'events',
+        params,
       },
     );
   }
 
-  async addTextFile(directoryPath: string, name: string, content: string) {
+  async addTextFile(directoryPath: string, name: string, content: string, groupId?: number) {
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      name: name,
+      groupId: groupId,
+    });
+
     return firstValueFrom(
       this.http.post(
-        `${apiUrl}/addTextFile?directoryPath=${directoryPath}&name=${name}`,
+        `${apiUrl}/addTextFile`,
         content,
+        { params },
       ),
     );
   }
 
-  async moveFile(oldFilePath: string, newFilePath: string) {
+  async moveFile(oldFilePath: string, newFilePath: string, groupId?: number) {
+    const params = generateHttpParams({
+      oldName: oldFilePath,
+      newName: newFilePath,
+      groupId: groupId,
+    });
+
     return firstValueFrom(
       this.http.post(
-        `${apiUrl}/moveFile?oldName=${oldFilePath}&newName=${newFilePath}`,
-        {},
+        `${apiUrl}/moveFile`,
+        null,
+        { params },
       ),
     );
   }
 
-  async deleteFile(directoryPath: string, name: string) {
+  async deleteFile(directoryPath: string, name: string, groupId?: number) {
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      name: name,
+      groupId: groupId,
+    });
+
     return firstValueFrom(
       this.http.delete(
-        `${apiUrl}/deleteFile?directoryPath=${directoryPath}&name=${name}`,
+        `${apiUrl}/deleteFile`,
+        { params },
       ),
     );
   }
 
-  async getFile(directoryPath: string, name: string) {
+  async getFile(directoryPath: string, name: string, groupId?: number): Promise<ArrayBuffer> {
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      name: name,
+      groupId: groupId,
+    });
+
     return await firstValueFrom(
       this.http.get(
-        `${apiUrl}/getFile?directoryPath=${directoryPath}&name=${name}`,
-        { responseType: 'arraybuffer' },
+        `${apiUrl}/getFile`,
+        { params, responseType: 'arraybuffer' },
       ),
     );
   }
@@ -65,11 +99,18 @@ export class FileService {
   async getImage(
     directoryPath: string,
     name: string,
+    groupId?: number,
   ): Promise<ArrayBuffer | null> {
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      name: name,
+      groupId: groupId,
+    });
+
     const result = await firstValueFrom(
       this.http.get(
-        `${apiUrl}/getImage?directoryPath=${directoryPath}&name=${name}`,
-        { responseType: 'arraybuffer' },
+        `${apiUrl}/getImage`,
+        { params, responseType: 'arraybuffer' },
       ),
     );
 
@@ -80,24 +121,39 @@ export class FileService {
     return result;
   }
 
-  async saveTextFile(directoryPath: string, name: string, content: string) {
+  async saveTextFile(directoryPath: string, name: string, content: string, groupId?: number) {
+    const params = generateHttpParams({
+      directoryPath: directoryPath,
+      name: name,
+      groupId: groupId,
+    });
+
     await firstValueFrom(
       this.http.post(
-        `${apiUrl}/saveTextFile?directoryPath=${directoryPath}&name=${name}`,
+        `${apiUrl}/saveTextFile`,
         content,
+        { params },
       ),
     );
   }
 
-  async getFileInfo(path: string): Promise<FileInfo> {
+  async getFileInfo(path: string, groupId?: number): Promise<FileInfo> {
+    const params = generateHttpParams({
+      filePath: path,
+      groupId: groupId,
+    });
+
     const fileInfo = await firstValueFrom(
-      this.http.get<FileInfo>(`${apiUrl}/getFileInfo?filePath=${path}`),
+      this.http.get<FileInfo>(`${apiUrl}/getFileInfo`, { params }),
     );
     return mapFileDates(fileInfo);
   }
 
-  downloadFile(path: string) {
-    const requestUrl = `${apiUrl}/downloadFile?path=${encodeURIComponent(path)}`;
+  downloadFile(path: string, groupId?: number) {
+    let requestUrl = `${apiUrl}/downloadFile?path=${encodeURIComponent(path)}`;
+    if (groupId) {
+      requestUrl += `&groupId=${groupId}`;
+    }
 
     const a = document.createElement('a');
     a.href = requestUrl;

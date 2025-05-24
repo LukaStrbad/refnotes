@@ -28,6 +28,7 @@ export const appConfig: ApplicationConfig = {
         deps: [HttpClient]
       }
     }),
-    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy }
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
+    { provide: 'Window', useValue: window },
   ]
 };

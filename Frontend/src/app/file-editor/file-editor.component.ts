@@ -27,6 +27,9 @@ import { Location } from '@angular/common';
 })
 export class FileEditorComponent {
   readonly directoryPath: string;
+  readonly groupId?: number;
+  readonly linkBasePath: string = '';
+
   fileName: string;
   content = '';
   loading = true;
@@ -43,8 +46,13 @@ export class FileEditorComponent {
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
     [this.directoryPath, this.fileName] = splitDirAndName(path);
+    const groupId = route.snapshot.paramMap.get('groupId');
+    if (groupId) {
+      this.groupId = Number(groupId);
+      this.linkBasePath = `/groups/${this.groupId}`;
+    }
 
-    fileService.getFile(this.directoryPath, this.fileName)
+    fileService.getFile(this.directoryPath, this.fileName, this.groupId)
       .then((content) => {
         this.content = new TextDecoder().decode(content);
         this.loading = false;
@@ -52,7 +60,7 @@ export class FileEditorComponent {
         this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
       });
 
-    tagService.listFileTags(this.directoryPath, this.fileName)
+    tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
       .then((tags) => {
         this.tags = tags;
       }, async () => {
@@ -65,6 +73,7 @@ export class FileEditorComponent {
       this.directoryPath,
       this.fileName,
       this.content,
+      this.groupId,
     ), {
       default: await getTranslation(this.translate, 'error.save-file'),
     });
@@ -75,14 +84,14 @@ export class FileEditorComponent {
       return;
     }
 
-    await this.notificationService.awaitAndNotifyError(this.tagService.addFileTag(this.directoryPath, fileName, tag), {
+    await this.notificationService.awaitAndNotifyError(this.tagService.addFileTag(this.directoryPath, fileName, tag, this.groupId), {
       default: await getTranslation(this.translate, 'error.add-file-tag'),
     });
     this.tags.push(tag);
   }
 
   async removeTag([fileName, tag]: [string, string]) {
-    await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.directoryPath, fileName, tag), {
+    await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.directoryPath, fileName, tag, this.groupId), {
       default: await getTranslation(this.translate, 'error.remove-file-tag'),
     });
     this.tags = this.tags.filter((t) => t !== tag);
@@ -91,16 +100,13 @@ export class FileEditorComponent {
   async renameFile([, newFileName]: [string, string]) {
     const oldFilePath = joinPaths(this.directoryPath, this.fileName);
     const newFilePath = joinPaths(this.directoryPath, newFileName);
-    await this.notificationService.awaitAndNotifyError(this.fileService.moveFile(oldFilePath, newFilePath), {
+    await this.notificationService.awaitAndNotifyError(this.fileService.moveFile(oldFilePath, newFilePath, this.groupId), {
       default: await getTranslation(this.translate, 'error.rename-file'),
     });
 
-    const newUrl = this.router.createUrlTree(['/editor'], {
-      queryParams: {
-        directory: this.directoryPath,
-        file: newFileName,
-      }
-    });
+    const filePath = joinPaths(this.directoryPath, newFileName)
+
+    const newUrl = this.router.createUrlTree([this.linkBasePath, 'file', filePath, 'edit']);
     this.location.replaceState(newUrl.toString());
 
     const oldName = this.fileName;

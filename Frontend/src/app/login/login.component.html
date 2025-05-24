@@ -54,7 +54,7 @@
       <button class="btn btn-primary" (click)="login()" translate>
         login.login
       </button>
-      <a routerLink="/signup">
+      <a routerLink="/signup" [queryParams]="{ redirectUrl }">
         <button class="btn btn-secondary mt-4 w-full" translate>
           login.signUp
         </button>

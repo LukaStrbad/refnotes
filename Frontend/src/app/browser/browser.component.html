@@ -72,7 +72,7 @@
   <div class="breadcrumbs text-sm">
     <ul>
       <li>
-        <a routerLink="/browser">
+        <a [routerLink]="linkBasePath + '/browser'">
           <i class="bi bi-house mr-1"></i>
           {{ "browser.home" | translate }}
         </a>
@@ -80,7 +80,7 @@
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
           <a
-            routerLink="/browser{{ breadcrumb.path }}"
+            [routerLink]="breadcrumb.path"
             testTag="breadcrumb-item"
           >
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
@@ -225,7 +225,12 @@
               @if (isEditable(file)) {
                 <a
                   class="btn btn-sm btn-accent"
-                  [routerLink]="['/file', getFilePath(file), 'edit']"
+                  [routerLink]="[
+                    linkBasePath,
+                    'file',
+                    getFilePath(file),
+                    'edit',
+                  ]"
                   testTag="browser.edit-file"
                 >
                   <i class="bi bi-pencil"></i>

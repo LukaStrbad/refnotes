@@ -8,10 +8,16 @@ import { firstValueFrom, of } from 'rxjs';
 describe('authInterceptor', () => {
   const interceptor: HttpInterceptorFn = (req, next) =>
     TestBed.runInInjectionContext(() => authInterceptor(req, next));
+  let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
+    authService = jasmine.createSpyObj('AuthService', ['isTokenExpired', 'tryToRefreshTokens'], ['accessToken']);
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClient()]
+      providers: [
+        provideHttpClient(),
+        { provide: AuthService, useValue: authService }
+      ]
     });
     localStorage.clear();
   });
@@ -21,8 +27,7 @@ describe('authInterceptor', () => {
   });
 
   it('should add withCredentials option', async () => {
-    const authService = TestBed.inject(AuthService);
-    spyOn(authService, 'isTokenExpired').and.returnValue(false);
+    authService.isTokenExpired.and.returnValue(false);
 
     const mockNext: HttpHandlerFn = jasmine.createSpy('HttpHandlerFn')
       .and.callFake(req => of(req));
@@ -33,16 +38,16 @@ describe('authInterceptor', () => {
     const resultObservable = interceptor(fakeRequest, mockNext);
     const result = await firstValueFrom(resultObservable);
 
-    expect(fakeRequest.clone).toHaveBeenCalledWith({withCredentials: true});
+    expect(fakeRequest.clone).toHaveBeenCalledWith({ withCredentials: true });
     expect(result).toBeTruthy();
   });
 
   it('should refresh tokens if expired, then continue if refresh succeeds', async () => {
-    const authService = TestBed.inject(AuthService);
-    spyOnProperty(authService, 'accessToken', 'get').and.returnValues('old-token', 'new-token');
+    const accessTokenProperty = Object.getOwnPropertyDescriptor(authService, 'accessToken') as { get: jasmine.Spy<(this: jasmine.SpyObj<AuthService>) => string | null> };
+    accessTokenProperty.get.and.returnValues('old-token', 'new-token');
+    authService.isTokenExpired.and.returnValue(true);
 
-    spyOn(authService, 'isTokenExpired').and.returnValue(true);
-    const tryToRefreshTokensSpy = spyOn(authService, 'tryToRefreshTokens').and.callFake(() => {
+    authService.tryToRefreshTokens.and.callFake(() => {
       return Promise.resolve(true);
     });
 
@@ -56,7 +61,7 @@ describe('authInterceptor', () => {
     const resultObservable = interceptor(fakeRequest, mockNext);
     await firstValueFrom(resultObservable);
 
-    expect(tryToRefreshTokensSpy).toHaveBeenCalled();
+    expect(authService.tryToRefreshTokens).toHaveBeenCalled();
     expect(fakeRequest.clone).toHaveBeenCalled();
     expect(authService.accessToken).toBe('new-token');
     expect(mockNext).toHaveBeenCalled();

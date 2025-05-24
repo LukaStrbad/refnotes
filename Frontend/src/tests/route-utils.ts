@@ -1,14 +1,12 @@
 import { TestBed } from "@angular/core/testing";
 import { ActivatedRoute } from "@angular/router";
-import { joinPaths } from "../utils/path-utils";
 
-export function mockActivatedRoute(directory: string, file: string) {
+export function mockActivatedRoute(values: Record<string, string>) {
   const activatedRoute = TestBed.inject(ActivatedRoute);
   activatedRoute.snapshot.paramMap.get = (param: string) => {
-    if (param === 'path') {
-      return joinPaths(directory, file);
+    if (param in values) {
+      return values[param];
     }
-
-    throw new Error(`Unknown query parameter: ${param}`);
-  }
+    return null;
+  };
 }

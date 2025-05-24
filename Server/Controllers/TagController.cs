@@ -16,6 +16,13 @@ public class TagController(ITagService tagService) : ControllerBase
         return Ok(await tagService.ListAllTags());
     }
 
+    [HttpGet("listAllGroupTags")]
+    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<string>>> ListAllGroupTags(int groupId)
+    {
+        return Ok(await tagService.ListAllGroupTags(groupId));
+    }
+
     [HttpGet("listFileTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<string>>> ListFileTags(string directoryPath, string name, int? groupId)
