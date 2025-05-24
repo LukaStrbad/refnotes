@@ -136,10 +136,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.navSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs);
+        this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs.bind(this));
       });
 
-    this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs);
+    this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs.bind(this));
   }
 
   ngOnDestroy(): void {

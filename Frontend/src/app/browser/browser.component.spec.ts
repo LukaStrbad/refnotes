@@ -96,6 +96,7 @@ describe('BrowserComponent', () => {
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
   let authService: jasmine.SpyObj<AuthService>;
+
   beforeEach(async () => {
     const setup = setupTestBed();
     browserService = setup.browserService;
