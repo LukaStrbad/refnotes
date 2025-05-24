@@ -55,6 +55,20 @@ export const routes: Routes = [
   {
     path: "groups/:groupId/browser",
     component: BrowserComponent,
+    children: [
+      {
+        path: '**',
+        component: BrowserComponent
+      }
+    ]
+  },
+  {
+    path: "groups/:groupId/file/:path/edit",
+    component: FileEditorComponent,
+  },
+  {
+    path: "groups/:groupId/file/:path/preview",
+    component: FilePreviewComponent,
   },
   {
     path: "join-group/:id/:code",

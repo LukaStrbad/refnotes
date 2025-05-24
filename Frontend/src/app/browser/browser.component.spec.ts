@@ -9,7 +9,7 @@ import {
 import { BrowserService } from '../../services/browser.service';
 import { LoggerService } from '../../services/logger.service';
 import { AuthService } from '../../services/auth.service';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Observable, of, Subscriber } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -22,66 +22,89 @@ function createFile(name: string): File {
   return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
+function setupTestBed(groupId?: string) {
+  const browserService = jasmine.createSpyObj<BrowserService>('BrowserService', [
+    'listCached',
+    'addDirectory',
+    'deleteDirectory',
+  ]);
+  const fileService = jasmine.createSpyObj<FileService>('FileService', [
+    'addTextFile',
+    'deleteFile',
+    'addFile',
+  ]);
+  const authService = jasmine.createSpyObj<AuthService>('AuthService', [], ['user']);
+  const storage: Record<string, string> = {};
+
+  // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
+  // This mocks localStorage to avoid the issue
+  spyOn(localStorage, 'getItem').and.callFake(
+    (key: string) => storage[key] ?? null,
+  );
+  spyOn(localStorage, 'setItem').and.callFake(
+    (key: string, value: string) => {
+      storage[key] = value;
+    },
+  );
+
+  browserService.listCached.and.returnValue(
+    of({ name: '/', files: [], directories: [] }),
+  );
+
+  const imports = [
+    BrowserComponent,
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useClass: TranslateFakeLoader,
+      },
+    }),
+  ];
+
+  const providers: unknown[] = [
+    provideRouter([
+      {
+        path: '**',
+        component: BrowserComponent,
+      },
+    ]),
+    provideHttpClient(),
+    provideHttpClientTesting(),
+    LoggerService,
+    { provide: AuthService, useValue: authService },
+    { provide: BrowserService, useValue: browserService },
+    { provide: FileService, useValue: fileService },
+  ];
+
+  // Add ActivatedRoute mock only if groupId is provided
+  if (groupId) {
+    const mockActivatedRoute = {
+      snapshot: {
+        params: { groupId },
+        paramMap: { get: (key: string) => key === 'groupId' ? groupId : null }
+      }
+    };
+    providers.push({ provide: ActivatedRoute, useValue: mockActivatedRoute });
+  }
+
+  return { browserService, fileService, authService, storage, providers, imports };
+}
+
 describe('BrowserComponent', () => {
   let component: BrowserComponent;
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
   let authService: jasmine.SpyObj<AuthService>;
-  const storage: Record<string, string> = {};
-
   beforeEach(async () => {
-    // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
-    // This mocks localStorage to avoid the issue
-    spyOn(localStorage, 'getItem').and.callFake(
-      (key: string) => storage[key] ?? null,
-    );
-    spyOn(localStorage, 'setItem').and.callFake(
-      (key: string, value: string) => {
-        storage[key] = value;
-      },
-    );
-
-    browserService = jasmine.createSpyObj('BrowserService', [
-      'listCached',
-      'addDirectory',
-      'deleteDirectory',
-    ]);
-    fileService = jasmine.createSpyObj('FileService', [
-      'addTextFile',
-      'deleteFile',
-      'addFile',
-    ]);
-    authService = jasmine.createSpyObj('AuthService', [], ['user']);
-
-    browserService.listCached.and.returnValue(
-      of({ name: '/', files: [], directories: [] }),
-    );
+    const setup = setupTestBed();
+    browserService = setup.browserService;
+    fileService = setup.fileService;
+    authService = setup.authService;
 
     await TestBed.configureTestingModule({
-      imports: [
-        BrowserComponent,
-        TranslateModule.forRoot({
-          loader: {
-            provide: TranslateLoader,
-            useClass: TranslateFakeLoader,
-          },
-        }),
-      ],
-      providers: [
-        provideRouter([
-          {
-            path: '**',
-            component: BrowserComponent,
-          },
-        ]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        LoggerService,
-        { provide: AuthService, useValue: authService },
-        { provide: BrowserService, useValue: browserService },
-        { provide: FileService, useValue: fileService },
-      ],
+      imports: setup.imports,
+      providers: setup.providers,
     }).compileComponents();
 
     fixture = TestBed.createComponent(BrowserComponent);
@@ -303,5 +326,110 @@ describe('BrowserComponent', () => {
 
     expect(filesToMove.length).toBe(1);
     expect(filesToMove[0].textContent).toEqual('/test.txt');
+  });
+});
+
+describe('BrowserComponent with groupId', () => {
+  let component: BrowserComponent;
+  let fixture: ComponentFixture<BrowserComponent>;
+  let browserService: jasmine.SpyObj<BrowserService>;
+
+  beforeEach(async () => {
+    const setup = setupTestBed('1'); // Pass groupId to setup function
+    browserService = setup.browserService;
+
+    await TestBed.configureTestingModule({
+      imports: setup.imports,
+      providers: setup.providers,
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(BrowserComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    await component.loadingPromise;
+  });
+
+  it('should set groupId from route parameters and update linkBasePath', () => {
+    expect(component.groupId).toBe(1);
+    expect(component.linkBasePath).toBe('/groups/1');
+  });
+
+  it('should navigate to folder with group path when groupId is set', async () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl');
+
+    await component.navigateToFolder('/test-folder');
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/groups/1/browser/test-folder');
+  });
+
+  it('should call browserService.listCached with groupId when refreshing route', async () => {
+    const mockDirectory: Directory = {
+      name: '/',
+      files: [],
+      directories: []
+    };
+    browserService.listCached.and.returnValue(of(mockDirectory));
+
+    await component.refreshRoute();
+
+    expect(browserService.listCached).toHaveBeenCalledWith('/', 1);
+  });
+
+  it('should call browserService.addDirectory with groupId when creating new folder', async () => {
+    component.currentFolder = {
+      name: '/',
+      files: [],
+      directories: []
+    };
+
+    await component.createNewFolder('testFolder');
+
+    expect(browserService.addDirectory).toHaveBeenCalledWith('/testFolder', 1);
+  });
+
+  it('should call browserService.deleteDirectory with groupId when deleting folder', async () => {
+    await component.deleteFolder('testFolder');
+
+    expect(browserService.deleteDirectory).toHaveBeenCalledWith('/testFolder', 1);
+  });
+
+  it('should call browserService.listCached with groupId in nested folder paths', async () => {
+    // Mock router URL to simulate being in a nested folder
+    const router = TestBed.inject(Router);
+    spyOnProperty(router, 'url', 'get').and.returnValue('/groups/1/browser/parent/child');
+
+    const mockDirectory: Directory = {
+      name: '/parent/child',
+      files: [],
+      directories: []
+    };
+    browserService.listCached.and.returnValue(of(mockDirectory));
+
+    await component.refreshRoute();
+
+    expect(browserService.listCached).toHaveBeenCalledWith('/parent/child', 1);
+  });
+
+  it('should call browserService.addDirectory with groupId in nested folder paths', async () => {
+    component.currentFolder = {
+      name: '/parent',
+      files: [],
+      directories: []
+    };
+    component.currentPath = '/parent';
+
+    await component.createNewFolder('newChild');
+
+    expect(browserService.addDirectory).toHaveBeenCalledWith('/parent/newChild', 1);
+  });
+
+  it('should call browserService.deleteDirectory with groupId in nested folder paths', async () => {
+    component.currentPath = '/parent';
+
+    await component.deleteFolder('childToDelete');
+
+    expect(browserService.deleteDirectory).toHaveBeenCalledWith('/parent/childToDelete', 1);
   });
 });

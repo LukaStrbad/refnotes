@@ -225,7 +225,7 @@
               @if (isEditable(file)) {
                 <a
                   class="btn btn-sm btn-accent"
-                  [routerLink]="['/file', getFilePath(file), 'edit']"
+                  [routerLink]="[linkBasePath, 'file', getFilePath(file), 'edit']"
                   testTag="browser.edit-file"
                 >
                   <i class="bi bi-pencil"></i>

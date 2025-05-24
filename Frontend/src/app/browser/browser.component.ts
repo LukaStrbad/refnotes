@@ -54,6 +54,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   protected readonly tagLimit = 3;
   readonly selectedFiles: ReadonlySet<string>;
   readonly groupId?: number;
+  readonly linkBasePath: string = '';
 
   // Public
   currentFolder: Directory | null = null;
@@ -133,7 +134,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.dateLang = event.lang;
     });
 
-    this.groupId = this.route.snapshot.params['groupId'];
+    const groupId = this.route.snapshot.params['groupId'];
+    if (groupId) {
+      this.groupId = Number(groupId);
+      this.linkBasePath = `/groups/${this.groupId}`;
+    }
   }
 
   ngOnInit(): void {
@@ -328,12 +333,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   getFilePath(file: File): string {
-    return joinPaths(this.currentPath, file.name);
+    // Slice removes the leading /
+    return joinPaths(this.currentPath, file.name).slice(1);
   }
 
   async openPreview(file: File) {
     const path = joinPaths(this.currentPath, file.name);
-    await this.router.navigate(['/file', path, 'preview']);
+    const navigationRoute = [];
+    navigationRoute.push(this.linkBasePath, 'file', path, 'preview');
+    await this.router.navigate(navigationRoute);
   }
 
   limitTags(tags: string[]): string[] {
@@ -372,7 +380,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async renameFile([oldFileName, newFileName]: [string, string]) {
     const oldFilePath = joinPaths(this.currentPath, oldFileName);
     const newFilePath = joinPaths(this.currentPath, newFileName);
-    await this.fileService.moveFile(oldFilePath, newFilePath);
+    await this.fileService.moveFile(oldFilePath, newFilePath, this.groupId);
     const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
     if (file) {
       file.name = newFileName;

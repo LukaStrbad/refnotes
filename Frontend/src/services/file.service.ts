@@ -139,7 +139,7 @@ export class FileService {
 
   async getFileInfo(path: string, groupId?: number): Promise<FileInfo> {
     const params = generateHttpParams({
-      path: path,
+      filePath: path,
       groupId: groupId,
     });
 
