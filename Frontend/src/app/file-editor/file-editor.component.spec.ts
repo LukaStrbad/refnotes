@@ -211,8 +211,7 @@ describe('FileEditorComponent', () => {
     fileService.getFile.and.resolveTo(new ArrayBuffer(0));
     tagService.listFileTags.and.resolveTo([]);
     const location = TestBed.inject(Location);
-    let newPath = '';
-    spyOn(location, 'replaceState').and.callFake((path) => (newPath = path));
+    spyOn(location, 'replaceState');
 
     fixture = TestBed.createComponent(FileEditorComponent);
     const component = fixture.componentInstance;
@@ -226,7 +225,7 @@ describe('FileEditorComponent', () => {
       "/test/new-name.txt",
       undefined,
     );
-    expect(newPath).toContain('file=new-name.txt');
+    expect(location.replaceState).toHaveBeenCalledWith('/file/%2Ftest%2Fnew-name.txt/edit');
   });
 
   it('should rename file in root directory', async () => {
@@ -348,5 +347,13 @@ describe('FileEditorComponent with groupId', () => {
       '/test/renamed.txt',
       123,
     );
+  });
+
+  it('should update URL with groupId when renaming file', async () => {
+    const location = TestBed.inject(Location);
+
+    await component.renameFile(['test.txt', 'renamed.txt']);
+
+    expect(location.replaceState).toHaveBeenCalledWith('/groups/123/file/%2Ftest%2Frenamed.txt/edit');
   });
 });

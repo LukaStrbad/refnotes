@@ -28,6 +28,7 @@ import { Location } from '@angular/common';
 export class FileEditorComponent {
   readonly directoryPath: string;
   readonly groupId?: number;
+  readonly linkBasePath: string = '';
 
   fileName: string;
   content = '';
@@ -48,6 +49,7 @@ export class FileEditorComponent {
     const groupId = route.snapshot.paramMap.get('groupId');
     if (groupId) {
       this.groupId = Number(groupId);
+      this.linkBasePath = `/groups/${this.groupId}`;
     }
 
     fileService.getFile(this.directoryPath, this.fileName, this.groupId)
@@ -102,12 +104,9 @@ export class FileEditorComponent {
       default: await getTranslation(this.translate, 'error.rename-file'),
     });
 
-    const newUrl = this.router.createUrlTree(['/editor'], {
-      queryParams: {
-        directory: this.directoryPath,
-        file: newFileName,
-      }
-    });
+    const filePath = joinPaths(this.directoryPath, newFileName)
+
+    const newUrl = this.router.createUrlTree([this.linkBasePath, 'file', filePath, 'edit']);
     this.location.replaceState(newUrl.toString());
 
     const oldName = this.fileName;

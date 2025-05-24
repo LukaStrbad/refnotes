@@ -333,8 +333,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   getFilePath(file: File): string {
-    // Slice removes the leading /
-    return joinPaths(this.currentPath, file.name).slice(1);
+    return joinPaths(this.currentPath, file.name);
   }
 
   async openPreview(file: File) {
