@@ -185,7 +185,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     for (const stackPart of this.pathStack) {
       path.push(stackPart);
-      console.log(path);
       breadcrumbs.push({
         name: stackPart,
         path: [...path],

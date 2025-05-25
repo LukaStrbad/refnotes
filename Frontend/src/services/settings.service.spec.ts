@@ -7,7 +7,7 @@ import {
   TranslateModule,
   TranslateService,
 } from '@ngx-translate/core';
-import {MdEditorSettings, Theme} from '../model/settings';
+import { MdEditorSettings, Theme } from '../model/settings';
 
 describe('SettingsService', () => {
   let service: SettingsService;
@@ -131,5 +131,36 @@ describe('SettingsService', () => {
     expect(localStorage.getItem('mdEditorSettings')).toBe(
       JSON.stringify(settings),
     );
+  });
+
+  it('should return default group settings if no settings are stored', () => {
+    expect(service.group()).toEqual({
+      rememberGroupPath: true,
+    });
+  });
+
+  it('should return stored group settings if settings are stored', () => {
+    const settings = JSON.stringify({
+      rememberGroupPath: false,
+      groupPath: '/custom-path',
+    });
+    localStorage.setItem('groupSettings', settings);
+    service = new SettingsService(translate);
+
+    expect(service.group()).toEqual({
+      rememberGroupPath: false,
+      groupPath: '/custom-path',
+    });
+  });
+
+  it('should set and store group settings', () => {
+    const settings = {
+      rememberGroupPath: false,
+      groupPath: '/custom-path',
+    };
+    service.setGroupSettings(settings);
+
+    expect(service.group()).toEqual(settings);
+    expect(localStorage.getItem('groupSettings')).toBe(JSON.stringify(settings));
   });
 });

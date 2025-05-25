@@ -19,6 +19,13 @@
       "dark": "Tamna",
       "light": "Svijetla",
       "title": "Tema"
+    },
+    "group": {
+      "title": "Postavke grupe"
+    },
+    "groupSettings": {
+      "rememberGroupPathLabel": "Pamćenje posljednje grupne putanje pri povratku u navigacijsku kategoriju grupa",
+      "rememberedPath": "Trenutna zapamćena putanja: {{path}}"
     }
   },
   "app": {

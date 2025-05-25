@@ -29,7 +29,8 @@
             </a>
           </li>
           <li>
-            <a routerLink="groups">
+            <!-- If on group page, show main group link -->
+            <a [routerLink]="onGroupPage ? '/groups' : groupLink()" testTag="header.groups-link">
               <i class="bi bi-people"></i>
               {{ "header.routes.groups" | translate }}
             </a>
@@ -63,7 +64,8 @@
             </a>
           </li>
           <li>
-            <a routerLink="groups">
+            <!-- If on group page, show main group link -->
+            <a [routerLink]="onGroupPage ? '/groups' : groupLink()" testTag="header.groups-link">
               <i class="bi bi-people"></i>
               {{ "header.routes.groups" | translate }}
             </a>

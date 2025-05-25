@@ -19,6 +19,13 @@
       "dark": "Dark",
       "light": "Light",
       "title": "Theme"
+    },
+    "group": {
+      "title": "Group settings"
+    },
+    "groupSettings": {
+      "rememberGroupPathLabel": "Remember last group path when returning to Groups navigation category",
+      "rememberedPath": "Current path: {{path}}"
     }
   },
   "app": {
