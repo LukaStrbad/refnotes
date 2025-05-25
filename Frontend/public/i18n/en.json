@@ -231,7 +231,7 @@
       "title": "Group link created",
       "description": "You can share the following link to invite others to the group:",
       "copy": "Copy link",
-      "copied-to-clipboard": "LIink copied to clipboard",
+      "copied-to-clipboard": "Link copied to clipboard",
       "copy-failed": "Failed to copy the link to clipboard"
     },
     "invalid-join-group-link": "Group join link is invalid",

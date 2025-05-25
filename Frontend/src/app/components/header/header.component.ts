@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, computed, ElementRef, output, Signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, computed, ElementRef, OnDestroy, output, Signal, ViewChild } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -8,7 +8,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { NotificationService } from '../../../services/notification.service';
 import { getTranslation } from '../../../utils/translation-utils';
 import { SearchComponent } from "../search/search.component";
-import { filter } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 
 @Component({
@@ -17,11 +17,12 @@ import { TestTagDirective } from '../../../directives/test-tag.directive';
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
-export class HeaderComponent implements AfterViewInit {
+export class HeaderComponent implements AfterViewInit, OnDestroy {
   openMobileSearch = output<void>();
 
   groupLink: Signal<string>;
   onGroupPage = false;
+  private navSubscription: Subscription;
 
   @ViewChild('header', { static: true })
   private headerRef!: ElementRef<HTMLElement>;
@@ -39,7 +40,7 @@ export class HeaderComponent implements AfterViewInit {
       return savedPath ?? '/groups';
     });
 
-    this.router.events.pipe(filter(event => event instanceof NavigationEnd))
+    this.navSubscription = this.router.events.pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event) => {
         const url = event.urlAfterRedirects;
         this.onGroupPage = url.startsWith('/groups');
@@ -52,6 +53,10 @@ export class HeaderComponent implements AfterViewInit {
     this.headerRef.nativeElement.onresize = () => {
       this.setHeaderHeightVar();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.navSubscription.unsubscribe();
   }
 
   private setHeaderHeightVar() {
