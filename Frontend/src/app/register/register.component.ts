@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import {
@@ -20,7 +20,7 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import {TestTagDirective} from "../../directives/test-tag.directive";
+import { TestTagDirective } from "../../directives/test-tag.directive";
 
 @Component({
   selector: 'app-register',
@@ -154,7 +154,14 @@ export class RegisterComponent {
     );
   }
 
-  constructor(private auth: AuthService) {}
+  redirectUrl?: string;
+
+  constructor(
+    private auth: AuthService,
+    private route: ActivatedRoute
+  ) {
+    this.redirectUrl = this.route.snapshot.queryParamMap.get("redirectUrl") ?? undefined;
+  }
 
   async register() {
     const { username, name, email, password } = this.registrationForm.value;
@@ -163,6 +170,6 @@ export class RegisterComponent {
       return;
     }
 
-    await this.auth.register(username, name, email, password);
+    await this.auth.register(username, name, email, password, this.redirectUrl);
   }
 }

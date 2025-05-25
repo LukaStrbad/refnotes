@@ -19,6 +19,13 @@
       "dark": "Dark",
       "light": "Light",
       "title": "Theme"
+    },
+    "group": {
+      "title": "Group settings"
+    },
+    "groupSettings": {
+      "rememberGroupPathLabel": "Remember last group path when returning to Groups navigation category",
+      "rememberedPath": "Current path: {{path}}"
     }
   },
   "app": {
@@ -28,7 +35,8 @@
     "logout": "Logout",
     "routes": {
       "home": "Home",
-      "settings": "Settings"
+      "settings": "Settings",
+      "groups": "Groups"
     }
   },
   "login": {
@@ -129,6 +137,22 @@
       "accept": "Accept",
       "no": "No",
       "yes": "Yes"
+    },
+    "createGroup": {
+      "title": "Create group",
+      "groupName": "Group name",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "editGroup": {
+      "prompt": {
+        "title": "Update group",
+        "message": "Are you sure you want to update the group?"
+      },
+      "title": "Edit group",
+      "groupName": "Group name",
+      "cancel": "Cancel",
+      "update": "Update"
     }
   },
   "auth": {
@@ -179,7 +203,9 @@
     "load-file": "Error loading file",
     "load-image": "Error loading image",
     "load-file-tags": "Error loading file tags",
-    "deleting-files": "An error occurred deleting some files"
+    "deleting-files": "An error occurred deleting some files",
+    "access-code-not-allowed": "You are not allowed to create group access codes",
+    "error-creating-access-code": "Error generating group access code"
   },
   "time": {
     "just-now": "Just now",
@@ -197,5 +223,60 @@
       "modified-from": "Modified after",
       "modified-to": "Modified before"
     }
+  },
+  "groups": {
+    "new-group": "New group",
+    "no-groups": "You are not a member of any group",
+    "link-created": {
+      "title": "Group link created",
+      "description": "You can share the following link to invite others to the group:",
+      "copy": "Copy link",
+      "copied-to-clipboard": "Link copied to clipboard",
+      "copy-failed": "Failed to copy the link to clipboard"
+    },
+    "invalid-join-group-link": "Group join link is invalid",
+    "join-group-error": "Error joining group",
+    "user-already-in-group": "You are already a part of the group",
+    "join-group-success": "Successfully joined the group",
+    "update-group-error": "Error updating group",
+    "update-group-success": "Group updated successfully",
+    "confirm": {
+      "leave-group-title": "Leave group",
+      "leave-group-message": "Are you sure you want to leave the group?"
+    },
+    "leave-group-error": "Error leaving group",
+    "leave-group-success": "Successfully left the group"
+  },
+  "group": {
+    "member-count": "Members: {{count}}",
+    "view-members": "View members",
+    "invite-members": "Invite",
+    "edit": "Edit",
+    "members": {
+      "change-role": "Change role",
+      "change-role-description": "You are about to change the role of user \"{{username}}\"",
+      "cancel": "Cancel",
+      "update-role": "Update role",
+      "username": "Username",
+      "role": "Role",
+      "actions": "Actions",
+      "no-members": "There are no members in this group",
+      "remove": "Remove",
+      "confirm-remove": "Remove user",
+      "confirm-remove-description": "Are you sure you want to remove user \"{{username}}\" from the group?",
+      "user-removed": "User removed from the group",
+      "error-removing-user": "Error removing user from the group",
+      "role-updated": "User role successfully updated",
+      "error-updating-role": "Error updating user role"
+    },
+    "role": {
+      "admin": "Admin",
+      "owner": "Owner",
+      "member": "Member"
+    },
+    "leave": "Leave group"
+  },
+  "button": {
+    "back": "Back"
   }
 }

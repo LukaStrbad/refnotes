@@ -14,7 +14,7 @@ public interface IUserGroupService
     /// </summary>
     /// <param name="name">An optional name for the user group. If null, the group will be created without a name.</param>
     /// <returns>The ID of the created group</returns>
-    Task<int> Create(string? name = null);
+    Task<GroupDto> Create(string? name = null);
 
     /// <summary>
     /// Updates a user group with new information.
@@ -117,7 +117,7 @@ public class UserGroupService(
     IEncryptionService encryptionService,
     IUserService userService) : IUserGroupService
 {
-    public async Task<int> Create(string? name = null)
+    public async Task<GroupDto> Create(string? name = null)
     {
         var user = await userService.GetUser();
 
@@ -145,7 +145,7 @@ public class UserGroupService(
         await context.UserGroupRoles.AddAsync(groupRole);
         await context.SaveChangesAsync();
 
-        return group.Id;
+        return new GroupDto(group.Id, name, groupRole.Role);
     }
 
     public async Task Update(int groupId, UpdateGroupDto updateGroup)
@@ -155,6 +155,11 @@ public class UserGroupService(
 
         if (role is null)
             throw new ForbiddenException("You don't have a permission to view this group");
+
+        if (role.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
+        {
+            throw new ForbiddenException("You don't have a permission to update this group");
+        }
 
         var group = await GetGroupAsync(groupId);
         group.Name = updateGroup.Name is null ? null : encryptionService.EncryptAesStringBase64(updateGroup.Name);

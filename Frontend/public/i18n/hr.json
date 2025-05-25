@@ -19,6 +19,13 @@
       "dark": "Tamna",
       "light": "Svijetla",
       "title": "Tema"
+    },
+    "group": {
+      "title": "Postavke grupe"
+    },
+    "groupSettings": {
+      "rememberGroupPathLabel": "Pamćenje posljednje grupne putanje pri povratku u navigacijsku kategoriju grupa",
+      "rememberedPath": "Trenutna zapamćena putanja: {{path}}"
     }
   },
   "app": {
@@ -28,7 +35,8 @@
     "logout": "Odjava",
     "routes": {
       "home": "Početna",
-      "settings": "Postavke"
+      "settings": "Postavke",
+      "groups": "Grupe"
     }
   },
   "login": {
@@ -129,6 +137,22 @@
       "cancel": "Otkaži",
       "no": "Ne",
       "yes": "Da"
+    },
+    "createGroup": {
+      "cancel": "Otkaži",
+      "create": "Stvori",
+      "groupName": "Naziv grupe",
+      "title": "Stvori grupu"
+    },
+    "editGroup": {
+      "cancel": "Otkaži",
+      "groupName": "Naziv grupe",
+      "prompt": {
+        "message": "Jesi siguran/a da želiš urediti grupu?",
+        "title": "Uređivanje grupe"
+      },
+      "title": "Uredi grupu",
+      "update": "Potvrdi"
     }
   },
   "auth": {
@@ -179,7 +203,9 @@
     "load-file": "Pogreška u učitavanje datoteke",
     "load-image": "Pogreška učitavanje slike",
     "load-file-tags": "Pogreška kod učitavanja oznaka datoteka",
-    "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka"
+    "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka",
+    "access-code-not-allowed": "Nemaš dopuštenje za kreiranje pristupnih kodova za ovu grupu",
+    "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda"
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
@@ -197,5 +223,60 @@
       "modified-to": "Izmijenjeno prije",
       "only-search-current-directory": "Pretraži samo ovaj direktorij"
     }
+  },
+  "group": {
+    "invite-members": "Pozvati",
+    "member-count": "Članovi: {{count}}",
+    "view-members": "Pogledaj članove",
+    "edit": "Uredi",
+    "members": {
+      "actions": "Radnje",
+      "cancel": "Odustani",
+      "change-role": "Promjena role",
+      "change-role-description": "Upravo ćete promijeniti rolu korisnika \"{{username}}\"",
+      "confirm-remove": "Uklanjanje korisnika",
+      "confirm-remove-description": "Jeste li sigurni da želite ukloniti korisnika \"{{username}}\" iz grupe?",
+      "error-removing-user": "Pogreška prilikom uklanjanja korisnika iz grupe",
+      "error-updating-role": "Pogreška prilikom ažuriranja korisničke role",
+      "no-members": "U ovoj grupi nema članova",
+      "remove": "Ukloni",
+      "role": "Rola",
+      "role-updated": "Rola korisnika je uspješno ažurirana",
+      "update-role": "Ažuriraj rolu",
+      "user-removed": "Korisnik je uklonjen iz grupe",
+      "username": "Korisničko ime"
+    },
+    "role": {
+      "admin": "Administrator",
+      "member": "Član",
+      "owner": "Vlasnik"
+    },
+    "leave": "Napustiti grupu"
+  },
+  "groups": {
+    "link-created": {
+      "copied-to-clipboard": "Veza kopirana u međuspremnik",
+      "copy": "Kopiraj vezu",
+      "copy-failed": "Greška prilikom kopiranja veze",
+      "description": "Možeš podijeliti sljedeću vezu da bi pozvao druge u grupu:",
+      "title": "Stvorena grupna veza"
+    },
+    "new-group": "Nova grupa",
+    "no-groups": "Nisi član nijedne grupe",
+    "invalid-join-group-link": "Link za pridruživanje grupi je nevažeći",
+    "join-group-error": "Pogreška u pridruživanju grupi",
+    "join-group-success": "Uspješno pridruženje grupi",
+    "user-already-in-group": "Već ste dio grupe",
+    "update-group-error": "Greška prilikom uređivanja grupe",
+    "update-group-success": "Izmjene grupe uspješno spremljene",
+    "confirm": {
+      "leave-group-message": "Jeste li sigurni da želite napustiti grupu?",
+      "leave-group-title": "Napuštenje grupe"
+    },
+    "leave-group-error": "Pogreška prilikom napuštanja grupe",
+    "leave-group-success": "Uspješno napuštenje grupe"
+  },
+  "button": {
+    "back": "Nazad"
   }
 }

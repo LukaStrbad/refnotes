@@ -1,6 +1,5 @@
 export type Theme = 'auto' | 'light' | 'dark';
 
-
 export type EditorMode = 'SideBySide' | 'EditorOnly' | 'PreviewOnly';
 
 export interface MdEditorSettings {
@@ -13,4 +12,9 @@ export interface MdEditorSettings {
 export interface SearchSettings {
   fullTextSearch: boolean;
   onlySearchCurrentDir: boolean;
+}
+
+export interface GroupSettings {
+  rememberGroupPath: boolean;
+  groupPath?: string;
 }

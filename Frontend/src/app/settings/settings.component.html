@@ -25,6 +25,35 @@
 
   <div class="card bg-base-100 shadow-xl">
     <div class="card-body">
+      <h2 class="card-title" translate>settings.group.title</h2>
+
+      <fieldset class="fieldset">
+        <label class="cursor-pointer fieldset-label">
+          <span class="label-text mr-2 select-none" translate>
+            settings.groupSettings.rememberGroupPathLabel
+          </span>
+          <input
+            type="checkbox"
+            class="checkbox checkbox-accent"
+            [(ngModel)]="group.rememberGroupPath"
+            (change)="updateGroupSettings()"
+          />
+        </label>
+
+        @if (group.groupPath) {
+          <span class="text-base-content/60">
+            {{
+              "settings.groupSettings.rememberedPath"
+                | translate: { path: group.groupPath }
+            }}
+          </span>
+        }
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
       <h2 class="card-title" translate>settings.theme.title</h2>
 
       <fieldset class="fieldset">
@@ -100,7 +129,7 @@
 
       <fieldset class="fieldset">
         <label class="cursor-pointer fieldset-label">
-          <span class="label-text mr-2" translate>
+          <span class="label-text mr-2 select-none" translate>
             settings.editorSettings.showLineNumbers
           </span>
           <input
@@ -114,7 +143,7 @@
 
       <fieldset class="fieldset">
         <label class="cursor-pointer fieldset-label">
-          <span class="label-text mr-2" translate>
+          <span class="label-text mr-2 select-none" translate>
             settings.editorSettings.wrapLines
           </span>
           <input
@@ -128,7 +157,7 @@
 
       <fieldset class="fieldset">
         <label class="cursor-pointer fieldset-label">
-          <div class="flex flex-col gap-2">
+          <div class="flex flex-col gap-2 select-none">
             <span class="label-text mr-2" translate>
               settings.editorSettings.experimentalFastRender
             </span>

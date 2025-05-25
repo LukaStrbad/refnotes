@@ -1,0 +1,43 @@
+<dialog #modal class="modal modal-bottom sm:modal-middle">
+  <div class="modal-box flex flex-col gap-4">
+    <h3 class="text-lg font-bold" translate>modals.editGroup.title</h3>
+
+    <div class="form-control w-full">
+      <label class="fieldset-label" for="nameInput" translate
+        >modals.editGroup.groupName</label
+      >
+      <input
+        type="text"
+        id="nameInput"
+        class="input input-bordered w-full"
+        [(ngModel)]="groupName"
+        (keyup.enter)="editGroup()"
+        testTag="input-group-name"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <button
+        class="btn btn-sm"
+        (click)="hide()"
+        testTag="button-cancel-edit"
+        translate
+      >
+        modals.editGroup.cancel
+      </button>
+      <button
+        class="btn btn-sm btn-primary"
+        (click)="editGroup()"
+        [disabled]="!groupName.trim()"
+        testTag="button-update-group"
+        translate
+      >
+        modals.editGroup.update
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

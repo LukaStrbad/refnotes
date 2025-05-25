@@ -10,11 +10,12 @@ import {
 import { AuthService } from '../../../services/auth.service';
 import { provideRouter } from '@angular/router';
 import { SettingsService } from '../../../services/settings.service';
-import { Component, signal } from '@angular/core';
+import { Component, signal, WritableSignal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { click } from "../../../tests/click-utils";
 import { SearchService } from '../../../services/search.service';
 import { TagService } from '../../../services/tag.service';
+import { GroupSettings } from '../../../model/settings';
 
 @Component({ selector: 'app-search', template: '' }) class SearchStubComponent { }
 
@@ -23,12 +24,16 @@ describe('HeaderComponent', () => {
   let fixture: ComponentFixture<HeaderComponent>;
   let auth: jasmine.SpyObj<AuthService>;
   let settings: jasmine.SpyObj<SettingsService>;
+  let groupSettingsSignal: WritableSignal<GroupSettings>;
 
   beforeEach(async () => {
     auth = jasmine.createSpyObj('AuthService', ['logout', 'isUserLoggedIn']);
+
+    groupSettingsSignal = signal({ rememberGroupPath: true } as GroupSettings);
     settings = jasmine.createSpyObj('SettingsService', ['setTheme'], {
       theme: signal('auto'),
-      search: signal({})
+      search: signal({}),
+      group: groupSettingsSignal,
     });
     const searchService = jasmine.createSpyObj<SearchService>('SearchService', ['searchFiles']);
     searchService.searchFiles.and.resolveTo([]);
@@ -123,5 +128,25 @@ describe('HeaderComponent', () => {
 
     click(themeButtons[2]); // Dark
     expect(settings.setTheme).toHaveBeenCalledWith('dark');
+  });
+
+  it('should link to remembered group path when not on groups page', () => {
+    groupSettingsSignal.set({ rememberGroupPath: true, groupPath: '/groups/1/browser' });
+    component.onGroupPage = false;
+    fixture.detectChanges();
+
+    const groupLink = fixture.debugElement.query(By.css('[data-test="header.groups-link"]')).nativeElement as HTMLAnchorElement;
+
+    expect(groupLink.getAttribute('href')).toBe('/groups/1/browser');
+  });
+
+  it('should link to /groups when on groups page', () => {
+    groupSettingsSignal.set({ rememberGroupPath: true, groupPath: '/groups/1/browser' });
+    component.onGroupPage = true;
+    fixture.detectChanges();
+
+    const groupLink = fixture.debugElement.query(By.css('[data-test="header.groups-link"]')).nativeElement as HTMLAnchorElement;
+
+    expect(groupLink.getAttribute('href')).toBe('/groups');
   });
 });

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { GENERIC_ERROR_CODE, getErrorMessage, HttpErrorMessages } from '../utils/errorHandler';
 import { TranslateService } from '@ngx-translate/core';
 import { getTranslation } from '../utils/translation-utils';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -40,7 +41,8 @@ export class NotificationService {
    */
   async awaitAndNotifyError<T>(
     promise: Promise<T>,
-    messages: HttpErrorMessages
+    messages: HttpErrorMessages,
+    logger?: LoggerService,
   ) {
     try {
       return await promise;
@@ -51,6 +53,7 @@ export class NotificationService {
         error = await getTranslation(this.translate, GENERIC_ERROR_CODE);
       }
       this.error(error);
+      logger?.error('Error occurred and notified user', e);
       throw e;
     }
   }

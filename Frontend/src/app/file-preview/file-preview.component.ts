@@ -27,6 +27,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   private readonly markdownHighlighter: MarkdownHighlighter;
   readonly directoryPath: string;
   readonly fileName: string;
+  readonly groupId?: number;
 
   loading = true;
   tags: string[] = [];
@@ -48,6 +49,10 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     private notificationService: NotificationService,
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
+    const groupId = route.snapshot.paramMap.get('groupId');
+    if (groupId) {
+      this.groupId = Number(groupId);
+    }
     [this.directoryPath, this.fileName] = splitDirAndName(path);
     this.fileType = fileUtils.getFileType(this.fileName);
 
@@ -70,7 +75,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
       this.loadFile();
     }
 
-    this.tagService.listFileTags(this.directoryPath, this.fileName)
+    this.tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
       .then((tags) => {
         this.tags = tags;
       }, async () => {
@@ -79,7 +84,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
 
     const dateLang = this.translate.currentLang;
 
-    this.fileService.getFileInfo(joinPaths(this.directoryPath, this.fileName))
+    this.fileService.getFileInfo(joinPaths(this.directoryPath, this.fileName), this.groupId)
       .then(async (fileInfo) => {
         this.fileInfo = await updateFileTime(fileInfo, this.translate, dateLang);
       });
@@ -92,7 +97,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   }
 
   loadFile() {
-    this.fileService.getFile(this.directoryPath, this.fileName)
+    this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
       .then((content) => {
         const text = new TextDecoder().decode(content);
         if (this.fileType === 'markdown') {
@@ -111,7 +116,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   }
 
   loadImage() {
-    this.fileService.getImage(this.directoryPath, this.fileName)
+    this.fileService.getImage(this.directoryPath, this.fileName, this.groupId)
       .then((data) => {
         if (!data) {
           return;

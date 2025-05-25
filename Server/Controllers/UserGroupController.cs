@@ -12,11 +12,11 @@ namespace Server.Controllers;
 public class UserGroupController(IUserGroupService userGroupService) : ControllerBase
 {
     [HttpPost("create")]
-    [ProducesResponseType<int>(StatusCodes.Status200OK)]
+    [ProducesResponseType<GroupDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult> Create(string? name = null)
     {
-        var id = await userGroupService.Create(name);
-        return Ok(id);
+        var newGroup = await userGroupService.Create(name);
+        return Ok(newGroup);
     }
 
     [HttpPost("{groupId:int}/update")]

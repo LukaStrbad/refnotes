@@ -18,10 +18,10 @@ RefNotes is a note-taking application built with .NET and Angular.
 - Alerts for errors and other actions
 - File downloads
 - File and folder search
+- User groups
 
 ## Planned Features
 
-- User groups
 - File sharing
 - File favorites
 - Public notes with a preview URL
