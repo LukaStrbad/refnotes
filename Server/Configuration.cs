@@ -40,6 +40,7 @@ public static class Configuration
         builder.Services.AddScoped<IUserGroupService, UserGroupService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IGroupPermissionService, GroupPermissionService>();
+        builder.Services.AddScoped<IPublicFileService, PublicFileService>();
 
         builder.Services.AddAuthentication(x =>
         {
