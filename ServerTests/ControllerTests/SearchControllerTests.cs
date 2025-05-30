@@ -1,20 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server.Controllers;
 using Server.Model;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class SearchControllerTests
+public class SearchControllerTests : IClassFixture<ControllerFixture<SearchController>>
 {
     private readonly SearchController _controller;
     private readonly ISearchService _searchService;
 
-    public SearchControllerTests()
+    public SearchControllerTests(ControllerFixture<SearchController> fixture)
     {
-        _searchService = Substitute.For<ISearchService>();
-        _controller = new SearchController(_searchService);
+        var serviceProvider = fixture.CreateServiceProvider();
+        _searchService = serviceProvider.GetRequiredService<ISearchService>();
+        _controller = serviceProvider.GetRequiredService<SearchController>();
     }
 
     [Fact]

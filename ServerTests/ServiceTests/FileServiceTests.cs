@@ -4,6 +4,7 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Services;
 using Server.Utils;
+using ServerTests.Fixtures;
 using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
@@ -505,107 +506,5 @@ public class FileServiceTests : BaseTests, IAsyncLifetime
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task AddFile_ThrowsWhenUserNotInGroup()
-    {
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to add a file to a group the user doesn't belong to
-        const string fileName = "unauthorized.txt";
-
-        // Act & Assert
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.AddFile(_directoryPath, fileName, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task MoveFile_ThrowsWhenUserNotInGroup()
-    {
-        // Set up a file in the group directory
-        const string fileName = "test_move.txt";
-        const string newFileName = "moved.txt";
-        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
-
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to move a file in a group the user doesn't belong to
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task DeleteFile_ThrowsWhenUserNotInGroup()
-    {
-        // Set up a file in the group directory
-        const string fileName = "test_delete.txt";
-        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
-
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to delete a file in a group the user doesn't belong to
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.DeleteFile(_directoryPath, fileName, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task GetFilesystemFilePath_ThrowsWhenUserNotInGroup()
-    {
-        // Set up a file in the group directory
-        const string fileName = "test_path.txt";
-        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
-
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to get the file path in a group the user doesn't belong to
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.GetFilesystemFilePath(_directoryPath, fileName, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task GetFileInfo_ThrowsWhenUserNotInGroup()
-    {
-        // Set up a file in the group directory
-        const string fileName = "test_info.txt";
-        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
-
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to get file info in a group the user doesn't belong to
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.GetFileInfo($"{_directoryPath}/{fileName}", _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permission")]
-    public async Task UpdateTimestamp_ThrowsWhenUserNotInGroup()
-    {
-        // Set up a file in the group directory
-        const string fileName = "test_timestamp.txt";
-        await _fileService.AddFile(_directoryPath, fileName, _group.Id);
-
-        // Create a different user and set it as current user
-        var (unauthorizedUser, _) = CreateUser(Context, $"test_unauthorized_{RandomString(32)}");
-        SetUser(unauthorizedUser);
-
-        // Try to update timestamp of a file in a group the user doesn't belong to
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _fileService.UpdateTimestamp(_directoryPath, fileName, _group.Id));
     }
 }

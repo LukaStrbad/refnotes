@@ -1,38 +1,34 @@
-﻿using System.Security.Claims;
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
-using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class FileControllerTests : BaseTests
+public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<FileController>>
 {
     private readonly FileController _controller;
     private readonly IFileService _fileService;
-    private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly IFileStorageService _fileStorageService;
     private readonly DefaultHttpContext _httpContext;
 
-    public FileControllerTests()
+    public FileControllerTests(ControllerFixture<FileController> fixture)
     {
-        _fileService = Substitute.For<IFileService>();
-        _fileStorageService = Substitute.For<IFileStorageService>();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, "test_user")
-        ]));
-        _httpContext = new DefaultHttpContext { User = _claimsPrincipal };
-        _controller = new FileController(_fileService, _fileStorageService)
+        var serviceProvider = fixture.CreateServiceProvider();
+
+        _fileService = serviceProvider.GetRequiredService<IFileService>();
+        _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
+        _controller = serviceProvider.GetRequiredService<FileController>();
+        
+        _httpContext = new DefaultHttpContext();
+        _controller.ControllerContext = new ControllerContext
         {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = _httpContext
-            }
+            HttpContext = _httpContext
         };
     }
 

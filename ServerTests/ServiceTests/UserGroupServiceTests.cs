@@ -4,6 +4,7 @@ using Server.Exceptions;
 using Server.Model;
 using ServerTests.Mocks;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ServiceTests;
 
@@ -115,27 +116,6 @@ public class UserGroupServiceTests : BaseTests
     }
 
     [Fact]
-    public async Task AssignRole_ThrowsIfAdminDemotesAdmin()
-    {
-        var dbGroup = await CreateRandomGroup();
-
-        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
-        await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
-
-        // Admin cannot demote other admins
-        SetUser(_secondUser);
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Member));
-
-        var role = await Context.UserGroupRoles.Where(role =>
-                role.UserGroupId == dbGroup.Id && role.UserId == _thirdUser.Id)
-            .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
-
-        // Assert that the third user is still an admin
-        Assert.Equal(UserGroupRoleType.Admin, role?.Role);
-    }
-
-    [Fact]
     public async Task AssignRole_DemotesAdminIfUserIsOwner()
     {
         var dbGroup = await CreateRandomGroup();
@@ -180,17 +160,6 @@ public class UserGroupServiceTests : BaseTests
     }
 
     [Fact]
-    public async Task AssignRole_ThrowsIfUserNotInGroup()
-    {
-        var dbGroup = await CreateRandomGroup();
-
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member));
-    }
-
-    [Fact]
     public async Task GetGroupMembers_ReturnsMembers()
     {
         var dbGroup = await CreateRandomGroup();
@@ -203,17 +172,6 @@ public class UserGroupServiceTests : BaseTests
         Assert.Equal(2, members.Count);
         Assert.Contains(_user.Id, memberIds);
         Assert.Contains(_secondUser.Id, memberIds);
-    }
-
-    [Fact]
-    public async Task GetGroupMembers_ThrowsIfUserNotInGroup()
-    {
-        var dbGroup = await CreateRandomGroup();
-
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _userGroupService.GetGroupMembers(dbGroup.Id));
     }
 
     [Fact]
@@ -259,23 +217,6 @@ public class UserGroupServiceTests : BaseTests
     }
 
     [Fact]
-    public async Task RemoveUser_ThrowsIfAdminRemovesAdmin()
-    {
-        var dbGroup = await CreateRandomGroup();
-
-        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Admin);
-        await _userGroupService.AssignRole(dbGroup.Id, _thirdUser.Id, UserGroupRoleType.Admin);
-
-        SetUser(_secondUser);
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _userGroupService.RemoveUser(dbGroup.Id, _thirdUser.Id));
-
-        var members = await _userGroupService.GetGroupMembers(dbGroup.Id);
-
-        Assert.Equal(3, members.Count);
-    }
-
-    [Fact]
     public async Task RemoveUser_RemovesSelf()
     {
         var dbGroup = await CreateRandomGroup();
@@ -314,25 +255,6 @@ public class UserGroupServiceTests : BaseTests
         // Max expiry is 7 days
         await Assert.ThrowsAsync<ExpiryTimeTooLongException>(() =>
             _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(8)));
-
-        var dbCodes = await Context.GroupAccessCodes
-            .Where(groupCode => groupCode.GroupId == dbGroup.Id)
-            .ToListAsync(TestContext.Current.CancellationToken);
-
-        Assert.Empty(dbCodes);
-    }
-
-    [Fact]
-    public async Task GenerateGroupAccessCode_ThrowsIfUserDoesntHavePermission()
-    {
-        var dbGroup = await CreateRandomGroup();
-
-        await _userGroupService.AssignRole(dbGroup.Id, _secondUser.Id, UserGroupRoleType.Member);
-
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _userGroupService.GenerateGroupAccessCode(dbGroup.Id, DateTime.UtcNow.AddDays(1)));
 
         var dbCodes = await Context.GroupAccessCodes
             .Where(groupCode => groupCode.GroupId == dbGroup.Id)

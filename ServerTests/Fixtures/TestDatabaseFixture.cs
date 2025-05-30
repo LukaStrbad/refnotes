@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Server.Db;
-using ServerTests;
+using ServerTests.Fixtures;
 using Testcontainers.MySql;
 
 [assembly: AssemblyFixture(typeof(TestDatabaseFixture))]
 
-namespace ServerTests;
+namespace ServerTests.Fixtures;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public class TestDatabaseFixture : IAsyncLifetime
@@ -15,8 +15,8 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     private string? _connectionString;
 
-    private bool _initialized;
-    private readonly Lock _lock = new();
+    private bool _isDatabaseCreated;
+    private readonly Lock _isDatabaseCreatedLock = new();
 
     public RefNotesContext CreateContext()
     {
@@ -25,18 +25,18 @@ public class TestDatabaseFixture : IAsyncLifetime
             throw new Exception("Connection string is not set");
         }
 
-        lock (_lock)
+        lock (_isDatabaseCreatedLock)
         {
             var serverVersion = ServerVersion.AutoDetect(_connectionString);
             var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
                 .UseMySql(_connectionString, serverVersion).Options;
             var context = new RefNotesContext(dbOptions);
 
-            if (_initialized) return context;
+            if (_isDatabaseCreated) return context;
 
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
-            _initialized = true;
+            _isDatabaseCreated = true;
 
             return context;
         }
@@ -68,11 +68,10 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         if (_mysqlContainer is not null)
         {
             await _mysqlContainer.StopAsync();
         }
-
-        GC.SuppressFinalize(this);
     }
 }

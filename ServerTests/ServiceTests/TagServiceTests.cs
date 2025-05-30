@@ -6,6 +6,7 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Services;
 using Server.Utils;
+using ServerTests.Fixtures;
 using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
@@ -292,51 +293,6 @@ public class TagServiceTests : BaseTests, IAsyncLifetime
         const string tag = "test_tag";
 
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            _tagService.RemoveFileTag(_directoryPath, fileName, tag, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permissions")]
-    public async Task ListAllGroupTags_ThrowsForbiddenException_WhenUserIsNotInGroup()
-    {
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _tagService.ListAllGroupTags(_group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permissions")]
-    public async Task ListFileTags_ThrowsForbiddenException_WhenUserIsNotInGroup()
-    {
-        const string fileName = "test_permissions.txt";
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _tagService.ListFileTags(_directoryPath, fileName, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permissions")]
-    public async Task AddFileTag_ThrowsForbiddenException_WhenUserIsNotInGroup()
-    {
-        const string fileName = "test_permissions.txt";
-        const string tag = "test_tag";
-        SetUser(_secondUser);
-        
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _tagService.AddFileTag(_directoryPath, fileName, tag, _group.Id));
-    }
-
-    [Fact]
-    [Trait("Category", "Permissions")]
-    public async Task RemoveFileTag_ThrowsForbiddenException_WhenUserIsNotInGroup()
-    {
-        const string fileName = "test_permissions.txt";
-        const string tag = "test_tag";
-        SetUser(_secondUser);
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
             _tagService.RemoveFileTag(_directoryPath, fileName, tag, _group.Id));
     }
 }

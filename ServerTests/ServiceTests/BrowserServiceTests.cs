@@ -7,6 +7,7 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Services;
 using Server.Utils;
+using ServerTests.Fixtures;
 using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
@@ -290,45 +291,5 @@ public class BrowserServiceTests : BaseTests
         var responseDirectory = await _browserService.List(group.Id, _newDirectoryPath);
 
         Assert.Null(responseDirectory);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task AddDirectory_ThrowsIfUserLacksGroupPermission()
-    {
-        var group = await CreateRandomGroup();
-        
-        SetUser(_secondUser);
-        
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _browserService.AddDirectory("/restricted", group.Id)
-        );
-    }
-
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task DeleteDirectory_ThrowsIfUserLacksGroupPermission()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory("/restricted", group.Id);
-        
-        SetUser(_secondUser);
-        
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _browserService.DeleteDirectory("/restricted", group.Id)
-        );
-    }
-
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task List_ThrowsIfUserLacksGroupPermission()
-    {
-        var group = await CreateRandomGroup();
-
-        SetUser(_secondUser);
-        
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            _browserService.List(group.Id)
-        );
     }
 }

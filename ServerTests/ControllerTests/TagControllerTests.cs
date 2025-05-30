@@ -1,32 +1,22 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server.Controllers;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class TagControllerTests : BaseTests
+public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<TagController>>
 {
     private readonly TagController _controller;
     private readonly ITagService _tagService;
-    private readonly ClaimsPrincipal _claimsPrincipal;
 
-    public TagControllerTests()
+    public TagControllerTests(ControllerFixture<TagController> fixture)
     {
-        _tagService = Substitute.For<ITagService>();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, "test_user")
-        ]));
-        var httpContext = new DefaultHttpContext { User = _claimsPrincipal };
-        _controller = new TagController(_tagService)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = httpContext
-            }
-        };
+        var serviceProvider = fixture.CreateServiceProvider();
+        _tagService = serviceProvider.GetRequiredService<ITagService>();
+        _controller = serviceProvider.GetRequiredService<TagController>();
     }
 
     [Fact]

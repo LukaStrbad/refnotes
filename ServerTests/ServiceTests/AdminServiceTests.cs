@@ -4,6 +4,7 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ServiceTests;
 

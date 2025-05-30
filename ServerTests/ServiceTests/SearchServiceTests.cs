@@ -5,6 +5,7 @@ using Server.Db;
 using Server.Model;
 using Server.Services;
 using Server.Utils;
+using ServerTests.Fixtures;
 using ServerTests.Mocks;
 
 namespace ServerTests.ServiceTests;
