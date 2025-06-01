@@ -117,10 +117,8 @@ public class UserGroupService(
     IEncryptionService encryptionService,
     IUserService userService) : IUserGroupService
 {
-    public async Task<GroupDto> Create(string? name = null)
+    public async Task<GroupDto> Create(User user, string? name = null)
     {
-        var user = await userService.GetUser();
-
         string? encryptedName = null;
         if (name is not null)
         {
@@ -146,6 +144,12 @@ public class UserGroupService(
         await context.SaveChangesAsync();
 
         return new GroupDto(group.Id, name, groupRole.Role);
+    }
+    
+    public async Task<GroupDto> Create(string? name = null)
+    {
+        var user = await userService.GetUser();
+        return await Create(user, name);        
     }
 
     public async Task Update(int groupId, UpdateGroupDto updateGroup)

@@ -1,231 +1,126 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using NSubstitute;
-using Server.Db;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Server.Db.Model;
 using Server.Exceptions;
 using Server.Services;
 using Server.Utils;
-using ServerTests.Fixtures;
-using ServerTests.Mocks;
+using ServerTests.Data;
+using ServerTests.Data.Attributes;
 
 namespace ServerTests.ServiceTests;
 
+[ConcreteType<IFileServiceUtils, FileServiceUtils>]
+[ConcreteType<IUserGroupService, UserGroupService>]
+[ConcreteType<IEncryptionService, EncryptionService>]
 public class BrowserServiceTests : BaseTests
 {
-    private readonly BrowserService _browserService;
-    private readonly User _user;
-    private readonly User _secondUser;
-    private readonly ClaimsPrincipal _claimsPrincipal;
-    private readonly EncryptionService _encryptionService;
+    private readonly string _newDirectoryPath = $"/new_{RandomString(32)}";
 
-    private readonly string _newDirectoryPath;
-
-    public BrowserServiceTests(TestDatabaseFixture testDatabaseFixture)
+    private static async Task<EncryptedDirectory?> GetDirectory(Sut<BrowserService> sut, string path,
+        UserGroup? group = null)
     {
-        _encryptionService = new EncryptionService(AesKey, AesIv);
-        Context = testDatabaseFixture.CreateContext();
-        var rndString = RandomString(32);
-        (_user, _claimsPrincipal) = CreateUser(Context, $"test_{rndString}");
-        SetUser(_user);
-        (_secondUser, _) = CreateUser(Context, $"test_second_{rndString}");
-        var fileStorageService = Substitute.For<IFileStorageService>();
-        var serviceUtils = new FileServiceUtils(Context, _encryptionService, UserService);
-        var userGroupService = new UserGroupService(Context, _encryptionService, UserService);
-        _browserService =
-            new BrowserService(Context, _encryptionService, fileStorageService, serviceUtils, UserService,
-                userGroupService);
-
-        rndString = RandomString(32);
-        _newDirectoryPath = $"/new_{rndString}";
-    }
-
-    private async Task<EncryptedDirectory?> GetDirectory(string path, UserGroup? group = null)
-    {
-        var encryptedPath = _encryptionService.EncryptAesStringBase64(path);
+        var encryptedPath = sut.ServiceProvider.GetRequiredService<IEncryptionService>().EncryptAesStringBase64(path);
         if (group is null)
         {
-            return await Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath && d.OwnerId == _user.Id,
+            return await sut.Context.Directories.FirstOrDefaultAsync(
+                d => d.Path == encryptedPath && d.OwnerId == sut.DefaultUser.Id,
                 TestContext.Current.CancellationToken);
         }
 
-        return await Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath && d.GroupId == group.Id,
+        return await sut.Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath && d.GroupId == group.Id,
             TestContext.Current.CancellationToken);
     }
 
-    [Fact]
-    public async Task AddRootDirectory_AddsDirectory()
+    [Theory, AutoData]
+    public async Task AddRootDirectory_AddsDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory("/", null);
+        await sut.Value.AddDirectory("/", group?.Id);
 
-        var directory = await GetDirectory("/");
+        var directory = await GetDirectory(sut, "/", group);
         Assert.NotNull(directory);
     }
 
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task AddRootDirectory_AddsDirectory_ForGroup()
+    [Theory, AutoData]
+    public async Task AddDirectoryToRoot_AddsDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory("/", group.Id);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
 
-        var directory = GetDirectory("/", group);
+        var directory = await GetDirectory(sut, _newDirectoryPath, group);
         Assert.NotNull(directory);
     }
 
-    [Fact]
-    public async Task AddDirectoryToRoot_AddsDirectory()
+    [Theory, AutoData]
+    public async Task AddDirectoryToSubdirectory_AddsDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
-
-        var directory = await GetDirectory(_newDirectoryPath);
-        Assert.NotNull(directory);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task AddDirectoryToRoot_AddsDirectory_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
-
-        var directory = await GetDirectory(_newDirectoryPath, group);
-        Assert.NotNull(directory);
-    }
-
-    [Fact]
-    public async Task AddDirectoryToSubdirectory_AddsDirectory()
-    {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
 
         var subPath = $"{_newDirectoryPath}/sub";
-        await _browserService.AddDirectory(subPath, null);
-        
-        var directory = await GetDirectory(subPath);
-        Assert.NotNull(directory);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task AddDirectoryToSubdirectory_AddsDirectory_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
+        await sut.Value.AddDirectory(subPath, group?.Id);
 
-        var subPath = $"{_newDirectoryPath}/sub";
-        await _browserService.AddDirectory(subPath, group.Id);
-        
-        var directory = await GetDirectory(subPath, group);
+        var directory = await GetDirectory(sut, subPath, group);
         Assert.NotNull(directory);
     }
 
-    [Fact]
-    public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists()
+    [Theory, AutoData]
+    public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
 
         await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() =>
-            _browserService.AddDirectory(_newDirectoryPath, null));
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
-
-        await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() =>
-            _browserService.AddDirectory(_newDirectoryPath, group.Id));
+            sut.Value.AddDirectory(_newDirectoryPath, group?.Id));
     }
 
-    [Fact]
-    public async Task DeleteDirectory_RemovesDirectory()
+    [Theory, AutoData]
+    public async Task DeleteDirectory_RemovesDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
 
-        await _browserService.DeleteDirectory(_newDirectoryPath, null);
+        await sut.Value.DeleteDirectory(_newDirectoryPath, group?.Id);
 
-        var directory = await Context.Directories.FirstOrDefaultAsync(
-            d => d.Path == _encryptionService.EncryptAesStringBase64(_newDirectoryPath),
-            TestContext.Current.CancellationToken);
-        Assert.Null(directory);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task DeleteDirectory_RemovesDirectory_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
+        var directory = await GetDirectory(sut, _newDirectoryPath, group);
 
-        await _browserService.DeleteDirectory(_newDirectoryPath, group.Id);
-
-        var directory = await GetDirectory(_newDirectoryPath, group);
         Assert.Null(directory);
     }
 
-    [Fact]
-    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist()
+    [Theory, AutoData]
+    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, null));
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, group.Id));
+            sut.Value.DeleteDirectory(_newDirectoryPath, group?.Id));
     }
 
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty()
+    [Theory, AutoData]
+    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
 
         var subPath = $"{_newDirectoryPath}/sub";
-        await _browserService.AddDirectory(subPath, null);
+        await sut.Value.AddDirectory(subPath, null);
 
         await Assert.ThrowsAsync<DirectoryNotEmptyException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, null));
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
-
-        var subPath = $"{_newDirectoryPath}/sub";
-        await _browserService.AddDirectory(subPath, group.Id);
-
-        await Assert.ThrowsAsync<DirectoryNotEmptyException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, group.Id));
+            sut.Value.DeleteDirectory(_newDirectoryPath, null));
     }
 
-    [Fact]
-    public async Task List_ReturnsRootDirectory()
+    [Theory, AutoData]
+    public async Task List_ReturnsRootDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        var responseDirectory = await _browserService.List(null);
-
-        Assert.NotNull(responseDirectory);
-        Assert.Equal("/", responseDirectory.Name);
-        Assert.Empty(responseDirectory.Files);
-        Assert.Empty(responseDirectory.Directories);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task List_ReturnsRootDirectory_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        var responseDirectory = await _browserService.List(group.Id);
+        var responseDirectory = await sut.Value.List(group?.Id);
 
         Assert.NotNull(responseDirectory);
         Assert.Equal("/", responseDirectory.Name);
@@ -233,41 +128,21 @@ public class BrowserServiceTests : BaseTests
         Assert.Empty(responseDirectory.Directories);
     }
 
-    [Fact]
-    public async Task List_ReturnsDirectory()
+    [Theory, AutoData]
+    public async Task List_ReturnsDirectory(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        await _browserService.AddDirectory(_newDirectoryPath, null);
+        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
         var expectedDirName = _newDirectoryPath.TrimStart('/');
 
-        var rootDirectory = await _browserService.List(null);
+        var rootDirectory = await sut.Value.List(group?.Id);
         Assert.NotNull(rootDirectory);
         Assert.Single(rootDirectory.Directories);
         Assert.Empty(rootDirectory.Files);
         Assert.Equal(expectedDirName, rootDirectory.Directories.FirstOrDefault());
 
-        var responseDirectory = await _browserService.List(null, _newDirectoryPath);
-
-        Assert.NotNull(responseDirectory);
-        Assert.Equal(expectedDirName, responseDirectory.Name);
-        Assert.Empty(responseDirectory.Files);
-        Assert.Empty(responseDirectory.Directories);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task List_ReturnsDirectory_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        await _browserService.AddDirectory(_newDirectoryPath, group.Id);
-        var expectedDirName = _newDirectoryPath.TrimStart('/');
-
-        var rootDirectory = await _browserService.List(group.Id);
-        Assert.NotNull(rootDirectory);
-        Assert.Single(rootDirectory.Directories);
-        Assert.Empty(rootDirectory.Files);
-        Assert.Equal(expectedDirName, rootDirectory.Directories.FirstOrDefault());
-
-        var responseDirectory = await _browserService.List(group.Id, _newDirectoryPath);
+        var responseDirectory = await sut.Value.List(group?.Id, _newDirectoryPath);
 
         Assert.NotNull(responseDirectory);
         Assert.Equal(expectedDirName, responseDirectory.Name);
@@ -275,20 +150,12 @@ public class BrowserServiceTests : BaseTests
         Assert.Empty(responseDirectory.Directories);
     }
 
-    [Fact]
-    public async Task List_ReturnsNull_WhenDirectoryDoesNotExist()
+    [Theory, AutoData]
+    public async Task List_ReturnsNull_WhenDirectoryDoesNotExist(
+        Sut<BrowserService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
-        var responseDirectory = await _browserService.List(null, _newDirectoryPath);
-
-        Assert.Null(responseDirectory);
-    }
-    
-    [Fact]
-    [Trait("Category", "Group")]
-    public async Task List_ReturnsNull_WhenDirectoryDoesNotExist_ForGroup()
-    {
-        var group = await CreateRandomGroup();
-        var responseDirectory = await _browserService.List(group.Id, _newDirectoryPath);
+        var responseDirectory = await sut.Value.List(group?.Id, _newDirectoryPath);
 
         Assert.Null(responseDirectory);
     }

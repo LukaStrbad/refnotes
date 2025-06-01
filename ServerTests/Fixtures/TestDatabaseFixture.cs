@@ -18,6 +18,21 @@ public class TestDatabaseFixture : IAsyncLifetime
     private bool _isDatabaseCreated;
     private readonly Lock _isDatabaseCreatedLock = new();
 
+    private static TestDatabaseFixture? _instance;
+
+    public static TestDatabaseFixture Instance
+    {
+        get
+        {
+            if (_instance is null)
+            {
+                throw new Exception("TestDatabaseFixture is not initialized");
+            }
+
+            return _instance;
+        }
+    }
+
     public RefNotesContext CreateContext()
     {
         if (string.IsNullOrEmpty(_connectionString))
@@ -35,7 +50,7 @@ public class TestDatabaseFixture : IAsyncLifetime
             if (_isDatabaseCreated) return context;
 
             context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();
+            context.Database.Migrate();
             _isDatabaseCreated = true;
 
             return context;
@@ -44,6 +59,8 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        _instance = this;
+        
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Test.json", optional: true)
             .Build();
@@ -73,5 +90,7 @@ public class TestDatabaseFixture : IAsyncLifetime
         {
             await _mysqlContainer.StopAsync();
         }
+
+        _instance = null;
     }
 }

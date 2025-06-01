@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
+using Server.Model;
 
 namespace Server.Services;
 
@@ -37,6 +38,12 @@ public class EncryptionService : IEncryptionService
     {
         AesKey = aesKey;
         AesIv = aesIv;
+    }
+
+    public EncryptionService(IEncryptionKeyProvider keyProvider)
+    {
+        AesKey = keyProvider.Key;
+        AesIv = keyProvider.Iv;
     }
 
     public byte[] EncryptAes(byte[] bytes)
