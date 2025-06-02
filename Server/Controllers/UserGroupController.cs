@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
@@ -9,13 +10,27 @@ namespace Server.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class UserGroupController(IUserGroupService userGroupService) : ControllerBase
+public class UserGroupController : ControllerBase
 {
+    private readonly IUserGroupService _userGroupService;
+    private readonly IGroupPermissionService _groupPermissionService;
+    private readonly IUserService _userService;
+
+    public UserGroupController(
+        IUserGroupService userGroupService,
+        IGroupPermissionService groupPermissionService,
+        IUserService userService)
+    {
+        _userGroupService = userGroupService;
+        _groupPermissionService = groupPermissionService;
+        _userService = userService;
+    }
+
     [HttpPost("create")]
     [ProducesResponseType<GroupDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult> Create(string? name = null)
     {
-        var newGroup = await userGroupService.Create(name);
+        var newGroup = await _userGroupService.Create(name);
         return Ok(newGroup);
     }
 
@@ -23,7 +38,12 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> Update(int groupId, [FromBody] UpdateGroupDto updateGroup)
     {
-        await userGroupService.Update(groupId, updateGroup);
+        // Only Admins and Owners can update groups
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId,
+                UserGroupRoleType.Admin))
+            return Forbid();
+
+        await _userGroupService.Update(groupId, updateGroup);
         return Ok();
     }
 
@@ -31,7 +51,7 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     [ProducesResponseType<IEnumerable<GroupDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetUserGroups()
     {
-        var groups = await userGroupService.GetUserGroups();
+        var groups = await _userGroupService.GetUserGroups();
         return Ok(groups);
     }
 
@@ -39,16 +59,22 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     [ProducesResponseType<IEnumerable<GroupUserDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetGroupMembers(int groupId)
     {
-        var members = await userGroupService.GetGroupMembers(groupId);
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId))
+            return Forbid();
+
+        var members = await _userGroupService.GetGroupMembers(groupId);
         return Ok(members);
     }
 
     [HttpPost("{groupId:int}/assignRole")]
     public async Task<ActionResult> AssignRole(int groupId, [FromBody] AssignRoleDto assignRole)
     {
+        if (!await _groupPermissionService.CanManageRoleAsync(await _userService.GetUser(), groupId, assignRole.Role))
+            return Forbid();
+
         try
         {
-            await userGroupService.AssignRole(groupId, assignRole.UserId, assignRole.Role);
+            await _userGroupService.AssignRole(groupId, assignRole.UserId, assignRole.Role);
             return Ok();
         }
         catch (Exception e) when (e is InvalidOperationException or UserIsOwnerException)
@@ -64,9 +90,12 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     [HttpDelete("{groupId:int}/removeUser")]
     public async Task<ActionResult> RemoveUser(int groupId, [FromQuery] int userId)
     {
+        if (!await _groupPermissionService.CanManageUserAsync(await _userService.GetUser(), groupId, userId))
+            return Forbid();
+
         try
         {
-            await userGroupService.RemoveUser(groupId, userId);
+            await _userGroupService.RemoveUser(groupId, userId);
             return Ok();
         }
         catch (Exception e) when (e is InvalidOperationException or UserIsOwnerException)
@@ -78,9 +107,14 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     [HttpPost("{groupId:int}/generateAccessCode")]
     public async Task<ActionResult> GenerateAccessCode(int groupId, [FromBody] DateTime? expiryTime = null)
     {
+        // Only Admins and Owners can generate access codes
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId,
+                UserGroupRoleType.Admin))
+            return Forbid();
+
         expiryTime ??= DateTime.UtcNow.AddDays(7);
 
-        var code = await userGroupService.GenerateGroupAccessCode(groupId, (DateTime)expiryTime);
+        var code = await _userGroupService.GenerateGroupAccessCode(groupId, (DateTime)expiryTime);
         return Ok(code);
     }
 
@@ -89,7 +123,7 @@ public class UserGroupController(IUserGroupService userGroupService) : Controlle
     {
         try
         {
-            await userGroupService.AddCurrentUserToGroup(groupId, accessCode);
+            await _userGroupService.AddCurrentUserToGroup(groupId, accessCode);
             return Ok();
         }
         catch (InvalidOperationException e)

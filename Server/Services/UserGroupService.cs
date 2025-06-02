@@ -117,10 +117,8 @@ public class UserGroupService(
     IEncryptionService encryptionService,
     IUserService userService) : IUserGroupService
 {
-    public async Task<GroupDto> Create(string? name = null)
+    public async Task<GroupDto> Create(User user, string? name = null)
     {
-        var user = await userService.GetUser();
-
         string? encryptedName = null;
         if (name is not null)
         {
@@ -147,20 +145,15 @@ public class UserGroupService(
 
         return new GroupDto(group.Id, name, groupRole.Role);
     }
+    
+    public async Task<GroupDto> Create(string? name = null)
+    {
+        var user = await userService.GetUser();
+        return await Create(user, name);        
+    }
 
     public async Task Update(int groupId, UpdateGroupDto updateGroup)
     {
-        var user = await userService.GetUser();
-        var role = await GetUserGroupRoleAsync(groupId, user.Id);
-
-        if (role is null)
-            throw new ForbiddenException("You don't have a permission to view this group");
-
-        if (role.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
-        {
-            throw new ForbiddenException("You don't have a permission to update this group");
-        }
-
         var group = await GetGroupAsync(groupId);
         group.Name = updateGroup.Name is null ? null : encryptionService.EncryptAesStringBase64(updateGroup.Name);
         await context.SaveChangesAsync();
@@ -180,12 +173,6 @@ public class UserGroupService(
 
     public async Task<List<GroupUserDto>> GetGroupMembers(int groupId)
     {
-        var currentUser = await userService.GetUser();
-        var role = await GetUserGroupRoleAsync(groupId, currentUser.Id);
-
-        if (role is null)
-            throw new ForbiddenException("You don't have a permission to view this group");
-
         var groupUsers = from groupRole in context.UserGroupRoles
             join user in context.Users on groupRole.UserId equals user.Id
             where groupRole.UserGroupId == groupId
@@ -201,12 +188,6 @@ public class UserGroupService(
             throw new InvalidOperationException("Cannot change role to Owner");
         }
 
-        var currentUser = await userService.GetUser();
-        var currentUserRole = (await GetUserGroupRoleAsync(groupId, currentUser.Id))?.Role;
-
-        if (currentUserRole is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
-            throw new ForbiddenException("You don't have the permission to change user roles");
-
         var user = await context.Users.FindAsync(userId);
 
         if (user is null)
@@ -221,14 +202,6 @@ public class UserGroupService(
         if (userRoleType is UserGroupRoleType.Owner)
         {
             throw new UserIsOwnerException("Cannot change role of the owner");
-        }
-
-        var currentUserRoleStrength = currentUserRole.GetRoleStrength();
-        var userRoleStrength = userRoleType.GetRoleStrength();
-
-        if (currentUserRoleStrength <= userRoleStrength && currentUser.Id != userId)
-        {
-            throw new ForbiddenException("You don't have the permission to change roles of more privileged users");
         }
 
         if (userRole is null)
@@ -272,19 +245,6 @@ public class UserGroupService(
             return;
         }
 
-        var currentUserRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
-
-        var toRemoveUserRoleType = (UserGroupRoleType?)toRemoveRole.Role;
-        var currentUserRoleType = currentUserRole?.Role;
-
-        var toRemoveRoleStrength = toRemoveUserRoleType.GetRoleStrength();
-        var currentUserRoleStrength = currentUserRoleType.GetRoleStrength();
-
-        if (currentUserRoleStrength <= toRemoveRoleStrength)
-        {
-            throw new ForbiddenException("You do not have permission to remove users from the group.");
-        }
-
         context.UserGroupRoles.Remove(toRemoveRole);
         await context.SaveChangesAsync();
     }
@@ -292,14 +252,8 @@ public class UserGroupService(
     public async Task<string> GenerateGroupAccessCode(int groupId, DateTime expiryTime)
     {
         var currentUser = await userService.GetUser();
-        var currentUserRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
-        if (currentUserRole?.Role is not (UserGroupRoleType.Owner or UserGroupRoleType.Admin))
-        {
-            throw new ForbiddenException("You cannot invite other users to the group");
-        }
 
         var group = await GetGroupAsync(groupId);
-
         var groupAccessCode = TokenService.GenerateGroupAccessCode(currentUser, group, expiryTime);
 
         await context.GroupAccessCodes.AddAsync(groupAccessCode);

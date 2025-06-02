@@ -1,45 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-using Server;
 using Server.Controllers;
-using Server.Db;
-using Server.Exceptions;
 using Server.Model;
 using Server.Services;
-using Xunit;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class BrowserControllerTests : BaseTests
+public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture<BrowserController>>
 {
     private readonly BrowserController _controller;
     private readonly IBrowserService _browserService;
-    private ClaimsPrincipal _claimsPrincipal;
-    private DefaultHttpContext _httpContext;
 
-    public BrowserControllerTests()
+    public BrowserControllerTests(ControllerFixture<BrowserController> fixture)
     {
-        _browserService = Substitute.For<IBrowserService>();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, "test_user")
-        ]));
-        _httpContext = new DefaultHttpContext { User = _claimsPrincipal };
-        _controller = new BrowserController(_browserService)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = _httpContext
-            }
-        };
+        var serviceProvider = fixture.CreateServiceProvider();
+        _controller = serviceProvider.GetRequiredService<BrowserController>();
+        _browserService = serviceProvider.GetRequiredService<IBrowserService>();
     }
 
     [Fact]

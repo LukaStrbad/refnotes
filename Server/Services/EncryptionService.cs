@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
+using Server.Model;
 
 namespace Server.Services;
 
@@ -9,34 +10,16 @@ public class EncryptionService : IEncryptionService
     public byte[] AesKey { get; }
     public byte[] AesIv { get; }
 
-    public const string AesKeyFileName = "aes_key.bin";
-    public const string AesIvFileName = "aes_iv.bin";
-
-    public EncryptionService(AppConfiguration appConfig)
-    {
-        var keyPath = Path.Combine(appConfig.BaseDir, AesKeyFileName);
-        var ivPath = Path.Combine(appConfig.BaseDir, AesIvFileName);
-        if (File.Exists(keyPath) && File.Exists(ivPath))
-        {
-            AesKey = File.ReadAllBytes(keyPath);
-            AesIv = File.ReadAllBytes(ivPath);
-        }
-        else
-        {
-            using var aes = Aes.Create();
-            aes.GenerateKey();
-            aes.GenerateIV();
-            AesKey = aes.Key;
-            AesIv = aes.IV;
-            File.WriteAllBytes(keyPath, AesKey);
-            File.WriteAllBytes(ivPath, AesIv);
-        }
-    }
-
     public EncryptionService(byte[] aesKey, byte[] aesIv)
     {
         AesKey = aesKey;
         AesIv = aesIv;
+    }
+
+    public EncryptionService(IEncryptionKeyProvider keyProvider)
+    {
+        AesKey = keyProvider.Key;
+        AesIv = keyProvider.Iv;
     }
 
     public byte[] EncryptAes(byte[] bytes)

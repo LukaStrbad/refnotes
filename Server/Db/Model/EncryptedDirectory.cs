@@ -18,6 +18,7 @@ public class EncryptedDirectory
         Files = [];
         Directories = [];
         Owner = owner;
+        OwnerId = owner.Id;
     }
 
     public EncryptedDirectory(string path, UserGroup group)

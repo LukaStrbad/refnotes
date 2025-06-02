@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -9,35 +10,34 @@ using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
+using ServerTests.Fixtures;
 using ServerTests.Mocks;
 
 namespace ServerTests.ControllerTests;
 
-public class AuthControllerTests : BaseTests
+public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<AuthController>>
 {
     private readonly IAuthService _authService;
     private readonly AuthController _controller;
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
-    private readonly HttpContext _httpContext;
 
-    public AuthControllerTests()
+    public AuthControllerTests(ControllerFixture<AuthController> fixture)
     {
-        _authService = Substitute.For<IAuthService>();
+        var serviceProvider = fixture.CreateServiceProvider();
+        _authService = serviceProvider.GetRequiredService<IAuthService>();
+        var httpContext = serviceProvider.GetRequiredService<HttpContext>();
         _requestCookies = new RequestCookieCollection();
         _responseCookies = new ResponseCookies();
-        _httpContext = Substitute.For<HttpContext>();
-        _httpContext.Request.Cookies.Returns(_requestCookies);
-        _httpContext.Response.Cookies.Returns(_responseCookies);
-        var configuration = new ConfigurationManager();
-        configuration["CookieDomain"] = "localhost";
-
-        _controller = new AuthController(_authService, configuration)
+        httpContext.Request.Cookies.Returns(_requestCookies);
+        httpContext.Response.Cookies.Returns(_responseCookies);
+        
+        serviceProvider.GetRequiredService<IConfiguration>()["CookieDomain"] = "localhost";
+        
+        _controller = serviceProvider.GetRequiredService<AuthController>();
+        _controller.ControllerContext = new ControllerContext
         {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = _httpContext
-            }
+            HttpContext = httpContext
         };
     }
 
