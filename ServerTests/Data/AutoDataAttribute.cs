@@ -12,7 +12,7 @@ using Xunit.v3;
 
 namespace ServerTests.Data;
 
-public class AutoData : DataAttribute
+public class AutoDataAttribute : DataAttribute
 {
     public override async ValueTask<IReadOnlyCollection<ITheoryDataRow>> GetData(MethodInfo testMethod,
         DisposalTracker disposalTracker)

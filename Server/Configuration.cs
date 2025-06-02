@@ -26,6 +26,7 @@ public static class Configuration
         
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+        builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();

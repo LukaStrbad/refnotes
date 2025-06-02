@@ -1,4 +1,4 @@
-﻿namespace Server.Model;
+﻿namespace Server.Services;
 
 public interface IEncryptionKeyProvider
 {

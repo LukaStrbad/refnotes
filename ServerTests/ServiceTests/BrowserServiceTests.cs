@@ -17,7 +17,7 @@ public class BrowserServiceTests : BaseTests
     private readonly string _newDirectoryPath = $"/new_{RandomString(32)}";
 
     private static async Task<EncryptedDirectory?> GetDirectory(Sut<BrowserService> sut, string path,
-        UserGroup? group = null)
+        UserGroup? group)
     {
         var encryptedPath = sut.ServiceProvider.GetRequiredService<IEncryptionService>().EncryptAesStringBase64(path);
         if (group is null)

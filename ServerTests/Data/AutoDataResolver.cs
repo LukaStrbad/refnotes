@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Server;
 using Server.Db;
 using Server.Db.Model;
 using Server.Model;
@@ -20,6 +21,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
     private readonly ParameterInfo[] _methodParameters;
     private readonly TestDatabaseFixture _testDatabaseFixture;
     private readonly RefNotesContext _context;
+    private readonly string _testFolder;
 
     private IServiceProvider? _rootProvider;
     private IServiceScope? _serviceScope;
@@ -31,6 +33,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IEncryptionService),
         typeof(IFileStorageService),
         typeof(IFileServiceUtils),
+        typeof(IFileService),
         typeof(IUserGroupService),
         typeof(IBrowserService)
     ];
@@ -44,6 +47,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         _methodInfo = methodInfo;
         _methodParameters = methodInfo.GetParameters();
         _testDatabaseFixture = testDatabaseFixture;
+        _testFolder = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(_testFolder);
 
         _context = _testDatabaseFixture.CreateContext();
     }
@@ -117,7 +122,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
         }
 
         var sutType = typeof(Sut<>);
-        if (parameter.ParameterType.GetGenericTypeDefinition() == sutType)
+        if (parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() == sutType)
         {
             var genericType = parameter.ParameterType.GenericTypeArguments.First();
             var sutValue = _serviceProvider.GetRequiredService(genericType);
@@ -132,6 +137,11 @@ public sealed class AutoDataResolver : IAsyncDisposable
     {
         services.AddSingleton(_context);
         services.AddSingleton<IEncryptionKeyProvider>(new MockEncryptionKeyProvider());
+        services.AddSingleton(new AppConfiguration
+        {
+            DataDir = _testFolder,
+            JwtPrivateKey = "test_jwt_private_key_123456789234234247"
+        });
 
         var classType = _methodInfo.DeclaringType;
         if (classType is null)
@@ -187,10 +197,10 @@ public sealed class AutoDataResolver : IAsyncDisposable
 
                 services.AddScoped(parameter.ParameterType, customTypeAttribute.ImplementationType);
             }
-            else if (!IsAlreadyRegistered(services, parameter.ParameterType))
-            {
-                services.AddScoped(parameter.ParameterType);
-            }
+            // else if (!IsAlreadyRegistered(services, parameter.ParameterType))
+            // {
+            //     services.AddScoped(parameter.ParameterType);
+            // }
         }
 
         // Add the rest of interfaces
