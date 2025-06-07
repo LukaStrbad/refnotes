@@ -15,12 +15,14 @@ namespace ServerTests.ControllerTests;
 public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGroupController>>
 {
     private readonly IUserGroupService _userGroupService;
+    private readonly IGroupPermissionService _groupPermissionService;
     private readonly UserGroupController _controller;
 
     public UserGroupControllerTests(ControllerFixture<UserGroupController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _userGroupService = serviceProvider.GetRequiredService<IUserGroupService>();
+        _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
         _controller = serviceProvider.GetRequiredService<UserGroupController>();
     }
 
@@ -43,6 +45,9 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     {
         var dto = new UpdateGroupDto("New name");
         const int groupId = 10;
+
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId, UserGroupRoleType.Admin)
+            .Returns(true);
 
         var result = await _controller.Update(groupId, dto);
         var okResult = Assert.IsType<OkResult>(result);
@@ -71,6 +76,7 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     {
         var members = new List<GroupUserDto> { new(1, "jdoe", "John Doe", UserGroupRoleType.Member) };
         _userGroupService.GetGroupMembers(5).Returns(members);
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), 5).Returns(true);
 
         var result = await _controller.GetGroupMembers(5);
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -84,6 +90,7 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     public async Task AssignRole_ReturnsOk()
     {
         var dto = new AssignRoleDto(1, UserGroupRoleType.Admin);
+        _groupPermissionService.CanManageRoleAsync(Arg.Any<User>(), 1, UserGroupRoleType.Admin).Returns(true);
 
         var result = await _controller.AssignRole(1, dto);
         var okResult = Assert.IsType<OkResult>(result);
@@ -96,11 +103,13 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     [Fact]
     public async Task AssignRole_ReturnsBadRequest_ForInvalidOperationException()
     {
+        const int groupId = 5;
         var dto = new AssignRoleDto(2, UserGroupRoleType.Member);
         _userGroupService.AssignRole(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<UserGroupRoleType>())
             .ThrowsAsync(new InvalidOperationException("error"));
+        _groupPermissionService.CanManageRoleAsync(Arg.Any<User>(), groupId, UserGroupRoleType.Member).Returns(true);
 
-        var result = await _controller.AssignRole(5, dto);
+        var result = await _controller.AssignRole(groupId, dto);
         var badResult = Assert.IsType<BadRequestObjectResult>(result);
 
         Assert.NotNull(badResult);
@@ -111,11 +120,13 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     [Fact]
     public async Task AssignRole_ReturnsNotFound_ForUserNotFoundException()
     {
+        const int groupId = 5;
         var dto = new AssignRoleDto(99, UserGroupRoleType.Member);
         _userGroupService.AssignRole(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<UserGroupRoleType>())
             .ThrowsAsync(new UserNotFoundException("not found"));
+        _groupPermissionService.CanManageRoleAsync(Arg.Any<User>(), groupId, UserGroupRoleType.Member).Returns(true);
 
-        var result = await _controller.AssignRole(8, dto);
+        var result = await _controller.AssignRole(groupId, dto);
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
 
         Assert.NotNull(notFoundResult);
@@ -126,10 +137,14 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     [Fact]
     public async Task RemoveUser_ReturnsOk()
     {
-        var result = await _controller.RemoveUser(2, 3);
+        const int groupId = 2;
+        const int userId = 3;
+        _groupPermissionService.CanManageUserAsync(Arg.Any<User>(), groupId, userId).Returns(true);
+        
+        var result = await _controller.RemoveUser(groupId, userId);
         var okResult = Assert.IsType<OkResult>(result);
 
-        await _userGroupService.Received(1).RemoveUser(2, 3);
+        await _userGroupService.Received(1).RemoveUser(groupId, userId);
         Assert.NotNull(okResult);
         Assert.Equal(200, okResult.StatusCode);
     }
@@ -137,10 +152,13 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     [Fact]
     public async Task RemoveUser_ReturnsBadRequest_ForInvalidOperationException()
     {
+        const int groupId = 1;
+        const int userId = 1;
         _userGroupService.RemoveUser(Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(new InvalidOperationException("fail"));
+        _groupPermissionService.CanManageUserAsync(Arg.Any<User>(), groupId, userId).Returns(true);
 
-        var result = await _controller.RemoveUser(1, 1);
+        var result = await _controller.RemoveUser(groupId, userId);
         var badResult = Assert.IsType<BadRequestObjectResult>(result);
 
         Assert.NotNull(badResult);
@@ -152,6 +170,7 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
     public async Task GenerateAccessCode_ReturnsOk()
     {
         _userGroupService.GenerateGroupAccessCode(1, Arg.Any<DateTime>()).Returns("CODE123");
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), 1, UserGroupRoleType.Admin).Returns(true);
 
         var expiry = DateTime.UtcNow.AddDays(3);
         var result = await _controller.GenerateAccessCode(1, expiry);
