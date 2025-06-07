@@ -51,7 +51,6 @@ public interface ITagService
 public class TagService(
     RefNotesContext context,
     IEncryptionService encryptionService,
-    IUserGroupService userGroupService,
     IFileServiceUtils utils,
     IUserService userService) : ITagService
 {

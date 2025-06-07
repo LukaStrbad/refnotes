@@ -61,7 +61,7 @@ public class UserGroupService(
         var groups = from groupRole in context.UserGroupRoles
             join userGroup in context.UserGroups on groupRole.UserGroupId equals userGroup.Id
             where groupRole.UserId == user.Id
-            select new GroupDto(userGroup.Id, encryptionService.DecryptAesStringBase64(userGroup.Name), groupRole.Role);
+            select new GroupDto(userGroup.Id, encryptionService.DecryptAesStringBase64(userGroup.Name ?? ""), groupRole.Role);
 
         return await groups.ToListAsync();
     }

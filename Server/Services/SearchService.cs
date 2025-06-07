@@ -22,7 +22,6 @@ public sealed class SearchService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
-    IFileServiceUtils utils,
     IMemoryCache cache,
     IUserService userService) : ISearchService
 {

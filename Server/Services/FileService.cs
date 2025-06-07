@@ -66,9 +66,7 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    IFileServiceUtils utils,
-    IUserService userService,
-    IUserGroupService userGroupService) : IFileService
+    IFileServiceUtils utils) : IFileService
 {
     public async Task<string> AddFile(string directoryPath, string name, int? groupId)
     {
