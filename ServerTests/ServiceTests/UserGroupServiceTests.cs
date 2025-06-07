@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Server.Db.Model;
 using Server.Exceptions;
@@ -7,11 +8,11 @@ using ServerTests.Mocks;
 using Server.Services;
 using ServerTests.Data;
 using ServerTests.Data.Attributes;
-using ServerTests.Fixtures;
 
 namespace ServerTests.ServiceTests;
 
 [ConcreteType<IEncryptionService, FakeEncryptionService>]
+[SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters")]
 public class UserGroupServiceTests : BaseTests
 {
     [Theory, AutoData]
