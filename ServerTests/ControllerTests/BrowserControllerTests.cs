@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server.Controllers;
+using Server.Db.Model;
 using Server.Model;
 using Server.Services;
 using ServerTests.Fixtures;
@@ -12,12 +13,14 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
 {
     private readonly BrowserController _controller;
     private readonly IBrowserService _browserService;
+    private readonly IGroupPermissionService _groupPermissionService;
 
     public BrowserControllerTests(ControllerFixture<BrowserController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<BrowserController>();
         _browserService = serviceProvider.GetRequiredService<IBrowserService>();
+        _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
     }
 
     [Fact]
@@ -30,7 +33,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
 
         var result = await _controller.List(path, null);
 
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(responseDirectory, okResult.Value);
     }
 
@@ -42,8 +45,20 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
 
         var result = await _controller.List(path, null);
 
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task List_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.List(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);
     }
 
     [Fact]
@@ -55,6 +70,18 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
         var result = await _controller.AddDirectory(path, null);
 
         Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task AddDirectory_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "/test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.AddDirectory(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);
     }
 
     [Fact]
@@ -79,5 +106,17 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Cannot delete root directory.", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "/test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.DeleteDirectory(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);   
     }
 }

@@ -21,15 +21,15 @@ public class TagController : GroupPermissionControllerBase
     }
 
     [HttpGet("listAllTags")]
-    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListAllTags()
+    [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ListAllTags()
     {
         return Ok(await _tagService.ListAllTags());
     }
 
     [HttpGet("listAllGroupTags")]
-    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListAllGroupTags(int groupId)
+    [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ListAllGroupTags(int groupId)
     {
         if (await GroupAccessForbidden(groupId))
             return Forbid();
@@ -39,7 +39,7 @@ public class TagController : GroupPermissionControllerBase
 
     [HttpGet("listFileTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListFileTags(string directoryPath, string name, int? groupId)
+    public async Task<ActionResult> ListFileTags(string directoryPath, string name, int? groupId)
     {
         if (await GroupAccessForbidden(groupId))
             return Forbid();

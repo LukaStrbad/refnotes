@@ -25,7 +25,7 @@ public class BrowserController : GroupPermissionControllerBase
     [ProducesResponseType<DirectoryDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<DirectoryDto>> List(string path, int? groupId)
+    public async Task<ActionResult> List(string path, int? groupId)
     {
         if (await GroupAccessForbidden(groupId))
             return Forbid();

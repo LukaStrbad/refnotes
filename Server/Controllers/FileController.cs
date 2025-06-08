@@ -170,7 +170,7 @@ public class FileController : GroupPermissionControllerBase
 
     [HttpGet("getFileInfo")]
     [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FileDto>> GetFileInfo(string filePath, int? groupId)
+    public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
         if (await GroupAccessForbidden(groupId))
             return Forbid();
