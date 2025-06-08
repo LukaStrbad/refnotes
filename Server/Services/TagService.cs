@@ -51,7 +51,6 @@ public interface ITagService
 public class TagService(
     RefNotesContext context,
     IEncryptionService encryptionService,
-    IUserGroupService userGroupService,
     IFileServiceUtils utils,
     IUserService userService) : ITagService
 {
@@ -66,14 +65,6 @@ public class TagService(
 
     public async Task<List<string>> ListAllGroupTags(int groupId)
     {
-        var user = await userService.GetUser();
-        var groupRole = await userGroupService.GetUserGroupRoleAsync(groupId, user.Id);
-
-        if (groupRole is null)
-        {
-            throw new ForbiddenException("User is not a member of the specified group");
-        }
-
         return await context.FileTags
             .Where(t => t.GroupOwnerId == groupId)
             .Select(t => t.DecryptedName(encryptionService))
@@ -82,15 +73,6 @@ public class TagService(
 
     public async Task<List<string>> ListFileTags(string directoryPath, string name, int? groupId)
     {
-        if (groupId is not null)
-        {
-            var user = await userService.GetUser();
-            var groupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
-            if (groupRole is null)
-            {
-                throw new ForbiddenException("User is not a member of the specified group");
-            }
-        }
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         return file.Tags.Select(t => t.DecryptedName(encryptionService)).ToList();
     }
@@ -98,16 +80,6 @@ public class TagService(
     public async Task AddFileTag(string directoryPath, string name, string tag, int? groupId)
     {
         var user = await userService.GetUser();
-
-        if (groupId is not null)
-        {
-            var role = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
-            if (role is null)
-            {
-                throw new ForbiddenException("User is not a member of the specified group");
-            }
-        }
-
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
@@ -144,15 +116,6 @@ public class TagService(
 
     public async Task RemoveFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        if (groupId is not null)
-        {
-            var user = await userService.GetUser();
-            var groupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
-            if (groupRole is null)
-            {
-                throw new ForbiddenException("User is not a member of the specified group");
-            }
-        }
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);

@@ -26,6 +26,7 @@ public static class Configuration
         
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+        builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
         
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();
@@ -38,6 +39,7 @@ public static class Configuration
         builder.Services.AddScoped<ISearchService, SearchService>();
         builder.Services.AddScoped<IUserGroupService, UserGroupService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IGroupPermissionService, GroupPermissionService>();
 
         builder.Services.AddAuthentication(x =>
         {

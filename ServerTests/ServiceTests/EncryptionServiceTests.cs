@@ -1,5 +1,6 @@
 ﻿using Server;
 using Server.Services;
+using ServerTests.Data;
 using ServerTests.Extensions;
 
 namespace ServerTests.ServiceTests;
@@ -9,205 +10,163 @@ using Xunit;
 
 public class EncryptionServiceTests : BaseTests
 {
-    private readonly EncryptionService _encryptionService;
-
-    public EncryptionServiceTests()
-    {
-        _encryptionService = new EncryptionService(AesKey, AesIv);
-    }
-
-    [Fact]
-    public void EncryptionServiceConstructor_WithAppConfig_InitializesKeyAndIv()
-    {
-        const string baseDir = ".";
-        var appConfig = new AppConfiguration { BaseDir = baseDir };
-
-        // Create files in the base directory to simulate existing key and IV files.
-        var keyPath = Path.Combine(baseDir, EncryptionService.AesKeyFileName);
-        var ivPath = Path.Combine(baseDir, EncryptionService.AesIvFileName);
-        File.WriteAllBytes(keyPath, AesKey);
-        File.WriteAllBytes(ivPath, AesIv);
-
-        var encryptionService = new EncryptionService(appConfig);
-
-        Assert.NotNull(encryptionService);
-        Assert.Equal(AesKey, encryptionService.AesKey);
-        Assert.Equal(AesIv, encryptionService.AesIv);
-
-        // Clean up the files created for this test.
-        File.Delete(keyPath);
-        File.Delete(ivPath);
-    }
-
-    [Fact]
-    public void EncryptionServiceConstructor_WithAppConfigNoFiles_InitializesKeyAndIv()
-    {
-        const string baseDir = ".";
-        var appConfig = new AppConfiguration { BaseDir = baseDir };
-
-        var encryptionService = new EncryptionService(appConfig);
-
-        Assert.NotNull(encryptionService);
-        Assert.NotEqual(AesKey, encryptionService.AesKey);
-        Assert.NotEqual(AesIv, encryptionService.AesIv);
-    }
-
-    [Fact]
-    public void EncryptAes_EncryptsByteArray_ReturnsEncryptedByteArray()
+    [Theory, AutoData]
+    public void EncryptAes_EncryptsByteArray_ReturnsEncryptedByteArray(
+        Sut<EncryptionService> sut)
     {
         var bytes = "test data"u8.ToArray();
 
-        var encryptedBytes = _encryptionService.EncryptAes(bytes);
+        var encryptedBytes = sut.Value.EncryptAes(bytes);
 
         Assert.NotNull(encryptedBytes);
         Assert.NotEqual(bytes, encryptedBytes);
     }
 
-    [Fact]
-    public async Task EncryptAes_EncryptsStream_ReturnsEncryptedStream()
+    [Theory, AutoData]
+    public async Task EncryptAes_EncryptsStream_ReturnsEncryptedStream(Sut<EncryptionService> sut)
     {
         var bytes = "test data"u8.ToArray();
         await using var inputStream = new MemoryStream(bytes);
         await using var outputStream = new MemoryStream();
 
-        await _encryptionService.EncryptAesToStreamAsync(inputStream, outputStream);
+        await sut.Value.EncryptAesToStreamAsync(inputStream, outputStream);
 
         var encryptedBytes = outputStream.ToArray();
         Assert.NotNull(encryptedBytes);
         Assert.NotEqual(bytes, encryptedBytes);
     }
 
-    [Fact]
-    public void EncryptAes_EncryptsString_ReturnsEncryptedByteArray()
+    [Theory, AutoData]
+    public void EncryptAes_EncryptsString_ReturnsEncryptedByteArray(Sut<EncryptionService> sut)
     {
         const string text = "test data";
 
-        var encryptedBytes = _encryptionService.EncryptAes(text);
+        var encryptedBytes = sut.Value.EncryptAes(text);
 
         Assert.NotNull(encryptedBytes);
         Assert.NotEqual(Encoding.UTF8.GetBytes(text), encryptedBytes);
     }
 
-    [Fact]
-    public void EncryptAesStringBase64_EncryptsString_ReturnsBase64String()
+    [Theory, AutoData]
+    public void EncryptAesStringBase64_EncryptsString_ReturnsBase64String(Sut<EncryptionService> sut)
     {
         const string text = "test data";
 
-        var encryptedBase64 = _encryptionService.EncryptAesStringBase64(text);
+        var encryptedBase64 = sut.Value.EncryptAesStringBase64(text);
 
         Assert.NotNull(encryptedBase64);
         Assert.NotEqual(text, encryptedBase64);
     }
 
-    [Fact]
-    public void DecryptAes_DecryptsEncryptedByteArray_ReturnsOriginalByteArray()
+    [Theory, AutoData]
+    public void DecryptAes_DecryptsEncryptedByteArray_ReturnsOriginalByteArray(Sut<EncryptionService> sut)
     {
         var bytes = "test data"u8.ToArray();
-        var encryptedBytes = _encryptionService.EncryptAes(bytes);
+        var encryptedBytes = sut.Value.EncryptAes(bytes);
 
-        var decryptedBytes = _encryptionService.DecryptAes(encryptedBytes);
+        var decryptedBytes = sut.Value.DecryptAes(encryptedBytes);
 
         Assert.Equal(bytes, decryptedBytes);
     }
 
-    [Fact]
-    public void DecryptAes_DecryptsEncryptedStream_ReturnsOriginalStream()
+    [Theory, AutoData]
+    public void DecryptAes_DecryptsEncryptedStream_ReturnsOriginalStream(Sut<EncryptionService> sut)
     {
         var bytes = "test data"u8.ToArray();
-        var encryptedBytes = _encryptionService.EncryptAes(bytes);
-        
+        var encryptedBytes = sut.Value.EncryptAes(bytes);
+
         using var encryptedInputStream = new MemoryStream(encryptedBytes);
 
-        using var outputStream = _encryptionService.DecryptAesToStream(encryptedInputStream);
+        using var outputStream = sut.Value.DecryptAesToStream(encryptedInputStream);
 
         var decryptedBytes = outputStream.ToArray();
         Assert.Equal(bytes, decryptedBytes);
     }
 
-    [Fact]
-    public void DecryptAesString_DecryptsEncryptedByteArray_ReturnsOriginalString()
+    [Theory, AutoData]
+    public void DecryptAesString_DecryptsEncryptedByteArray_ReturnsOriginalString(Sut<EncryptionService> sut)
     {
         const string text = "test data";
-        var encryptedBytes = _encryptionService.EncryptAes(text);
+        var encryptedBytes = sut.Value.EncryptAes(text);
 
-        var decryptedText = _encryptionService.DecryptAesString(encryptedBytes);
+        var decryptedText = sut.Value.DecryptAesString(encryptedBytes);
 
         Assert.Equal(text, decryptedText);
     }
 
-    [Fact]
-    public void DecryptAesStringBase64_DecryptsEncryptedBase64String_ReturnsOriginalString()
+    [Theory, AutoData]
+    public void DecryptAesStringBase64_DecryptsEncryptedBase64String_ReturnsOriginalString(Sut<EncryptionService> sut)
     {
         const string text = "test data";
-        var encryptedBase64 = _encryptionService.EncryptAesStringBase64(text);
+        var encryptedBase64 = sut.Value.EncryptAesStringBase64(text);
 
-        var decryptedText = _encryptionService.DecryptAesStringBase64(encryptedBase64);
+        var decryptedText = sut.Value.DecryptAesStringBase64(encryptedBase64);
 
         Assert.Equal(text, decryptedText);
     }
 
-    [Fact]
-    public void EncryptAes_EmptyByteArray_ReturnsNonEmptyEncryptedByteArray()
+    [Theory, AutoData]
+    public void EncryptAes_EmptyByteArray_ReturnsNonEmptyEncryptedByteArray(Sut<EncryptionService> sut)
     {
         var bytes = Array.Empty<byte>();
 
-        var encryptedBytes = _encryptionService.EncryptAes(bytes);
+        var encryptedBytes = sut.Value.EncryptAes(bytes);
 
         Assert.NotNull(encryptedBytes);
         Assert.NotEmpty(encryptedBytes);
     }
 
-    [Fact]
-    public void EncryptAes_EmptyString_ReturnsNonEmptyEncryptedByteArray()
+    [Theory, AutoData]
+    public void EncryptAes_EmptyString_ReturnsNonEmptyEncryptedByteArray(Sut<EncryptionService> sut)
     {
         var text = string.Empty;
 
-        var encryptedBytes = _encryptionService.EncryptAes(text);
+        var encryptedBytes = sut.Value.EncryptAes(text);
 
         Assert.NotNull(encryptedBytes);
         Assert.NotEmpty(encryptedBytes);
     }
 
-    [Fact]
-    public void EncryptAesStringBase64_EmptyString_ReturnsNonEmptyBase64String()
+    [Theory, AutoData]
+    public void EncryptAesStringBase64_EmptyString_ReturnsNonEmptyBase64String(Sut<EncryptionService> sut)
     {
         var text = string.Empty;
 
-        var encryptedBase64 = _encryptionService.EncryptAesStringBase64(text);
+        var encryptedBase64 = sut.Value.EncryptAesStringBase64(text);
 
         Assert.NotNull(encryptedBase64);
         Assert.NotEmpty(encryptedBase64);
     }
 
-    [Fact]
-    public void DecryptAes_EmptyEncryptedByteArray_ReturnsEmptyByteArray()
+    [Theory, AutoData]
+    public void DecryptAes_EmptyEncryptedByteArray_ReturnsEmptyByteArray(Sut<EncryptionService> sut)
     {
         var bytes = Array.Empty<byte>();
-        var encryptedBytes = _encryptionService.EncryptAes(bytes);
+        var encryptedBytes = sut.Value.EncryptAes(bytes);
 
-        var decryptedBytes = _encryptionService.DecryptAes(encryptedBytes);
+        var decryptedBytes = sut.Value.DecryptAes(encryptedBytes);
 
         Assert.Empty(decryptedBytes);
     }
 
-    [Fact]
-    public void DecryptAesString_EmptyEncryptedByteArray_ReturnsEmptyString()
+    [Theory, AutoData]
+    public void DecryptAesString_EmptyEncryptedByteArray_ReturnsEmptyString(Sut<EncryptionService> sut)
     {
         var text = string.Empty;
-        var encryptedBytes = _encryptionService.EncryptAes(text);
+        var encryptedBytes = sut.Value.EncryptAes(text);
 
-        var decryptedText = _encryptionService.DecryptAesString(encryptedBytes);
+        var decryptedText = sut.Value.DecryptAesString(encryptedBytes);
 
         Assert.Equal(text, decryptedText);
     }
 
-    [Fact]
-    public void DecryptAesStringBase64_EmptyEncryptedBase64String_ReturnsEmptyString()
+    [Theory, AutoData]
+    public void DecryptAesStringBase64_EmptyEncryptedBase64String_ReturnsEmptyString(Sut<EncryptionService> sut)
     {
         var text = string.Empty;
-        var encryptedBase64 = _encryptionService.EncryptAesStringBase64(text);
+        var encryptedBase64 = sut.Value.EncryptAesStringBase64(text);
 
-        var decryptedText = _encryptionService.DecryptAesStringBase64(encryptedBase64);
+        var decryptedText = sut.Value.DecryptAesStringBase64(encryptedBase64);
 
         Assert.Equal(text, decryptedText);
     }

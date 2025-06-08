@@ -66,7 +66,7 @@ public class BrowserService(
     {
         var user = await userService.GetUser();
 
-        path = NormalizePath(path);
+        path = FileUtils.NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
 
         var existingDir = await utils.GetDirectory(path, false, groupId);
@@ -78,14 +78,7 @@ public class BrowserService(
         }
         else
         {
-            var groupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
-            if (groupRole is null)
-            {
-                throw new ForbiddenException("User is not a member of the specified group");
-            }
-
             var group = await userGroupService.GetGroupAsync((int)groupId);
-            
             newDirectory = new EncryptedDirectory(encryptedPath, group);
         }
 
@@ -102,7 +95,7 @@ public class BrowserService(
             throw new DirectoryAlreadyExistsException($"Directory at path '{path}' already exists");
         }
 
-        var (baseDir, _) = SplitDirPathName(path);
+        var (baseDir, _) = FileUtils.SplitDirAndFile(path);
         var parentDir = await utils.GetDirectory(baseDir, false, groupId);
 
         // Recursively create parent directories if they don't exist
@@ -125,7 +118,7 @@ public class BrowserService(
     {
         var user = await userService.GetUser();
 
-        path = NormalizePath(path);
+        path = FileUtils.NormalizePath(path);
 
         if (path is "/")
         {
@@ -145,10 +138,6 @@ public class BrowserService(
         }
         else
         {
-            var userGroupRole = await userGroupService.GetUserGroupRoleAsync((int)groupId, user.Id);
-            if (userGroupRole is null)
-                throw new ForbiddenException("User is not a member of the specified group");
-            
             directoryQuery = from dir in directoryQuery
                 join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
                 where groupRole.UserId == user.Id && dir.GroupId == groupId
@@ -178,19 +167,4 @@ public class BrowserService(
         context.Entry(directory).State = EntityState.Deleted;
         await context.SaveChangesAsync();
     }
-
-    private record DirPathName(string ParentDir, string Name);
-
-    private static DirPathName SplitDirPathName(string path)
-    {
-        var parentDir = Path.GetDirectoryName(path)?.Replace("\\", "/");
-        if (string.IsNullOrWhiteSpace(parentDir))
-            parentDir = "/";
-        var name = Path.GetFileName(path);
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Path must not be root");
-        return new DirPathName(parentDir, name);
-    }
-
-    private static string NormalizePath(string path) => path.Replace("\\", "/");
 }

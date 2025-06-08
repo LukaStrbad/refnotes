@@ -1,45 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-using Server;
 using Server.Controllers;
-using Server.Db;
-using Server.Exceptions;
+using Server.Db.Model;
 using Server.Model;
 using Server.Services;
-using Xunit;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class BrowserControllerTests : BaseTests
+public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture<BrowserController>>
 {
     private readonly BrowserController _controller;
     private readonly IBrowserService _browserService;
-    private ClaimsPrincipal _claimsPrincipal;
-    private DefaultHttpContext _httpContext;
+    private readonly IGroupPermissionService _groupPermissionService;
 
-    public BrowserControllerTests()
+    public BrowserControllerTests(ControllerFixture<BrowserController> fixture)
     {
-        _browserService = Substitute.For<IBrowserService>();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, "test_user")
-        ]));
-        _httpContext = new DefaultHttpContext { User = _claimsPrincipal };
-        _controller = new BrowserController(_browserService)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = _httpContext
-            }
-        };
+        var serviceProvider = fixture.CreateServiceProvider();
+        _controller = serviceProvider.GetRequiredService<BrowserController>();
+        _browserService = serviceProvider.GetRequiredService<IBrowserService>();
+        _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
     }
 
     [Fact]
@@ -52,7 +33,7 @@ public class BrowserControllerTests : BaseTests
 
         var result = await _controller.List(path, null);
 
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(responseDirectory, okResult.Value);
     }
 
@@ -64,8 +45,20 @@ public class BrowserControllerTests : BaseTests
 
         var result = await _controller.List(path, null);
 
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("Directory not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task List_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.List(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);
     }
 
     [Fact]
@@ -77,6 +70,18 @@ public class BrowserControllerTests : BaseTests
         var result = await _controller.AddDirectory(path, null);
 
         Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task AddDirectory_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "/test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.AddDirectory(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);
     }
 
     [Fact]
@@ -101,5 +106,17 @@ public class BrowserControllerTests : BaseTests
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Cannot delete root directory.", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const string path = "/test_path";
+        const int groupId = 1;
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        
+        var result = await _controller.DeleteDirectory(path, groupId);
+        
+        Assert.IsType<ForbidResult>(result);   
     }
 }

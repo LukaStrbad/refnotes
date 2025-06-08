@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Server.Exceptions;
+using Server.Controllers.Base;
 using Server.Model;
 using Server.Services;
 using Server.Utils;
@@ -12,18 +12,34 @@ namespace Server.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class FileController(IFileService fileService, IFileStorageService fileStorageService) : ControllerBase
+public class FileController : GroupPermissionControllerBase
 {
+    private readonly IFileService _fileService;
+    private readonly IFileStorageService _fileStorageService;
+
+    public FileController(
+        IFileService fileService,
+        IFileStorageService fileStorageService,
+        IGroupPermissionService groupPermissionService,
+        IUserService userService) : base(groupPermissionService, userService)
+    {
+        _fileService = fileService;
+        _fileStorageService = fileStorageService;
+    }
+
     [HttpPost("addFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddFile(string directoryPath, int? groupId)
     {
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
         var files = Request.Form.Files;
         foreach (var file in files)
         {
             var name = file.FileName;
-            var fileName = await fileService.AddFile(directoryPath, name, groupId);
-            await fileStorageService.SaveFileAsync(fileName, file.OpenReadStream());
+            var fileName = await _fileService.AddFile(directoryPath, name, groupId);
+            await _fileStorageService.SaveFileAsync(fileName, file.OpenReadStream());
         }
 
         return Ok();
@@ -33,10 +49,13 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddTextFile(string directoryPath, string name, int? groupId)
     {
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
         using var sr = new StreamReader(Request.Body);
         var content = await sr.ReadToEndAsync();
-        var fileName = await fileService.AddFile(directoryPath, name, groupId);
-        await fileStorageService.SaveFileAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)));
+        var fileName = await _fileService.AddFile(directoryPath, name, groupId);
+        await _fileStorageService.SaveFileAsync(fileName, new MemoryStream(Encoding.UTF8.GetBytes(content)));
 
         return Ok();
     }
@@ -45,7 +64,10 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> MoveFile(string oldName, string newName, int? groupId)
     {
-        await fileService.MoveFile(oldName, newName, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        await _fileService.MoveFile(oldName, newName, groupId);
         return Ok();
     }
 
@@ -54,13 +76,16 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name, int? groupId)
     {
-        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
         if (fileName is null)
         {
             return NotFound("File not found.");
         }
 
-        var stream = fileStorageService.GetFile(fileName);
+        var stream = _fileStorageService.GetFile(fileName);
 
         var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
             ? "text/markdown"
@@ -72,15 +97,18 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetImage(string directoryPath, string name, int? groupId)
     {
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
         try
         {
-            var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
+            var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
             if (fileName is null)
             {
                 return File([], "application/octet-stream");
             }
 
-            var stream = fileStorageService.GetFile(fileName);
+            var stream = _fileStorageService.GetFile(fileName);
 
             const string contentType = "application/octet-stream";
             return File(stream, contentType, name);
@@ -97,14 +125,17 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId)
     {
-        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
         if (fileName is null)
         {
             return NotFound("File not found.");
         }
 
-        await fileStorageService.SaveFileAsync(fileName, Request.Body);
-        await fileService.UpdateTimestamp(directoryPath, name, groupId);
+        await _fileStorageService.SaveFileAsync(fileName, Request.Body);
+        await _fileService.UpdateTimestamp(directoryPath, name, groupId);
         return Ok();
     }
 
@@ -113,7 +144,10 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteFile(string directoryPath, string name, int? groupId)
     {
-        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
         if (fileName is null)
         {
             return NotFound("File not found.");
@@ -121,8 +155,8 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
         try
         {
-            await fileService.DeleteFile(directoryPath, name, groupId);
-            await fileStorageService.DeleteFile(fileName);
+            await _fileService.DeleteFile(directoryPath, name, groupId);
+            await _fileStorageService.DeleteFile(fileName);
         }
         catch (FileNotFoundException)
         {
@@ -136,9 +170,12 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
 
     [HttpGet("getFileInfo")]
     [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<FileDto>> GetFileInfo(string filePath, int? groupId)
+    public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
-        var fileInfo = await fileService.GetFileInfo(filePath, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        var fileInfo = await _fileService.GetFileInfo(filePath, groupId);
         return Ok(fileInfo);
     }
 
@@ -146,15 +183,18 @@ public class FileController(IFileService fileService, IFileStorageService fileSt
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> DownloadFile(string path, int? groupId)
     {
-        var (directoryPath, name) = FileServiceUtils.SplitDirAndFile(path);
-        var fileName = await fileService.GetFilesystemFilePath(directoryPath, name, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        var (directoryPath, name) = FileUtils.SplitDirAndFile(path);
+        var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
         if (fileName is null)
         {
             return NotFound("File not found.");
         }
 
         new FileExtensionContentTypeProvider().TryGetContentType(path, out var contentType);
-        var stream = fileStorageService.GetFile(fileName);
+        var stream = _fileStorageService.GetFile(fileName);
         return File(stream, contentType ?? "application/octet-stream", name);
     }
 }

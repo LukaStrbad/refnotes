@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Server.Controllers.Base;
 using Server.Services;
 
 namespace Server.Controllers;
@@ -7,34 +8,53 @@ namespace Server.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class TagController(ITagService tagService) : ControllerBase
+public class TagController : GroupPermissionControllerBase
 {
-    [HttpGet("listAllTags")]
-    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListAllTags()
+    private readonly ITagService _tagService;
+
+    public TagController(
+        ITagService tagService,
+        IGroupPermissionService groupPermissionService,
+        IUserService userService) : base(groupPermissionService, userService)
     {
-        return Ok(await tagService.ListAllTags());
+        _tagService = tagService;
+    }
+
+    [HttpGet("listAllTags")]
+    [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ListAllTags()
+    {
+        return Ok(await _tagService.ListAllTags());
     }
 
     [HttpGet("listAllGroupTags")]
-    [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListAllGroupTags(int groupId)
+    [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ListAllGroupTags(int groupId)
     {
-        return Ok(await tagService.ListAllGroupTags(groupId));
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        return Ok(await _tagService.ListAllGroupTags(groupId));
     }
 
     [HttpGet("listFileTags")]
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<string>>> ListFileTags(string directoryPath, string name, int? groupId)
+    public async Task<ActionResult> ListFileTags(string directoryPath, string name, int? groupId)
     {
-        return Ok(await tagService.ListFileTags(directoryPath, name, groupId));
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        return Ok(await _tagService.ListFileTags(directoryPath, name, groupId));
     }
 
     [HttpPost("addFileTag")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        await tagService.AddFileTag(directoryPath, name, tag, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        await _tagService.AddFileTag(directoryPath, name, tag, groupId);
         return Ok();
     }
 
@@ -42,7 +62,10 @@ public class TagController(ITagService tagService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> RemoveFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        await tagService.RemoveFileTag(directoryPath, name, tag, groupId);
+        if (await GroupAccessForbidden(groupId))
+            return Forbid();
+
+        await _tagService.RemoveFileTag(directoryPath, name, tag, groupId);
         return Ok();
     }
 }

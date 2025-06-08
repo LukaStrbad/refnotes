@@ -66,22 +66,10 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    IFileServiceUtils utils,
-    IUserService userService,
-    IUserGroupService userGroupService) : IFileService
+    IFileServiceUtils utils) : IFileService
 {
-    private async Task CheckGroupPermission(int groupId)
-    {
-        var user = await userService.GetUser();
-        var role = await userGroupService.GetUserGroupRoleAsync(groupId, user.Id);
-        if (role is null)
-            throw new ForbiddenException("User is not a member of the specified group");
-    }
-
     public async Task<string> AddFile(string directoryPath, string name, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
         var directory = await utils.GetDirectory(directoryPath, true, groupId);
 
         if (directory is null)
@@ -104,10 +92,8 @@ public class FileService(
 
     public async Task MoveFile(string oldName, string newName, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
-        var (dirName, filename) = FileServiceUtils.SplitDirAndFile(oldName);
-        var (newDirName, newFilename) = FileServiceUtils.SplitDirAndFile(newName);
+        var (dirName, filename) = FileUtils.SplitDirAndFile(oldName);
+        var (newDirName, newFilename) = FileUtils.SplitDirAndFile(newName);
 
         var (dir, file) = await utils.GetDirAndFile(dirName, filename, groupId);
         // If directory is the same, use the existing directory
@@ -150,8 +136,6 @@ public class FileService(
 
     public async Task<string?> GetFilesystemFilePath(string directoryPath, string name, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
         try
         {
             var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
@@ -165,8 +149,6 @@ public class FileService(
 
     public async Task DeleteFile(string directoryPath, string name, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
         var (directory, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
 
         directory.Files.Remove(file);
@@ -176,8 +158,6 @@ public class FileService(
 
     public async Task UpdateTimestamp(string directoryPath, string name, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
         file.Modified = DateTime.UtcNow;
         context.Entry(file).State = EntityState.Modified;
@@ -186,9 +166,7 @@ public class FileService(
 
     public async Task<FileDto> GetFileInfo(string filePath, int? groupId)
     {
-        if (groupId is not null) await CheckGroupPermission((int)groupId);
-
-        var (directoryPath, name) = FileServiceUtils.SplitDirAndFile(filePath);
+        var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 

@@ -1,38 +1,37 @@
-﻿using System.Security.Claims;
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
-using Server.Exceptions;
+using Server.Db.Model;
 using Server.Model;
 using Server.Services;
+using ServerTests.Fixtures;
 
 namespace ServerTests.ControllerTests;
 
-public class FileControllerTests : BaseTests
+public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<FileController>>
 {
     private readonly FileController _controller;
     private readonly IFileService _fileService;
-    private readonly ClaimsPrincipal _claimsPrincipal;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IGroupPermissionService _groupPermissionService;
     private readonly DefaultHttpContext _httpContext;
 
-    public FileControllerTests()
+    public FileControllerTests(ControllerFixture<FileController> fixture)
     {
-        _fileService = Substitute.For<IFileService>();
-        _fileStorageService = Substitute.For<IFileStorageService>();
-        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.Name, "test_user")
-        ]));
-        _httpContext = new DefaultHttpContext { User = _claimsPrincipal };
-        _controller = new FileController(_fileService, _fileStorageService)
+        var serviceProvider = fixture.CreateServiceProvider();
+
+        _fileService = serviceProvider.GetRequiredService<IFileService>();
+        _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
+        _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
+        _controller = serviceProvider.GetRequiredService<FileController>();
+
+        _httpContext = new DefaultHttpContext();
+        _controller.ControllerContext = new ControllerContext
         {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = _httpContext
-            }
+            HttpContext = _httpContext
         };
     }
 
@@ -61,6 +60,33 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
+    public async Task AddFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string fileName = "test_file_name";
+        var file = Substitute.For<IFormFile>();
+        var fileStream = new MemoryStream("file content"u8.ToArray());
+        file.OpenReadStream().Returns(fileStream);
+        file.FileName.Returns(name);
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        var formFileCollection = new FormFileCollection { file };
+        var formCollection = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
+            formFileCollection);
+        _controller.ControllerContext.HttpContext.Request.Form = formCollection;
+
+        var result = await _controller.AddFile(directoryPath, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().AddFile(directoryPath, name, groupId);
+        await _fileStorageService.DidNotReceiveWithAnyArgs().SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+
+    [Fact]
     public async Task AddTextFile_ReturnsOk_WhenFileAdded()
     {
         const string directoryPath = "test_dir_path";
@@ -78,6 +104,26 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
+    public async Task AddTextFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string fileName = "test_file_name";
+        const string content = "test content";
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
+
+        var result = await _controller.AddTextFile(directoryPath, name, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().AddFile(directoryPath, name, groupId);
+        await _fileStorageService.DidNotReceiveWithAnyArgs().SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+
+    [Fact]
     public async Task MoveFile_ReturnsOk_WhenFileIsMoved()
     {
         const string oldName = "/dir/file.txt";
@@ -90,6 +136,20 @@ public class FileControllerTests : BaseTests
         Assert.IsType<OkResult>(result);
     }
 
+    [Fact]
+    public async Task MoveFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string oldName = "/dir/file.txt";
+        const string newName = "/dir2/file2.txt";
+
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        var result = await _controller.MoveFile(oldName, newName, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().MoveFile(oldName, newName, groupId);
+    }
 
     [Fact]
     public async Task GetFile_ReturnsOk_WhenFileExists()
@@ -119,6 +179,28 @@ public class FileControllerTests : BaseTests
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task GetFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string fileName = "test_file_name";
+        var stream = Substitute.For<Stream>();
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        _fileService.GetFilesystemFilePath(directoryPath, name, null).Returns(fileName);
+        _fileStorageService.GetFile(fileName).Returns(stream);
+
+        var result = await _controller.GetFile(directoryPath, name, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        _fileStorageService.DidNotReceiveWithAnyArgs().GetFile(fileName);
+        await _fileService.DidNotReceive().GetFilesystemFilePath(directoryPath, name, groupId);
     }
 
     [Fact]
@@ -152,6 +234,25 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
+    public async Task GetImage_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string imageName = "test_file_name.png";
+        var stream = Substitute.For<Stream>();
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        var result = await _controller.GetImage(directoryPath, name, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        _fileStorageService.DidNotReceiveWithAnyArgs().GetFile(imageName);
+        await _fileService.DidNotReceive().GetFilesystemFilePath(directoryPath, name, groupId);
+    }
+
+    [Fact]
     public async Task DeleteFile_ReturnsOk_WhenFileDeleted()
     {
         const string directoryPath = "test_dir_path";
@@ -176,6 +277,22 @@ public class FileControllerTests : BaseTests
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task DeleteFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        var result = await _controller.DeleteFile(directoryPath, name, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().DeleteFile(directoryPath, name, groupId);
     }
 
     [Fact]
@@ -211,6 +328,26 @@ public class FileControllerTests : BaseTests
     }
 
     [Fact]
+    public async Task SaveTextFile_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string directoryPath = "test_dir_path";
+        const string name = "test_file_name";
+        const string fileName = "test_file_name";
+        const string content = "test content";
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+        _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
+
+        var result = await _controller.SaveTextFile(directoryPath, name, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().UpdateTimestamp(directoryPath, name, groupId);
+        await _fileStorageService.DidNotReceiveWithAnyArgs().SaveFileAsync(fileName, Arg.Any<Stream>());
+    }
+
+    [Fact]
     public async Task GetFileInfo_ReturnsFileInfo()
     {
         const string filePath = "/file.txt";
@@ -221,8 +358,23 @@ public class FileControllerTests : BaseTests
 
         var result = await _controller.GetFileInfo(filePath, null);
 
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var okResult = Assert.IsType<OkObjectResult>(result);
         var fileInfo = Assert.IsType<FileDto>(okResult.Value);
         Assert.Equal("file.txt", fileInfo.Name);
+    }
+
+    [Fact]
+    public async Task GetFileInfo_ReturnsForbidden_WhenGroupIsForbidden()
+    {
+        const int groupId = 1;
+        const string filePath = "/file.txt";
+
+        // Deny access to group
+        _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
+
+        var result = await _controller.GetFileInfo(filePath, groupId);
+
+        Assert.IsType<ForbidResult>(result);
+        await _fileService.DidNotReceive().GetFileInfo(filePath, groupId);
     }
 }
