@@ -1,0 +1,73 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Server.Controllers.Base;
+using Server.Db.Model;
+using Server.Services;
+
+namespace Server.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+[Authorize]
+public class PublicFileController : GroupPermissionControllerBase
+{
+    private readonly IPublicFileService _publicFileService;
+    private readonly IFileService _fileService;
+
+    public PublicFileController(
+        IPublicFileService publicFileService,
+        IFileService fileService,
+        IGroupPermissionService groupPermissionService,
+        IUserService userService) : base(groupPermissionService, userService)
+    {
+        _publicFileService = publicFileService;
+        _fileService = fileService;
+    }
+
+    [HttpGet("getUrlHash")]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetUrlHash(string filePath, int? groupId)
+    {
+        var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (file is null)
+            return NotFound($"File '{filePath}' not found");
+
+        var urlHash = await _publicFileService.GetUrlHash(file.Id);
+        return Ok(urlHash);
+    }
+
+    [HttpPost("create")]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> CreatePublicFile(string filePath, int? groupId)
+    {
+        if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+            return Forbid();
+        
+        var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (file is null)
+            return NotFound($"File '{filePath}' not found");
+
+        var urlHash = await _publicFileService.CreatePublicFile(file.Id);
+        return Ok(urlHash);
+    }
+    
+    [HttpDelete("delete")]
+    [ProducesResponseType<bool>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> DeletePublicFile(string filePath, int? groupId)
+    {
+        if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+            return Forbid();
+        
+        var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (file is null)
+            return NotFound($"File '{filePath}' not found");
+        
+        var result = await _publicFileService.DeletePublicFile(file.Id);
+        return Ok(result);
+    }
+}

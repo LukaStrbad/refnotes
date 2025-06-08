@@ -16,15 +16,18 @@ public class FileController : GroupPermissionControllerBase
 {
     private readonly IFileService _fileService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IPublicFileService _publicFileService;
 
     public FileController(
         IFileService fileService,
         IFileStorageService fileStorageService,
         IGroupPermissionService groupPermissionService,
-        IUserService userService) : base(groupPermissionService, userService)
+        IUserService userService,
+        IPublicFileService publicFileService) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
         _fileStorageService = fileStorageService;
+        _publicFileService = publicFileService;
     }
 
     [HttpPost("addFile")]
@@ -86,11 +89,25 @@ public class FileController : GroupPermissionControllerBase
         }
 
         var stream = _fileStorageService.GetFile(fileName);
+        return File(stream, FileUtils.GetContentType(name), name);
+    }
 
-        var contentType = name.EndsWith(".md") || name.EndsWith(".markdown")
-            ? "text/markdown"
-            : "application/octet-stream";
-        return File(stream, contentType, name);
+    [AllowAnonymous]
+    [HttpGet("public/getFile")]
+    [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetPublicFile(string urlHash)
+    {
+        var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
+        if (encryptedFile is null)
+            return NotFound("File not found.");
+
+        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
+        if (fileInfo is null)
+            return NotFound("File not found.");
+
+        var stream = _fileStorageService.GetFile(encryptedFile.FilesystemName);
+        return File(stream, FileUtils.GetContentType(fileInfo.Name), fileInfo.Name);
     }
 
     [HttpGet("getImage")]
@@ -176,6 +193,23 @@ public class FileController : GroupPermissionControllerBase
             return Forbid();
 
         var fileInfo = await _fileService.GetFileInfo(filePath, groupId);
+        return Ok(fileInfo);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("public/getFileInfo")]
+    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetPublicFileInfo(string urlHash)
+    {
+        var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
+        if (encryptedFile is null)
+            return NotFound("File not found.");
+        
+        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
+        if (fileInfo is null)
+            return NotFound("File not found.");
+        
         return Ok(fileInfo);
     }
 

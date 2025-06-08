@@ -55,10 +55,23 @@ public interface IFileService
     /// <summary>
     /// Get information about a file at the specified path.
     /// </summary>
-    /// <param name="filePath"></param>
+    /// <param name="filePath">Path to the file</param>
     /// <param name="groupId">ID of the group where the file belongs to</param>
-    /// <returns></returns>
     Task<FileDto> GetFileInfo(string filePath, int? groupId);
+
+    /// <summary>
+    /// Get information about a file from its ID.
+    /// </summary>
+    /// <param name="fileId">File ID</param>
+    Task<FileDto?> GetFileInfoAsync(int fileId);
+
+    /// <summary>
+    /// Get the ID of a file at the specified path.
+    /// </summary>
+    /// <param name="filePath">Path to the file</param>
+    /// <param name="groupId">ID of the group where the file belongs to</param>
+    /// <returns>EncryptedFile object</returns>
+    Task<EncryptedFile?> GetEncryptedFileAsync(string filePath, int? groupId);
 }
 
 public class FileService(
@@ -175,5 +188,37 @@ public class FileService(
             fileSize,
             file.Created,
             file.Modified);
+    }
+
+    public async Task<FileDto?> GetFileInfoAsync(int fileId)
+    {
+        var file = await context.Files.Include(f => f.Tags)
+            .FirstOrDefaultAsync(f => f.Id == fileId);
+
+        if (file is null)
+            return null;
+        
+        var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
+        
+        return new FileDto(file.DecryptedName(encryptionService),
+            file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
+            fileSize,
+            file.Created,
+            file.Modified);
+    }
+
+    public async Task<EncryptedFile?> GetEncryptedFileAsync(string filePath, int? groupId)
+    {
+        var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
+        try
+        {
+            var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
+
+            return file;
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return null;
+        }
     }
 }

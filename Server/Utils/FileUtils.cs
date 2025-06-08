@@ -27,4 +27,30 @@ public static class FileUtils
         var fileName = Path.GetFileName(path);
         return (directoryName, fileName);
     }
+
+    public static string GetContentType(string name)
+    {
+       if (IsTextFile(name))
+           return "text/plain";
+       
+       if (IsMarkdownFile(name))
+           return "text/markdown";
+       
+       var extension = Path.GetExtension(name);
+       
+       // Image types and other
+       return extension switch
+       {
+           ".png" => "image/png",
+           ".jpg" => "image/jpeg",
+           ".jpeg" => "image/jpeg",
+           ".gif" => "image/gif",
+           ".svg" => "image/svg+xml",
+           ".webp" => "image/webp",
+           ".ico" => "image/x-icon",
+           ".bmp" => "image/bmp",
+           ".tiff" => "image/tiff",
+           _ => "application/octet-stream" // Default
+       };
+    }
 }

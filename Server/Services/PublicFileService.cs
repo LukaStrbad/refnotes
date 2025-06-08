@@ -15,22 +15,22 @@ public sealed class PublicFileService : IPublicFileService
 
     private static string GenerateRandomHash() => Guid.NewGuid().ToString();
 
-    public async Task<string?> GetUrlHash(int fileId)
+    public async Task<string?> GetUrlHash(int encryptedFileId)
     {
-        var file = await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == fileId);
+        var file = await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == encryptedFileId);
         return file?.UrlHash;
     }
 
-    public async Task<string> CreatePublicFile(int fileId)
+    public async Task<string> CreatePublicFile(int encryptedFileId)
     {
-        var encryptedFile = await _context.Files.FirstOrDefaultAsync(file => file.Id == fileId);
+        var encryptedFile = await _context.Files.FirstOrDefaultAsync(file => file.Id == encryptedFileId);
         if (encryptedFile is null)
         {
             throw new FileNotFoundException();
         }
 
         // Check if hash already exists
-        var existingHash = await GetUrlHash(fileId);
+        var existingHash = await GetUrlHash(encryptedFileId);
         if (existingHash is not null)
             return existingHash;
 
@@ -41,13 +41,13 @@ public sealed class PublicFileService : IPublicFileService
         var publicFile = new PublicFile
         {
             UrlHash = hash,
-            EncryptedFileId = fileId
+            EncryptedFileId = encryptedFileId
         };
         _context.PublicFiles.Add(publicFile);
         await _context.SaveChangesAsync();
         return hash;
     }
-    
+
     public async Task<bool> DeletePublicFile(int fileId)
     {
         var file = await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == fileId);
@@ -55,9 +55,18 @@ public sealed class PublicFileService : IPublicFileService
         {
             return false;
         }
-        
+
         _context.PublicFiles.Remove(file);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<EncryptedFile?> GetEncryptedFileAsync(string urlHash)
+    {
+        var publicFile = await _context.PublicFiles.FirstOrDefaultAsync(file => file.UrlHash == urlHash);
+        if (publicFile is null)
+            return null;
+
+        return await _context.Files.FirstOrDefaultAsync(file => file.Id == publicFile.EncryptedFileId);
     }
 }
