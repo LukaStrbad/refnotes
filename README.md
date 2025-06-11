@@ -19,12 +19,12 @@ RefNotes is a note-taking application built with .NET and Angular.
 - File downloads
 - File and folder search
 - User groups
+- Public notes (accessed through a public URL)
 
 ## Planned Features
 
 - File sharing
 - File favorites
-- Public notes with a preview URL
 - Autocomplete for image paths
 
 ## Getting Started
