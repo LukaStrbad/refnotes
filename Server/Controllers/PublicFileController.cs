@@ -33,7 +33,7 @@ public class PublicFileController : GroupPermissionControllerBase
         if (file is null)
             return NotFound($"File '{filePath}' not found");
 
-        var urlHash = await _publicFileService.GetUrlHash(file.Id);
+        var urlHash = await _publicFileService.GetUrlHashAsync(file.Id);
         return Ok(urlHash);
     }
 
@@ -45,15 +45,15 @@ public class PublicFileController : GroupPermissionControllerBase
     {
         if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
             return Forbid();
-        
+
         var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
         if (file is null)
             return NotFound($"File '{filePath}' not found");
 
-        var urlHash = await _publicFileService.CreatePublicFile(file.Id);
+        var urlHash = await _publicFileService.CreatePublicFileAsync(file.Id);
         return Ok(urlHash);
     }
-    
+
     [HttpDelete("delete")]
     [ProducesResponseType<bool>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -62,12 +62,12 @@ public class PublicFileController : GroupPermissionControllerBase
     {
         if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
             return Forbid();
-        
+
         var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
         if (file is null)
             return NotFound($"File '{filePath}' not found");
-        
-        var result = await _publicFileService.DeletePublicFile(file.Id);
+
+        var result = await _publicFileService.DeletePublicFileAsync(file.Id);
         return Ok(result);
     }
 }

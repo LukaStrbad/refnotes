@@ -143,6 +143,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
             DataDir = _testFolder,
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
+        services.AddLogging();
 
         var classType = _methodInfo.DeclaringType;
         if (classType is null)

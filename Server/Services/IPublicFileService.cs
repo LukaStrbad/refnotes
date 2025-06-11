@@ -9,7 +9,7 @@ public interface IPublicFileService
     /// </summary>
     /// <param name="encryptedFileId">ID of the encrypted file</param>
     /// <returns>The URL hash or null if the public file is not found</returns>
-    Task<string?> GetUrlHash(int encryptedFileId);
+    Task<string?> GetUrlHashAsync(int encryptedFileId);
 
     /// <summary>
     /// Generate a new public File with a random hash.
@@ -20,14 +20,14 @@ public interface IPublicFileService
     /// <param name="encryptedFileId">ID of the encrypted file</param>
     /// <returns>The generated URL hash</returns>
     /// <exception cref="FileNotFoundException">Thrown when an encrypted file with specified ID doesn't exist</exception>
-    Task<string> CreatePublicFile(int encryptedFileId);
+    Task<string> CreatePublicFileAsync(int encryptedFileId);
 
     /// <summary>
     /// Deletes a public file.
     /// </summary>
     /// <param name="fileId">Public file ID</param>
     /// <returns>True if the public file was deleted, false if it doesn't exist</returns>
-    Task<bool> DeletePublicFile(int fileId);
+    Task<bool> DeletePublicFileAsync(int fileId);
     
     Task<EncryptedFile?> GetEncryptedFileAsync(string urlHash);
 }
