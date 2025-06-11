@@ -24,6 +24,9 @@ public static class Configuration
         builder.Services.AddControllersWithViews();
         builder.AddDatabase(appConfig);
         
+        builder.Logging.ClearProviders();
+        builder.Logging.AddConsole();
+        
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
@@ -41,6 +44,7 @@ public static class Configuration
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IGroupPermissionService, GroupPermissionService>();
         builder.Services.AddScoped<IPublicFileService, PublicFileService>();
+        builder.Services.AddScoped<IAppDomainService, AppDomainService>();
 
         builder.Services.AddAuthentication(x =>
         {

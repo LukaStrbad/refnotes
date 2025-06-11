@@ -35,7 +35,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IFileServiceUtils),
         typeof(IFileService),
         typeof(IUserGroupService),
-        typeof(IBrowserService)
+        typeof(IBrowserService),
+        typeof(IAppDomainService)
     ];
 
     private readonly List<Type> _realizedMocks = [];
