@@ -17,6 +17,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     private readonly IFileService _fileService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IGroupPermissionService _groupPermissionService;
+    private readonly IPublicFileService _publicFileService;
     private readonly DefaultHttpContext _httpContext;
 
     public FileControllerTests(ControllerFixture<FileController> fixture)
@@ -26,6 +27,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileService = serviceProvider.GetRequiredService<IFileService>();
         _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
         _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
+        _publicFileService = serviceProvider.GetRequiredService<IPublicFileService>();
         _controller = serviceProvider.GetRequiredService<FileController>();
 
         _httpContext = new DefaultHttpContext();
@@ -204,6 +206,39 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     }
 
     [Fact]
+    public async Task GetPublicFile_ReturnsOk_WhenFileExists()
+    {
+        const string urlHash = "test_url_hash";
+        var encryptedFile = new EncryptedFile("abcd.txt", "test")
+        {
+            Id = 123
+        };
+        var fileDto = new FileDto("test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        var stream = Substitute.For<Stream>();
+        
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
+        _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(stream);
+        
+        var result = await _controller.GetPublicFile(urlHash);
+        
+        var okResult = Assert.IsType<FileStreamResult>(result);
+        Assert.Equal(stream, okResult.FileStream);
+    }
+
+    [Fact]
+    public async Task GetPublicFile_ReturnsNotFound_WhenPublicFileDoesntExist()
+    {
+        const string urlHash = "test_url_hash";
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns((EncryptedFile?)null);
+        
+        var result = await _controller.GetPublicFile(urlHash);
+        
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    [Fact]
     public async Task GetImage_ReturnsOk_WhenImageExists()
     {
         const string directoryPath = "test_dir_path";
@@ -376,5 +411,37 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         Assert.IsType<ForbidResult>(result);
         await _fileService.DidNotReceive().GetFileInfo(filePath, groupId);
+    }
+    
+    [Fact]
+    public async Task GetPublicFileInfo_ReturnsFileInfo()
+    {
+        const string urlHash = "test_url_hash";
+        var encryptedFile = new EncryptedFile("abcd.txt", "test")
+        {
+            Id = 123
+        };
+        var fileDto = new FileDto("test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
+        
+        var result = await _controller.GetPublicFileInfo(urlHash);
+        
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var fileInfo = Assert.IsType<FileDto>(okResult.Value);
+        Assert.Equal("test.txt", fileInfo.Name);
+    }
+    
+    [Fact]
+    public async Task GetPublicFileInfo_ReturnsNotFound_WhenPublicFileDoesntExist()
+    {
+        const string urlHash = "test_url_hash";
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns((EncryptedFile?)null);
+        
+        var result = await _controller.GetPublicFileInfo(urlHash);
+        
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("File not found.", notFoundResult.Value);
     }
 }

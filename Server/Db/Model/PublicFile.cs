@@ -11,11 +11,17 @@ public class PublicFile
     public int Id { get; init; }
     
     [MaxLength(256)]
-    public required string UrlHash { get; init; }
+    public string UrlHash { get; init; }
 
     [ForeignKey("EncryptedFileId")] public EncryptedFile? EncryptedFile { get; init; }
 
     [ForeignKey("EncryptedFileId")] public int EncryptedFileId { get; init; }
     
     public DateTime Created { get; init; } = DateTime.UtcNow;
+
+    public PublicFile(string urlHash, int encryptedFileId)
+    {
+        UrlHash = urlHash;
+        EncryptedFileId = encryptedFileId;
+    }
 }

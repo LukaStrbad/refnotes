@@ -38,11 +38,7 @@ public sealed class PublicFileService : IPublicFileService
         var hash = GenerateRandomHash();
 
         // Create a new public file entry
-        var publicFile = new PublicFile
-        {
-            UrlHash = hash,
-            EncryptedFileId = encryptedFileId
-        };
+        var publicFile = new PublicFile(hash, encryptedFileId);
         _context.PublicFiles.Add(publicFile);
         await _context.SaveChangesAsync();
         return hash;
