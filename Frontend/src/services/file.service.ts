@@ -162,4 +162,24 @@ export class FileService {
     a.click();
     document.body.removeChild(a);
   }
+
+  async getPublicFile(urlHash: string): Promise<ArrayBuffer> {
+    const params = generateHttpParams({ urlHash: urlHash });
+
+    return await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/public/getFile`,
+        { params, responseType: 'arraybuffer' },
+      ),
+    );
+  }
+
+  async getPublicFileInfo(urlHash: string): Promise<FileInfo> {
+    const params = generateHttpParams({ urlHash: urlHash });
+
+    const fileInfo = await firstValueFrom(
+      this.http.get<FileInfo>(`${apiUrl}/public/getFileInfo`, { params }),
+    );
+    return mapFileDates(fileInfo);
+  }
 }
