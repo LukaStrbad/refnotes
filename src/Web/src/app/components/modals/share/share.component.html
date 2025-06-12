@@ -12,7 +12,7 @@
           class="toggle toggle-primary"
           [checked]="isPublic()"
           (change)="togglePublicState()"
-          testTag="toggle-public-state"
+          testTag="share.toggle.public"
         />
       </label>
     </div>
@@ -29,12 +29,12 @@
             class="input input-bordered join-item flex-1"
             [value]="publicLink()"
             readonly
-            testTag="input-public-link"
+            testTag="share.input.public-link"
           />
           <button
             class="btn btn-primary join-item"
             (click)="copyToClipboard()"
-            testTag="button-copy-link"
+            testTag="share.button.copy"
             translate
           >
             <i class="bi bi-clipboard"></i>
