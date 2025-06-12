@@ -76,7 +76,7 @@ public class PublicFileController : GroupPermissionControllerBase
         if (file is null)
             return NotFound($"File '{filePath}' not found");
 
-        var result = await _publicFileService.DeletePublicFileAsync(file.Id);
+        var result = await _publicFileService.DeactivatePublicFileAsync(file.Id);
         return Ok(result);
     }
 }

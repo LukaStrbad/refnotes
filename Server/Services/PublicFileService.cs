@@ -19,7 +19,11 @@ public sealed class PublicFileService : IPublicFileService
 
     public async Task<string?> GetUrlHashAsync(int encryptedFileId)
     {
-        var file = await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == encryptedFileId);
+        var file = await _context.PublicFiles
+            .Where(file => file.EncryptedFileId == encryptedFileId)
+            .Where(file => file.State == PublicFileState.Active)
+            .FirstOrDefaultAsync();
+
         return file?.UrlHash;
     }
 
@@ -32,23 +36,29 @@ public sealed class PublicFileService : IPublicFileService
             throw new FileNotFoundException();
         }
 
-        // Check if hash already exists
-        var existingHash = await GetUrlHashAsync(encryptedFileId);
-        if (existingHash is not null)
-            return existingHash;
+        // Check if the file already has a public file
+        var publicFile = await _context.PublicFiles
+            .Where(file => file.EncryptedFileId == encryptedFileId)
+            .FirstOrDefaultAsync();
+        if (publicFile is not null)
+        {
+            publicFile.State = PublicFileState.Active;
+            await _context.SaveChangesAsync();
+            return publicFile.UrlHash;
+        }
 
         // Otherwise, generate a new hash
         var hash = GenerateRandomHash();
 
         // Create a new public file entry
-        var publicFile = new PublicFile(hash, encryptedFileId);
+        publicFile = new PublicFile(hash, encryptedFileId);
         _context.PublicFiles.Add(publicFile);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Public file created for file {encryptedFileId}.", encryptedFileId);
         return hash;
     }
 
-    public async Task<bool> DeletePublicFileAsync(int fileId)
+    public async Task<bool> DeactivatePublicFileAsync(int fileId)
     {
         var file = await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == fileId);
         if (file is null)
@@ -57,7 +67,7 @@ public sealed class PublicFileService : IPublicFileService
             return false;
         }
 
-        _context.PublicFiles.Remove(file);
+        file.State = PublicFileState.Inactive;
         await _context.SaveChangesAsync();
         return true;
     }

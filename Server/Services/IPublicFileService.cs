@@ -27,7 +27,7 @@ public interface IPublicFileService
     /// </summary>
     /// <param name="fileId">Public file ID</param>
     /// <returns>True if the public file was deleted, false if it doesn't exist</returns>
-    Task<bool> DeletePublicFileAsync(int fileId);
+    Task<bool> DeactivatePublicFileAsync(int fileId);
     
     Task<EncryptedFile?> GetEncryptedFileAsync(string urlHash);
 }

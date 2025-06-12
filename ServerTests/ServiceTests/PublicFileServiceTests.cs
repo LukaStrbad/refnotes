@@ -73,35 +73,38 @@ public class PublicFileServiceTests : BaseTests
         var file = await CreateFile(sut);
 
         var urlHash = await sut.Value.CreatePublicFileAsync(file.Id);
+        await sut.Value.DeactivatePublicFileAsync(file.Id);
         var urlHash2 = await sut.Value.CreatePublicFileAsync(file.Id);
 
         var publicFiles = await sut.Context.PublicFiles.Where(pf => pf.EncryptedFileId == file.Id)
             .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.Single(publicFiles);
+        Assert.Equal(PublicFileState.Active, publicFiles.First().State);
         Assert.Equal(urlHash, publicFiles.First().UrlHash);
         Assert.Equal(urlHash, urlHash2);
     }
     
     [Theory, AutoData]
-    public async Task DeletePublicFile_DeletesPublicFile(Sut<PublicFileService> sut)
+    public async Task DeactivatePublicFileAsync_DeactivatesPublicFile(Sut<PublicFileService> sut)
     {
         var file = await CreateFile(sut);
 
         await sut.Value.CreatePublicFileAsync(file.Id);
-        var deleteResult = await sut.Value.DeletePublicFileAsync(file.Id);
+        var deleteResult = await sut.Value.DeactivatePublicFileAsync(file.Id);
         
         var publicFile = await sut.Context.PublicFiles.FirstOrDefaultAsync(pf => pf.EncryptedFileId == file.Id,
             cancellationToken: TestContext.Current.CancellationToken);
         
         Assert.True(deleteResult);
-        Assert.Null(publicFile);
+        Assert.NotNull(publicFile);
+        Assert.Equal(PublicFileState.Inactive, publicFile.State);
     }
     
     [Theory, AutoData]
-    public async Task DeletePublicFile_ReturnsFalse_WhenFileNotFound(Sut<PublicFileService> sut)
+    public async Task DeactivatePublicFileAsync_ReturnsFalse_WhenFileNotFound(Sut<PublicFileService> sut)
     {
-        var deleteResult = await sut.Value.DeletePublicFileAsync(0);
+        var deleteResult = await sut.Value.DeactivatePublicFileAsync(0);
         
         Assert.False(deleteResult);
     }
