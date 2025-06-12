@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using Server.Db;
 using Server.Middlewares;
 using Server.Services;
@@ -114,11 +115,6 @@ public static class Configuration
 
     public static void RegisterMiddlewares(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
-
         var allowedOrigins = app.Configuration.GetSection("CorsOrigin").Get<string>();
         if (allowedOrigins is null)
         {
@@ -135,6 +131,16 @@ public static class Configuration
         app.UseExceptionHandlerMiddleware();
 
         app.MapControllers();
+    }
+
+    public static void RegisterAppServices(this WebApplication app)
+    {
+        if (!app.Environment.IsDevelopment()) return;
+        app.MapOpenApi();
+        app.MapScalarApiReference(options =>
+        {
+            options.AddDocument("v1", routePattern: "openapi/v1.json");
+        });
     }
 
     public static AppConfiguration LoadAppConfig()
