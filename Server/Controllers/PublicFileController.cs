@@ -13,15 +13,18 @@ public class PublicFileController : GroupPermissionControllerBase
 {
     private readonly IPublicFileService _publicFileService;
     private readonly IFileService _fileService;
+    private readonly ILogger<PublicFileController> _logger;
 
     public PublicFileController(
         IPublicFileService publicFileService,
         IFileService fileService,
         IGroupPermissionService groupPermissionService,
-        IUserService userService) : base(groupPermissionService, userService)
+        IUserService userService,
+        ILogger<PublicFileController> logger) : base(groupPermissionService, userService)
     {
         _publicFileService = publicFileService;
         _fileService = fileService;
+        _logger = logger;
     }
 
     [HttpGet("getUrlHash")]
@@ -43,8 +46,11 @@ public class PublicFileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> CreatePublicFile(string filePath, int? groupId)
     {
-        if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        {
+            _logger.LogWarning("User {username} tried to create a public file at path {path}", User.Identity?.Name, filePath);
             return Forbid();
+        }
 
         var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
         if (file is null)
@@ -60,8 +66,11 @@ public class PublicFileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> DeletePublicFile(string filePath, int? groupId)
     {
-        if (!await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        {
+            _logger.LogWarning("User {username} tried to delete a public file at path {path}", User.Identity?.Name, filePath);
             return Forbid();
+        }
 
         var file = await _fileService.GetEncryptedFileAsync(filePath, groupId);
         if (file is null)
