@@ -4,6 +4,7 @@ import { LoggerService } from '../../../../services/logger.service';
 import { NotificationService } from '../../../../services/notification.service';
 import { getTranslation } from '../../../../utils/translation-utils';
 import { TestTagDirective } from '../../../../directives/test-tag.directive';
+import { ClipboardService } from '../../../../services/utils/clipboard.service';
 
 @Component({
   selector: 'app-share-modal',
@@ -26,6 +27,7 @@ export class ShareModalComponent {
     private log: LoggerService,
     private notificationService: NotificationService,
     private translate: TranslateService,
+    private clipboard: ClipboardService,
   ) { }
 
   show() {
@@ -48,7 +50,7 @@ export class ShareModalComponent {
     }
 
     try {
-      await navigator.clipboard.writeText(link);
+      await this.clipboard.copyText(link);
       this.notificationService.info(await getTranslation(this.translate, 'share.public-link.copied-to-clipboard'))
     } catch (err) {
       this.log.error('Failed to copy link to clipboard:', err);
