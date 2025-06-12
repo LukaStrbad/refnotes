@@ -102,7 +102,8 @@
     "save": "Spremi",
     "buttonEditTags": "Uredi oznake",
     "labelTags": "Oznake:",
-    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'"
+    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
+    "buttonShare": "Podijeli"
   },
   "modals": {
     "create": {
@@ -153,6 +154,13 @@
       },
       "title": "Uredi grupu",
       "update": "Potvrdi"
+    },
+    "share": {
+      "close": "Zatvori",
+      "copy": "Kopiraj",
+      "makePublic": "Javno",
+      "publicLink": "Javna veza",
+      "title": "Podijeliti datoteku {{fileName}}?"
     }
   },
   "auth": {
@@ -278,5 +286,11 @@
   },
   "button": {
     "back": "Nazad"
+  },
+  "share": {
+    "public-link": {
+      "copied-to-clipboard": "Veza kopirana u međuspremnik",
+      "copy-failed": "Greška prilikom kopiranja veze"
+    }
   }
 }

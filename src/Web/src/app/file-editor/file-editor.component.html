@@ -3,7 +3,10 @@
     <h1 class="font-bold text-2xl">
       {{ "editor.editingFile" | translate: { fileName } }}
     </h1>
-    <button (click)="renameFileModal.show(fileName)" class="btn btn-xs btn-secondary">
+    <button
+      (click)="renameFileModal.show(fileName)"
+      class="btn btn-xs btn-secondary"
+    >
       <i class="bi bi-pencil"></i>
     </button>
   </div>
@@ -21,6 +24,18 @@
     </div>
 
     <div class="flex gap-2 self-end">
+      <!-- Share button -->
+      <button
+        class="btn btn-accent"
+        (click)="openShareModal()"
+        [disabled]="loading"
+        testTag="share-button"
+      >
+        <i class="bi bi-share"></i>
+        <span translate>editor.buttonShare</span>
+      </button>
+
+      <!-- Edit tags button -->
       <button
         class="btn btn-secondary"
         (click)="editTagsModal.show(fileName, tags)"
@@ -29,12 +44,14 @@
         <span translate>editor.buttonEditTags</span>
       </button>
 
+      <!-- Save button -->
       <button
         class="btn btn-primary ms-auto"
         (click)="saveContent()"
         testTag="save-button"
         translate
       >
+        <i class="bi bi-floppy"></i>
         editor.save
       </button>
     </div>
@@ -60,3 +77,11 @@
   #renameFileModal
   (rename)="renameFile($event)"
 ></app-rename-file-modal>
+
+<app-share-modal
+  #shareModal
+  [fileName]="share.fileName()"
+  [isPublic]="share.isPublic()"
+  [publicLink]="share.publicLink()"
+  (changePublicState)="share.setPublicState($event)"
+></app-share-modal>

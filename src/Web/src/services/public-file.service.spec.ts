@@ -32,33 +32,35 @@ describe('PublicFileService', () => {
   it('should get URL hash', async () => {
     const filePath = '/path/to/file.txt';
     const groupId = 1;
-    const mockResponse = 'url-hash';
+    const urlHash = 'url-hash';
+    const expectedUrl = `${environment.frontendUrl}/file/public/${urlHash}`;
 
-    const promise = service.getUrlHash(filePath, groupId);
+    const promise = service.getUrl(filePath, groupId);
 
     const req = httpMock.expectOne(
       `${apiUrl}/getUrlHash?filePath=${filePath}&groupId=${groupId}`
     );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockResponse);
+    req.flush(urlHash);
 
-    expect(await promise).toBe(mockResponse);
+    expect(req.request.method).toBe('GET');
+    expect(await promise).toBe(expectedUrl);
   });
 
   it('should create public file', async () => {
     const filePath = '/path/to/file.txt';
     const groupId = 1;
-    const mockResponse = 'public-file-url';
+    const urlHash = 'url-hash';
+    const expectedUrl = `${environment.frontendUrl}/file/public/${urlHash}`;
 
     const promise = service.createPublicFile(filePath, groupId);
 
     const req = httpMock.expectOne(
-      `${apiUrl}/createPublicFile?filePath=${filePath}&groupId=${groupId}`
+      `${apiUrl}/create?filePath=${filePath}&groupId=${groupId}`
     );
-    expect(req.request.method).toBe('POST');
-    req.flush(mockResponse);
+    req.flush(urlHash);
 
-    expect(await promise).toBe(mockResponse);
+    expect(req.request.method).toBe('POST');
+    expect(await promise).toBe(expectedUrl);
   });
 
   it('should delete public file', async () => {
@@ -68,7 +70,7 @@ describe('PublicFileService', () => {
     const promise = service.deletePublicFile(filePath, groupId);
 
     const req = httpMock.expectOne(
-      `${apiUrl}/deletePublicFile?filePath=${filePath}&groupId=${groupId}`
+      `${apiUrl}/delete?filePath=${filePath}&groupId=${groupId}`
     );
     expect(req.request.method).toBe('DELETE');
     req.flush({});
