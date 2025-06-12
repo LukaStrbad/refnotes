@@ -1,0 +1,62 @@
+<dialog #modal class="modal modal-bottom sm:modal-middle">
+  <div class="modal-box flex flex-col gap-4">
+    <h3 class="text-lg font-bold">
+      {{ "modals.share.title" | translate: { fileName: fileName() } }}
+    </h3>
+
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text" translate>modals.share.makePublic</span>
+        <input
+          type="checkbox"
+          class="toggle toggle-primary"
+          [checked]="isPublic()"
+          (change)="togglePublicState()"
+          testTag="toggle-public-state"
+        />
+      </label>
+    </div>
+
+    @if (isPublic() && publicLink()) {
+      <div class="form-control w-full">
+        <label class="label" for="publicLink">
+          <span class="label-text" translate>modals.share.publicLink</span>
+        </label>
+        <div class="join w-full">
+          <input
+            type="text"
+            id="publicLink"
+            class="input input-bordered join-item flex-1"
+            [value]="publicLink()"
+            readonly
+            testTag="input-public-link"
+          />
+          <button
+            class="btn btn-primary join-item"
+            (click)="copyToClipboard()"
+            testTag="button-copy-link"
+            translate
+          >
+            <i class="bi bi-clipboard"></i>
+            modals.share.copy
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="flex justify-end gap-2">
+      <button
+        class="btn btn-sm"
+        (click)="hide()"
+        testTag="button-close-share"
+        translate
+      >
+        modals.share.close
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

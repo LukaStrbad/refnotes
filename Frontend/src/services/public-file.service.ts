@@ -13,26 +13,38 @@ export class PublicFileService {
 
   constructor(private http: HttpClient) { }
 
-  async getUrlHash(filePath: string, groupId?: number): Promise<string> {
+  async getUrl(filePath: string, groupId?: number): Promise<string|null> {
     const params = generateHttpParams({
       filePath,
       groupId,
     });
 
-    return await firstValueFrom(
+    const urlHash = await firstValueFrom(
       this.http.get(`${apiUrl}/getUrlHash`, { responseType: 'text', params })
     );
+
+    if (!urlHash) {
+      return null; // If no hash is returned, the file is not public
+    }
+
+    return this.createUrlFromHash(urlHash);
   }
 
-  async createPublicFile(filePath: string, groupId?: number): Promise<string> {
+  async createPublicFile(filePath: string, groupId?: number): Promise<string|null> {
     const params = generateHttpParams({
       filePath,
       groupId,
     });
 
-    return await firstValueFrom(
-      this.http.post(`${apiUrl}/createPublicFile`, {}, { responseType: 'text', params })
+    const urlHash = await firstValueFrom(
+      this.http.post(`${apiUrl}/create`, {}, { responseType: 'text', params })
     );
+
+    if (!urlHash) {
+      return null; // If no hash is returned, the file could not be made public
+    }
+
+    return this.createUrlFromHash(urlHash);
   }
 
   async deletePublicFile(filePath: string, groupId?: number): Promise<void> {
@@ -42,7 +54,11 @@ export class PublicFileService {
     });
 
     await firstValueFrom(
-      this.http.delete(`${apiUrl}/deletePublicFile`, { params })
+      this.http.delete(`${apiUrl}/delete`, { params })
     );
+  }
+
+  private createUrlFromHash(urlHash: string): string {
+    return `${environment.frontendUrl}/file/public/${urlHash}`;
   }
 }
