@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Server.Db;
 
@@ -11,9 +12,11 @@ using Server.Db;
 namespace Server.Migrations
 {
     [DbContext(typeof(RefNotesContext))]
-    partial class RefNotesContextModelSnapshot : ModelSnapshot
+    [Migration("20250526190600_AddPublicFiles")]
+    partial class AddPublicFiles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -179,9 +182,6 @@ namespace Server.Migrations
                     b.Property<int>("EncryptedFileId")
                         .HasColumnType("int");
 
-                    b.Property<int>("State")
-                        .HasColumnType("int");
-
                     b.Property<string>("UrlHash")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -191,7 +191,7 @@ namespace Server.Migrations
 
                     b.HasIndex("EncryptedFileId");
 
-                    b.HasIndex("UrlHash", "State")
+                    b.HasIndex("UrlHash")
                         .IsUnique();
 
                     b.ToTable("public_files");

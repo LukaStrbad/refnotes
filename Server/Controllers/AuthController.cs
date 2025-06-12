@@ -13,34 +13,21 @@ namespace Server.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
-    private readonly string[] _cookieDomains;
+    private readonly IAppDomainService _appDomainService;
     private readonly bool _cookieSecure;
 
-    public AuthController(IAuthService authService, IConfiguration configuration)
+    public AuthController(IAuthService authService, IConfiguration configuration, IAppDomainService appDomainService)
     {
         _authService = authService;
-
-        var cookieDomain = configuration["CookieDomain"];
-        if (cookieDomain is null)
-        {
-            throw new Exception("CookieDomain not set in configuration");
-        }
-
-        var cookieDomains = cookieDomain.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (cookieDomains.Length == 0)
-            throw new Exception("CookieDomain list is empty");
-
-        _cookieDomains = cookieDomains;
+        _appDomainService = appDomainService;
         _cookieSecure = configuration.GetValue<bool?>("CookieSecure") ?? false;
     }
 
     private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
     {
-        // Check if the request domain is in the list of cookie domains, if not, use the first one in the list
+        // Check if the request is from a valid domain, if not, set the cookie domain to localhost
         var requestDomain = HttpContext.Request.Host.Host;
-        var cookieDomain = _cookieDomains.FirstOrDefault(domain => requestDomain.EndsWith(domain)) 
-                           ?? (_cookieDomains.FirstOrDefault() ?? "localhost");
+        var cookieDomain = _appDomainService.IsAppDomain(requestDomain) ? requestDomain : "localhost";
 
         var options = new CookieOptions
         {

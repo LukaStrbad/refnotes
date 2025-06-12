@@ -35,7 +35,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IFileServiceUtils),
         typeof(IFileService),
         typeof(IUserGroupService),
-        typeof(IBrowserService)
+        typeof(IBrowserService),
+        typeof(IAppDomainService)
     ];
 
     private readonly List<Type> _realizedMocks = [];
@@ -142,6 +143,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
             DataDir = _testFolder,
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
+        services.AddLogging();
 
         var classType = _methodInfo.DeclaringType;
         if (classType is null)
