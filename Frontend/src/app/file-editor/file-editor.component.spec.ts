@@ -14,7 +14,6 @@ import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
 import { Location } from '@angular/common';
 import { ShareService } from '../../services/components/modals/share.service';
-import { use } from 'marked';
 
 @Component({
   selector: 'app-md-editor',
