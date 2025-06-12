@@ -7,15 +7,19 @@ import { NotificationService } from '../../../../services/notification.service';
 import { createMockNotificationService } from '../../../../services/notification.service.spec';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { click } from '../../../../tests/click-utils';
+import { ClipboardService } from '../../../../services/utils/clipboard.service';
+import { createMockClipboardService } from '../../../../services/utils/clipboard.service.spec';
 
 describe('ShareComponent', () => {
   let component: ShareModalComponent;
   let fixture: ComponentFixture<ShareModalComponent>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let clipboardService: jasmine.SpyObj<ClipboardService>;
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
     notificationService = createMockNotificationService();
+    clipboardService = createMockClipboardService();
 
     await TestBed.configureTestingModule({
       imports: [
@@ -30,6 +34,7 @@ describe('ShareComponent', () => {
       providers: [
         { provide: LoggerService, useValue: createMockLoggerService() },
         { provide: NotificationService, useValue: notificationService },
+        { provide: ClipboardService, useValue: clipboardService },
       ]
     }).compileComponents();
 
@@ -63,7 +68,6 @@ describe('ShareComponent', () => {
 
   it('should show info notification when copying link', async () => {
     fixture.detectChanges();
-    const writeTextSpy = spyOn(navigator.clipboard, 'writeText').and.resolveTo();
 
     const copyButton = nativeElement.querySelector('[data-test="share.button.copy"]') as HTMLButtonElement;
     expect(copyButton).toBeTruthy();
@@ -72,7 +76,7 @@ describe('ShareComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(writeTextSpy).toHaveBeenCalledWith('https://example.com/public/test-hash');
+    expect(clipboardService.copyText).toHaveBeenCalledWith('https://example.com/public/test-hash');
     expect(notificationService.info).toHaveBeenCalled();
   });
 });
