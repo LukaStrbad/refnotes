@@ -3,17 +3,18 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { LoggerService } from '../../../../services/logger.service';
 import { NotificationService } from '../../../../services/notification.service';
 import { getTranslation } from '../../../../utils/translation-utils';
+import { TestTagDirective } from '../../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-share-modal',
-  imports: [TranslatePipe, TranslateDirective],
+  imports: [TranslatePipe, TranslateDirective, TestTagDirective],
   templateUrl: './share.component.html',
   styleUrl: './share.component.css'
 })
 export class ShareModalComponent {
-  isPublic = model(false);
-  publicLink = input<string | null>(null);
-  fileName = input<string>('');
+  readonly isPublic = input.required<boolean>();
+  readonly publicLink = input.required<string | null>();
+  readonly fileName = input.required<string>();
 
   @Output()
   changePublicState = new EventEmitter<boolean>();
