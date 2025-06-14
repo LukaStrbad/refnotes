@@ -8,6 +8,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { File } from '../model/file';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -123,5 +124,37 @@ describe('FileService', () => {
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
     await promise;
+  });
+
+  it('should get a public file', async () => {
+    const mockResponse = new ArrayBuffer(8);
+
+    const promise = service.getPublicFile('test-hash');
+    const req = httpMock.expectOne(
+      `${apiUrl}/public/getFile?urlHash=test-hash`,
+    );
+    req.flush(mockResponse);
+
+    expect(req.request.method).toBe('GET');
+    expect(await promise).toEqual(mockResponse);
+  });
+
+  it('should get public file info', async () => {
+    const mockInfo: File = {
+      name: "test.txt",
+      size: 1024,
+      tags: [],
+      created: new Date(),
+      modified: new Date(),
+    };
+
+    const promise = service.getPublicFileInfo('test-hash');
+    const req = httpMock.expectOne(
+      `${apiUrl}/public/getFileInfo?urlHash=test-hash`
+    );
+    req.flush(mockInfo);
+
+    expect(req.request.method).toBe('GET');
+    expect(await promise).toEqual(mockInfo);
   });
 });
