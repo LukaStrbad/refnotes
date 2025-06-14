@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Server.Model;
 using Server.Services;
+using Server.Utils;
 
 namespace Server.Db.Model;
 
@@ -52,9 +53,11 @@ public class EncryptedDirectory
     public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService, IFileStorageService fileStorageService)
     {
         var name = DecryptedName(encryptionService);
+        var dirPath = DecryptedPath(encryptionService);
         var filesTasks = Files.Select(async file =>
         {
             var fileName = file.DecryptedName(encryptionService);
+            var filePath = FileUtils.NormalizePath($"{dirPath}/{fileName}");
             var tags = file.Tags.Select(tag => tag.DecryptedName(encryptionService));
             var size = await fileStorageService.GetFileSize(file.FilesystemName);
             return new FileDto(fileName, tags, size, file.Created, file.Modified);

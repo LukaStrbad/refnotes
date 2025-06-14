@@ -107,7 +107,7 @@ public class FileController : GroupPermissionControllerBase
             return NotFound("File not found.");
 
         var stream = _fileStorageService.GetFile(encryptedFile.FilesystemName);
-        return File(stream, FileUtils.GetContentType(fileInfo.Name), fileInfo.Name);
+        return File(stream, FileUtils.GetContentType(fileInfo.Path), Path.GetFileName(fileInfo.Path));
     }
 
     [HttpGet("getImage")]

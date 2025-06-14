@@ -1,6 +1,8 @@
-﻿namespace Server.Utils;
+﻿using System.Text.RegularExpressions;
 
-public static class FileUtils
+namespace Server.Utils;
+
+public static partial class FileUtils
 {
     public static bool IsTextFile(string name) => name.EndsWith(".txt", StringComparison.InvariantCultureIgnoreCase);
 
@@ -8,8 +10,12 @@ public static class FileUtils
         name.EndsWith(".md", StringComparison.InvariantCultureIgnoreCase) ||
         name.EndsWith(".markdown", StringComparison.InvariantCultureIgnoreCase);
     
-    public static string NormalizePath(string path) => path.Replace("\\", "/");
-    
+    public static string NormalizePath(string path)
+    {
+        var regex = NormalizePathRegex();
+        return regex.Replace(path, "/");
+    }
+
     /// <summary>
     /// Gets directory path from the given path with slashes as separators
     /// </summary>
@@ -53,4 +59,11 @@ public static class FileUtils
            _ => "application/octet-stream" // Default
        };
     }
+
+    /// <summary>
+    /// Regex to replace multiple backslashes and forward slashes with a single slash.
+    /// </summary>
+    /// <returns></returns>
+    [GeneratedRegex(@"[\\/]+")]
+    private static partial Regex NormalizePathRegex();
 }

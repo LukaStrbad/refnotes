@@ -270,7 +270,7 @@ public class FileServiceTests : BaseTests
         Assert.Equal(_directoryPath[1..], responseDirectory.Name);
         Assert.Single(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
-        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
+        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Path);
     }
 
     [Theory, AutoData]
@@ -307,8 +307,7 @@ public class FileServiceTests : BaseTests
     [Theory, AutoData]
     public async Task GetFileInfo_ReturnsFileInfo(
         Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IFileStorageService fileStorageService)
+        [FixtureGroup(AddNull = true)] UserGroup? group)
     {
         await CreateDirectories(sut, group);
 
@@ -324,7 +323,38 @@ public class FileServiceTests : BaseTests
         var fileInfo = await sut.Value.GetFileInfo($"{_directoryPath}/{fileName}", group?.Id);
 
         Assert.NotNull(fileInfo);
-        Assert.Equal(fileName, fileInfo.Name);
+        Assert.Equal($"{_directoryPath}/{fileName}", fileInfo.Path);
+        Assert.Equal(1024L, fileInfo.Size);
+        Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
+        Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
+    }
+
+    [Theory, AutoData]
+    public async Task GetFileInfoAsync_ReturnsFileInfo(
+        Sut<FileService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group,
+        IBrowserService browserService,
+        IFileStorageService fileStorageService)
+    {
+        await CreateDirectories(sut, group);
+        var subdirectoryPath = $"{_directoryPath}/subdir";
+        const string fileName = "testfile.txt";
+        var filePath = $"{subdirectoryPath}/{fileName}";
+
+        // Create subdirectory
+        await browserService.AddDirectory(subdirectoryPath, group?.Id);
+
+        await sut.Value.AddFile(subdirectoryPath, fileName, group?.Id);
+        fileStorageService.GetFileSize(Arg.Any<string>())
+            .Returns(Task.FromResult(1024L));
+        
+        var encryptedFile = await sut.Value.GetEncryptedFileAsync(filePath, group?.Id);
+        Assert.NotNull(encryptedFile);
+
+        var fileInfo = await sut.Value.GetFileInfoAsync(encryptedFile.Id);
+        
+        Assert.NotNull(fileInfo);
+        Assert.Equal(filePath, fileInfo.Path);
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
