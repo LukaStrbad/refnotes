@@ -395,7 +395,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var fileInfo = Assert.IsType<FileDto>(okResult.Value);
-        Assert.Equal("file.txt", fileInfo.Name);
+        Assert.Equal("file.txt", fileInfo.Path);
     }
 
     [Fact]
@@ -430,7 +430,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         
         var okResult = Assert.IsType<OkObjectResult>(result);
         var fileInfo = Assert.IsType<FileDto>(okResult.Value);
-        Assert.Equal("test.txt", fileInfo.Name);
+        Assert.Equal("test.txt", fileInfo.Path);
     }
     
     [Fact]
