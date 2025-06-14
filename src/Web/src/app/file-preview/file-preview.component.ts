@@ -59,7 +59,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     this.markdownHighlighter = new MarkdownHighlighter(
       this.settings.mdEditor().showLineNumbers,
       this.directoryPath,
-      fileService,
+      (dirPath: string, fileName: string) => this.fileService.getImage(dirPath, fileName, this.groupId),
     );
 
     effect(() => {

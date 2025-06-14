@@ -31,6 +31,10 @@ export const routes: Routes = [
     component: FilePreviewComponent,
   },
   {
+    path: "file/public/:hash",
+    component: FilePreviewComponent,
+  },
+  {
     path: "browser",
     component: BrowserComponent,
     children: [
