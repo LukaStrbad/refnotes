@@ -31,7 +31,7 @@ export const routes: Routes = [
     component: FilePreviewComponent,
   },
   {
-    path: "file/public/:hash",
+    path: "file/public/:publicHash",
     component: FilePreviewComponent,
   },
   {

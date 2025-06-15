@@ -15,6 +15,8 @@ import { FileWithTime } from '../../model/file';
 import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
+import { FileProvider } from './file-provider';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-file-preview',
@@ -24,10 +26,10 @@ import { updateFileTime } from '../../utils/date-utils';
   encapsulation: ViewEncapsulation.None,
 })
 export class FilePreviewComponent implements OnDestroy, AfterViewInit {
-  private readonly markdownHighlighter: MarkdownHighlighter;
-  readonly directoryPath: string;
-  readonly fileName: string;
+  private markdownHighlighter?: MarkdownHighlighter;
+  fileName?: string;
   readonly groupId?: number;
+  readonly fileProvider: FileProvider;
 
   loading = true;
   tags: string[] = [];
@@ -41,53 +43,78 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
 
   constructor(
     route: ActivatedRoute,
+    tagService: TagService,
+    private log: LoggerService,
     private fileService: FileService,
-    private tagService: TagService,
     public settings: SettingsService,
     private changeDetector: ChangeDetectorRef,
     private translate: TranslateService,
     private notificationService: NotificationService,
   ) {
-    const path = route.snapshot.paramMap.get('path') as string;
-    const groupId = route.snapshot.paramMap.get('groupId');
-    if (groupId) {
-      this.groupId = Number(groupId);
-    }
-    [this.directoryPath, this.fileName] = splitDirAndName(path);
-    this.fileType = fileUtils.getFileType(this.fileName);
+    const publicFileHash = route.snapshot.paramMap.get('publicHash');
+    if (publicFileHash) {
+      this.fileProvider = FileProvider.createPublicFileProvider(
+        fileService,
+        publicFileHash,
+      );
+    } else {
+      const path = route.snapshot.paramMap.get('path') as string;
+      const groupId = route.snapshot.paramMap.get('groupId');
+      if (groupId) {
+        this.groupId = Number(groupId);
+      }
 
-    this.markdownHighlighter = new MarkdownHighlighter(
-      this.settings.mdEditor().showLineNumbers,
-      this.directoryPath,
-      (dirPath: string, fileName: string) => this.fileService.getImage(dirPath, fileName, this.groupId),
-    );
+      this.fileProvider = FileProvider.createRegularFileProvider(
+        fileService,
+        tagService,
+        path,
+        this.groupId,
+      );
+    }
 
     effect(() => {
       const showLineNumbers = this.settings.mdEditor().showLineNumbers;
+      if (!this.markdownHighlighter) {
+        return;
+      }
       this.markdownHighlighter.showLineNumbers = showLineNumbers;
     });
   }
 
   ngAfterViewInit(): void {
-    if (this.fileType === 'image') {
-      this.loadImage();
-    } else if (this.fileType === 'markdown' || this.fileType === 'text') {
-      this.loadFile();
-    }
+    (async () => {
+      const path = await this.fileProvider.filePath;
+      const [, fileName] = splitDirAndName(path);
+      this.fileName = fileName;
+      this.fileType = fileUtils.getFileType(this.fileName);
 
-    this.tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
-      .then((tags) => {
+      this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
+        this.settings.mdEditor().showLineNumbers,
+        (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
+      );
+
+      const promises: Promise<void>[] = [];
+
+      if (this.fileType === 'image') {
+        promises.push(this.loadImage());
+      } else if (this.fileType === 'markdown' || this.fileType === 'text') {
+        promises.push(this.loadFile());
+      }
+
+      const listTagsPromise = this.fileProvider.listTags().then(tags => {
         this.tags = tags;
-      }, async () => {
+      }).catch(async () => {
         this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
       });
+      promises.push(listTagsPromise);
 
-    const dateLang = this.translate.currentLang;
-
-    this.fileService.getFileInfo(joinPaths(this.directoryPath, this.fileName), this.groupId)
-      .then(async (fileInfo) => {
-        this.fileInfo = await updateFileTime(fileInfo, this.translate, dateLang);
+      const fileInfoPromise = this.fileProvider.getFileInfo().then(async fileInfo => {
+        this.fileInfo = await updateFileTime(fileInfo, this.translate, this.translate.currentLang);
       });
+      promises.push(fileInfoPromise);
+
+      await Promise.all(promises);
+    })();
   }
 
   ngOnDestroy(): void {
@@ -96,43 +123,52 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  loadFile() {
-    this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
-      .then((content) => {
-        const text = new TextDecoder().decode(content);
-        if (this.fileType === 'markdown') {
-          const markdown = this.markdownHighlighter.parse(text) as string;
-          this.loading = false;
-          this.changeDetector.detectChanges();
-          this.previewContentElement.nativeElement.innerHTML = markdown;
-          this.updateImages();
-        } else if (this.fileType === 'text') {
-          this.loading = false;
-          this.previewContentElement.nativeElement.innerHTML = text;
-        }
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
-      });
+  async loadFile() {
+    if (!this.markdownHighlighter) {
+      throw new Error('MarkdownHighlighter is not initialized');
+    }
+
+    try {
+      const content = await this.fileProvider.getFile();
+      const text = new TextDecoder().decode(content);
+      if (this.fileType === 'markdown') {
+        const markdown = this.markdownHighlighter.parse(text) as string;
+        this.loading = false;
+        this.changeDetector.detectChanges();
+        this.previewContentElement.nativeElement.innerHTML = markdown;
+        this.updateImages();
+      } else if (this.fileType === 'text') {
+        this.loading = false;
+        this.changeDetector.detectChanges();
+        this.previewContentElement.nativeElement.innerHTML = text;
+      }
+    } catch (error) {
+      this.log.error('Error loading file:', error);
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
+    }
   }
 
-  loadImage() {
-    this.fileService.getImage(this.directoryPath, this.fileName, this.groupId)
-      .then((data) => {
-        if (!data) {
-          return;
-        }
+  async loadImage() {
+    const filePath = await this.fileProvider.filePath;
+    const [directoryPath, fileName] = splitDirAndName(filePath);
 
-        this.imageSrc = getImageBlobUrl(this.fileName, data);
-        this.loading = false;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
-      });
+    try {
+      const data = await this.fileService.getImage(directoryPath, fileName, this.groupId);
+      if (!data) {
+        return;
+      }
+
+      this.imageSrc = getImageBlobUrl(fileName, data);
+      this.loading = false;
+    } catch {
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
+    };
   }
 
   /**
    * Updates the image elements with the correct image source
    */
   private updateImages() {
-    this.markdownHighlighter.updateImages(this.previewContentElement);
+    this.markdownHighlighter?.updateImages(this.previewContentElement);
   }
 }

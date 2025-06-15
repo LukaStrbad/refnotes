@@ -9,7 +9,7 @@ import { By } from '@angular/platform-browser';
 import { mockActivatedRoute } from '../../tests/route-utils';
 
 function setupTestBed() {
-  const fileService = jasmine.createSpyObj('FileService', ['getFile', 'getImage', 'getFileInfo']);
+  const fileService = jasmine.createSpyObj('FileService', ['getFile', 'getImage', 'getFileInfo', 'getPublicFileInfo']);
   const tagService = jasmine.createSpyObj('TagService', ['listFileTags']);
 
   const imports = [
@@ -26,7 +26,7 @@ function setupTestBed() {
     TranslateService,
     {
       provide: ActivatedRoute,
-      useValue: { snapshot: { paramMap: { get: () => '/test' } } },
+      useValue: { snapshot: { paramMap: { get: (key: string) => key === 'path' ? '/test' : undefined } } },
     },
     { provide: FileService, useValue: fileService },
     { provide: TagService, useValue: tagService },
@@ -68,7 +68,7 @@ describe('FilePreviewComponent', () => {
 
     tagService.listFileTags.and.resolveTo(['tag1', 'tag2']);
     fileService.getFileInfo.and.resolveTo({
-      name: 'test.md',
+      path: 'test.md',
       size: 1234,
       modified: new Date(),
       created: new Date(),
@@ -179,7 +179,7 @@ describe('FilePreviewComponent with groupId', () => {
 
     tagService.listFileTags.and.resolveTo(['tag1', 'tag2']);
     fileService.getFileInfo.and.resolveTo({
-      name: 'test.md',
+      path: 'test.md',
       size: 1234,
       modified: new Date(),
       created: new Date(),
