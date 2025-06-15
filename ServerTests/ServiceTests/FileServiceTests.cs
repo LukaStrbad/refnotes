@@ -270,7 +270,7 @@ public class FileServiceTests : BaseTests
         Assert.Equal(_directoryPath[1..], responseDirectory.Name);
         Assert.Single(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
-        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Path);
+        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
     }
 
     [Theory, AutoData]
