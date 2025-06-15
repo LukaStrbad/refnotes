@@ -29,7 +29,7 @@ public class EncryptedDirectory
         Directories = [];
         Group = group;
     }
-    
+
     public EncryptedDirectory()
     {
         Id = 0;
@@ -39,8 +39,7 @@ public class EncryptedDirectory
     }
 
     public int Id { get; init; }
-    [StringLength(1024)]
-    public string Path { get; init; }
+    [StringLength(1024)] public string Path { get; init; }
     public List<EncryptedFile> Files { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
     public User? Owner { get; init; }
@@ -49,24 +48,28 @@ public class EncryptedDirectory
     public UserGroup? Group { get; init; }
     public int? GroupId { get; init; }
 
-    public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService, IFileStorageService fileStorageService)
+    public async Task<DirectoryDto> Decrypt(IEncryptionService encryptionService,
+        IFileStorageService fileStorageService)
     {
         var name = DecryptedName(encryptionService);
+        var dirPath = DecryptedPath(encryptionService);
         var filesTasks = Files.Select(async file =>
         {
             var fileName = file.DecryptedName(encryptionService);
+            var filePath = $"{dirPath}/{fileName}";
             var tags = file.Tags.Select(tag => tag.DecryptedName(encryptionService));
             var size = await fileStorageService.GetFileSize(file.FilesystemName);
-            return new FileDto(fileName, tags, size, file.Created, file.Modified);
+            return new FileDto(fileName, filePath, tags, size, file.Created, file.Modified);
         });
         var files = await Task.WhenAll(filesTasks);
-        
-        var directoriesTasks = Directories.Select(async directory => (await directory.Decrypt(encryptionService, fileStorageService)).Name);
+
+        var directoriesTasks = Directories.Select(async directory =>
+            (await directory.Decrypt(encryptionService, fileStorageService)).Name);
         var directories = await Task.WhenAll(directoriesTasks);
-        
+
         return new DirectoryDto(name, files, directories);
     }
-    
+
     public string DecryptedPath(IEncryptionService encryptionService)
     {
         return encryptionService.DecryptAesStringBase64(Path);

@@ -1,12 +1,11 @@
 ﻿using System.Reflection;
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server;
 using Server.Db;
 using Server.Db.Model;
-using Server.Model;
 using Server.Services;
 using Server.Utils;
 using ServerTests.Data.Attributes;
@@ -35,7 +34,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IFileServiceUtils),
         typeof(IFileService),
         typeof(IUserGroupService),
-        typeof(IBrowserService)
+        typeof(IBrowserService),
+        typeof(IAppDomainService)
     ];
 
     private readonly List<Type> _realizedMocks = [];
@@ -142,6 +142,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
             DataDir = _testFolder,
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
+        services.AddLogging();
 
         var classType = _methodInfo.DeclaringType;
         if (classType is null)
@@ -154,6 +155,25 @@ public sealed class AutoDataResolver : IAsyncDisposable
                                 ?? throw new Exception(
                                     "ConcreteTypeAttribute DeclaringType cannot be null in this context");
             services.AddScoped(declaringType, concreteTypeAttribute.ImplementationType);
+        }
+        
+        // Find the ConfigurationDataAttribute
+        if (classType.GetCustomAttribute<ConfigurationDataAttribute>() is { } configurationDataAttribute)
+        {
+            var functionName = configurationDataAttribute.FunctionName;
+            var function = _methodInfo.DeclaringType?.GetMethod(functionName);
+            if (function is null)
+                throw new Exception($"Function {functionName} not found on class {classType.FullName}");
+
+            // Check if the function is static
+            if (!function.IsStatic)
+                throw new Exception($"Function {functionName} must be static");
+
+            if (!typeof(IConfiguration).IsAssignableFrom(function.ReturnType)
+                || function.Invoke(null, null) is not IConfiguration configuration)
+                throw new Exception($"Function {functionName} must return IConfiguration");
+
+            services.AddSingleton(configuration);
         }
 
         // Find the "System under test" type

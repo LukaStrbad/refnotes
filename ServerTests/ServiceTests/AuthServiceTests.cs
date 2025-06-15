@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Server.Db.Model;
 using Server.Exceptions;
@@ -9,10 +10,20 @@ using ServerTests.Data.Attributes;
 
 namespace ServerTests.ServiceTests;
 
+[ConfigurationData(nameof(Configuration))]
 public class AuthServiceTests : BaseTests
 {
     private readonly User _newUser;
+
     private const string DefaultPassword = "password";
+
+    public static IConfiguration Configuration()
+    {
+        // Set access token expiry to 5 minutes
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection([new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")])
+            .Build();
+    }
 
     public AuthServiceTests()
     {

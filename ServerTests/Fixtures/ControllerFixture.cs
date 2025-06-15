@@ -30,6 +30,8 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
         services.AddScopedSubstitute<IUserGroupService>();
         services.AddScopedSubstitute<IFileService>();
         services.AddScopedSubstitute<IFileStorageService>();
+        services.AddScopedSubstitute<IPublicFileService>();
+        services.AddScopedSubstitute<IAppDomainService>();
         services.AddScopedSubstitute<HttpContext>();
 
         // The controller

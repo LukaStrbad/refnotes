@@ -22,7 +22,7 @@ public sealed class Sut<T> where T : class
     public RefNotesContext Context { get; init; }
     public IServiceProvider ServiceProvider { get; init; }
     
-    public IReadOnlyList<User> Users { get; } = [];
+    public IReadOnlyList<User> Users { get; }
     
     public Sut(T value, RefNotesContext context, IServiceProvider serviceProvider, IReadOnlyList<User> users)
     {

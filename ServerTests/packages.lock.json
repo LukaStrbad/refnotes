@@ -330,6 +330,11 @@
           "MySqlConnector": "2.4.0"
         }
       },
+      "Scalar.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "2.4.13",
+        "contentHash": "7EA3SCKM2n7oPJ/yraN5xReXVIaT1rOFA8aasrcLnS1HIwPHJox0IV2Bs/XmFnwgTkSOXtSWjseO3ZhXPNSKnQ=="
+      },
       "SharpZipLib": {
         "type": "Transitive",
         "resolved": "1.4.2",
@@ -443,6 +448,7 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[9.0.4, )",
           "Microsoft.AspNetCore.OpenApi": "[9.0.4, )",
           "Pomelo.EntityFrameworkCore.MySql": "[9.0.0-preview.3.efcore.9.0.0, )",
+          "Scalar.AspNetCore": "[2.4.13, )",
           "System.Linq.Async": "[6.0.1, )"
         }
       }
