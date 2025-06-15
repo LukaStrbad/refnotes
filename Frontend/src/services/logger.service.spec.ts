@@ -3,6 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { LoggerService } from './logger.service';
 import { environment } from '../environments/environment';
 
+export function createMockLoggerService(): jasmine.SpyObj<LoggerService> {
+  return jasmine.createSpyObj('LoggerService', ['currentTimestamp', 'info', 'warn', 'error']);
+}
+
 describe('LoggerService', () => {
   let service: LoggerService;
   let originalProduction: boolean;

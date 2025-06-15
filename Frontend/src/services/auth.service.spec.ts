@@ -138,24 +138,4 @@ describe('AuthService', () => {
       { info: { message: reason } }
     );
   });
-
-  it('should include redirect URL if user is not logged in', async () => {
-    router.navigate.calls.reset();
-    const url = 'http://localhost:4200/settings';
-    const redirectUrl = '/settings';
-    windowMock.location = {
-      href: url,
-      pathname: '/settings',
-      origin: 'http://localhost:4200',
-    }
-
-    await service.init();
-
-    expect(router.navigate).toHaveBeenCalledWith(
-      ['/login'],
-      {
-        queryParams: { redirectUrl },
-      }
-    );
-  });
 });

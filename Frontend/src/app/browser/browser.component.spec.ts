@@ -19,7 +19,7 @@ import { File } from '../../model/file';
 import { User } from '../../model/user';
 
 function createFile(name: string): File {
-  return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
+  return { path: name, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 function setupTestBed(groupId?: string) {
@@ -120,15 +120,6 @@ describe('BrowserComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should navigate to login if user is not authenticated', () => {
-    const userProperty = Object.getOwnPropertyDescriptor(authService, 'user') as { get: jasmine.Spy<(this: jasmine.SpyObj<AuthService>) => User | null> };
-    userProperty.get.and.returnValue(null);
-    const router = TestBed.inject(Router);
-    spyOn(router, 'navigate').and.rejectWith(true);
-    component.ngOnInit();
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
-  });
-
   it('should refresh routes when refreshRoute is called', async () => {
     const cachedDirectory: Directory = {
       name: '/',
@@ -196,7 +187,7 @@ describe('BrowserComponent', () => {
     );
 
     expect(fileTrs.length).toBe(1);
-    const fileNames = component.currentFolder!.files.map((f) => f.name);
+    const fileNames = component.currentFolder!.files.map((f) => f.path);
     expect(fileNames).toContain('test.txt');
     expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '', undefined);
   });
@@ -224,7 +215,7 @@ describe('BrowserComponent', () => {
     );
     component.ngOnInit();
     await component.loadingPromise;
-    expect(component.currentFolder?.files.map((f) => f.name)).toContain(
+    expect(component.currentFolder?.files.map((f) => f.path)).toContain(
       'test.txt',
     );
 

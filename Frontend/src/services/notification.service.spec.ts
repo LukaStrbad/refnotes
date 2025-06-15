@@ -1,7 +1,17 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-
 import { NotificationService } from './notification.service';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
+
+export function createMockNotificationService(): jasmine.SpyObj<NotificationService> {
+  return jasmine.createSpyObj('NotificationService', [
+    'info',
+    'success',
+    'error',
+    'warning',
+    'awaitAndNotifyError',
+    'removeNotification'
+  ]);
+}
 
 describe('NotificationService', () => {
   let service: NotificationService;

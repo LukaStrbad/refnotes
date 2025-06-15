@@ -5,7 +5,6 @@ import { Marked, Tokens } from "marked";
 import { splitDirAndName } from "./path-utils";
 import { getImageBlobUrl, resolveImageUrl } from "./image-utils";
 import { ElementRef } from "@angular/core";
-import { FileService } from "../services/file.service";
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -39,7 +38,7 @@ export class MarkdownHighlighter {
   constructor(
     private _showLineNumbers: boolean,
     private currentPath: string,
-    private fileService: FileService,
+    private loadImage: (dirPath: string, fileName: string) => Promise<ArrayBuffer | null>,
   ) {
     this.marked = new Marked(this.highlightExtension(), {
       renderer: this.imageExtension()
@@ -74,7 +73,7 @@ export class MarkdownHighlighter {
 
       const [dir, name] = splitDirAndName(imageUrl.src);
       // Load the image from the server
-      this.fileService.getImage(dir, name).then((data) => {
+      this.loadImage(dir, name).then((data) => {
         if (!data) {
           console.error(`Failed to fetch image: ${imageUrl.src}`);
           return;

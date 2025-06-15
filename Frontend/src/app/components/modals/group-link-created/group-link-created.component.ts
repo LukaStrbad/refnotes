@@ -3,6 +3,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { NotificationService } from '../../../../services/notification.service';
 import { getTranslation } from '../../../../utils/translation-utils';
 import { TestTagDirective } from '../../../../directives/test-tag.directive';
+import { ClipboardService } from '../../../../services/utils/clipboard.service';
 
 @Component({
   selector: 'app-group-link-created',
@@ -20,6 +21,7 @@ export class GroupLinkCreatedComponent {
   constructor(
     private notificationService: NotificationService,
     private translate: TranslateService,
+    private clipboard: ClipboardService,
   ) { }
 
   show(link: string) {
@@ -33,7 +35,7 @@ export class GroupLinkCreatedComponent {
 
   async copyLink() {
     try {
-      await navigator.clipboard.writeText(this.link());
+      await this.clipboard.copyText(this.link());
       this.notificationService.info(await getTranslation(this.translate, 'groups.link-created.copied-to-clipboard'))
     } catch {
       this.notificationService.error(await getTranslation(this.translate, 'groups.link-created.copy-failed'))
