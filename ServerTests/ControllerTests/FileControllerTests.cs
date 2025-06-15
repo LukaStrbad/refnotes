@@ -213,15 +213,15 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         {
             Id = 123
         };
-        var fileDto = new FileDto("test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        var fileDto = new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
         var stream = Substitute.For<Stream>();
-        
+
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
         _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
         _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(stream);
-        
+
         var result = await _controller.GetPublicFile(urlHash);
-        
+
         var okResult = Assert.IsType<FileStreamResult>(result);
         Assert.Equal(stream, okResult.FileStream);
     }
@@ -231,9 +231,9 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     {
         const string urlHash = "test_url_hash";
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns((EncryptedFile?)null);
-        
+
         var result = await _controller.GetPublicFile(urlHash);
-        
+
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }
@@ -388,14 +388,14 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         const string filePath = "/file.txt";
 
         _fileService.GetFileInfo(filePath, null).Returns(Task.FromResult(
-            new FileDto("file.txt", ["tag1", "tag2"], 1024, DateTime.UtcNow, DateTime.UtcNow))
+            new FileDto("file.txt", filePath, ["tag1", "tag2"], 1024, DateTime.UtcNow, DateTime.UtcNow))
         );
 
         var result = await _controller.GetFileInfo(filePath, null);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var fileInfo = Assert.IsType<FileDto>(okResult.Value);
-        Assert.Equal("file.txt", fileInfo.Path);
+        Assert.Equal("file.txt", fileInfo.Name);
     }
 
     [Fact]
@@ -412,7 +412,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         Assert.IsType<ForbidResult>(result);
         await _fileService.DidNotReceive().GetFileInfo(filePath, groupId);
     }
-    
+
     [Fact]
     public async Task GetPublicFileInfo_ReturnsFileInfo()
     {
@@ -421,26 +421,26 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         {
             Id = 123
         };
-        var fileDto = new FileDto("test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
-        
+        var fileDto = new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
         _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
-        
+
         var result = await _controller.GetPublicFileInfo(urlHash);
-        
+
         var okResult = Assert.IsType<OkObjectResult>(result);
         var fileInfo = Assert.IsType<FileDto>(okResult.Value);
-        Assert.Equal("test.txt", fileInfo.Path);
+        Assert.Equal("test.txt", fileInfo.Name);
     }
-    
+
     [Fact]
     public async Task GetPublicFileInfo_ReturnsNotFound_WhenPublicFileDoesntExist()
     {
         const string urlHash = "test_url_hash";
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns((EncryptedFile?)null);
-        
+
         var result = await _controller.GetPublicFileInfo(urlHash);
-        
+
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
     }

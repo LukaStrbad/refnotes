@@ -183,7 +183,8 @@ public class FileService(
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 
-        return new FileDto(filePath,
+        return new FileDto(name,
+            filePath,
             file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
             fileSize,
             file.Created,
@@ -197,16 +198,18 @@ public class FileService(
             .Include(f => f.Tags)
             .FirstOrDefaultAsync(f => f.Id == fileId);
         var directory = file?.EncryptedDirectory;
-        
+
         if (file is null || directory is null)
             return null;
-        
+
         var directoryPath = directory.DecryptedPath(encryptionService);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
-        
-        var fullPath = FileUtils.NormalizePath(Path.Join(directoryPath, file.Name));
-        
-        return new FileDto(fullPath,
+
+        var fileName = file.DecryptedName(encryptionService);
+        var fullPath = FileUtils.NormalizePath(Path.Join(directoryPath, fileName));
+
+        return new FileDto(fileName,
+            fullPath,
             file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
             fileSize,
             file.Created,

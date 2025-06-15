@@ -8,6 +8,7 @@ using Server.Db;
 using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
+using Server.Utils;
 
 namespace Server.Services;
 
@@ -42,15 +43,34 @@ public interface IAuthService
     Task<Tokens> RefreshAccessToken(string accessToken, string refreshToken);
 }
 
-public class AuthService(RefNotesContext context, AppConfiguration appConfig) : IAuthService
+public class AuthService : IAuthService
 {
-    private readonly byte[] _privateKey = appConfig.JwtPrivateKeyBytes;
+    private readonly byte[] _privateKey;
+    private readonly RefNotesContext _context;
+    private readonly TimeSpan _accessTokenExpiry;
+    private readonly ILogger<AuthService> _logger;
+
+    public AuthService(
+        RefNotesContext context,
+        AppConfiguration appConfig,
+        IConfiguration configuration,
+        ILogger<AuthService> logger)
+    {
+        _context = context;
+        _privateKey = appConfig.JwtPrivateKeyBytes;
+
+        var expirySetting = configuration.GetValue<string>("AccessTokenExpiry");
+        _accessTokenExpiry = TimeParser.ParseTimeString(expirySetting);
+
+        _logger = logger;
+    }
 
     public async Task<Tokens> Login(UserCredentials credentials)
     {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Username == credentials.Username);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == credentials.Username);
         if (user is null)
         {
+            _logger.LogWarning("User {Username} not found", credentials.Username);
             throw new UserNotFoundException("User not found.");
         }
 
@@ -64,9 +84,11 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
                 throw new UnauthorizedException();
             case PasswordVerificationResult.SuccessRehashNeeded:
                 user.Password = passwordHasher.HashPassword(credentials, credentials.Password);
-                await context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 break;
         }
+
+        _logger.LogInformation("User {Username} logged in", credentials.Username);
 
         var tokens = await AddUserRefreshToken(user);
         return tokens;
@@ -74,9 +96,10 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
 
     public async Task<Tokens> Register(User newUser)
     {
-        var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Username == newUser.Username);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == newUser.Username);
         if (existingUser is not null)
         {
+            _logger.LogWarning("User {Username} already exists", newUser.Username);
             throw new UserExistsException("User already exists");
         }
 
@@ -85,8 +108,10 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
         var passwordHasher = new PasswordHasher<UserCredentials>();
         newUser.Password =
             passwordHasher.HashPassword(new UserCredentials(newUser.Username, newUser.Password), newUser.Password);
-        await context.AddAsync(newUser);
-        await context.SaveChangesAsync();
+        await _context.AddAsync(newUser);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {Username} registered", newUser.Username);
 
         return await AddUserRefreshToken(newUser);
     }
@@ -95,23 +120,24 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
     {
         var principal = GetPrincipalFromExpiredToken(accessToken);
         var name = principal.Identity?.Name;
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Username == name);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == name);
 
         if (user is null)
         {
+            _logger.LogWarning("User {Username} not found", name);
             throw new UserNotFoundException("No user found");
         }
 
         var savedRefreshToken =
-            await context.UserRefreshTokens.FirstOrDefaultAsync(t =>
+            await _context.UserRefreshTokens.FirstOrDefaultAsync(t =>
                 t.Username == user.Username && t.RefreshToken == refreshToken);
         if (savedRefreshToken is null || savedRefreshToken.IsExpired)
         {
             throw new RefreshTokenInvalid("Refresh token is invalid or expired");
         }
 
-        context.UserRefreshTokens.Remove(savedRefreshToken);
-        await context.SaveChangesAsync();
+        _context.UserRefreshTokens.Remove(savedRefreshToken);
+        await _context.SaveChangesAsync();
 
         var newTokens = await AddUserRefreshToken(user);
         return newTokens;
@@ -125,10 +151,13 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
             new SymmetricSecurityKey(_privateKey),
             SecurityAlgorithms.HmacSha256);
 
+        _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds", user.Username,
+            _accessTokenExpiry.TotalSeconds);
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             SigningCredentials = credentials,
-            Expires = DateTime.UtcNow.AddMinutes(5),
+            Expires = DateTime.UtcNow.Add(_accessTokenExpiry),
             Subject = GenerateClaims(user)
         };
 
@@ -149,7 +178,7 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
             new Claim(ClaimTypes.Email, user.Email),
         ]);
 
-        ci.AddClaims(user.Roles?.Select(role => new Claim(ClaimTypes.Role, role)) ?? []);
+        ci.AddClaims(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         return ci;
     }
@@ -181,13 +210,13 @@ public class AuthService(RefNotesContext context, AppConfiguration appConfig) : 
     private async Task<Tokens> AddUserRefreshToken(User user)
     {
         var tokens = CreateTokens(user);
-        await context.AddAsync(new UserRefreshToken
+        await _context.AddAsync(new UserRefreshToken
         {
             Username = user.Username,
             RefreshToken = tokens.RefreshToken.Token,
             ExpiryTime = tokens.RefreshToken.ExpiryTime
         });
-        await context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return tokens;
     }
