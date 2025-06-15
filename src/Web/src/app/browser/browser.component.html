@@ -182,7 +182,7 @@
             </td>
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
-                <div>{{ file.path }}</div>
+                <div>{{ file.name }}</div>
 
                 @for (tag of limitTags(file.tags); track tag) {
                   <div class="badge badge-soft badge-primary">{{ tag }}</div>
@@ -204,7 +204,7 @@
                   class="btn btn-xs btn-soft btn-secondary"
                   (click)="
                     $event.stopPropagation();
-                    editTagsModal.show(file.path, file.tags)
+                    editTagsModal.show(file.name, file.tags)
                   "
                 >
                   <i class="bi bi-pencil"></i>
@@ -254,7 +254,7 @@
 
                   <button
                     class="btn btn-sm btn-accent"
-                    (click)="renameFileModal.show(file.path)"
+                    (click)="renameFileModal.show(file.name)"
                   >
                     <i class="bi bi-pencil"></i>
                     {{ "browser.rename" | translate }}
@@ -266,6 +266,14 @@
                   >
                     <i class="bi bi-download"></i>
                     {{ "browser.download" | translate }}
+                  </button>
+
+                  <button
+                    class="btn btn-sm btn-accent"
+                    (click)="openShareModal(file)"
+                    >
+                    <i class="bi bi-share"></i>
+                    {{ "browser.share" | translate }}
                   </button>
 
                   <button
@@ -302,3 +310,11 @@
   #renameFileModal
   (rename)="renameFile($event)"
 ></app-rename-file-modal>
+
+<app-share-modal
+  #shareModal
+  [fileName]="share.fileName()"
+  [isPublic]="share.isPublic()"
+  [publicLink]="share.publicLink()"
+  (changePublicState)="share.setPublicState($event)"
+></app-share-modal>

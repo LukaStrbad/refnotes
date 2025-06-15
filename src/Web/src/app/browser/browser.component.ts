@@ -31,6 +31,8 @@ import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
+import { ShareService } from '../../services/components/modals/share.service';
+import { ShareModalComponent } from '../components/modals/share/share.component';
 
 @Component({
   selector: 'app-browser',
@@ -45,7 +47,8 @@ import { updateFileTime } from '../../utils/date-utils';
     EditTagsModalComponent,
     RenameFileModalComponent,
     ByteSizePipe,
-  ],
+    ShareModalComponent
+],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
@@ -76,6 +79,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   fileModal!: CreateNewModalComponent;
   @ViewChild('folderModal')
   folderModal!: CreateNewModalComponent;
+  @ViewChild('shareModal')
+  shareModal!: ShareModalComponent;
 
   /**
    * For testing purposes, this property is used to store the promise returned by the refreshRoute method.
@@ -113,6 +118,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private translateService: TranslateService,
     private askModal: AskModalService,
+    public share: ShareService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
 
@@ -494,6 +500,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
   downloadFile(file: File) {
     const filePath = joinPaths(this.currentPath, file.path);
     this.fileService.downloadFile(filePath, this.groupId);
+  }
+
+  async openShareModal(file: File) {
+    this.share.setFilePath(file.path);
+    await this.share.loadPublicLink();
+    this.shareModal.show();
   }
 }
 

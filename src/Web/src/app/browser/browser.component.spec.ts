@@ -16,10 +16,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
 import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
-import { User } from '../../model/user';
 
 function createFile(name: string): File {
-  return { path: name, tags: [], size: 0, created: new Date(), modified: new Date() };
+  return { name: name, path: name, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 function setupTestBed(groupId?: string) {
@@ -95,13 +94,11 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
-  let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
     const setup = setupTestBed();
     browserService = setup.browserService;
     fileService = setup.fileService;
-    authService = setup.authService;
 
     await TestBed.configureTestingModule({
       imports: setup.imports,

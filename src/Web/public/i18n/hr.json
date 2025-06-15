@@ -89,7 +89,8 @@
       }
     },
     "files-deleted": "Datoteke izbrisane",
-    "download": "Preuzmi"
+    "download": "Preuzmi",
+    "share": "Podijeli"
   },
   "editor": {
     "viewType": {
