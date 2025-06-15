@@ -11,7 +11,7 @@ describe('authInterceptor', () => {
   let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
-    authService = jasmine.createSpyObj('AuthService', ['isTokenExpired', 'tryToRefreshTokens'], ['accessToken']);
+    authService = jasmine.createSpyObj('AuthService', ['isTokenExpired', 'isTokenExpiredWithSkew', 'tryToRefreshTokens'], ['accessToken']);
 
     TestBed.configureTestingModule({
       providers: [

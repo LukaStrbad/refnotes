@@ -3,8 +3,6 @@ import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { from, lastValueFrom } from 'rxjs';
 
-let refreshTokenPromise: Promise<boolean> | null = null;
-
 export const authInterceptor: HttpInterceptorFn = (req, next) => from(authHandler(req, next));
 
 async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Promise<HttpEvent<unknown>> {
@@ -18,13 +16,7 @@ async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Prom
   const accessToken = authService.accessToken;
 
   if (accessToken && authService.isTokenExpired()) {
-    // Check if we are already refreshing the token to avoid multiple requests
-    if (refreshTokenPromise === null) {
-      refreshTokenPromise = authService.tryToRefreshTokens();
-    }
-
-    await refreshTokenPromise;
-    refreshTokenPromise = null;
+    await authService.tryToRefreshTokens();
   }
 
   return await lastValueFrom(next(req));

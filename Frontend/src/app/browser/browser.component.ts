@@ -129,10 +129,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.auth.user === null) {
-      this.router.navigate(['/login']).then();
-    }
-
     this.navSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
