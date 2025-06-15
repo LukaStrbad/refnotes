@@ -78,13 +78,13 @@ public class PublicFileServiceTests : BaseTests
 
         var publicFiles = await sut.Context.PublicFiles.Where(pf => pf.EncryptedFileId == file.Id)
             .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
-        
+
         Assert.Single(publicFiles);
         Assert.Equal(PublicFileState.Active, publicFiles.First().State);
         Assert.Equal(urlHash, publicFiles.First().UrlHash);
         Assert.Equal(urlHash, urlHash2);
     }
-    
+
     [Theory, AutoData]
     public async Task DeactivatePublicFileAsync_DeactivatesPublicFile(Sut<PublicFileService> sut)
     {
@@ -92,20 +92,43 @@ public class PublicFileServiceTests : BaseTests
 
         await sut.Value.CreatePublicFileAsync(file.Id);
         var deleteResult = await sut.Value.DeactivatePublicFileAsync(file.Id);
-        
+
         var publicFile = await sut.Context.PublicFiles.FirstOrDefaultAsync(pf => pf.EncryptedFileId == file.Id,
             cancellationToken: TestContext.Current.CancellationToken);
-        
+
         Assert.True(deleteResult);
         Assert.NotNull(publicFile);
         Assert.Equal(PublicFileState.Inactive, publicFile.State);
     }
-    
+
     [Theory, AutoData]
     public async Task DeactivatePublicFileAsync_ReturnsFalse_WhenFileNotFound(Sut<PublicFileService> sut)
     {
         var deleteResult = await sut.Value.DeactivatePublicFileAsync(0);
-        
+
         Assert.False(deleteResult);
+    }
+
+    [Theory, AutoData]
+    public async Task IsPublicFileActive_ReturnsTrue_WhenFileActive(Sut<PublicFileService> sut)
+    {
+        var file = await CreateFile(sut);
+
+        var fileHash = await sut.Value.CreatePublicFileAsync(file.Id);
+
+        var isActive = await sut.Value.IsPublicFileActive(fileHash);
+        Assert.True(isActive);
+    }
+
+    [Theory, AutoData]
+    public async Task IsPublicFileActive_ReturnsFalse_WhenFileInactive(Sut<PublicFileService> sut)
+    {
+        var file = await CreateFile(sut);
+
+        var fileHash = await sut.Value.CreatePublicFileAsync(file.Id);
+        await sut.Value.DeactivatePublicFileAsync(file.Id);
+
+        var isActive = await sut.Value.IsPublicFileActive(fileHash);
+        Assert.False(isActive);
     }
 }

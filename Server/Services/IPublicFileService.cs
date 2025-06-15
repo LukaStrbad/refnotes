@@ -30,4 +30,6 @@ public interface IPublicFileService
     Task<bool> DeactivatePublicFileAsync(int fileId);
     
     Task<EncryptedFile?> GetEncryptedFileAsync(string urlHash);
+
+    Task<bool> IsPublicFileActive(string urlHash);
 }

@@ -82,4 +82,10 @@ public sealed class PublicFileService : IPublicFileService
         _logger.LogError("Public file with hash {urlHash} not found.", sanitizedUrlHash);
         return null;
     }
+
+    public async Task<bool> IsPublicFileActive(string urlHash)
+    {
+        var publicFile = await _context.PublicFiles.FirstOrDefaultAsync(file => file.UrlHash == urlHash);
+        return publicFile?.State == PublicFileState.Active;
+    }
 }

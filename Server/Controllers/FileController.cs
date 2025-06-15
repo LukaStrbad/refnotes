@@ -99,7 +99,7 @@ public class FileController : GroupPermissionControllerBase
     public async Task<ActionResult> GetPublicFile(string urlHash)
     {
         var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
-        if (encryptedFile is null)
+        if (encryptedFile is null || !await _publicFileService.IsPublicFileActive(urlHash))
             return NotFound("File not found.");
 
         var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
@@ -203,13 +203,13 @@ public class FileController : GroupPermissionControllerBase
     public async Task<ActionResult> GetPublicFileInfo(string urlHash)
     {
         var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
-        if (encryptedFile is null)
+        if (encryptedFile is null || !await _publicFileService.IsPublicFileActive(urlHash))
             return NotFound("File not found.");
-        
+
         var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
         if (fileInfo is null)
             return NotFound("File not found.");
-        
+
         return Ok(fileInfo);
     }
 

@@ -217,6 +217,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         var stream = Substitute.For<Stream>();
 
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(true);
         _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
         _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(stream);
 
@@ -424,6 +425,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         var fileDto = new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
 
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(true);
         _fileService.GetFileInfoAsync(encryptedFile.Id).Returns(fileDto);
 
         var result = await _controller.GetPublicFileInfo(urlHash);
