@@ -160,12 +160,12 @@
         </thead>
       }
       <tbody>
-        @for (file of files; track file.name) {
+        @for (file of files; track file.path) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
                 type="checkbox"
-                [checked]="isFileSelected(file.name)"
+                [checked]="isFileSelected(file.path)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
                 (click)="toggleFileSelect(file, $event)"
                 testTag="browser.file-to-move-checkbox"
@@ -174,15 +174,15 @@
               <i
                 class="bi group-hover:hidden peer-checked:hidden"
                 [ngClass]="{
-                  'bi-filetype-md': fileUtils.isMarkdownFile(file.name),
-                  'bi-file-text': fileUtils.isTextFile(file.name),
+                  'bi-filetype-md': fileUtils.isMarkdownFile(file.path),
+                  'bi-file-text': fileUtils.isTextFile(file.path),
                   'bi-file-earmark': true,
                 }"
               ></i>
             </td>
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
-                <div>{{ file.name }}</div>
+                <div>{{ file.path }}</div>
 
                 @for (tag of limitTags(file.tags); track tag) {
                   <div class="badge badge-soft badge-primary">{{ tag }}</div>
@@ -204,7 +204,7 @@
                   class="btn btn-xs btn-soft btn-secondary"
                   (click)="
                     $event.stopPropagation();
-                    editTagsModal.show(file.name, file.tags)
+                    editTagsModal.show(file.path, file.tags)
                   "
                 >
                   <i class="bi bi-pencil"></i>
@@ -254,7 +254,7 @@
 
                   <button
                     class="btn btn-sm btn-accent"
-                    (click)="renameFileModal.show(file.name)"
+                    (click)="renameFileModal.show(file.path)"
                   >
                     <i class="bi bi-pencil"></i>
                     {{ "browser.rename" | translate }}
