@@ -120,15 +120,6 @@ describe('BrowserComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should navigate to login if user is not authenticated', () => {
-    const userProperty = Object.getOwnPropertyDescriptor(authService, 'user') as { get: jasmine.Spy<(this: jasmine.SpyObj<AuthService>) => User | null> };
-    userProperty.get.and.returnValue(null);
-    const router = TestBed.inject(Router);
-    spyOn(router, 'navigate').and.rejectWith(true);
-    component.ngOnInit();
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
-  });
-
   it('should refresh routes when refreshRoute is called', async () => {
     const cachedDirectory: Directory = {
       name: '/',

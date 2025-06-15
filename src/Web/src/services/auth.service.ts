@@ -25,6 +25,7 @@ export class AuthService {
   private token: DecodedToken | null = null;
   private _isUserLoggedIn: WritableSignal<boolean> = signal(false);
   public isUserLoggedIn: Signal<boolean> = this._isUserLoggedIn;
+  private refreshTokenPromise: Promise<boolean> | null = null;
 
   private http!: HttpClient;
 
@@ -47,43 +48,7 @@ export class AuthService {
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
     this.http = new HttpClient(this.httpBackend);
 
-    if (!this.setUserAndToken()) {
-      const redirectUrl = this.getRedirectUrl();
-      const navigationUrl = this.getLoggedOutNavigationUrl();
-
-      await this.router.navigate([navigationUrl], {
-        queryParams: {
-          redirectUrl
-        }
-      });
-    }
-  }
-
-  getRedirectUrl(): string | undefined {
-    const url = new URL(this.window.location.href);
-
-    // Return the redirect URL if it's already set
-    const redirectUrl = url.searchParams.get('redirectUrl');
-    if (redirectUrl) {
-      return redirectUrl;
-    }
-
-    // Don't redirect to /, /login or /signup
-    if (url.pathname === '/' || url.pathname === '/login' || url.pathname === '/signup') {
-      return undefined;
-    }
-
-    return this.window.location.href.split(this.window.location.origin)[1];
-  }
-
-  getLoggedOutNavigationUrl(): string {
-    // When user refreshes on the signup page, we must redirect to the signup page
-    if (this.window.location.pathname === '/signup') {
-      return '/signup';
-    }
-
-    // In other cases, redirect to the login page
-    return '/login';
+    this.setUserAndToken();
   }
 
   // For testing purposes
@@ -91,7 +56,7 @@ export class AuthService {
     this.http = http;
   }
 
-  isTokenExpired() {
+  isTokenExpired(): boolean {
     if (!this.token) {
       return true;
     }
@@ -99,21 +64,49 @@ export class AuthService {
     return this.token.exp * 1000 < Date.now();
   }
 
-  async tryToRefreshTokens() {
-    return this.refreshTokens().then(() => {
-      this.setUserAndToken();
+  /**
+   * Checks if the token is expired with a skew of 1 minute.
+   * This is useful to avoid issues with clock skew between the client and server.
+   */
+  isTokenExpiredWithSkew() {
+    if (!this.token) {
       return true;
-    }, (reason) => {
-      const status = getStatusCode(reason);
+    }
 
-      if (status === 401) {
-        this.logout("auth.sessionExpired", false).then();
-      } else {
-        this.logout("auth.error", false).then();
-      }
+    // 1 minute skew
+    const skewSeconds = 60;
 
-      return false;
-    });
+    // Check if the token is expired with a skew
+    return (this.token.exp + skewSeconds) * 1000 < Date.now();
+  }
+
+  async tryToRefreshTokens() {
+    // Return saved promise if a refresh is already in progress
+    if (this.refreshTokenPromise) {
+      return this.refreshTokenPromise;
+    }
+
+    this.refreshTokenPromise = this.refreshTokens()
+      .then(() => {
+        this.setUserAndToken();
+        return true;
+      })
+      .catch((reason) => {
+        const status = getStatusCode(reason);
+
+        if (status === 401) {
+          this.logout("auth.sessionExpired", false).then();
+        } else {
+          this.logout("auth.error", false).then();
+        }
+
+        return false;
+      })
+      .finally(() => {
+        this.refreshTokenPromise = null;
+      });
+
+    return this.refreshTokenPromise;
   }
 
   async login(username: string, password: string, redirectUrl?: string) {
@@ -149,7 +142,7 @@ export class AuthService {
       this.token = decodedToken as DecodedToken;
       this.setUser(this.token);
 
-      this._isUserLoggedIn.set(!this.isTokenExpired());
+      this._isUserLoggedIn.set(!this.isTokenExpiredWithSkew());
       return true;
     } else {
       throw new Error(`Invalid access token: ${accessToken}`);
