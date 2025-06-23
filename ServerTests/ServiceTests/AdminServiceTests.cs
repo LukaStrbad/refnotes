@@ -1,12 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Server.Db;
-using Server.Db.Model;
+﻿using Data.Db.Model;
+using Microsoft.EntityFrameworkCore;
 using Server.Exceptions;
 using Server.Model;
 using Server.Services;
 using ServerTests.Data;
 using ServerTests.Data.Attributes;
-using ServerTests.Fixtures;
 
 namespace ServerTests.ServiceTests;
 

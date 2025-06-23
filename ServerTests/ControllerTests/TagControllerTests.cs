@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server.Controllers;
-using Server.Db.Model;
+using Data.Db.Model;
 using Server.Services;
 using ServerTests.Fixtures;
 

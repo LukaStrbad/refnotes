@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Data.Db.Model;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using Server.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 using ServerTests.Mocks;

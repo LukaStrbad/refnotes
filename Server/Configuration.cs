@@ -1,12 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Data.Db;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using Server.Db;
 using Server.Middlewares;
 using Server.Services;
 using Server.Utils;
@@ -20,18 +19,18 @@ public static class Configuration
     private const string ConfigFile = "config.json";
     private const string DefaultDataDir = "data";
 
-    public static void RegisterServices(this WebApplicationBuilder builder, AppConfiguration appConfig)
+    public static void RegisterServices(this IHostApplicationBuilder builder, AppConfiguration appConfig)
     {
         builder.Services.AddControllersWithViews();
-        builder.AddDatabase(appConfig);
-        
+        builder.AddDatabase();
+
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole();
-        
+
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
-        
+
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();
         builder.Services.AddScoped<IFileService, FileService>();
@@ -79,38 +78,24 @@ public static class Configuration
         {
             builder.Services.AddOpenApi();
         }
-        
+
         var maxFileSize = builder.Configuration.GetValue<long>("MaxFileSize");
         // Set 1 MB as the minimum max file size
-        if (maxFileSize < 1024 * 1024) 
+        if (maxFileSize < 1024 * 1024)
             maxFileSize = 1024 * 1024;
 
         builder.Services.Configure<KestrelServerOptions>(options =>
         {
             options.Limits.MaxRequestBodySize = maxFileSize;
         });
-        
-        builder.Services.Configure<FormOptions>(options =>
-        {
-            options.MultipartBodyLengthLimit = maxFileSize;
-        });
 
-
+        builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = maxFileSize; });
         builder.Services.AddMemoryCache();
     }
 
-    private static void AddDatabase(this WebApplicationBuilder builder, AppConfiguration appConfig)
+    public static void AddDatabase(this IHostApplicationBuilder builder)
     {
-        var connectionString = builder.Configuration["Db:ConnectionString"];
-        ArgumentNullException.ThrowIfNull(connectionString);
-        var serverVersion = ServerVersion.AutoDetect(connectionString);
-        builder.Services.AddDbContext<RefNotesContext>(options =>
-            options.UseMySql(connectionString, serverVersion)
-        );
-
-        using var scope = builder.Services.BuildServiceProvider().CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<RefNotesContext>();
-        db.Database.Migrate();
+        builder.AddMySqlDbContext<RefNotesContext>(connectionName: "refnotes");
     }
 
     public static void RegisterMiddlewares(this WebApplication app)
@@ -137,10 +122,7 @@ public static class Configuration
     {
         if (!app.Environment.IsDevelopment()) return;
         app.MapOpenApi();
-        app.MapScalarApiReference(options =>
-        {
-            options.AddDocument("v1", routePattern: "openapi/v1.json");
-        });
+        app.MapScalarApiReference(options => { options.AddDocument("v1", routePattern: "openapi/v1.json"); });
     }
 
     public static AppConfiguration LoadAppConfig()

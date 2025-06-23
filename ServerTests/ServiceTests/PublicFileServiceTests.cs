@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Server.Db.Model;
+﻿using Data.Db.Model;
+using Microsoft.EntityFrameworkCore;
 using Server.Services;
 using ServerTests.Data;
 

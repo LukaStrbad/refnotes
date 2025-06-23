@@ -1,5 +1,4 @@
 using Server;
-using Server.Db;
 
 var appConfig = Configuration.LoadAppConfig();
 

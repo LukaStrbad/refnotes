@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Server.Db;
-using Server.Db.Model;
+﻿using Data.Db;
+using Microsoft.EntityFrameworkCore;
+using Data.Db.Model;
 using Server.Exceptions;
 
 namespace Server.Services;

@@ -1,12 +1,11 @@
 ﻿using System.Security.Cryptography;
-using Server.Db;
-using Server.Db.Model;
+using Data.Db.Model;
 using Server.Exceptions;
 using Server.Model;
 
 namespace Server.Services;
 
-public class TokenService
+public sealed class TokenService
 {
     private const int RefreshTokenExpirationDays = 7;
     private const int MaxGroupAccessCodeExpiryTimeDays = 7;

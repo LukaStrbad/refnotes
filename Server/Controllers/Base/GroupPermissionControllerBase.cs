@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Db.Model;
+using Data.Db.Model;
 using Server.Services;
 
 namespace Server.Controllers.Base;

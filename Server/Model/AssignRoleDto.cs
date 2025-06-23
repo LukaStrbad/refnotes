@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using Server.Db.Model;
+using Data.Db.Model;
 
 namespace Server.Model;
 

@@ -1,11 +1,11 @@
 ﻿using System.Reflection;
+using Data.Db;
+using Data.Db.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server;
-using Server.Db;
-using Server.Db.Model;
 using Server.Services;
 using Server.Utils;
 using ServerTests.Data.Attributes;

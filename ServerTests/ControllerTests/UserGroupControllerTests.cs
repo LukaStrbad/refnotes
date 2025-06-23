@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
-using Server.Db.Model;
+using Data.Db.Model;
 using Server.Model;
 using Server.Services;
 using Server.Exceptions;

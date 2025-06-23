@@ -1,4 +1,4 @@
-﻿using Server.Db.Model;
+﻿using Data.Db.Model;
 
 namespace Server.Model;
 

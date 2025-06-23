@@ -1,12 +1,4 @@
-﻿using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using NSubstitute;
-using Server;
-using Server.Db.Model;
-using Server.Services;
-using ServerTests.Mocks;
-
-namespace ServerTests;
+﻿namespace ServerTests;
 
 public class BaseTests : IDisposable
 {

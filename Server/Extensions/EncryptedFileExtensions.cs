@@ -1,4 +1,4 @@
-﻿using Server.Db.Model;
+﻿using Data.Db.Model;
 using Server.Model;
 using Server.Services;
 
@@ -14,5 +14,10 @@ public static class EncryptedFileExtensions
             file.Tags.Select(tag => tag.DecryptedName(encryptionService)).ToList(),
             file.FilesystemName,
             file.Modified);
+    }
+    
+    public static string DecryptedName(this EncryptedFile file, IEncryptionService encryptionService)
+    {
+        return encryptionService.DecryptAesStringBase64(file.Name);
     }
 }

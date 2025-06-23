@@ -1,6 +1,6 @@
+using Data.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Server.Db;
 using ServerTests.Fixtures;
 using Testcontainers.MySql;
 

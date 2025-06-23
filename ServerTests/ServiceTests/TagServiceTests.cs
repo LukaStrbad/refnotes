@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Data.Db.Model;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Server.Db.Model;
 using Server.Services;
 using Server.Utils;
 using ServerTests.Data;

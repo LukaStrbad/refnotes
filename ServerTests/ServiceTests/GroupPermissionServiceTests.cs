@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Data.Db.Model;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Server.Db.Model;
 using Server.Services;
 using ServerTests.Data;
 
