@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Data.Model;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Server.Controllers;
-using Data.Db.Model;
 using Server.Services;
 using ServerTests.Fixtures;
 

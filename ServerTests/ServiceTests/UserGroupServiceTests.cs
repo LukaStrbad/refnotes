@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Data.Db.Model;
+using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Server.Exceptions;

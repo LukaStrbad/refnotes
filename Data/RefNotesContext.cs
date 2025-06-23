@@ -1,7 +1,7 @@
-﻿using Data.Db.Model;
+﻿using Data.Model;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data.Db;
+namespace Data;
 
 public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbContext(options)
 {

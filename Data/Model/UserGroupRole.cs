@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Data.Db.Model;
+namespace Data.Model;
 
 [Table("user_group_roles")]
 [Index(nameof(UserId), nameof(UserGroupId), IsUnique = true)]

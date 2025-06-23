@@ -1,5 +1,5 @@
-﻿using Data.Db;
-using Data.Db.Model;
+﻿using Data;
+using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Server.Services;
 

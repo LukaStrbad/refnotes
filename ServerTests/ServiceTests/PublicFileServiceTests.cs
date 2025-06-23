@@ -1,4 +1,4 @@
-﻿using Data.Db.Model;
+﻿using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Server.Services;
 using ServerTests.Data;

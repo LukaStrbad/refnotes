@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data.Db.Model;
+namespace Data.Model;
 
 [Table("group_access_codes")]
 [Index(nameof(ExpiryTime))]

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Data.Db;
+using Data;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
 

@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
-using Data.Db;
-using Data.Db.Model;
+using Data;
+using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

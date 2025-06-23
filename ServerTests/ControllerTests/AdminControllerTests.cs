@@ -1,4 +1,4 @@
-﻿using Data.Db.Model;
+﻿using Data.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;

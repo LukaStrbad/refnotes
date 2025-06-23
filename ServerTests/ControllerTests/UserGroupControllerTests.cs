@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Data.Model;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Server.Controllers;
-using Data.Db.Model;
 using Server.Model;
 using Server.Services;
 using Server.Exceptions;

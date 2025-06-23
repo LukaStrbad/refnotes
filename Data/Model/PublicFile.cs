@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data.Db.Model;
+namespace Data.Model;
 
 [Table("public_files")]
 [Index(nameof(UrlHash), nameof(State), IsUnique = true)]

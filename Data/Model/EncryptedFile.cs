@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data.Db.Model;
+namespace Data.Model;
 
 [Table("encrypted_files")]
 [Index(nameof(EncryptedDirectoryId))]

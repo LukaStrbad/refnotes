@@ -1,7 +1,7 @@
-﻿using Data.Db;
+﻿using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Data.Db.Model;
+using Data.Model;
 using Server.Extensions;
 using Server.Model;
 using Server.Utils;

@@ -1,7 +1,7 @@
 ﻿
 
-using Data.Db;
-using Data.Db.Model;
+using Data;
+using Data.Model;
 
 namespace ServerTests.Data;
 

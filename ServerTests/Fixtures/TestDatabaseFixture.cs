@@ -1,4 +1,4 @@
-using Data.Db;
+using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServerTests.Fixtures;

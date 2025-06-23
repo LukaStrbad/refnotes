@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace Data.Db.Model;
+namespace Data.Model;
 
 [Table("user_refresh_tokens")]
 public class UserRefreshToken

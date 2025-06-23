@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace Data.Db;
+namespace Data;
 
 /// <summary>
 /// Factory for creating RefNotesContext for design-time tools like EF Core CLI.

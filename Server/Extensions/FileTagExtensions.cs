@@ -1,4 +1,4 @@
-﻿using Data.Db.Model;
+﻿using Data.Model;
 using Server.Services;
 
 namespace Server.Extensions;
