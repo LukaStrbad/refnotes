@@ -1,5 +1,6 @@
 ﻿using Data.Model;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace Data;
 
@@ -21,7 +22,7 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
             .HasMany(left => left.Tags)
             .WithMany(right => right.Files)
             .UsingEntity(join => join.ToTable("encrypted_files_file_tags"));
-        
+
         new UserGroupRoleConfiguration().Configure(modelBuilder.Entity<UserGroupRole>());
     }
 }

@@ -95,7 +95,7 @@ public static class Configuration
 
     public static void AddDatabase(this IHostApplicationBuilder builder)
     {
-        builder.AddMySqlDbContext<RefNotesContext>(connectionName: "refnotes");
+        builder.AddMySqlDbContext<RefNotesContext>(connectionName: "main");
     }
 
     public static void RegisterMiddlewares(this WebApplication app)

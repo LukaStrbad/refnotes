@@ -17,7 +17,7 @@ namespace MigrationService.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -67,7 +67,7 @@ namespace MigrationService.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("encrypted_directories");
+                    b.ToTable("encrypted_directories", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.EncryptedFile", b =>
@@ -101,7 +101,7 @@ namespace MigrationService.Migrations
 
                     b.HasIndex("EncryptedDirectoryId");
 
-                    b.ToTable("encrypted_files");
+                    b.ToTable("encrypted_files", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.FileTag", b =>
@@ -129,7 +129,7 @@ namespace MigrationService.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("file_tags");
+                    b.ToTable("file_tags", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.GroupAccessCode", b =>
@@ -162,7 +162,7 @@ namespace MigrationService.Migrations
 
                     b.HasIndex("GroupId", "Value");
 
-                    b.ToTable("group_access_codes");
+                    b.ToTable("group_access_codes", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.PublicFile", b =>
@@ -194,7 +194,7 @@ namespace MigrationService.Migrations
                     b.HasIndex("UrlHash", "State")
                         .IsUnique();
 
-                    b.ToTable("public_files");
+                    b.ToTable("public_files", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.User", b =>
@@ -231,7 +231,7 @@ namespace MigrationService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("users");
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.UserGroup", b =>
@@ -248,7 +248,7 @@ namespace MigrationService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user_groups");
+                    b.ToTable("user_groups", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.UserGroupRole", b =>
@@ -277,7 +277,7 @@ namespace MigrationService.Migrations
                     b.HasIndex("UserId", "UserGroupId")
                         .IsUnique();
 
-                    b.ToTable("user_group_roles");
+                    b.ToTable("user_group_roles", (string)null);
                 });
 
             modelBuilder.Entity("Server.Db.Model.UserRefreshToken", b =>
@@ -303,7 +303,7 @@ namespace MigrationService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user_refresh_tokens");
+                    b.ToTable("user_refresh_tokens", (string)null);
                 });
 
             modelBuilder.Entity("EncryptedFileFileTag", b =>
