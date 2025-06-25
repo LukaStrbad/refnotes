@@ -14,7 +14,7 @@ COPY . /app/
 RUN pnpm run build
 
 FROM caddy:alpine
-COPY --from=build /app/dist/frontend/browser /srv
+COPY --from=build /app/dist/web/browser /srv
 COPY docker/Caddyfile /etc/caddy/Caddyfile
 
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
