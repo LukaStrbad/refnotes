@@ -12,11 +12,11 @@ public class TimeParserTests
     {
         // Act
         var result = TimeParser.ParseTimeString(input);
-        
+
         // Assert
         Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), result);
     }
-    
+
     [Theory]
     [InlineData("5s", 5)]
     [InlineData("10s", 10)]
@@ -79,8 +79,8 @@ public class TimeParserTests
         var result = TimeParser.ParseTimeString(input);
 
         // Assert
-        var expected = TimeSpan.FromHours(expectedHours) + 
-                      TimeSpan.FromMinutes(expectedMinutes) + 
+        var expected = TimeSpan.FromHours(expectedHours) +
+                      TimeSpan.FromMinutes(expectedMinutes) +
                       TimeSpan.FromSeconds(expectedSeconds);
         Assert.Equal(expected, result);
     }
@@ -95,8 +95,8 @@ public class TimeParserTests
         var result = TimeParser.ParseTimeString(input);
 
         // Assert
-        var expected = TimeSpan.FromHours(expectedHours) + 
-                      TimeSpan.FromMinutes(expectedMinutes) + 
+        var expected = TimeSpan.FromHours(expectedHours) +
+                      TimeSpan.FromMinutes(expectedMinutes) +
                       TimeSpan.FromSeconds(expectedSeconds);
         Assert.Equal(expected, result);
     }

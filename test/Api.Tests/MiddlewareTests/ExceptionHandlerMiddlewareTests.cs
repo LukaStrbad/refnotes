@@ -67,7 +67,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
     public async Task Invoke_SetsConflict_WhenFileAlreadyExistsExceptionIsThrown()
     {
         const string message = "Exception";
-        
+
         var middleware = new ExceptionHandlerMiddleware(Next, _logger);
 
         await middleware.Invoke(_httpContext);
@@ -78,7 +78,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
 
         Task Next(HttpContext _) => throw new FileAlreadyExistsException(message);
     }
-    
+
     [Fact]
     public async Task Invoke_SetsNotFound_WhenDirectoryNotFoundExceptionIsThrown()
     {
@@ -94,7 +94,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
 
         Task Next(HttpContext _) => throw new DirectoryNotFoundException(message);
     }
-    
+
     [Fact]
     public async Task Invoke_SetsNotFound_WhenFileNotFoundExceptionIsThrown()
     {
@@ -110,7 +110,7 @@ public class ExceptionHandlerMiddlewareTests : BaseTests
 
         Task Next(HttpContext _) => throw new FileNotFoundException(message);
     }
-    
+
     [Fact]
     public async Task Invoke_SetsInternalServerError_WhenOtherExceptionIsThrown()
     {

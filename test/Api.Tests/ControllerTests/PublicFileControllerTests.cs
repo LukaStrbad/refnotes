@@ -7,7 +7,7 @@ namespace Api.Tests.ControllerTests;
 public class PublicFileControllerTests : BaseTests, IClassFixture<ControllerFixture<PublicFileController>>
 {
     private readonly PublicFileController _controller;
-    
+
     public PublicFileControllerTests(ControllerFixture<PublicFileController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();

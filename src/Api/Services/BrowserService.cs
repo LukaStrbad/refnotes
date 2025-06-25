@@ -140,9 +140,9 @@ public class BrowserService(
         else
         {
             directoryQuery = from dir in directoryQuery
-                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
-                where groupRole.UserId == user.Id && dir.GroupId == groupId
-                select dir;
+                             join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                             where groupRole.UserId == user.Id && dir.GroupId == groupId
+                             select dir;
         }
 
         var directory = await directoryQuery

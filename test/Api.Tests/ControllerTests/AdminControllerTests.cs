@@ -59,9 +59,9 @@ public class AdminControllerTests : BaseTests, IClassFixture<ControllerFixture<A
             new(new User(0, "user1", "user1", "user1@user.com", "password")),
             new(new User(0, "user2", "user2", "user2@user.com", "password"))
         ];
-        
+
         _adminService.ListUsers().Returns(users);
-        
+
         var result = await _controller.ListUsers();
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);

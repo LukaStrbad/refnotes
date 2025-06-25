@@ -156,7 +156,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
                                     "ConcreteTypeAttribute DeclaringType cannot be null in this context");
             services.AddScoped(declaringType, concreteTypeAttribute.ImplementationType);
         }
-        
+
         // Find the ConfigurationDataAttribute
         if (classType.GetCustomAttribute<ConfigurationDataAttribute>() is { } configurationDataAttribute)
         {
@@ -189,7 +189,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
         if (classType.GetCustomAttribute<SutAttribute>() is not { } sutAttribute)
             throw new Exception(
                 $"SutAttribute or Sut<> parameter not found on class {classType.FullName} or test method {_methodInfo.Name}");
-        
+
         var sutType = sutAttribute.SutType;
         services.AddScoped(sutType);
     }

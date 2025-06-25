@@ -31,9 +31,9 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
         _responseCookies = new ResponseCookies();
         httpContext.Request.Cookies.Returns(_requestCookies);
         httpContext.Response.Cookies.Returns(_responseCookies);
-        
+
         serviceProvider.GetRequiredService<IConfiguration>()["CookieDomain"] = "localhost";
-        
+
         _controller = serviceProvider.GetRequiredService<AuthController>();
         _controller.ControllerContext = new ControllerContext
         {

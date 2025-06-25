@@ -5,7 +5,7 @@ namespace Api.Services;
 public sealed class AppDomainService : IAppDomainService
 {
     private readonly HashSet<string> _appDomains;
-    
+
     public AppDomainService(IConfiguration configuration, ILogger<AppDomainService> logger)
     {
         var appDomain = configuration.GetValue<string?>("AppDomain");
@@ -24,10 +24,10 @@ public sealed class AppDomainService : IAppDomainService
             logger.LogError("AppDomains list is empty");
             throw new InvalidConfigurationException("AppDomains list is empty");
         }
-        
+
         _appDomains = new HashSet<string>(appDomains);
     }
-    
+
     public bool IsAppDomain(string domain)
     {
         return _appDomains.Contains(domain);

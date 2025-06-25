@@ -29,15 +29,15 @@ public class AppDomainServiceTests
         var isAppDomain = appDomainService.IsAppDomain("test");
         Assert.True(isAppDomain);
     }
-    
+
     [Fact]
     public void IsAppDomain_ReturnsFalse_IfAppDomainIsNotSet()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         configuration["AppDomain"] = "test";
-        
+
         var appDomainService = new AppDomainService(configuration, _logger);
-        
+
         var isAppDomain = appDomainService.IsAppDomain("test2");
         Assert.False(isAppDomain);
     }
@@ -48,9 +48,9 @@ public class AppDomainServiceTests
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         configuration["AppDomains:0"] = "test";
         configuration["AppDomains:1"] = "test2";
-        
+
         var appDomainService = new AppDomainService(configuration, _logger);
-        
+
         Assert.True(appDomainService.IsAppDomain("test"));
         Assert.True(appDomainService.IsAppDomain("test2"));
         Assert.False(appDomainService.IsAppDomain("test3"));
@@ -61,9 +61,9 @@ public class AppDomainServiceTests
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         configuration["AppDomain"] = "test.com";
-        
+
         var appDomainService = new AppDomainService(configuration, _logger);
-        
+
         var isAppDomain = appDomainService.IsUrlAppDomain("https://test.com");
         Assert.True(isAppDomain);
     }

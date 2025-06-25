@@ -101,7 +101,7 @@ public class TagService(
                 .Where(t => t.GroupOwnerId == groupId)
                 .FirstOrDefaultAsync(t => t.Name == encryptedTag);
         }
-        
+
         var tagToAdd = existingTag ?? new FileTag
         {
             Name = encryptedTag,

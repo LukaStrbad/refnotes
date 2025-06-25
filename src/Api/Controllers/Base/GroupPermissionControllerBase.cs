@@ -22,12 +22,12 @@ public abstract class GroupPermissionControllerBase : ControllerBase
 
         return !await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId);
     }
-    
+
     protected async Task<bool> GroupAccessForbidden(int? groupId, UserGroupRoleType minRole)
     {
         if (groupId is null)
             return false;
-        
+
         return !await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId, minRole);
     }
 }

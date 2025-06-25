@@ -21,7 +21,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
         {
             if (FileLocks.TryGetValue(fileName, out var fileLock))
                 return fileLock;
-            
+
             fileLock = new SemaphoreSlim(1);
             FileLocks.Add(fileName, fileLock);
             return fileLock;
@@ -59,13 +59,13 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
             throw new TimeoutException("File lock timeout.");
 
         LockReleasingStream? lockReleasingStream = null;
-        
+
         try
         {
             var filePath = Path.Combine(appConfig.DataDir, fileName);
             var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             var decryptedStream = encryptionService.DecryptAesToStream(stream);
-            
+
             lockReleasingStream = new LockReleasingStream(decryptedStream, fileLock);
             return lockReleasingStream;
         }

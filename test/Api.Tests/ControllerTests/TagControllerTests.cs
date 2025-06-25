@@ -40,9 +40,9 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
         const int groupId = 1;
         _tagService.ListAllGroupTags(groupId).Returns(Task.FromResult(new List<string> { "tag1", "tag2" }));
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(true);
-        
+
         var result = await _controller.ListAllGroupTags(groupId);
-        
+
         var okResult = Assert.IsType<OkObjectResult>(result);
         var tags = Assert.IsType<List<string>>(okResult.Value);
         Assert.Equal(["tag1", "tag2"], tags);
@@ -53,9 +53,9 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
     {
         const int groupId = 1;
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.ListAllGroupTags(groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 
@@ -82,9 +82,9 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.ListFileTags(directoryPath, name, groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 
@@ -110,9 +110,9 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
         const string name = "test_file_name";
         const string tag = "test_tag";
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.AddFileTag(directoryPath, name, tag, groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 
@@ -129,7 +129,7 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
 
         Assert.IsType<OkResult>(result);
     }
-    
+
     [Fact]
     public async Task RemoveFileTag_ReturnsForbidden_WhenGroupIsForbidden()
     {
@@ -138,9 +138,9 @@ public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<Tag
         const string name = "test_file_name";
         const string tag = "test_tag";
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.RemoveFileTag(directoryPath, name, tag, groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 }

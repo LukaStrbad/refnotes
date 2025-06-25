@@ -21,13 +21,13 @@ public class RefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContex
             .AddJsonFile("appsettings.json")
             .AddEnvironmentVariables()
             .Build();
-        
+
         // Get connection string from above sources
         var connectionString = configuration.GetConnectionString("main");
-        
+
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new Exception("Connection string is not set");
-        
+
         var optionsBuilder = new DbContextOptionsBuilder<RefNotesContext>();
         optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
         return new RefNotesContext(optionsBuilder.Options);

@@ -60,7 +60,7 @@ public class TestDatabaseFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         _instance = this;
-        
+
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Test.json", optional: true)
             .Build();

@@ -11,7 +11,7 @@ public class FileTag
     public List<EncryptedFile> Files { get; set; } = [];
     public User? Owner { get; set; }
     public int? OwnerId { get; set; }
-    
+
     public UserGroup? GroupOwner { get; set; }
     public int? GroupOwnerId { get; set; }
 }

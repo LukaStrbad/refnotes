@@ -39,11 +39,11 @@ public class UserGroupService(
 
         return new GroupDto(group.Id, name, groupRole.Role);
     }
-    
+
     public async Task<GroupDto> Create(string? name = null)
     {
         var user = await userService.GetUser();
-        return await Create(user, name);        
+        return await Create(user, name);
     }
 
     public async Task Update(int groupId, UpdateGroupDto updateGroup)
@@ -58,9 +58,9 @@ public class UserGroupService(
         var user = await userService.GetUser();
 
         var groups = from groupRole in context.UserGroupRoles
-            join userGroup in context.UserGroups on groupRole.UserGroupId equals userGroup.Id
-            where groupRole.UserId == user.Id
-            select new GroupDto(userGroup.Id, encryptionService.DecryptAesStringBase64(userGroup.Name ?? ""), groupRole.Role);
+                     join userGroup in context.UserGroups on groupRole.UserGroupId equals userGroup.Id
+                     where groupRole.UserId == user.Id
+                     select new GroupDto(userGroup.Id, encryptionService.DecryptAesStringBase64(userGroup.Name ?? ""), groupRole.Role);
 
         return await groups.ToListAsync();
     }
@@ -68,9 +68,9 @@ public class UserGroupService(
     public async Task<List<GroupUserDto>> GetGroupMembers(int groupId)
     {
         var groupUsers = from groupRole in context.UserGroupRoles
-            join user in context.Users on groupRole.UserId equals user.Id
-            where groupRole.UserGroupId == groupId
-            select new GroupUserDto(user.Id, user.Username, user.Name, groupRole.Role);
+                         join user in context.Users on groupRole.UserId equals user.Id
+                         where groupRole.UserGroupId == groupId
+                         select new GroupUserDto(user.Id, user.Username, user.Name, groupRole.Role);
 
         return await groupUsers.ToListAsync();
     }
@@ -212,7 +212,7 @@ public class UserGroupService(
 
         return role;
     }
-    
+
     public async Task<UserGroupRoleType?> GetGroupRoleTypeAsync(int groupId, int userId)
     {
         var role = await GetUserGroupRoleAsync(groupId, userId);

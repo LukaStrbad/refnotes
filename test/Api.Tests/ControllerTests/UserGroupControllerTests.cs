@@ -140,7 +140,7 @@ public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGrou
         const int groupId = 2;
         const int userId = 3;
         _groupPermissionService.CanManageUserAsync(Arg.Any<User>(), groupId, userId).Returns(true);
-        
+
         var result = await _controller.RemoveUser(groupId, userId);
         var okResult = Assert.IsType<OkResult>(result);
 

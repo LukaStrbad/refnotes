@@ -2,11 +2,11 @@
 
 namespace Api.Tests.Mocks;
 
-public class ResponseCookies: IResponseCookies
+public class ResponseCookies : IResponseCookies
 {
     public Dictionary<string, string> Cookies { get; } = new();
     public Dictionary<string, CookieOptions> Options { get; } = new();
-    
+
     public void Append(string key, string value)
     {
         Cookies[key] = value;

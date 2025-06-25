@@ -14,14 +14,14 @@ public class EncryptedFile(string filesystemName, string name)
     [MaxLength(255)]
     public string Name { get; set; } = name;
     public List<FileTag> Tags { get; init; } = [];
-    
+
     public DateTime Created { get; init; } = DateTime.UtcNow;
 
     public DateTime Modified { get; set; } = DateTime.UtcNow;
-    
+
     [ForeignKey("EncryptedDirectoryId")]
     public EncryptedDirectory? EncryptedDirectory { get; init; }
-    
+
     [ForeignKey("EncryptedDirectoryId")]
     public int EncryptedDirectoryId { get; init; }
 }

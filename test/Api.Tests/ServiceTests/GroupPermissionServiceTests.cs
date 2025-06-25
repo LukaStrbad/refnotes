@@ -132,7 +132,7 @@ public class GroupPermissionServiceTests : BaseTests
 
         Assert.False(canManage);
     }
-    
+
     [Theory, AutoData]
     public async Task CanManageRoleAsync_ReturnsFalse_WhenTargetRoleIsOwner(
         Sut<GroupPermissionService> sut)
@@ -220,7 +220,7 @@ public class GroupPermissionServiceTests : BaseTests
 
         Assert.False(canManage);
     }
-    
+
     [Theory, AutoData]
     public async Task CanManageUserAsync_ReturnsFalse_WhenTargetUserIsOwner(
         Sut<GroupPermissionService> sut)

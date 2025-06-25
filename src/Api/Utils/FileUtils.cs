@@ -9,7 +9,7 @@ public static partial class FileUtils
     public static bool IsMarkdownFile(string name) =>
         name.EndsWith(".md", StringComparison.InvariantCultureIgnoreCase) ||
         name.EndsWith(".markdown", StringComparison.InvariantCultureIgnoreCase);
-    
+
     public static string NormalizePath(string path)
     {
         var regex = NormalizePathRegex();
@@ -36,28 +36,28 @@ public static partial class FileUtils
 
     public static string GetContentType(string name)
     {
-       if (IsTextFile(name))
-           return "text/plain";
-       
-       if (IsMarkdownFile(name))
-           return "text/markdown";
-       
-       var extension = Path.GetExtension(name);
-       
-       // Image types and other
-       return extension switch
-       {
-           ".png" => "image/png",
-           ".jpg" => "image/jpeg",
-           ".jpeg" => "image/jpeg",
-           ".gif" => "image/gif",
-           ".svg" => "image/svg+xml",
-           ".webp" => "image/webp",
-           ".ico" => "image/x-icon",
-           ".bmp" => "image/bmp",
-           ".tiff" => "image/tiff",
-           _ => "application/octet-stream" // Default
-       };
+        if (IsTextFile(name))
+            return "text/plain";
+
+        if (IsMarkdownFile(name))
+            return "text/markdown";
+
+        var extension = Path.GetExtension(name);
+
+        // Image types and other
+        return extension switch
+        {
+            ".png" => "image/png",
+            ".jpg" => "image/jpeg",
+            ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".svg" => "image/svg+xml",
+            ".webp" => "image/webp",
+            ".ico" => "image/x-icon",
+            ".bmp" => "image/bmp",
+            ".tiff" => "image/tiff",
+            _ => "application/octet-stream" // Default
+        };
     }
 
     /// <summary>

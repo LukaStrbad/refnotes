@@ -14,7 +14,7 @@ public interface IGroupPermissionService
     /// <param name="groupId">The group ID</param>
     /// <returns>True if the user has access to the group, false otherwise</returns>
     Task<bool> HasGroupAccessAsync(User user, int groupId);
-    
+
     /// <summary>
     /// Checks if the user has access to the specified group with a minimum required role.
     /// </summary>
@@ -32,7 +32,7 @@ public interface IGroupPermissionService
     /// <param name="role">The role to manage</param>
     /// <returns>True if the user can manage the role within the group, false otherwise</returns>
     Task<bool> CanManageRoleAsync(User user, int groupId, UserGroupRoleType role);
-    
+
     /// <summary>
     /// Check if the user can manage the specified user in the specified group.
     /// </summary>

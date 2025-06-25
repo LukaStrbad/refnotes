@@ -18,7 +18,7 @@ public static class UserGroupRoleTypeExtensions
 
         return Array.IndexOf(RoleHierarchy, (UserGroupRoleType)role);
     }
-    
+
     public static int GetRoleStrength(this UserGroupRoleType role)
     {
         return Array.IndexOf(RoleHierarchy, role);

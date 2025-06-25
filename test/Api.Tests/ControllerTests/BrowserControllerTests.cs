@@ -55,9 +55,9 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
         const string path = "test_path";
         const int groupId = 1;
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.List(path, groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 
@@ -78,9 +78,9 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
         const string path = "/test_path";
         const int groupId = 1;
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.AddDirectory(path, groupId);
-        
+
         Assert.IsType<ForbidResult>(result);
     }
 
@@ -114,9 +114,9 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture
         const string path = "/test_path";
         const int groupId = 1;
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
-        
+
         var result = await _controller.DeleteDirectory(path, groupId);
-        
-        Assert.IsType<ForbidResult>(result);   
+
+        Assert.IsType<ForbidResult>(result);
     }
 }

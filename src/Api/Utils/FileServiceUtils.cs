@@ -44,9 +44,9 @@ public class FileServiceUtils(
         if (groupId is not null)
         {
             directoryQueryable = from dir in context.Directories
-                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
-                where groupRole.UserId == user.Id && dir.GroupId == groupId
-                select dir;
+                                 join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                                 where groupRole.UserId == user.Id && dir.GroupId == groupId
+                                 select dir;
         }
 
         if (includeFilesAndDirs)
@@ -74,9 +74,9 @@ public class FileServiceUtils(
         if (groupId is not null)
         {
             query = from dir in context.Directories
-                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
-                where groupRole.UserId == user.Id && dir.GroupId == groupId
-                select dir;
+                    join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                    where groupRole.UserId == user.Id && dir.GroupId == groupId
+                    select dir;
         }
 
         query = query.Include(dir => dir.Files);

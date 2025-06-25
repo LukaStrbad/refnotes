@@ -14,7 +14,7 @@ public class AdminServiceTests : BaseTests
     public async Task ListUsers_ReturnsUsers(
         Sut<AdminService> sut,
         [FixtureUser] User user,
-        [FixtureUser(Roles = ["administrator"])] User adminUser) 
+        [FixtureUser(Roles = ["administrator"])] User adminUser)
     {
         var users = await sut.Value.ListUsers();
         Assert.True(users.Count >= 2);

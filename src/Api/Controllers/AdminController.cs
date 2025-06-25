@@ -23,12 +23,13 @@ public class AdminController(IAdminService adminService) : ControllerBase
         {
             var roles = await adminService.ModifyRoles(modifyRolesRequest);
             return Ok(roles);
-        } catch (UserNotFoundException e)
+        }
+        catch (UserNotFoundException e)
         {
             return NotFound(e.Message);
         }
     }
-    
+
     [HttpGet("listUsers")]
     [ProducesResponseType<Ok<List<User>>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<List<User>>> ListUsers()

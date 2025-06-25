@@ -17,6 +17,6 @@ public class GroupAccessCode
     public int GroupId { get; set; }
     public required User Sender { get; init; }
     public int SenderId { get; init; }
-    
+
     public bool IsExpired => DateTime.UtcNow >= ExpiryTime;
 }

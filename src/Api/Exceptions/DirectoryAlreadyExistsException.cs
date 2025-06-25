@@ -1,3 +1,3 @@
 ﻿namespace Api.Exceptions;
 
-public class DirectoryAlreadyExistsException(string message): Exception(message);
+public class DirectoryAlreadyExistsException(string message) : Exception(message);

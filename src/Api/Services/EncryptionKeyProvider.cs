@@ -6,7 +6,7 @@ public sealed class EncryptionKeyProvider : IEncryptionKeyProvider
 {
     public byte[] Key { get; }
     public byte[] Iv { get; }
-    
+
     public const string AesKeyFileName = "aes_key.bin";
     public const string AesIvFileName = "aes_iv.bin";
 

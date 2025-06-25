@@ -347,12 +347,12 @@ public class FileServiceTests : BaseTests
         await sut.Value.AddFile(subdirectoryPath, fileName, group?.Id);
         fileStorageService.GetFileSize(Arg.Any<string>())
             .Returns(Task.FromResult(1024L));
-        
+
         var encryptedFile = await sut.Value.GetEncryptedFileAsync(filePath, group?.Id);
         Assert.NotNull(encryptedFile);
 
         var fileInfo = await sut.Value.GetFileInfoAsync(encryptedFile.Id);
-        
+
         Assert.NotNull(fileInfo);
         Assert.Equal(filePath, fileInfo.Path);
         Assert.Equal(1024L, fileInfo.Size);

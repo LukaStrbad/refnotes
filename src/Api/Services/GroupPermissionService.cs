@@ -31,7 +31,7 @@ public class GroupPermissionService : IGroupPermissionService
     {
         if (role == UserGroupRoleType.Owner)
             return false;
-        
+
         var groupRole = await _userGroupService.GetGroupRoleTypeAsync(groupId, user.Id);
         if (groupRole is null)
             return false;

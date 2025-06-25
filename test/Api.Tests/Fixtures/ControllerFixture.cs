@@ -12,7 +12,7 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
 {
     private readonly List<IDisposable> _disposables = [];
     private readonly ServiceProvider _rootServiceProvider;
-    
+
     public ControllerFixture()
     {
         var services = new ServiceCollection();
@@ -39,7 +39,7 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
 
         _rootServiceProvider = services.BuildServiceProvider(validateScopes: true);
     }
-    
+
     public void Dispose()
     {
         _rootServiceProvider.Dispose();

@@ -12,7 +12,7 @@ public sealed class LockReleasingStream(Stream inner, SemaphoreSlim streamLock) 
     protected override void Dispose(bool disposing)
     {
         if (_disposed) return;
-        
+
         if (disposing)
         {
             inner.Dispose();

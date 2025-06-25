@@ -15,7 +15,7 @@ public static class EncryptedFileExtensions
             file.FilesystemName,
             file.Modified);
     }
-    
+
     public static string DecryptedName(this EncryptedFile file, IEncryptionService encryptionService)
     {
         return encryptionService.DecryptAesStringBase64(file.Name);

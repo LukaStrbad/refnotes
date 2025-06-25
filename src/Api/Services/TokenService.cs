@@ -46,7 +46,7 @@ public sealed class TokenService
             throw new ExpiryTimeTooLongException(
                 $"Expiry time should be at most {MaxGroupAccessCodeExpiryTimeDays} days");
         }
-        
+
         var accessCode = GenerateRandomString(64);
         var groupAccessCode = new GroupAccessCode
         {
