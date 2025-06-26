@@ -1,9 +1,9 @@
 using MigrationService;
-using Api;
+using ServiceDefaults;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.AddDatabase();
+builder.AddServiceDefaults();
 builder.Services.AddHostedService<MigrationWorker>();
 
 builder.Services.AddOpenTelemetry()

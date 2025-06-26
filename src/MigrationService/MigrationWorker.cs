@@ -36,7 +36,7 @@ public class MigrationWorker : BackgroundService
         catch (Exception e)
         {
             _logger.LogError(e, "Error while running migration");
-            activity?.RecordException(e);
+            activity?.AddException(e);
             throw;
         }
 

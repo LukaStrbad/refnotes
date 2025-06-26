@@ -15,18 +15,13 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.6"/>
+        <PackageReference Include="OpenTelemetry" Version="1.12.0" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0-preview.3.efcore.9.0.0"/>
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql.Design" Version="1.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Api\Api.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="appsettings.json;appsettings.Development.json">
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        </None>
+      <ProjectReference Include="..\Data\Data.csproj" />
+      <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
     </ItemGroup>
 </Project>

@@ -2,13 +2,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Api.Services;
 using Api.Utils;
-using Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using ServiceDefaults;
 
 namespace Api;
 
@@ -21,11 +21,8 @@ public static class Configuration
 
     public static void RegisterServices(this IHostApplicationBuilder builder, AppConfiguration appConfig)
     {
+        builder.AddServiceDefaults();
         builder.Services.AddControllersWithViews();
-        builder.AddDatabase();
-
-        builder.Logging.ClearProviders();
-        builder.Logging.AddConsole();
 
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
@@ -91,11 +88,6 @@ public static class Configuration
 
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = maxFileSize; });
         builder.Services.AddMemoryCache();
-    }
-
-    public static void AddDatabase(this IHostApplicationBuilder builder)
-    {
-        builder.AddMySqlDbContext<RefNotesContext>(connectionName: "main");
     }
 
     public static void RegisterMiddlewares(this WebApplication app)
