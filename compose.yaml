@@ -4,18 +4,20 @@ services:
     ports:
       - "${HTTP_PORT:-0}:80"
     volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
-      - frontend
+      - web
       - backend
     restart: always
     networks:
       - internal
 
-  frontend:
-    build: ./Frontend
+  web:
+    build: 
+      context: .
+      dockerfile: ./docker/web/Dockerfile
     image: angular-app
     expose:
       - "80"
@@ -24,30 +26,41 @@ services:
       - internal
 
   backend:
-    build: ./Server
-    image: aspnet-app
+    build:
+      context: .
+      dockerfile: ./docker/api/Dockerfile
     expose:
       - "5000"
-    environment:
-      - ${CONNECTION_STRING}
     env_file: .env
     depends_on:
       mysql-db:
         condition: service_healthy
     volumes:
-      - ${REFNOTES_CONFIG}:/root/.config/refnotes
+      - ${REFNOTES_CONFIG:-./}:/root/.config/refnotes
       - refnotes-data:/data
-    restart: always
+    restart: on-failure:3
+    extra_hosts: 
+      - "host.docker.internal:host-gateway"
+    networks:
+      - internal
+  
+  migrations:
+    build:
+      context: .
+      dockerfile: ./docker/migrationservice/Dockerfile
+    depends_on:
+      mysql-db:
+        condition: service_healthy
     networks:
       - internal
 
   mysql-db:
     image: mysql:8.4
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE:-refnotes}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
     ports:
-      - "${DB_EXPOSE_PORT:-}:3306"
+      - "${DB_EXPOSE_PORT:-0}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     restart: always
