@@ -1,5 +1,6 @@
 ﻿using Api.Controllers.Base;
 using Api.Services;
+using Api.Utils;
 using Data.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,7 +49,8 @@ public class PublicFileController : GroupPermissionControllerBase
     {
         if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
         {
-            _logger.LogWarning("User {username} tried to create a public file at path {path}", User.Identity?.Name, filePath);
+            _logger.LogWarning("User {username} tried to create a public file at path {path}", User.Identity?.Name,
+                StringSanitizer.SanitizeLog(filePath));
             return Forbid();
         }
 
@@ -68,7 +70,8 @@ public class PublicFileController : GroupPermissionControllerBase
     {
         if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
         {
-            _logger.LogWarning("User {username} tried to delete a public file at path {path}", User.Identity?.Name, filePath);
+            _logger.LogWarning("User {username} tried to delete a public file at path {path}", User.Identity?.Name,
+                StringSanitizer.SanitizeLog(filePath));
             return Forbid();
         }
 

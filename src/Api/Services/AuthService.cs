@@ -70,7 +70,7 @@ public class AuthService : IAuthService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == credentials.Username);
         if (user is null)
         {
-            _logger.LogWarning("User {Username} not found", credentials.Username);
+            _logger.LogWarning("User {Username} not found", StringSanitizer.SanitizeLog(credentials.Username));
             throw new UserNotFoundException("User not found.");
         }
 
@@ -88,7 +88,7 @@ public class AuthService : IAuthService
                 break;
         }
 
-        _logger.LogInformation("User {Username} logged in", credentials.Username);
+        _logger.LogInformation("User {Username} logged in", StringSanitizer.SanitizeLog(credentials.Username));
 
         var tokens = await AddUserRefreshToken(user);
         return tokens;
@@ -99,7 +99,7 @@ public class AuthService : IAuthService
         var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == newUser.Username);
         if (existingUser is not null)
         {
-            _logger.LogWarning("User {Username} already exists", newUser.Username);
+            _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(newUser.Username));
             throw new UserExistsException("User already exists");
         }
 
@@ -111,7 +111,7 @@ public class AuthService : IAuthService
         await _context.AddAsync(newUser);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("User {Username} registered", newUser.Username);
+        _logger.LogInformation("User {Username} registered", StringSanitizer.SanitizeLog(newUser.Username));
 
         return await AddUserRefreshToken(newUser);
     }
@@ -151,8 +151,8 @@ public class AuthService : IAuthService
             new SymmetricSecurityKey(_privateKey),
             SecurityAlgorithms.HmacSha256);
 
-        _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds", user.Username,
-            _accessTokenExpiry.TotalSeconds);
+        _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds",
+            StringSanitizer.SanitizeLog(user.Username), _accessTokenExpiry.TotalSeconds);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
