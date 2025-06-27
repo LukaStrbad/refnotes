@@ -132,6 +132,24 @@
           "Asp.Versioning.Mvc": "8.1.0"
         }
       },
+      "Aspire.MySqlConnector": {
+        "type": "Transitive",
+        "resolved": "9.3.1",
+        "contentHash": "+XPBCQeBcUki5OQdcftd1fC+UCVLbWuB/3FHqtJh/5dS4vcb/td5aSPkwWZNt4Y81m44cAb0roGo9NK5P6BjaA==",
+        "dependencies": {
+          "AspNetCore.HealthChecks.MySql": "9.0.0",
+          "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Configuration.Binder": "8.0.2",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.2",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.15",
+          "Microsoft.Extensions.Hosting.Abstractions": "8.0.1",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
+          "Microsoft.Extensions.Options": "8.0.2",
+          "Microsoft.Extensions.Primitives": "8.0.0",
+          "MySqlConnector.DependencyInjection": "2.4.0",
+          "OpenTelemetry.Extensions.Hosting": "1.9.0"
+        }
+      },
       "Aspire.Pomelo.EntityFrameworkCore.MySql": {
         "type": "Transitive",
         "resolved": "9.3.1",
@@ -151,6 +169,15 @@
           "Polly.Core": "8.5.2",
           "Polly.Extensions": "8.5.2",
           "Pomelo.EntityFrameworkCore.MySql": "8.0.3"
+        }
+      },
+      "AspNetCore.HealthChecks.MySql": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "v9UqyTFVO79tWVM2uRuUWgauZAAHdLxEqa1mujnztBbG5MzIy78ciN6fICfFAZPNJQydYmkZHqPx7/eIuJog9A==",
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11",
+          "MySqlConnector": "2.3.1"
         }
       },
       "Humanizer.Core": {
@@ -813,6 +840,16 @@
           "Microsoft.Extensions.Logging.Abstractions": "8.0.2"
         }
       },
+      "MySqlConnector.DependencyInjection": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "SH8oWD/qdpZOpqNYZq/t3qj8U1Qkd9NgcwiQxoTf1WLqKCdOz1j0+vPvoeYIxmRyFneICrel+3PehsNWkLxJsg==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.2",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.2",
+          "MySqlConnector": "2.4.0"
+        }
+      },
       "MySqlConnector.Logging.Microsoft.Extensions.Logging": {
         "type": "Transitive",
         "resolved": "2.1.0",
@@ -921,6 +958,41 @@
         "dependencies": {
           "Polly.Core": "8.4.2",
           "System.Threading.RateLimiting": "8.0.0"
+        }
+      },
+      "Quartz": {
+        "type": "Transitive",
+        "resolved": "3.14.0",
+        "contentHash": "j8mY6S0FWbtuEFbStUEZAkkGpZLbSuTT0us1w0DUQqhi+vwg/7XXS36TeH3o34zZoqYGyXvk6jrKnW/p6kS8sg==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "2.1.1"
+        }
+      },
+      "Quartz.Extensions.DependencyInjection": {
+        "type": "Transitive",
+        "resolved": "3.14.0",
+        "contentHash": "CUY9ZaUsmnl8YxPcl3eXmg/1UVWv1NdyATKGaBjfxf8MYH36vgCoerv7aCSjM/oRbdiaBwNnPfNgHMzxUu1p1g==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "9.0.0",
+          "Microsoft.Extensions.Options": "9.0.0",
+          "Quartz": "3.14.0"
+        }
+      },
+      "Quartz.Extensions.Hosting": {
+        "type": "Transitive",
+        "resolved": "3.14.0",
+        "contentHash": "kbxBND5Nift+qwOud8cjywoLvjcQX+aLt6R7qQcQVg8w84NUNjTsjzZ5zIod9vz7ricSvIaQXGVbhpm7X6yVQA==",
+        "dependencies": {
+          "Microsoft.Extensions.Hosting.Abstractions": "9.0.0",
+          "Quartz.Extensions.DependencyInjection": "3.14.0"
+        }
+      },
+      "Quartz.Serialization.SystemTextJson": {
+        "type": "Transitive",
+        "resolved": "3.14.0",
+        "contentHash": "xbnc5NrBfYG9QksQM8LGmyeknwwRZfKbjsTHTy8/OiIX3AemVJ4AfR947i+CnAvhnwzbnSG/WVoksnUbN25EkQ==",
+        "dependencies": {
+          "Quartz": "3.14.0"
         }
       },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
@@ -1865,6 +1937,7 @@
         "type": "Project",
         "dependencies": {
           "Asp.Versioning.Mvc.ApiExplorer": "[8.1.0, )",
+          "Aspire.MySqlConnector": "[9.3.1, )",
           "Aspire.Pomelo.EntityFrameworkCore.MySql": "[9.3.1, )",
           "Data": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[9.0.6, )",
@@ -1873,6 +1946,10 @@
           "Microsoft.EntityFrameworkCore.Relational": "[9.0.6, )",
           "Microsoft.Extensions.Http.Resilience": "[9.6.0, )",
           "Microsoft.Extensions.ServiceDiscovery": "[9.3.1, )",
+          "Quartz": "[3.14.0, )",
+          "Quartz.Extensions.DependencyInjection": "[3.14.0, )",
+          "Quartz.Extensions.Hosting": "[3.14.0, )",
+          "Quartz.Serialization.SystemTextJson": "[3.14.0, )",
           "Scalar.AspNetCore": "[2.5.3, )"
         }
       }
