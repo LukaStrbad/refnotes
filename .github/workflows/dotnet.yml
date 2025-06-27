@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: ["main"]
     paths-ignore: 
-      - 'Frontend/**'
+      - 'src/Web/**'
 
 jobs:
   test:
@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: dotnet build -warnaserror --no-restore
       - name: Test
-        run: dotnet test --no-build --verbosity normal --logger trx --results-directory "TestResults" test/Api.Tests.csproj
+        run: dotnet test --no-build --verbosity normal --logger trx --results-directory "TestResults"
       - name: Upload dotnet test results
         uses: actions/upload-artifact@v4
         with:
