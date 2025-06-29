@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Api.Jobs;
 using Api.Services;
 using Api.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,6 +23,7 @@ public static class Configuration
     public static void RegisterServices(this IHostApplicationBuilder builder, AppConfiguration appConfig)
     {
         builder.AddServiceDefaults();
+        builder.RegisterScheduler();
         builder.Services.AddControllersWithViews();
 
         builder.Services.AddSingleton(appConfig);
@@ -42,6 +44,7 @@ public static class Configuration
         builder.Services.AddScoped<IGroupPermissionService, GroupPermissionService>();
         builder.Services.AddScoped<IPublicFileService, PublicFileService>();
         builder.Services.AddScoped<IAppDomainService, AppDomainService>();
+        builder.Services.AddScoped<IPublicFileImageService, PublicFileImageService>();
 
         builder.Services.AddAuthentication(x =>
         {
@@ -88,6 +91,13 @@ public static class Configuration
 
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = maxFileSize; });
         builder.Services.AddMemoryCache();
+    }
+
+    private static void RegisterScheduler(this IHostApplicationBuilder builder)
+    {
+        builder.AddSchedulerServiceDefaults();
+        builder.AddSchedulerHost();
+        builder.Services.AddTransient<UpdatePublicFileImagesJob>();
     }
 
     public static void RegisterMiddlewares(this WebApplication app)

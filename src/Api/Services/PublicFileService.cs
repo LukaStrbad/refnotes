@@ -8,11 +8,14 @@ public sealed class PublicFileService : IPublicFileService
 {
     private readonly RefNotesContext _context;
     private readonly ILogger<PublicFileService> _logger;
+    private readonly IPublicFileImageService _publicFileImageService;
 
-    public PublicFileService(RefNotesContext context, ILogger<PublicFileService> logger)
+    public PublicFileService(RefNotesContext context, ILogger<PublicFileService> logger,
+        IPublicFileImageService publicFileImageService)
     {
         _context = context;
         _logger = logger;
+        _publicFileImageService = publicFileImageService;
     }
 
     private static string GenerateRandomHash() => Guid.NewGuid().ToString();
@@ -42,8 +45,13 @@ public sealed class PublicFileService : IPublicFileService
             .FirstOrDefaultAsync();
         if (publicFile is not null)
         {
-            publicFile.State = PublicFileState.Active;
-            await _context.SaveChangesAsync();
+            if (publicFile.State != PublicFileState.Active)
+            {
+                publicFile.State = PublicFileState.Active;
+                await _context.SaveChangesAsync();
+                
+                await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
+            }
             return publicFile.UrlHash;
         }
 
@@ -55,6 +63,10 @@ public sealed class PublicFileService : IPublicFileService
         _context.PublicFiles.Add(publicFile);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Public file created for file {encryptedFileId}.", encryptedFileId);
+        
+        // Schedule image refresh
+        await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
+        
         return hash;
     }
 
@@ -69,6 +81,10 @@ public sealed class PublicFileService : IPublicFileService
 
         file.State = PublicFileState.Inactive;
         await _context.SaveChangesAsync();
+        
+        // Remove images for the public file
+        await _publicFileImageService.RemoveImagesForPublicFile(file.Id);
+        
         return true;
     }
 
