@@ -73,6 +73,13 @@ public interface IFileService
     /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns>EncryptedFile object</returns>
     Task<EncryptedFile?> GetEncryptedFileAsync(string filePath, int? groupId);
+
+    /// <summary>
+    /// Gets the full path of a file from its ID.
+    /// </summary>
+    /// <param name="fileId">ID of the file</param>
+    /// <returns>A string with the full path of the requested file</returns>
+    Task<string> GetFilePathAsync(int fileId);
 }
 
 public class FileService(
@@ -230,5 +237,21 @@ public class FileService(
         {
             return null;
         }
+    }
+
+    public async Task<string> GetFilePathAsync(int fileId)
+    {
+        var file = await context.Files
+            .Include(f => f.EncryptedDirectory)
+            .FirstOrDefaultAsync(f => f.Id == fileId);
+        if (file is null)
+            throw new FileNotFoundException("File not found");
+        
+        if (file.EncryptedDirectory is null)
+            throw new DirectoryNotFoundException("File directory not found");
+
+        var dirPath = file.EncryptedDirectory.DecryptedPath(encryptionService);
+        var fileName = file.DecryptedName(encryptionService);
+        return FileUtils.NormalizePath(Path.Join(dirPath, fileName));
     }
 }

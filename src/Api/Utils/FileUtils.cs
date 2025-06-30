@@ -10,6 +10,27 @@ public static partial class FileUtils
         name.EndsWith(".md", StringComparison.InvariantCultureIgnoreCase) ||
         name.EndsWith(".markdown", StringComparison.InvariantCultureIgnoreCase);
 
+    public static bool IsImageFile(string name)
+    {
+        var extension = Path.GetExtension(name);
+        return extension switch
+        {
+            ".png" => true,
+            ".jpg" => true,
+            ".jpeg" => true,
+            ".gif" => true,
+            ".svg" => true,
+            ".webp" => true,
+            ".ico" => true,
+            ".bmp" => true,
+            ".tiff" => true,
+            ".heic" => true,
+            ".heif" => true,
+            ".avif" => true,
+            _ => false
+        };
+    }
+
     public static string NormalizePath(string path)
     {
         var regex = NormalizePathRegex();
@@ -59,6 +80,42 @@ public static partial class FileUtils
             _ => "application/octet-stream" // Default
         };
     }
+
+    /// <summary>
+    /// Resolves a relative folder path against a root path
+    /// </summary>
+    /// <param name="root">The root path</param>
+    /// <param name="relativePath">The relative path to resolve</param>
+    /// <returns>The resolved absolute path</returns>
+    public static string ResolveRelativeFolderPath(string root, string relativePath)
+    {
+        // If the relative path is an absolute path, return it as is
+        if (relativePath.StartsWith('/'))
+        {
+            return relativePath;
+        }
+
+        var rootParts = root.Split('/', StringSplitOptions.RemoveEmptyEntries).ToList();
+        var relativeParts = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var part in relativeParts)
+        {
+            if (part == "..")
+            {
+                if (rootParts.Count > 0)
+                {
+                    rootParts.RemoveAt(rootParts.Count - 1);
+                }
+            }
+            else if (part != ".")
+            {
+                rootParts.Add(part);
+            }
+        }
+
+        return $"/{string.Join("/", rootParts)}";
+    }
+
 
     /// <summary>
     /// Regex to replace multiple backslashes and forward slashes with a single slash.

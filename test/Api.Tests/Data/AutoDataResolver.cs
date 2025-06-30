@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Api;
+using Quartz;
 
 namespace Api.Tests.Data;
 
@@ -35,7 +36,9 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IFileService),
         typeof(IUserGroupService),
         typeof(IBrowserService),
-        typeof(IAppDomainService)
+        typeof(IAppDomainService),
+        typeof(ISchedulerFactory),
+        typeof(IPublicFileImageService)
     ];
 
     private readonly List<Type> _realizedMocks = [];

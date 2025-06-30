@@ -104,4 +104,9 @@ public sealed class PublicFileService : IPublicFileService
         var publicFile = await _context.PublicFiles.FirstOrDefaultAsync(file => file.UrlHash == urlHash);
         return publicFile?.State == PublicFileState.Active;
     }
+
+    public async Task<PublicFile?> GetPublicFileAsync(string urlHash)
+    {
+        return await _context.PublicFiles.FirstOrDefaultAsync(file => file.UrlHash == urlHash);
+    }
 }

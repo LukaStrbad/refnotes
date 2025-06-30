@@ -8,8 +8,8 @@ public class PublicFileImage
     public int Id { get; init; }
 
     [ForeignKey("PublicFileId")] public PublicFile? PublicFile { get; init; }
-    [ForeignKey("PublicFileId")] public int PublicFileId { get; init; }
+    [ForeignKey("PublicFileId")] public required int PublicFileId { get; init; }
 
     [ForeignKey("EncryptedFileId")] public EncryptedFile? EncryptedFile { get; init; }
-    [ForeignKey("EncryptedFileId")] public int EncryptedFileId { get; init; }
+    [ForeignKey("EncryptedFileId")] public required int EncryptedFileId { get; init; }
 }
