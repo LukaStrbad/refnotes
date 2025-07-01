@@ -11,6 +11,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Api;
+using Api.Tests.Data.Faker;
+using Api.Tests.Data.Faker.Definition;
+using Bogus;
 using Quartz;
 
 namespace Api.Tests.Data;
@@ -119,6 +122,11 @@ public sealed class AutoDataResolver : IAsyncDisposable
             return group;
         }
 
+        if (parameter.ParameterType.IsGenericType &&
+            (parameter.ParameterType.GetGenericTypeDefinition() == typeof(Faker<>) ||
+             parameter.ParameterType.GetGenericTypeDefinition() == typeof(DatabaseFaker<>)))
+            return ResolveFaker(parameter.ParameterType);
+
         if (parameter.GetCustomAttribute<RandomStringAttribute>() is { } randomStringAttribute)
         {
             return randomStringAttribute.Prefix + RandomString(randomStringAttribute.Length);
@@ -134,6 +142,63 @@ public sealed class AutoDataResolver : IAsyncDisposable
         }
 
         return _serviceProvider.GetRequiredService(parameter.ParameterType);
+    }
+
+    private object CreateFaker(Type fakerType)
+    {
+        if (!fakerType.IsGenericType)
+            throw new Exception("Faker type must be a generic type");
+
+        object? faker;
+
+        if (fakerType.GetGenericTypeDefinition() == typeof(Faker<>))
+            faker = Activator.CreateInstance(fakerType);
+        else if (fakerType.GetGenericTypeDefinition() == typeof(DatabaseFaker<>))
+            faker = Activator.CreateInstance(fakerType, _context);
+        else
+            throw new Exception("Faker type must be a generic type");
+
+        if (faker is null)
+            throw new Exception("Faker instance cannot be null");
+
+        return faker;
+    }
+
+    private Dictionary<Type, FakerImplementationBase> CreateFakerImplementations(Type parameterType)
+    {
+        var fakerImplementationBase = typeof(FakerImplementationBase<>);
+        // Find all subclasses of FakerBase<>
+        var fakerImplSubclassTypes = fakerImplementationBase.Assembly.GetTypes()
+            .Where(t => t.BaseType?.IsGenericType == true &&
+                        t.BaseType?.GetGenericTypeDefinition() == fakerImplementationBase)
+            .ToList();
+
+        var fakerImplementations = new Dictionary<Type, FakerImplementationBase>();
+        foreach (var fakerImplSubclassType in fakerImplSubclassTypes)
+        {
+            var fakerImplGenericTypes = fakerImplSubclassType.BaseType?.GenericTypeArguments;
+            if (fakerImplGenericTypes?.Length != 1)
+                throw new Exception("Faker implementation must have exactly one generic type argument");
+
+            // The type argument of the implementation class is the type of the model that the faker is for
+            var modelType = fakerImplGenericTypes[0];
+
+            var fakerType = parameterType.GetGenericTypeDefinition().MakeGenericType(modelType);
+
+            // Generate FakerImplementationBase
+            var faker = CreateFaker(fakerType);
+            var fakerImpl =
+                Activator.CreateInstance(fakerImplSubclassType, fakerImplementations, faker) as FakerImplementationBase;
+            fakerImplementations[modelType] = fakerImpl ?? throw new Exception("Faker implementation cannot be null");
+        }
+
+        return fakerImplementations;
+    }
+
+    private object ResolveFaker(Type parameterType)
+    {
+        var implementations = CreateFakerImplementations(parameterType);
+        return implementations[parameterType.GenericTypeArguments[0]].CreateFakerObj();
     }
 
     private void RegisterBaseServices(IServiceCollection services)

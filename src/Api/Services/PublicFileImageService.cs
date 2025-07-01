@@ -84,11 +84,7 @@ public sealed class PublicFileImageService : IPublicFileImageService
             if (file is null)
                 continue;
 
-            var publicFileImage = new PublicFileImage
-            {
-                EncryptedFileId = file.Id,
-                PublicFileId = publicFile.Id
-            };
+            var publicFileImage = new PublicFileImage(publicFile.Id, file.Id);
             await _context.PublicFileImages.AddAsync(publicFileImage);
         }
 

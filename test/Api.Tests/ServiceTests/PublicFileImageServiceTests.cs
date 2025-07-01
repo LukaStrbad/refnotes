@@ -3,8 +3,10 @@ using System.Text;
 using Api.Services;
 using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
+using Api.Tests.Data.Faker;
 using Api.Tests.Mocks;
 using Api.Utils;
+using Bogus;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,7 +128,7 @@ public sealed class PublicFileImageServiceTests : BaseTests
         await fileStorageService.SaveFileAsync($"/{_fileName}",
             new MemoryStream(Encoding.UTF8.GetBytes(newFileContent)));
         await sut.Value.UpdateImagesForPublicFile(encryptedFile.Id);
-        
+
         var publicFile = await publicFileService.GetPublicFileAsync(hash);
         Assert.NotNull(publicFile);
         var publicFileImages = await sut.Context.PublicFileImages
@@ -135,5 +137,21 @@ public sealed class PublicFileImageServiceTests : BaseTests
         Assert.Equal(2, publicFileImages.Count);
         Assert.Equal(image1.Id, publicFileImages[0].EncryptedFileId);
         Assert.Equal(image2.Id, publicFileImages[1].EncryptedFileId);
+    }
+
+    [Theory, AutoData]
+    public async Task RemoveImagesForPublicFile_RemovesImages(
+        Sut<PublicFileImageService> sut,
+        DatabaseFaker<PublicFile> publicFileFaker,
+        DatabaseFaker<PublicFileImage> publicFileImageFaker)
+    {
+        var publicFile = publicFileFaker.Generate();
+        publicFileImageFaker.RuleFor(i => i.PublicFileId, _ => publicFile.Id).Generate(3);
+
+        await sut.Value.RemoveImagesForPublicFile(publicFile.Id);
+
+        var publicFileImagesList =
+            await sut.Context.PublicFileImages.Where(pfi => pfi.PublicFileId == publicFile.Id).ToListAsync();
+        Assert.Empty(publicFileImagesList);
     }
 }
