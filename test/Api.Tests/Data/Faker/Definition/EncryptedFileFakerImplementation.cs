@@ -20,7 +20,7 @@ public sealed class EncryptedFileFakerImplementation : FakerImplementationBase<E
             .RuleFor(f => f.Name, f => f.System.FileName())
             .RuleFor(f => f.Tags, _ => [])
             .RuleFor(f => f.EncryptedDirectory, _ => encryptedDirectoryFaker.Generate())
-            .RuleFor(f => f.EncryptedDirectoryId, (_, dir) => dir.Id)
+            .RuleFor(f => f.EncryptedDirectoryId, (_, file) => file.EncryptedDirectory?.Id ?? 0)
             .RuleFor(f => f.Created, _ => DateTime.UtcNow)
             .RuleFor(f => f.Modified, _ => DateTime.UtcNow);
     }

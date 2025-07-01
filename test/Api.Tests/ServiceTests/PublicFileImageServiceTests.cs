@@ -1,54 +1,18 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Api.Services;
 using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
 using Api.Tests.Data.Faker;
-using Api.Tests.Mocks;
-using Api.Utils;
-using Bogus;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Quartz;
 
 namespace Api.Tests.ServiceTests;
 
-[ConcreteType<IFileService, FileService>]
-[ConcreteType<IBrowserService, BrowserService>]
-[ConcreteType<IPublicFileService, PublicFileService>]
-[ConcreteType<IFileStorageService, FileStorageService>]
-[ConcreteType<IEncryptionService, FakeEncryptionService>]
-[ConcreteType<IFileServiceUtils, FileServiceUtils>]
 [SuppressMessage("Usage",
     "xUnit1051:Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken")]
 public sealed class PublicFileImageServiceTests : BaseTests
 {
-    private readonly string _fileName = $"{RandomString(32)}.md";
-
-    private static async Task<EncryptedFile> CreateFile(Sut<PublicFileImageService> sut, string fileName,
-        string? content = null)
-    {
-        // Assert root directory exists
-        await sut.ServiceProvider.GetRequiredService<IBrowserService>()
-            .AddDirectory("/", null);
-        var filesystemName = await sut.ServiceProvider.GetRequiredService<IFileService>()
-            .AddFile("/", fileName, null);
-
-        if (content is not null)
-        {
-            var fileContentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-            await sut.ServiceProvider.GetRequiredService<IFileStorageService>()
-                .SaveFileAsync(filesystemName, fileContentStream);
-        }
-
-        var encryptedFile = await sut.ServiceProvider.GetRequiredService<IFileService>()
-            .GetEncryptedFileAsync($"/{fileName}", null);
-        Assert.NotNull(encryptedFile);
-        return encryptedFile;
-    }
-
     [Theory, AutoData]
     public async Task ScheduleImageRefreshForPublicFile_SchedulesImageRefresh(
         Sut<PublicFileImageService> sut,
@@ -88,18 +52,22 @@ public sealed class PublicFileImageServiceTests : BaseTests
     [Theory, AutoData]
     public async Task UpdateImagesForPublicFile_UpdatesImages(
         Sut<PublicFileImageService> sut,
-        IPublicFileService publicFileService)
+        IFileService fileService, 
+        IFileStorageService fileStorageService,
+        DatabaseFaker<EncryptedFile> encryptedFileFaker,
+        DatabaseFaker<PublicFile> publicFileFaker)
     {
         const string imageName = "image.png";
-        const string fileContent = $"![alt]({imageName})";
+        var encryptedFile = encryptedFileFaker.Generate();
+        var publicFile = publicFileFaker.ForFile(encryptedFile).Generate();
+        var image = encryptedFileFaker.WithName(imageName).Generate();
+        
+        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(StreamFromString($"![alt]({imageName})"));
+        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetEncryptedFileAsync($"/{imageName}", null).Returns(image);
 
-        var encryptedFile = await CreateFile(sut, _fileName, fileContent);
-        var image = await CreateFile(sut, imageName);
-        var hash = await publicFileService.CreatePublicFileAsync(encryptedFile.Id);
+        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
 
-        await sut.Value.UpdateImagesForPublicFile(encryptedFile.Id);
-
-        var publicFile = await publicFileService.GetPublicFileAsync(hash);
         Assert.NotNull(publicFile);
         var publicFileImages = await sut.Context.PublicFileImages
             .Where(pfi => pfi.PublicFileId == publicFile.Id)
@@ -111,25 +79,28 @@ public sealed class PublicFileImageServiceTests : BaseTests
     [Theory, AutoData]
     public async Task UpdateImagesForPublicFile_AddsNewImages_WhenContentUpdates(
         Sut<PublicFileImageService> sut,
-        IPublicFileService publicFileService,
-        IFileStorageService fileStorageService)
+        IFileService fileService,
+        IFileStorageService fileStorageService,
+        DatabaseFaker<EncryptedFile> encryptedFileFaker,
+        DatabaseFaker<PublicFile> publicFileFaker)
     {
-        const string imageName1 = "image.png";
-        const string imageName2 = "image2.png";
-        const string fileContent = $"![alt]({imageName1})";
-        const string newFileContent = $"![alt]({imageName1})\n![alt2]({imageName2})";
+        var encryptedFile = encryptedFileFaker.Generate();
+        var image1 = encryptedFileFaker.AsImage().Generate();
+        var image2 = encryptedFileFaker.AsImage().Generate();
+        var publicFile = publicFileFaker.ForFile(encryptedFile).Generate();
 
-        var encryptedFile = await CreateFile(sut, _fileName, fileContent);
-        var image1 = await CreateFile(sut, imageName1);
-        var image2 = await CreateFile(sut, imageName2);
-        var hash = await publicFileService.CreatePublicFileAsync(encryptedFile.Id);
+        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
+            StreamFromString($"![alt]({image1.Name})"),
+            StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})")
+        );
+        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetEncryptedFileAsync($"/{image1.Name}", null).Returns(image1);
+        fileService.GetEncryptedFileAsync($"/{image2.Name}", null).Returns(image2);
 
-        await sut.Value.UpdateImagesForPublicFile(encryptedFile.Id);
-        await fileStorageService.SaveFileAsync($"/{_fileName}",
-            new MemoryStream(Encoding.UTF8.GetBytes(newFileContent)));
-        await sut.Value.UpdateImagesForPublicFile(encryptedFile.Id);
+        // Update with initial content and then update with new content
+        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
+        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
 
-        var publicFile = await publicFileService.GetPublicFileAsync(hash);
         Assert.NotNull(publicFile);
         var publicFileImages = await sut.Context.PublicFileImages
             .Where(pfi => pfi.PublicFileId == publicFile.Id)

@@ -1,4 +1,6 @@
-﻿namespace Api.Tests;
+﻿using System.Text;
+
+namespace Api.Tests;
 
 public class BaseTests : IDisposable
 {
@@ -31,5 +33,11 @@ public class BaseTests : IDisposable
         }
 
         GC.SuppressFinalize(this);
+    }
+
+    protected static Stream StreamFromString(string s)
+    {
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(s));
+        return stream;
     }
 }

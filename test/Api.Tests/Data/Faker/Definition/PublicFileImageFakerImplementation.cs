@@ -19,8 +19,8 @@ public class PublicFileImageFakerImplementation : FakerImplementationBase<Public
             .StrictMode(true)
             .RuleFor(i => i.Id, _ => 0)
             .RuleFor(i => i.PublicFile, _ => publicFileFaker.Generate())
-            .RuleFor(i => i.PublicFileId, (_, file) => file.Id)
+            .RuleFor(i => i.PublicFileId, (_, image) => image.PublicFile?.Id)
             .RuleFor(i => i.EncryptedFile, _ => encryptedFileFaker.Generate())
-            .RuleFor(i => i.EncryptedFileId, (_, file) => file.Id);
+            .RuleFor(i => i.EncryptedFileId, (_, image) => image.EncryptedFile?.Id);
     }
 }

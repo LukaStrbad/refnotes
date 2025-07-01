@@ -18,7 +18,7 @@ public sealed class PublicFileFakerImplementation : FakerImplementationBase<Publ
             .RuleFor(f => f.Id, f => 0)
             .RuleFor(f => f.UrlHash, f => f.Random.Hash())
             .RuleFor(f => f.EncryptedFile, _ => encryptedFileFaker.Generate())
-            .RuleFor(f => f.EncryptedFileId, (_, file) => file.Id)
+            .RuleFor(f => f.EncryptedFileId, (_, file) => file.EncryptedFile?.Id)
             .RuleFor(f => f.State, _ => PublicFileState.Active)
             .RuleFor(f => f.Created, _ => DateTime.UtcNow);
     }

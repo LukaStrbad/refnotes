@@ -20,8 +20,8 @@ public sealed class EncryptedDirectoryFakerImplementation : FakerImplementationB
             .RuleFor(g => g.Directories, _ => [])
             .RuleFor(g => g.Parent, _ => null)
             .RuleFor(g => g.Owner, _ => userFaker.Generate())
-            .RuleFor(g => g.OwnerId, (_, owner) => owner.Id)
+            .RuleFor(g => g.OwnerId, (_, dir) => dir.Owner?.Id)
             .RuleFor(g => g.Group, _ => null)
-            .RuleFor(d => d.GroupId, _ => null);
+            .RuleFor(d => d.GroupId, (_, dir) => dir.Group?.Id);
     }
 }
