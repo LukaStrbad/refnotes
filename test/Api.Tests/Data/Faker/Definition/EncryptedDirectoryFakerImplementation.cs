@@ -10,7 +10,7 @@ public sealed class EncryptedDirectoryFakerImplementation : FakerImplementationB
     {
     }
 
-    protected override Faker<EncryptedDirectory> CreateFaker()
+    public override Faker<EncryptedDirectory> CreateFaker()
     {
         var userFaker = ResolveFaker<User>();
         return BaseFaker.StrictMode(true)

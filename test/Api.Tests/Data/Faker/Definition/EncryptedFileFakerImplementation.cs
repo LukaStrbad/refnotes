@@ -10,7 +10,7 @@ public sealed class EncryptedFileFakerImplementation : FakerImplementationBase<E
     {
     }
 
-    protected override Faker<EncryptedFile> CreateFaker()
+    public override Faker<EncryptedFile> CreateFaker()
     {
         var encryptedDirectoryFaker = ResolveFaker<EncryptedDirectory>();
         return BaseFaker.CustomInstantiator(_ => new EncryptedFile("", ""))

@@ -63,7 +63,7 @@ public sealed class PublicFileImageServiceTests : BaseTests
         var image = encryptedFileFaker.WithName(imageName).Generate();
         
         fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(StreamFromString($"![alt]({imageName})"));
-        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
         fileService.GetEncryptedFileAsync($"/{imageName}", null).Returns(image);
 
         await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
@@ -93,7 +93,7 @@ public sealed class PublicFileImageServiceTests : BaseTests
             StreamFromString($"![alt]({image1.Name})"),
             StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})")
         );
-        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
         fileService.GetEncryptedFileAsync($"/{image1.Name}", null).Returns(image1);
         fileService.GetEncryptedFileAsync($"/{image2.Name}", null).Returns(image2);
 
@@ -127,7 +127,7 @@ public sealed class PublicFileImageServiceTests : BaseTests
         fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
             StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})\n![alt3]({image2.Name})")
         );
-        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
         fileService.GetEncryptedFileAsync(Arg.Any<string>(), null).Returns(image1, image2);
 
         // Update with initial content and then update with new content

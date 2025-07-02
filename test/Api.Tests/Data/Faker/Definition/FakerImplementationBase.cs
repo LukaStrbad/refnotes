@@ -29,7 +29,7 @@ public abstract class FakerImplementationBase<T> : FakerImplementationBase where
         throw new Exception($"Faker object is not of type {typeof(TModel).FullName}");
     }
 
-    protected abstract Faker<T> CreateFaker();
+    public abstract Faker<T> CreateFaker();
 
     public override object CreateFakerObj() => CreateFaker();
 }

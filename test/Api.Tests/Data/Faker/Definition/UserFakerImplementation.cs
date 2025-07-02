@@ -10,7 +10,7 @@ public sealed class UserFakerImplementation : FakerImplementationBase<User>
     {
     }
 
-    protected override Faker<User> CreateFaker()
+    public override Faker<User> CreateFaker()
     {
         return BaseFaker.CustomInstantiator(_ => new User(0, "", "", "", ""))
             .StrictMode(true)

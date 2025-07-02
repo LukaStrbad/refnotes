@@ -2,6 +2,8 @@
 using Api.Services;
 using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
+using Api.Tests.Data.Faker;
+using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Mocks;
 using Api.Utils;
 using Data.Model;
@@ -358,5 +360,28 @@ public class FileServiceTests : BaseTests
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
+    }
+
+    [Theory, AutoData]
+    public async Task GetEncryptedFileByRelativePathAsync_ReturnsRelativeFile(
+        Sut<FileService> sut,
+        [FixtureGroup(AddNull = true)] UserGroup? group,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir1 = dirFaker.CreateFaker()
+            .WithPath("/dir/subdir").ForUserOrGroup(sut.DefaultUser, group).Generate();
+        var dir2 = dirFaker.CreateFaker()
+            .WithPath("/dir/subdir2").ForUserOrGroup(sut.DefaultUser, group).Generate();
+
+        var file1 = fileFaker.CreateFaker().WithDir(dir1).Generate();
+        var file2 = fileFaker.CreateFaker().WithDir(dir2).Generate();
+
+        var relativePath = $"../subdir2/{file2.Name}";
+
+        var relativeFile = await sut.Value.GetEncryptedFileByRelativePathAsync(file1, relativePath);
+
+        Assert.NotNull(relativeFile);
+        Assert.Equal(file2.Id, relativeFile.Id);
     }
 }

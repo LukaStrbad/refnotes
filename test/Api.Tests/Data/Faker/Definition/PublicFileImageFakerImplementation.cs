@@ -10,7 +10,7 @@ public class PublicFileImageFakerImplementation : FakerImplementationBase<Public
     {
     }
 
-    protected override Faker<PublicFileImage> CreateFaker()
+    public override Faker<PublicFileImage> CreateFaker()
     {
         var publicFileFaker = ResolveFaker<PublicFile>();
         var encryptedFileFaker = ResolveFaker<EncryptedFile>();

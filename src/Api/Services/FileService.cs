@@ -77,9 +77,11 @@ public interface IFileService
     /// <summary>
     /// Gets the full path of a file from its ID.
     /// </summary>
-    /// <param name="fileId">ID of the file</param>
+    /// <param name="file">The file</param>
     /// <returns>A string with the full path of the requested file</returns>
-    Task<string> GetFilePathAsync(int fileId);
+    Task<string> GetFilePathAsync(EncryptedFile file);
+
+    Task<EncryptedFile?> GetEncryptedFileByRelativePathAsync(EncryptedFile encryptedFile, string relativePath);
 }
 
 public class FileService(
@@ -239,19 +241,36 @@ public class FileService(
         }
     }
 
-    public async Task<string> GetFilePathAsync(int fileId)
+    public async Task<string> GetFilePathAsync(EncryptedFile file)
     {
-        var file = await context.Files
-            .Include(f => f.EncryptedDirectory)
-            .FirstOrDefaultAsync(f => f.Id == fileId);
-        if (file is null)
-            throw new FileNotFoundException("File not found");
-        
+        await context.Entry(file).Reference(f => f.EncryptedDirectory).LoadAsync();
+
         if (file.EncryptedDirectory is null)
             throw new DirectoryNotFoundException("File directory not found");
 
         var dirPath = file.EncryptedDirectory.DecryptedPath(encryptionService);
         var fileName = file.DecryptedName(encryptionService);
         return FileUtils.NormalizePath(Path.Join(dirPath, fileName));
+    }
+
+    public async Task<EncryptedFile?> GetEncryptedFileByRelativePathAsync(EncryptedFile encryptedFile,
+        string relativePath)
+    {
+        await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
+        try
+        {
+            // Get the directory of the file
+            var filePath = await GetFilePathAsync(encryptedFile);
+            var (dirPath, _) = FileUtils.SplitDirAndFile(filePath);
+            // Resolve the relative path of the file
+            var absoluteFilePath = FileUtils.ResolveRelativeFolderPath(dirPath, relativePath);
+            
+            var targetFile = await GetEncryptedFileAsync(absoluteFilePath, encryptedFile.EncryptedDirectory?.GroupId);
+            return targetFile;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return null;
+        }
     }
 }
