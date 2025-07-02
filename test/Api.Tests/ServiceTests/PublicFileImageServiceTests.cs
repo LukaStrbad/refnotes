@@ -109,6 +109,39 @@ public sealed class PublicFileImageServiceTests : BaseTests
         Assert.Equal(image1.Id, publicFileImages[0].EncryptedFileId);
         Assert.Equal(image2.Id, publicFileImages[1].EncryptedFileId);
     }
+    
+    
+    [Theory, AutoData]
+    public async Task UpdateImagesForPublicFile_UpdatesImages_WithDuplicates(
+        Sut<PublicFileImageService> sut,
+        IFileService fileService,
+        IFileStorageService fileStorageService,
+        DatabaseFaker<EncryptedFile> encryptedFileFaker,
+        DatabaseFaker<PublicFile> publicFileFaker)
+    {
+        var encryptedFile = encryptedFileFaker.Generate();
+        var image1 = encryptedFileFaker.AsImage().Generate();
+        var image2 = encryptedFileFaker.AsImage().Generate();
+        var publicFile = publicFileFaker.ForFile(encryptedFile).Generate();
+
+        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
+            StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})\n![alt3]({image2.Name})")
+        );
+        fileService.GetFilePathAsync(encryptedFile.Id).Returns($"/{encryptedFile.Name}");
+        fileService.GetEncryptedFileAsync(Arg.Any<string>(), null).Returns(image1, image2);
+
+        // Update with initial content and then update with new content
+        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
+
+        Assert.NotNull(publicFile);
+        var publicFileImages = await sut.Context.PublicFileImages
+            .Where(pfi => pfi.PublicFileId == publicFile.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        
+        Assert.Equal(2, publicFileImages.Count);
+        Assert.Equal(image1.Id, publicFileImages[0].EncryptedFileId);
+        Assert.Equal(image2.Id, publicFileImages[1].EncryptedFileId);
+    }
 
     [Theory, AutoData]
     public async Task RemoveImagesForPublicFile_RemovesImages(

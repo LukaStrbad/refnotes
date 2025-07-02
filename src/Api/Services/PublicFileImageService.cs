@@ -72,7 +72,7 @@ public sealed class PublicFileImageService : IPublicFileImageService
         // Delete all images for the public file
         await _context.PublicFileImages.Where(image => image.PublicFileId == publicFileId).ExecuteDeleteAsync();
 
-        await foreach (var image in MarkdownUtils.GetImagesAsync(fileContent))
+        await foreach (var image in MarkdownUtils.GetImagesAsync(fileContent).Distinct())
         {
             // Skip in case the file is not an image
             if (!FileUtils.IsImageFile(image))
