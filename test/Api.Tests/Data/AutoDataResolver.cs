@@ -42,7 +42,9 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IBrowserService),
         typeof(IAppDomainService),
         typeof(ISchedulerFactory),
-        typeof(IPublicFileImageService)
+        typeof(IPublicFileImageService),
+        typeof(IGroupPermissionService),
+        typeof(IPublicFileService)
     ];
 
     private readonly List<Type> _realizedMocks = [];

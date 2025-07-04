@@ -49,9 +49,10 @@ public sealed class PublicFileService : IPublicFileService
             {
                 publicFile.State = PublicFileState.Active;
                 await _context.SaveChangesAsync();
-                
+
                 await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
             }
+
             return publicFile.UrlHash;
         }
 
@@ -63,10 +64,10 @@ public sealed class PublicFileService : IPublicFileService
         _context.PublicFiles.Add(publicFile);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Public file created for file {encryptedFileId}.", encryptedFileId);
-        
+
         // Schedule image refresh
         await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
-        
+
         return hash;
     }
 
@@ -81,10 +82,10 @@ public sealed class PublicFileService : IPublicFileService
 
         file.State = PublicFileState.Inactive;
         await _context.SaveChangesAsync();
-        
+
         // Remove images for the public file
         await _publicFileImageService.RemoveImagesForPublicFile(file.Id);
-        
+
         return true;
     }
 
@@ -108,5 +109,15 @@ public sealed class PublicFileService : IPublicFileService
     public async Task<PublicFile?> GetPublicFileAsync(string urlHash)
     {
         return await _context.PublicFiles.FirstOrDefaultAsync(file => file.UrlHash == urlHash);
+    }
+
+    public async Task<bool> HasAccessToFileThroughHash(string urlHash, EncryptedFile file)
+    {
+        var publicFile = await GetPublicFileAsync(urlHash);
+        if (publicFile is null)
+            return false;
+
+        return await _context.PublicFileImages
+            .AnyAsync(image => image.PublicFileId == publicFile.Id && image.EncryptedFileId == file.Id);
     }
 }

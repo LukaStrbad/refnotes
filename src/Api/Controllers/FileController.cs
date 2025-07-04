@@ -137,6 +137,29 @@ public class FileController : GroupPermissionControllerBase
         }
     }
 
+    [HttpGet("public/getImage")]
+    public async Task<ActionResult> GetPublicImage(string urlHash, string imagePath)
+    {
+        var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
+        if (encryptedFile is null || !await _publicFileService.IsPublicFileActive(urlHash))
+            return NotFound("File not found.");
+
+        var image = await _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath);
+        if (image is null)
+            return BadRequest();
+        
+        if (!await _publicFileService.HasAccessToFileThroughHash(urlHash, image))
+            return Forbid();
+        
+        var fileInfo = await _fileService.GetFileInfoAsync(image.Id);
+        // this shouldn't happen
+        if (fileInfo is null)
+            throw new Exception("File not found.");
+
+        var stream = _fileStorageService.GetFile(image.FilesystemName);
+        return File(stream, FileUtils.GetContentType(fileInfo.Path), fileInfo.Name);
+    }
+
     [HttpPost("saveTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]

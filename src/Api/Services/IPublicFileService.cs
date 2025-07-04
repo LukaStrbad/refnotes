@@ -34,4 +34,6 @@ public interface IPublicFileService
     Task<bool> IsPublicFileActive(string urlHash);
     
     Task<PublicFile?> GetPublicFileAsync(string urlHash);
+
+    Task<bool> HasAccessToFileThroughHash(string urlHash, EncryptedFile file);
 }

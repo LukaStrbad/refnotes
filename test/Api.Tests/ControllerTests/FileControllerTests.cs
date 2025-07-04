@@ -2,6 +2,9 @@
 using Api.Controllers;
 using Api.Model;
 using Api.Services;
+using Api.Tests.Data;
+using Api.Tests.Data.Attributes;
+using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Fixtures;
 using Data.Model;
 using Microsoft.AspNetCore.Http;
@@ -286,6 +289,57 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         Assert.IsType<ForbidResult>(result);
         _fileStorageService.DidNotReceiveWithAnyArgs().GetFile(imageName);
         await _fileService.DidNotReceive().GetFilesystemFilePath(directoryPath, name, groupId);
+    }
+
+    [Fact]
+    public async Task GetPublicImage_ReturnsOk_WhenImageExists()
+    {
+        const string urlHash = "test_url_hash";
+        const string imagePath = "/test.png";
+        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md")
+        {
+            Id = 123
+        };
+        var image = new EncryptedFile("gergsdf.bin", "test.png")
+        {
+            Id = 124
+        };
+        var imageInfo = new FileDto("test.png", imagePath, [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(true);
+        _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath).Returns(image);
+        _publicFileService.HasAccessToFileThroughHash(urlHash, image).Returns(true);
+        _fileService.GetFileInfoAsync(image.Id).Returns(imageInfo);
+        var stream = Substitute.For<Stream>();
+        _fileStorageService.GetFile(image.FilesystemName).Returns(stream);
+        
+        var result = await _controller.GetPublicImage(urlHash, imagePath);
+        
+        var okResult = Assert.IsType<FileStreamResult>(result);
+        Assert.Equal(stream, okResult.FileStream);
+    }
+
+    [Fact]
+    public async Task GetPublicImage_ReturnsForbidden_WhenPublicFileDoesntExist()
+    {
+        const string urlHash = "test_url_hash";
+        const string imagePath = "/test.png";
+        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md")
+        {
+            Id = 123
+        };
+        var image = new EncryptedFile("gergsdf.bin", "test.png")
+        {
+            Id = 124
+        };
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(true);
+        _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath).Returns(image);
+        _publicFileService.HasAccessToFileThroughHash(urlHash, image).Returns(false);
+        
+        var result = await _controller.GetPublicImage(urlHash, imagePath);
+        
+        Assert.IsType<ForbidResult>(result); 
     }
 
     [Fact]

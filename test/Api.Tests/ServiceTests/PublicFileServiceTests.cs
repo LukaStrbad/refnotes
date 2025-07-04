@@ -1,5 +1,7 @@
 ﻿using Api.Services;
 using Api.Tests.Data;
+using Api.Tests.Data.Faker;
+using Api.Tests.Data.Faker.Definition;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -130,5 +132,33 @@ public class PublicFileServiceTests : BaseTests
 
         var isActive = await sut.Value.IsPublicFileActive(fileHash);
         Assert.False(isActive);
+    }
+
+    [Theory, AutoData]
+    public async Task HasAccessToFileThroughHash_ReturnsTrue_WhenImageIsInPublicFile(
+        Sut<PublicFileService> sut,
+        PublicFileFakerImplementation publicFileFaker,
+        PublicFileImageFakerImplementation imageFaker)
+    {
+        var publicFile = publicFileFaker.CreateFaker().Generate();
+        var publicImage = imageFaker.CreateFaker().ForPublicFile(publicFile).Generate();
+
+        var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, publicImage.EncryptedFile!);
+        
+        Assert.True(hasAccess);
+    }
+    
+    [Theory, AutoData]
+    public async Task HasAccessToFileThroughHash_ReturnsFalse_WhenImageIsNotInPublicFile(
+        Sut<PublicFileService> sut,
+        PublicFileFakerImplementation publicFileFaker,
+        EncryptedFileFakerImplementation encryptedFileFaker)
+    {
+        var publicFile = publicFileFaker.CreateFaker().Generate();
+        var encryptedFile = encryptedFileFaker.CreateFaker().Generate();
+        
+        var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, encryptedFile);
+        
+        Assert.False(hasAccess);
     }
 }
