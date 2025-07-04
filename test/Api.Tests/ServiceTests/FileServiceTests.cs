@@ -374,8 +374,8 @@ public class FileServiceTests : BaseTests
         var dir2 = dirFaker.CreateFaker()
             .WithPath("/dir/subdir2").ForUserOrGroup(sut.DefaultUser, group).Generate();
 
-        var file1 = fileFaker.CreateFaker().WithDir(dir1).Generate();
-        var file2 = fileFaker.CreateFaker().WithDir(dir2).Generate();
+        var file1 = fileFaker.CreateFaker().ForDir(dir1).Generate();
+        var file2 = fileFaker.CreateFaker().ForDir(dir2).Generate();
 
         var relativePath = $"../subdir2/{file2.Name}";
 

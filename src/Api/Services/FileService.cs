@@ -77,6 +77,12 @@ public interface IFileService
     Task<User?> GetUserFromFile(EncryptedFile encryptedFile);
     
     Task<UserGroup?> GetUserGroupFromFile(EncryptedFile encryptedFile);
+    
+    /// <summary>
+    /// Gets the file owner of the group
+    /// </summary>
+    /// <param name="encryptedFile">the encrypted file</param>
+    Task<DirOwner> GetDirOwnerAsync(EncryptedFile encryptedFile);
 
     /// <summary>
     /// Gets the encrypted file from the specified path for the specified user.
@@ -94,6 +100,8 @@ public interface IFileService
     /// <param name="group">Group of the file</param>
     /// <returns></returns>
     Task<EncryptedFile?> GetEncryptedFileForGroupAsync(string filePath, UserGroup group);
+    
+    Task<EncryptedFile?> GetEncryptedFileForOwnerAsync(string filePath, DirOwner owner);
 
     /// <summary>
     /// Gets the full path of a file from its ID.
@@ -284,6 +292,24 @@ public class FileService(
         return directory.Group;
     }
 
+    public async Task<DirOwner> GetDirOwnerAsync(EncryptedFile encryptedFile)
+    {
+        await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
+        if (encryptedFile.EncryptedDirectory is null)
+            throw new Exception("File has no directory");
+        
+        var directory = encryptedFile.EncryptedDirectory;
+        await context.Entry(directory).Reference(d => d.Owner).LoadAsync();
+        if (directory.Owner is not null)
+            return new DirOwner(directory.Owner);
+        
+        await context.Entry(directory).Reference(d => d.Group).LoadAsync();
+        if (directory.Group is not null)
+            return new DirOwner(directory.Group);
+        
+        throw new Exception("File has no owner or group");
+    }
+
     public async Task<EncryptedFile?> GetEncryptedFileForUserAsync(string filePath, User user)
     {
         var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
@@ -320,6 +346,17 @@ public class FileService(
             .FirstOrDefaultAsync(x => x.Name == encryptedName);
 
         return file;
+    }
+
+    public async Task<EncryptedFile?> GetEncryptedFileForOwnerAsync(string filePath, DirOwner owner)
+    {
+        if (owner.User is not null)
+            return await GetEncryptedFileForUserAsync(filePath, owner.User);
+        
+        if (owner.Group is not null)
+            return await GetEncryptedFileForGroupAsync(filePath, owner.Group);
+        
+        throw new Exception("File owner is not a user or group");
     }
 
     public async Task<string> GetFilePathAsync(EncryptedFile file)

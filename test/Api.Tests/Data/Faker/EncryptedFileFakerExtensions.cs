@@ -16,6 +16,6 @@ public static class EncryptedFileFakerExtensions
     public static Faker<EncryptedFile> AsImage(this Faker<EncryptedFile> faker)
         => faker.RuleFor(f => f.Name, f => f.System.FileName(f.PickRandom(ImageExtensions)));
 
-    public static Faker<EncryptedFile> WithDir(this Faker<EncryptedFile> faker, EncryptedDirectory dir)
+    public static Faker<EncryptedFile> ForDir(this Faker<EncryptedFile> faker, EncryptedDirectory dir)
         => faker.RuleFor(f => f.EncryptedDirectory, _ => dir);
 }
