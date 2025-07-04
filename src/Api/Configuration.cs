@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using Api.Services.Schedulers;
 using ServiceDefaults;
 
 namespace Api;
@@ -45,6 +46,7 @@ public static class Configuration
         builder.Services.AddScoped<IPublicFileService, PublicFileService>();
         builder.Services.AddScoped<IAppDomainService, AppDomainService>();
         builder.Services.AddScoped<IPublicFileImageService, PublicFileImageService>();
+        builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
 
         builder.Services.AddAuthentication(x =>
         {

@@ -1,9 +1,7 @@
-﻿using Api.Jobs;
-using Api.Utils;
+﻿using Api.Utils;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
 
 namespace Api.Services;
 
@@ -11,47 +9,16 @@ public sealed class PublicFileImageService : IPublicFileImageService
 {
     private readonly RefNotesContext _context;
     private readonly ILogger<PublicFileImageService> _logger;
-    private readonly ISchedulerFactory _schedulerFactory;
     private readonly IFileStorageService _fileStorageService;
     private readonly IFileService _fileService;
 
-    public PublicFileImageService(ILogger<PublicFileImageService> logger, ISchedulerFactory schedulerFactory,
+    public PublicFileImageService(ILogger<PublicFileImageService> logger,
         RefNotesContext context, IFileStorageService fileStorageService, IFileService fileService)
     {
         _logger = logger;
-        _schedulerFactory = schedulerFactory;
         _context = context;
         _fileStorageService = fileStorageService;
         _fileService = fileService;
-    }
-
-    public async Task ScheduleImageRefreshForPublicFile(int publicFileId)
-    {
-        var scheduler = await _schedulerFactory.GetScheduler();
-        _logger.LogInformation("Creating job to update images for public file {publicFileId}", publicFileId);
-
-        var jobId = $"{UpdatePublicFileImagesJob.Name}-{publicFileId}";
-        var jobKey = new JobKey(jobId);
-
-        if (await scheduler.CheckExists(jobKey))
-        {
-            _logger.LogInformation("Deleting existing job {jobId}", jobId);
-            await scheduler.Interrupt(jobKey);
-            await scheduler.DeleteJob(jobKey);
-        }
-
-        var job = JobBuilder.Create<UpdatePublicFileImagesJob>()
-            .WithIdentity(jobKey)
-            .UsingJobData("publicFileId", publicFileId)
-            .StoreDurably()
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"{UpdatePublicFileImagesJob.Name}-trigger-{publicFileId}")
-            .StartNow()
-            .Build();
-
-        await scheduler.ScheduleJob(job, trigger);
     }
 
     public async Task UpdateImagesForPublicFile(int publicFileId)
@@ -91,6 +58,21 @@ public sealed class PublicFileImageService : IPublicFileImageService
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveImagesForEncryptedFile(int encryptedFileId)
+    {
+        var encryptedFile = await _context.Files.FindAsync(encryptedFileId);
+        if (encryptedFile is null)
+        {
+            _logger.LogError("Encrypted file with ID {encryptedFileId} not found.", encryptedFileId);
+            return;
+        }
+
+        var publicFile =
+            await _context.PublicFiles.FirstOrDefaultAsync(file => file.EncryptedFileId == encryptedFileId);
+        if (publicFile is not null)
+            await RemoveImagesForPublicFile(publicFile.Id);
     }
 
     public async Task RemoveImagesForPublicFile(int publicFileId)

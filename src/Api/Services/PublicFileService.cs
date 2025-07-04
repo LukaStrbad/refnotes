@@ -1,4 +1,5 @@
-﻿using Data;
+﻿using Api.Services.Schedulers;
+using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,13 +10,15 @@ public sealed class PublicFileService : IPublicFileService
     private readonly RefNotesContext _context;
     private readonly ILogger<PublicFileService> _logger;
     private readonly IPublicFileImageService _publicFileImageService;
+    private readonly IPublicFileScheduler _publicFileScheduler;
 
     public PublicFileService(RefNotesContext context, ILogger<PublicFileService> logger,
-        IPublicFileImageService publicFileImageService)
+        IPublicFileImageService publicFileImageService, IPublicFileScheduler publicFileScheduler)
     {
         _context = context;
         _logger = logger;
         _publicFileImageService = publicFileImageService;
+        _publicFileScheduler = publicFileScheduler;
     }
 
     private static string GenerateRandomHash() => Guid.NewGuid().ToString();
@@ -50,7 +53,7 @@ public sealed class PublicFileService : IPublicFileService
                 publicFile.State = PublicFileState.Active;
                 await _context.SaveChangesAsync();
 
-                await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
+                await _publicFileScheduler.ScheduleImageRefreshForPublicFile(publicFile.Id);
             }
 
             return publicFile.UrlHash;
@@ -66,7 +69,7 @@ public sealed class PublicFileService : IPublicFileService
         _logger.LogInformation("Public file created for file {encryptedFileId}.", encryptedFileId);
 
         // Schedule image refresh
-        await _publicFileImageService.ScheduleImageRefreshForPublicFile(publicFile.Id);
+        await _publicFileScheduler.ScheduleImageRefreshForPublicFile(publicFile.Id);
 
         return hash;
     }

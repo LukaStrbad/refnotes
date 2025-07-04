@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Api;
+using Api.Services.Schedulers;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
 using Bogus;
@@ -44,7 +45,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(ISchedulerFactory),
         typeof(IPublicFileImageService),
         typeof(IGroupPermissionService),
-        typeof(IPublicFileService)
+        typeof(IPublicFileService),
+        typeof(IPublicFileScheduler)
     ];
 
     private readonly List<Type> _realizedMocks = [];

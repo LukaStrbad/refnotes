@@ -1,9 +1,11 @@
 ﻿using Api.Services;
+using Api.Services.Schedulers;
 using Api.Tests.Data;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
@@ -49,7 +51,8 @@ public class PublicFileServiceTests : BaseTests
     }
 
     [Theory, AutoData]
-    public async Task CreatePublicFile_CreatesPublicFile(Sut<PublicFileService> sut)
+    public async Task CreatePublicFile_CreatesPublicFile(Sut<PublicFileService> sut,
+        IPublicFileScheduler publicFileScheduler)
     {
         var file = await CreateFile(sut);
 
@@ -61,6 +64,7 @@ public class PublicFileServiceTests : BaseTests
         Assert.NotEmpty(urlHash);
         Assert.NotNull(publicFile);
         Assert.Equal(urlHash, publicFile.UrlHash);
+        await publicFileScheduler.Received().ScheduleImageRefreshForPublicFile(publicFile.Id);
     }
 
     [Theory, AutoData]
@@ -70,7 +74,8 @@ public class PublicFileServiceTests : BaseTests
     }
 
     [Theory, AutoData]
-    public async Task CreatePublicFile_ReturnsExistingUrlHash(Sut<PublicFileService> sut)
+    public async Task CreatePublicFile_ReturnsExistingUrlHash(Sut<PublicFileService> sut,
+        IPublicFileScheduler publicFileScheduler)
     {
         var file = await CreateFile(sut);
 
@@ -85,6 +90,7 @@ public class PublicFileServiceTests : BaseTests
         Assert.Equal(PublicFileState.Active, publicFiles.First().State);
         Assert.Equal(urlHash, publicFiles.First().UrlHash);
         Assert.Equal(urlHash, urlHash2);
+        await publicFileScheduler.Received().ScheduleImageRefreshForPublicFile(publicFiles.First().Id);
     }
 
     [Theory, AutoData]
@@ -144,10 +150,10 @@ public class PublicFileServiceTests : BaseTests
         var publicImage = imageFaker.CreateFaker().ForPublicFile(publicFile).Generate();
 
         var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, publicImage.EncryptedFile!);
-        
+
         Assert.True(hasAccess);
     }
-    
+
     [Theory, AutoData]
     public async Task HasAccessToFileThroughHash_ReturnsFalse_WhenImageIsNotInPublicFile(
         Sut<PublicFileService> sut,
@@ -156,9 +162,9 @@ public class PublicFileServiceTests : BaseTests
     {
         var publicFile = publicFileFaker.CreateFaker().Generate();
         var encryptedFile = encryptedFileFaker.CreateFaker().Generate();
-        
+
         var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, encryptedFile);
-        
+
         Assert.False(hasAccess);
     }
 }

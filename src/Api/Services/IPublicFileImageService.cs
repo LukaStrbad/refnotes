@@ -2,7 +2,7 @@
 
 public interface IPublicFileImageService
 {
-    Task ScheduleImageRefreshForPublicFile(int publicFileId);
     Task UpdateImagesForPublicFile(int publicFileId);
+    Task RemoveImagesForEncryptedFile(int encryptedFileId);
     Task RemoveImagesForPublicFile(int publicFileId);
 }
