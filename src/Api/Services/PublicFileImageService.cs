@@ -65,6 +65,8 @@ public sealed class PublicFileImageService : IPublicFileImageService
 
         var encryptedFile = await _context.Files.FirstAsync(file => file.Id == publicFile.EncryptedFileId);
         await using var fileContent = _fileStorageService.GetFile(encryptedFile.FilesystemName);
+        var user = await _fileService.GetUserFromFile(encryptedFile);
+        var group = await _fileService.GetUserGroupFromFile(encryptedFile);
 
         var rootFilePath = await _fileService.GetFilePathAsync(encryptedFile);
         var rootDirectory = FileUtils.NormalizePath(Path.GetDirectoryName(rootFilePath) ?? "/");
@@ -80,7 +82,12 @@ public sealed class PublicFileImageService : IPublicFileImageService
 
             _logger.LogInformation("Adding image {image} to public file {publicFileId}", image, publicFileId);
             var filePath = FileUtils.ResolveRelativeFolderPath(rootDirectory, image);
-            var file = await _fileService.GetEncryptedFileAsync(filePath, null);
+            EncryptedFile? file = null;
+            if (user is not null)
+                file = await _fileService.GetEncryptedFileForUserAsync(filePath, user);
+            if (group is not null)
+                file = await _fileService.GetEncryptedFileForGroupAsync(filePath, group);
+
             if (file is null)
                 continue;
 

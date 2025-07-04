@@ -138,6 +138,7 @@ public class FileController : GroupPermissionControllerBase
     }
 
     [HttpGet("public/getImage")]
+    [AllowAnonymous]
     public async Task<ActionResult> GetPublicImage(string urlHash, string imagePath)
     {
         var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
