@@ -196,7 +196,8 @@
       "file-created": "Stvoreno: {{time}}",
       "file-modified": "Zadnja izmjena: {{time}}",
       "file-size": "Veličina"
-    }
+    },
+    "fileNotFound": "Datoteka nije pronađena"
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",

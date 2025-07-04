@@ -17,6 +17,7 @@ import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
 import { FileProvider } from './file-provider';
 import { LoggerService } from '../../services/logger.service';
+import { getStatusCode } from '../../utils/errorHandler';
 
 @Component({
   selector: 'app-file-preview',
@@ -31,7 +32,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   readonly groupId?: number;
   readonly fileProvider: FileProvider;
 
-  loading = true;
+  loadingState: LoadingState = LoadingState.Loading;
   tags: string[] = [];
   fileType: fileUtils.FileType = 'unknown';
   imageSrc: string | null = null;
@@ -40,6 +41,8 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   fileUtils = fileUtils;
 
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
+
+  LoadingState = LoadingState;
 
   constructor(
     route: ActivatedRoute,
@@ -133,18 +136,24 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
       const text = new TextDecoder().decode(content);
       if (this.fileType === 'markdown') {
         const markdown = this.markdownHighlighter.parse(text) as string;
-        this.loading = false;
+        this.loadingState = LoadingState.Loaded;
         this.changeDetector.detectChanges();
         this.previewContentElement.nativeElement.innerHTML = markdown;
         this.updateImages();
       } else if (this.fileType === 'text') {
-        this.loading = false;
+        this.loadingState = LoadingState.Loaded;
         this.changeDetector.detectChanges();
         this.previewContentElement.nativeElement.innerHTML = text;
       }
     } catch (error) {
-      this.log.error('Error loading file:', error);
-      this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
+      const statusCode = getStatusCode(error);
+      if (statusCode === 404) {
+        this.loadingState = LoadingState.NotFound;
+      } else {
+        this.loadingState = LoadingState.Error;
+        this.log.error('Error loading file:', error);
+        this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
+      }
     }
   }
 
@@ -159,7 +168,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
       }
 
       this.imageSrc = getImageBlobUrl(fileName, data);
-      this.loading = false;
+      this.loadingState = LoadingState.Loaded;
     } catch {
       this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
     };
@@ -171,4 +180,11 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   private updateImages() {
     this.markdownHighlighter?.updateImages(this.previewContentElement);
   }
+}
+
+enum LoadingState {
+  Loading,
+  Loaded,
+  NotFound,
+  Error,
 }

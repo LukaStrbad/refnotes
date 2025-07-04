@@ -196,7 +196,8 @@
       "file-created": "Created: {{time}}",
       "file-modified": "Modified: {{time}}",
       "file-size": "Size"
-    }
+    },
+    "fileNotFound": "File not found"
   },
   "error": {
     "file-already-exists": "File with same name already exists",
