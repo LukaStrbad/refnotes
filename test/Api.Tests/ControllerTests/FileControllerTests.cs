@@ -2,6 +2,7 @@
 using Api.Controllers;
 using Api.Model;
 using Api.Services;
+using Api.Services.Schedulers;
 using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
 using Api.Tests.Data.Faker.Definition;
@@ -22,6 +23,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     private readonly IGroupPermissionService _groupPermissionService;
     private readonly IPublicFileService _publicFileService;
     private readonly DefaultHttpContext _httpContext;
+    private readonly IPublicFileScheduler _publicFileScheduler;
 
     public FileControllerTests(ControllerFixture<FileController> fixture)
     {
@@ -31,6 +33,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
         _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
         _publicFileService = serviceProvider.GetRequiredService<IPublicFileService>();
+        _publicFileScheduler = serviceProvider.GetRequiredService<IPublicFileScheduler>();
         _controller = serviceProvider.GetRequiredService<FileController>();
 
         _httpContext = new DefaultHttpContext();
@@ -390,17 +393,22 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     {
         const string directoryPath = "test_dir_path";
         const string name = "test_file_name";
-        const string fileName = "test_file_name";
+        const string filesystemName = "test_file_name.bin";
         const string content = "test content";
 
-        _fileService.GetFilesystemFilePath(directoryPath, name, null).Returns(fileName);
+        var encryptedFile = new EncryptedFile(filesystemName, name)
+        {
+            Id = 123
+        };
+        _fileService.GetEncryptedFileAsync($"{directoryPath}/{name}", null).Returns(encryptedFile);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
         var result = await _controller.SaveTextFile(directoryPath, name, null);
 
         Assert.IsType<OkResult>(result);
-        await _fileStorageService.Received(1).SaveFileAsync(fileName, Arg.Any<Stream>());
+        await _fileStorageService.Received(1).SaveFileAsync(filesystemName, Arg.Any<Stream>());
         await _fileService.Received(1).UpdateTimestamp(directoryPath, name, null);
+        await _publicFileScheduler.Received(1).ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
     }
 
     [Fact]

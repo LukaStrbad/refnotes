@@ -1,4 +1,5 @@
 ﻿using Api.Services;
+using Api.Services.Schedulers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -32,6 +33,7 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
         services.AddScopedSubstitute<IFileStorageService>();
         services.AddScopedSubstitute<IPublicFileService>();
         services.AddScopedSubstitute<IAppDomainService>();
+        services.AddScopedSubstitute<IPublicFileScheduler>();
         services.AddScopedSubstitute<HttpContext>();
 
         // The controller

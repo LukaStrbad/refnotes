@@ -2,6 +2,7 @@
 using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
+using Api.Services.Schedulers;
 using Api.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,17 +18,20 @@ public class FileController : GroupPermissionControllerBase
     private readonly IFileService _fileService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IPublicFileService _publicFileService;
+    private readonly IPublicFileScheduler _publicFileScheduler;
 
     public FileController(
         IFileService fileService,
         IFileStorageService fileStorageService,
         IGroupPermissionService groupPermissionService,
         IUserService userService,
-        IPublicFileService publicFileService) : base(groupPermissionService, userService)
+        IPublicFileService publicFileService,
+        IPublicFileScheduler publicFileScheduler) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
         _fileStorageService = fileStorageService;
         _publicFileService = publicFileService;
+        _publicFileScheduler = publicFileScheduler;
     }
 
     [HttpPost("addFile")]
@@ -148,10 +152,10 @@ public class FileController : GroupPermissionControllerBase
         var image = await _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath);
         if (image is null)
             return BadRequest();
-        
+
         if (!await _publicFileService.HasAccessToFileThroughHash(urlHash, image))
             return Forbid();
-        
+
         var fileInfo = await _fileService.GetFileInfoAsync(image.Id);
         // this shouldn't happen
         if (fileInfo is null)
@@ -169,14 +173,16 @@ public class FileController : GroupPermissionControllerBase
         if (await GroupAccessForbidden(groupId))
             return Forbid();
 
-        var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
-        if (fileName is null)
+        var filePath = FileUtils.NormalizePath(Path.Join(directoryPath, name));
+        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (encryptedFile is null)
         {
             return NotFound("File not found.");
         }
 
-        await _fileStorageService.SaveFileAsync(fileName, Request.Body);
+        await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
         await _fileService.UpdateTimestamp(directoryPath, name, groupId);
+        await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
         return Ok();
     }
 
