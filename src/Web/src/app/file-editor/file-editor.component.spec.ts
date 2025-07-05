@@ -7,12 +7,13 @@ import {
   TranslateModule,
   TranslateService,
 } from '@ngx-translate/core';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
 import { Location } from '@angular/common';
+import { ShareService } from '../../services/components/modals/share.service';
 
 @Component({
   selector: 'app-md-editor',
@@ -31,6 +32,11 @@ function setupTestBed() {
     'addFileTag',
     'removeFileTag',
   ]);
+  const shareService = jasmine.createSpyObj('ShareService', ['setPublicState', 'loadPublicLink', 'setFilePath'], {
+    fileName: signal(''),
+    isPublic: signal(false),
+    publicLink: signal<string | null>(null),
+  });
 
   const imports = [
     FileEditorComponent,
@@ -51,6 +57,7 @@ function setupTestBed() {
     },
     { provide: FileService, useValue: fileService },
     { provide: TagService, useValue: tagService },
+    { provide: ShareService, useValue: shareService },
   ];
 
   return { fileService, tagService, providers, imports };

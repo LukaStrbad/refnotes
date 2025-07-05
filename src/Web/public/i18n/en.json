@@ -89,7 +89,8 @@
       }
     },
     "files-deleted": "Files deleted",
-    "download": "Download"
+    "download": "Download",
+    "share": "Share"
   },
   "editor": {
     "viewType": {
@@ -102,7 +103,8 @@
     "save": "Save",
     "buttonEditTags": "Edit tags",
     "labelTags": "Tags:",
-    "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'"
+    "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'",
+    "buttonShare": "Share"
   },
   "modals": {
     "create": {
@@ -153,6 +155,14 @@
       "groupName": "Group name",
       "cancel": "Cancel",
       "update": "Update"
+    },
+    "share": {
+      "title": "Share file {{fileName}}?",
+      "makePublic": "Is public",
+      "publicLink": "Public link",
+      "copy": "Copy",
+      "close": "Close",
+      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images."
     }
   },
   "auth": {
@@ -187,7 +197,10 @@
       "file-created": "Created: {{time}}",
       "file-modified": "Modified: {{time}}",
       "file-size": "Size"
-    }
+    },
+    "fileNotFound": "File not found",
+    "publicFileNotFound-description": "The file you are looking for is not available. It may have been deleted, the link is invalid, or sharing has been disabled.",
+    "fileNotFound-description": "The file you are looking for could not be found. It may have been moved or deleted."
   },
   "error": {
     "file-already-exists": "File with same name already exists",
@@ -278,5 +291,15 @@
   },
   "button": {
     "back": "Back"
-  }
+  },
+  "share": {
+    "public-link": {
+      "copied-to-clipboard": "Link copied to clipboard",
+      "copy-failed": "Failed to copy link to clipboard"
+    }
+  },
+  "home-button": {
+    "go-to-browser": "Go to File Browser"
+  },
+  "home-button-go-to-login": "Go to Login page"
 }

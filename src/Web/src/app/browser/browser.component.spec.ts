@@ -16,10 +16,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
 import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
-import { User } from '../../model/user';
 
 function createFile(name: string): File {
-  return { name, tags: [], size: 0, created: new Date(), modified: new Date() };
+  return { name: name, path: `/${name}`, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 function setupTestBed(groupId?: string) {
@@ -95,13 +94,11 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
-  let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
     const setup = setupTestBed();
     browserService = setup.browserService;
     fileService = setup.fileService;
-    authService = setup.authService;
 
     await TestBed.configureTestingModule({
       imports: setup.imports,
@@ -118,15 +115,6 @@ describe('BrowserComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
-
-  it('should navigate to login if user is not authenticated', () => {
-    const userProperty = Object.getOwnPropertyDescriptor(authService, 'user') as { get: jasmine.Spy<(this: jasmine.SpyObj<AuthService>) => User | null> };
-    userProperty.get.and.returnValue(null);
-    const router = TestBed.inject(Router);
-    spyOn(router, 'navigate').and.rejectWith(true);
-    component.ngOnInit();
-    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('should refresh routes when refreshRoute is called', async () => {

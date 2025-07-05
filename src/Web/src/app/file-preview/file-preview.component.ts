@@ -15,21 +15,26 @@ import { FileWithTime } from '../../model/file';
 import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
+import { FileProvider } from './file-provider';
+import { LoggerService } from '../../services/logger.service';
+import { getStatusCode } from '../../utils/errorHandler';
+import { HomeButtonComponent } from "../components/home-button/home-button.component";
 
 @Component({
   selector: 'app-file-preview',
-  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective, ByteSizePipe],
+  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective, ByteSizePipe, HomeButtonComponent],
   templateUrl: './file-preview.component.html',
   styleUrl: './file-preview.component.css',
   encapsulation: ViewEncapsulation.None,
 })
 export class FilePreviewComponent implements OnDestroy, AfterViewInit {
-  private readonly markdownHighlighter: MarkdownHighlighter;
-  readonly directoryPath: string;
-  readonly fileName: string;
+  private markdownHighlighter?: MarkdownHighlighter;
+  fileName?: string;
   readonly groupId?: number;
+  readonly fileProvider: FileProvider;
+  readonly isPublicFile: boolean;
 
-  loading = true;
+  loadingState: LoadingState = LoadingState.Loading;
   tags: string[] = [];
   fileType: fileUtils.FileType = 'unknown';
   imageSrc: string | null = null;
@@ -39,55 +44,91 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
 
   @ViewChild('previewRef') previewContentElement!: ElementRef<HTMLElement>;
 
+  LoadingState = LoadingState;
+
   constructor(
     route: ActivatedRoute,
+    tagService: TagService,
+    private log: LoggerService,
     private fileService: FileService,
-    private tagService: TagService,
     public settings: SettingsService,
     private changeDetector: ChangeDetectorRef,
     private translate: TranslateService,
     private notificationService: NotificationService,
   ) {
-    const path = route.snapshot.paramMap.get('path') as string;
-    const groupId = route.snapshot.paramMap.get('groupId');
-    if (groupId) {
-      this.groupId = Number(groupId);
-    }
-    [this.directoryPath, this.fileName] = splitDirAndName(path);
-    this.fileType = fileUtils.getFileType(this.fileName);
+    const publicFileHash = route.snapshot.paramMap.get('publicHash');
+    if (publicFileHash) {
+      this.fileProvider = FileProvider.createPublicFileProvider(
+        fileService,
+        publicFileHash,
+      );
+      this.isPublicFile = true;
+    } else {
+      const path = route.snapshot.paramMap.get('path') as string;
+      const groupId = route.snapshot.paramMap.get('groupId');
+      if (groupId) {
+        this.groupId = Number(groupId);
+      }
 
-    this.markdownHighlighter = new MarkdownHighlighter(
-      this.settings.mdEditor().showLineNumbers,
-      this.directoryPath,
-      fileService,
-    );
+      this.fileProvider = FileProvider.createRegularFileProvider(
+        fileService,
+        tagService,
+        path,
+        this.groupId,
+      );
+      this.isPublicFile = false;
+    }
 
     effect(() => {
       const showLineNumbers = this.settings.mdEditor().showLineNumbers;
+      if (!this.markdownHighlighter) {
+        return;
+      }
       this.markdownHighlighter.showLineNumbers = showLineNumbers;
     });
   }
 
   ngAfterViewInit(): void {
+    this.init().catch(error => {
+      const statusCode = getStatusCode(error);
+      if (statusCode === 404) {
+        this.loadingState = LoadingState.NotFound;
+      }
+    });
+  }
+
+  private async init() {
+    const path = await this.fileProvider.filePath;
+    const [, fileName] = splitDirAndName(path);
+    this.fileName = fileName;
+    this.fileType = fileUtils.getFileType(this.fileName);
+
+    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
+      this.settings.mdEditor().showLineNumbers,
+      (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
+    );
+
+    const promises: Promise<void>[] = [];
+
     if (this.fileType === 'image') {
-      this.loadImage();
+      promises.push(this.loadImage());
     } else if (this.fileType === 'markdown' || this.fileType === 'text') {
-      this.loadFile();
+      promises.push(this.loadFile());
     }
 
-    this.tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
-      .then((tags) => {
-        this.tags = tags;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
-      });
+    const listTagsPromise = this.fileProvider.listTags().then(tags => {
+      this.tags = tags;
+    }).catch(async () => {
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
+    });
+    promises.push(listTagsPromise);
 
-    const dateLang = this.translate.currentLang;
+    const fileInfoPromise = this.fileProvider.getFileInfo().then(async fileInfo => {
+      this.fileInfo = await updateFileTime(fileInfo, this.translate, this.translate.currentLang);
+    });
+    promises.push(fileInfoPromise);
 
-    this.fileService.getFileInfo(joinPaths(this.directoryPath, this.fileName), this.groupId)
-      .then(async (fileInfo) => {
-        this.fileInfo = await updateFileTime(fileInfo, this.translate, dateLang);
-      });
+    await Promise.all(promises);
   }
 
   ngOnDestroy(): void {
@@ -96,43 +137,65 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  loadFile() {
-    this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
-      .then((content) => {
-        const text = new TextDecoder().decode(content);
-        if (this.fileType === 'markdown') {
-          const markdown = this.markdownHighlighter.parse(text) as string;
-          this.loading = false;
-          this.changeDetector.detectChanges();
-          this.previewContentElement.nativeElement.innerHTML = markdown;
-          this.updateImages();
-        } else if (this.fileType === 'text') {
-          this.loading = false;
-          this.previewContentElement.nativeElement.innerHTML = text;
-        }
-      }, async () => {
+  async loadFile() {
+    if (!this.markdownHighlighter) {
+      throw new Error('MarkdownHighlighter is not initialized');
+    }
+
+    try {
+      const content = await this.fileProvider.getFile();
+      const text = new TextDecoder().decode(content);
+      if (this.fileType === 'markdown') {
+        const markdown = this.markdownHighlighter.parse(text) as string;
+        this.loadingState = LoadingState.Loaded;
+        this.changeDetector.detectChanges();
+        this.previewContentElement.nativeElement.innerHTML = markdown;
+        this.updateImages();
+      } else if (this.fileType === 'text') {
+        this.loadingState = LoadingState.Loaded;
+        this.changeDetector.detectChanges();
+        this.previewContentElement.nativeElement.innerHTML = text;
+      }
+    } catch (error) {
+      const statusCode = getStatusCode(error);
+      if (statusCode === 404) {
+        this.loadingState = LoadingState.NotFound;
+      } else {
+        this.loadingState = LoadingState.Error;
+        this.log.error('Error loading file:', error);
         this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
-      });
+      }
+    }
   }
 
-  loadImage() {
-    this.fileService.getImage(this.directoryPath, this.fileName, this.groupId)
-      .then((data) => {
-        if (!data) {
-          return;
-        }
+  async loadImage() {
+    const filePath = await this.fileProvider.filePath;
+    const [directoryPath, fileName] = splitDirAndName(filePath);
 
-        this.imageSrc = getImageBlobUrl(this.fileName, data);
-        this.loading = false;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
-      });
+    try {
+      const data = await this.fileService.getImage(directoryPath, fileName, this.groupId);
+      if (!data) {
+        return;
+      }
+
+      this.imageSrc = getImageBlobUrl(fileName, data);
+      this.loadingState = LoadingState.Loaded;
+    } catch {
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-image'));
+    };
   }
 
   /**
    * Updates the image elements with the correct image source
    */
   private updateImages() {
-    this.markdownHighlighter.updateImages(this.previewContentElement);
+    this.markdownHighlighter?.updateImages(this.previewContentElement);
   }
+}
+
+enum LoadingState {
+  Loading,
+  Loaded,
+  NotFound,
+  Error,
 }

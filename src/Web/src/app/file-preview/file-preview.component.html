@@ -1,71 +1,92 @@
-<div class="flex flex-col gap-4 h-full">
-  <div class="flex gap-2 items-center">
-    <h1 class="font-bold text-2xl">
-      {{ "preview.viewingFile" | translate: { fileName } }}
-    </h1>
+@switch (loadingState) {
+  @case (LoadingState.Loading) {
+    <div class="skeleton h-72 w-full"></div>
+  }
 
-    @if (fileInfo) {
-      <div class="tooltip tooltip-bottom">
-        <div class="tooltip-content z-100 text-left">
-          <p>
-            {{
-              "preview.tooltip.file-created"
-                | translate: { time: fileInfo.createdLong }
-            }}
-          </p>
-          <p>
-            {{
-              "preview.tooltip.file-modified"
-                | translate: { time: fileInfo.modifiedLong }
-            }}
-          </p>
-          <p>
-            {{ "preview.tooltip.file-size" | translate }}:
-            {{ fileInfo.size | byteSize }}
-          </p>
-        </div>
-        <i class="bi bi-info-circle text-base"></i>
-      </div>
-    }
-  </div>
-
-  @if (tags.length > 0) {
+  @case (LoadingState.NotFound) {
     <div
-      class="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center"
+      class="flex flex-col items-center justify-center h-full text-center p-8"
     >
+      <i class="bi bi-file-earmark-x text-6xl text-error mb-4"></i>
+      <h1 class="text-2xl font-bold mb-2" translate>preview.fileNotFound</h1>
+      <p class="mb-4 text-base text-base-content/70" translate>
+        @if (isPublicFile) {
+          preview.publicFileNotFound-description
+        } @else {
+          preview.fileNotFound-description
+        }
+      </p>
+      <app-home-button></app-home-button>
+    </div>
+  }
+
+  @case (LoadingState.Loaded) {
+    <div class="flex flex-col gap-4 h-full">
       <div class="flex gap-2 items-center">
-        <h2 class="text-lg" translate>preview.labelTags</h2>
-        @for (tag of tags; track tag) {
-          <div class="badge badge-soft badge-primary">{{ tag }}</div>
+        <h1 class="font-bold text-2xl">
+          {{ "preview.viewingFile" | translate: { fileName } }}
+        </h1>
+
+        @if (fileInfo) {
+          <div class="tooltip tooltip-bottom">
+            <div class="tooltip-content z-100 text-left">
+              <p>
+                {{
+                  "preview.tooltip.file-created"
+                    | translate: { time: fileInfo.createdLong }
+                }}
+              </p>
+              <p>
+                {{
+                  "preview.tooltip.file-modified"
+                    | translate: { time: fileInfo.modifiedLong }
+                }}
+              </p>
+              <p>
+                {{ "preview.tooltip.file-size" | translate }}:
+                {{ fileInfo.size | byteSize }}
+              </p>
+            </div>
+            <i class="bi bi-info-circle text-base"></i>
+          </div>
         }
       </div>
-    </div>
-  }
 
-  @if (loading) {
-    <div class="skeleton h-72 w-full"></div>
-  } @else {
-    @if (fileType === "image") {
-      <div>
-        <img
-          [src]="imageSrc"
-          class="w-full h-auto object-cover"
-          alt="{{ fileName }}"
-          testTag="preview.image"
-        />
-      </div>
-    }
-    <div
-      class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
-      [ngClass]="{ 'whitespace-pre-wrap': fileType === 'text' }"
-      [ngClass]="{ hidden: fileType === 'image' }"
-      [class.no-wrap]="!settings.mdEditor().wrapLines"
-    >
+      @if (tags.length > 0) {
+        <div
+          class="flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center"
+        >
+          <div class="flex gap-2 items-center">
+            <h2 class="text-lg" translate>preview.labelTags</h2>
+            @for (tag of tags; track tag) {
+              <div class="badge badge-soft badge-primary">{{ tag }}</div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (fileType === "image") {
+        <div>
+          <img
+            [src]="imageSrc"
+            class="w-full h-auto object-cover"
+            alt="{{ fileName }}"
+            testTag="preview.image"
+          />
+        </div>
+      }
       <div
-        class="preview bg-base-200 p-2 rounded-lg h-full"
-        #previewRef
-        testTag="preview.content"
-      ></div>
+        class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
+        [ngClass]="{ 'whitespace-pre-wrap': fileType === 'text' }"
+        [ngClass]="{ hidden: fileType === 'image' }"
+        [class.no-wrap]="!settings.mdEditor().wrapLines"
+      >
+        <div
+          class="preview bg-base-200 p-2 rounded-lg h-full"
+          #previewRef
+          testTag="preview.content"
+        ></div>
+      </div>
     </div>
   }
-</div>
+}

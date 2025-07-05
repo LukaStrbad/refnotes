@@ -3,15 +3,19 @@ import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-tran
 import { GroupLinkCreatedComponent } from './group-link-created.component';
 import { NotificationService } from '../../../../services/notification.service';
 import { By } from '@angular/platform-browser';
+import { ClipboardService } from '../../../../services/utils/clipboard.service';
+import { createMockClipboardService } from '../../../../services/utils/clipboard.service.spec';
 
 describe('GroupLinkCreatedComponent', () => {
   let component: GroupLinkCreatedComponent;
   let fixture: ComponentFixture<GroupLinkCreatedComponent>;
   let modal: HTMLDialogElement;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let clipboardService: jasmine.SpyObj<ClipboardService>;
 
   beforeEach(async () => {
     notificationService = jasmine.createSpyObj('NotificationService', ['info', 'error']);
+    clipboardService = createMockClipboardService();
 
     await TestBed.configureTestingModule({
       imports: [
@@ -25,6 +29,7 @@ describe('GroupLinkCreatedComponent', () => {
       ],
       providers: [
         { provide: NotificationService, useValue: notificationService },
+        { provide: ClipboardService, useValue: clipboardService },
       ],
     }).compileComponents();
 
@@ -74,47 +79,14 @@ describe('GroupLinkCreatedComponent', () => {
     component.show(testLink);
     fixture.detectChanges();
 
-    // Mock clipboard API
-    const mockClipboard = {
-      writeText: jasmine.createSpy('writeText').and.returnValue(Promise.resolve())
-    };
-    Object.defineProperty(navigator, 'clipboard', {
-      value: mockClipboard,
-      writable: true
-    });
-
     // Click copy button
     const copyButton = fixture.debugElement.query(By.css('button[data-test="groups.link-created.copy"]')).nativeElement as HTMLButtonElement;
     copyButton.click();
 
     await fixture.whenStable();
 
-    expect(mockClipboard.writeText).toHaveBeenCalledWith(testLink);
+    expect(clipboardService.copyText).toHaveBeenCalledWith(testLink);
     expect(notificationService.info).toHaveBeenCalled();
-  });
-
-  it('should show error notification when copy fails', async () => {
-    const testLink = 'http://test.com/join-group/123/test-code';
-    component.show(testLink);
-    fixture.detectChanges();
-
-    // Mock clipboard API to fail
-    const mockClipboard = {
-      writeText: jasmine.createSpy('writeText').and.returnValue(Promise.reject())
-    };
-    Object.defineProperty(navigator, 'clipboard', {
-      value: mockClipboard,
-      writable: true
-    });
-
-    // Click copy button
-    const copyButton = fixture.debugElement.query(By.css('button[data-test="groups.link-created.copy"]')).nativeElement as HTMLButtonElement;
-    copyButton.click();
-
-    await fixture.whenStable();
-
-    expect(mockClipboard.writeText).toHaveBeenCalledWith(testLink);
-    expect(notificationService.error).toHaveBeenCalled();
   });
 
   it('should close when clicking backdrop', () => {

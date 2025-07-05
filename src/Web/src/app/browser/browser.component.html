@@ -160,12 +160,12 @@
         </thead>
       }
       <tbody>
-        @for (file of files; track file.name) {
+        @for (file of files; track file.path) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
                 type="checkbox"
-                [checked]="isFileSelected(file.name)"
+                [checked]="isFileSelected(file.path)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
                 (click)="toggleFileSelect(file, $event)"
                 testTag="browser.file-to-move-checkbox"
@@ -174,8 +174,8 @@
               <i
                 class="bi group-hover:hidden peer-checked:hidden"
                 [ngClass]="{
-                  'bi-filetype-md': fileUtils.isMarkdownFile(file.name),
-                  'bi-file-text': fileUtils.isTextFile(file.name),
+                  'bi-filetype-md': fileUtils.isMarkdownFile(file.path),
+                  'bi-file-text': fileUtils.isTextFile(file.path),
                   'bi-file-earmark': true,
                 }"
               ></i>
@@ -269,6 +269,14 @@
                   </button>
 
                   <button
+                    class="btn btn-sm btn-accent"
+                    (click)="openShareModal(file)"
+                    >
+                    <i class="bi bi-share"></i>
+                    {{ "browser.share" | translate }}
+                  </button>
+
+                  <button
                     class="btn btn-sm btn-error"
                     (click)="deleteFile(file)"
                   >
@@ -302,3 +310,11 @@
   #renameFileModal
   (rename)="renameFile($event)"
 ></app-rename-file-modal>
+
+<app-share-modal
+  #shareModal
+  [fileName]="share.fileName()"
+  [isPublic]="share.isPublic()"
+  [publicLink]="share.publicLink()"
+  (changePublicState)="share.setPublicState($event)"
+></app-share-modal>

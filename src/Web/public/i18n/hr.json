@@ -89,7 +89,8 @@
       }
     },
     "files-deleted": "Datoteke izbrisane",
-    "download": "Preuzmi"
+    "download": "Preuzmi",
+    "share": "Podijeli"
   },
   "editor": {
     "viewType": {
@@ -102,7 +103,8 @@
     "save": "Spremi",
     "buttonEditTags": "Uredi oznake",
     "labelTags": "Oznake:",
-    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'"
+    "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
+    "buttonShare": "Podijeli"
   },
   "modals": {
     "create": {
@@ -153,6 +155,14 @@
       },
       "title": "Uredi grupu",
       "update": "Potvrdi"
+    },
+    "share": {
+      "close": "Zatvori",
+      "copy": "Kopiraj",
+      "makePublic": "Javno",
+      "publicLink": "Javna veza",
+      "title": "Podijeliti datoteku {{fileName}}?",
+      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike."
     }
   },
   "auth": {
@@ -187,7 +197,10 @@
       "file-created": "Stvoreno: {{time}}",
       "file-modified": "Zadnja izmjena: {{time}}",
       "file-size": "Veličina"
-    }
+    },
+    "fileNotFound": "Datoteka nije pronađena",
+    "fileNotFound-description": "Datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana.",
+    "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno."
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",
@@ -278,5 +291,15 @@
   },
   "button": {
     "back": "Nazad"
+  },
+  "share": {
+    "public-link": {
+      "copied-to-clipboard": "Veza kopirana u međuspremnik",
+      "copy-failed": "Greška prilikom kopiranja veze"
+    }
+  },
+  "home-button-go-to-login": "Idite na stranicu za prijavu",
+  "home-button": {
+    "go-to-browser": "Idite na preglednik"
   }
 }

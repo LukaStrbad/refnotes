@@ -1,5 +1,6 @@
 export interface File {
   name: string;
+  path: string;
   tags: string[];
   size: number;
   created: Date;
@@ -15,9 +16,10 @@ export interface FileWithTime extends File {
   modifiedShort?: string;
 }
 
-export function createFromJsFile(file: globalThis.File): File {
+export function createFromJsFile(file: globalThis.File, directoryPath: string): File {
   return {
     name: file.name,
+    path: `${directoryPath}/${file.name}`,
     tags: [],
     size: file.size,
     created: new Date(),

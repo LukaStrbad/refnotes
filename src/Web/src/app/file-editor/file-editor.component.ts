@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,8 @@ import { joinPaths, splitDirAndName } from '../../utils/path-utils';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { Location } from '@angular/common';
+import { ShareModalComponent } from "../components/modals/share/share.component";
+import { ShareService } from '../../services/components/modals/share.service';
 
 @Component({
   selector: 'app-file-editor',
@@ -20,8 +22,9 @@ import { Location } from '@angular/common';
     TranslateDirective,
     TestTagDirective,
     EditTagsModalComponent,
-    RenameFileModalComponent
-  ],
+    RenameFileModalComponent,
+    ShareModalComponent
+],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
 })
@@ -35,6 +38,9 @@ export class FileEditorComponent {
   loading = true;
   tags: string[] = [];
 
+  @ViewChild('shareModal')
+  shareModal!: ShareModalComponent;
+
   constructor(
     route: ActivatedRoute,
     private fileService: FileService,
@@ -43,6 +49,8 @@ export class FileEditorComponent {
     private notificationService: NotificationService,
     private router: Router,
     private location: Location,
+
+    public share: ShareService,
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
     [this.directoryPath, this.fileName] = splitDirAndName(path);
@@ -112,5 +120,11 @@ export class FileEditorComponent {
     const oldName = this.fileName;
     this.fileName = newFileName;
     this.notificationService.info(await getTranslation(this.translate, 'editor.file-renamed-to', { oldName, newName: newFileName }));
+  }
+
+  async openShareModal() {
+    this.share.setFilePath(joinPaths(this.directoryPath, this.fileName));
+    await this.share.loadPublicLink();
+    this.shareModal.show();
   }
 }

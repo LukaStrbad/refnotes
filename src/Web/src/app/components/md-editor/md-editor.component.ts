@@ -71,7 +71,9 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markdownHighlighter = new MarkdownHighlighter(
       this.settings.mdEditor().showLineNumbers,
       this.currentPath(),
-      fileService,
+      (dirPath: string, fileName: string) => this.fileService.getImage(
+        dirPath,
+        fileName)
     );
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);

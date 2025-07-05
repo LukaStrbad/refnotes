@@ -121,6 +121,26 @@ export class FileService {
     return result;
   }
 
+  async getPublicImage(urlHash: string, imagePath: string): Promise<ArrayBuffer | null> {
+    const params = generateHttpParams({
+      urlHash: urlHash,
+      imagePath: imagePath,
+    });
+
+    const result = await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/public/getImage`,
+        { params, responseType: 'arraybuffer' },
+      ),
+    );
+
+    if (result.byteLength === 0) {
+      return null;
+    }
+
+    return result;
+  }
+
   async saveTextFile(directoryPath: string, name: string, content: string, groupId?: number) {
     const params = generateHttpParams({
       directoryPath: directoryPath,
@@ -161,5 +181,25 @@ export class FileService {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }
+
+  async getPublicFile(urlHash: string): Promise<ArrayBuffer> {
+    const params = generateHttpParams({ urlHash: urlHash });
+
+    return await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/public/getFile`,
+        { params, responseType: 'arraybuffer' },
+      ),
+    );
+  }
+
+  async getPublicFileInfo(urlHash: string): Promise<FileInfo> {
+    const params = generateHttpParams({ urlHash: urlHash });
+
+    const fileInfo = await firstValueFrom(
+      this.http.get<FileInfo>(`${apiUrl}/public/getFileInfo`, { params }),
+    );
+    return mapFileDates(fileInfo);
   }
 }

@@ -31,6 +31,8 @@ import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
+import { ShareService } from '../../services/components/modals/share.service';
+import { ShareModalComponent } from '../components/modals/share/share.component';
 
 @Component({
   selector: 'app-browser',
@@ -45,7 +47,8 @@ import { updateFileTime } from '../../utils/date-utils';
     EditTagsModalComponent,
     RenameFileModalComponent,
     ByteSizePipe,
-  ],
+    ShareModalComponent
+],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
@@ -76,6 +79,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   fileModal!: CreateNewModalComponent;
   @ViewChild('folderModal')
   folderModal!: CreateNewModalComponent;
+  @ViewChild('shareModal')
+  shareModal!: ShareModalComponent;
 
   /**
    * For testing purposes, this property is used to store the promise returned by the refreshRoute method.
@@ -113,6 +118,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private translateService: TranslateService,
     private askModal: AskModalService,
+    public share: ShareService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
 
@@ -129,10 +135,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.auth.user === null) {
-      this.router.navigate(['/login']).then();
-    }
-
     this.navSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -313,7 +315,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.currentFolder?.files.push(createFromJsFile(file));
+                this.currentFolder?.files.push(createFromJsFile(file, this.currentPath));
               } else {
                 getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
                   .then((translation) => {
@@ -338,15 +340,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   isEditable(file: File): boolean {
-    return fileUtils.isEditable(file.name);
+    return fileUtils.isEditable(file.path);
   }
 
   getFilePath(file: File): string {
-    return joinPaths(this.currentPath, file.name);
+    return joinPaths(this.currentPath, file.path);
   }
 
   async openPreview(file: File) {
-    const path = joinPaths(this.currentPath, file.name);
+    const path = joinPaths(this.currentPath, file.path);
     const navigationRoute = [];
     navigationRoute.push(this.linkBasePath, 'file', path, 'preview');
     await this.router.navigate(navigationRoute);
@@ -365,7 +367,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.add-file-tag'),
     });
 
-    const file = this.currentFolder?.files.find((f) => f.name === fileName);
+    const file = this.currentFolder?.files.find((f) => f.path === fileName);
     if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
     }
@@ -376,7 +378,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.remove-file-tag'),
     });
 
-    const file = this.currentFolder?.files.find((f) => f.name === fileName);
+    const file = this.currentFolder?.files.find((f) => f.path === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
       if (index !== -1) {
@@ -389,9 +391,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const oldFilePath = joinPaths(this.currentPath, oldFileName);
     const newFilePath = joinPaths(this.currentPath, newFileName);
     await this.fileService.moveFile(oldFilePath, newFilePath, this.groupId);
-    const file = this.currentFolder?.files.find((f) => f.name === oldFileName);
+    const file = this.currentFolder?.files.find((f) => f.path === oldFileName);
     if (file) {
-      file.name = newFileName;
+      file.path = newFileName;
       file.modified = new Date();
     }
   }
@@ -419,7 +421,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     files.forEach((file) => {
-      const filePath = joinPaths(this.currentPath, file.name);
+      const filePath = joinPaths(this.currentPath, file.path);
       if (target.checked) {
         this.selectFileService.addFile(filePath);
       } else {
@@ -439,7 +441,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // If all files are selected, deselect them
     if (this.areAllFilesSelected) {
       this.currentFolder.files.forEach((file) => {
-        const filePath = joinPaths(this.currentPath, file.name);
+        const filePath = joinPaths(this.currentPath, file.path);
         this.selectFileService.removeFile(filePath);
       });
       this.areAllFilesSelected = false;
@@ -448,7 +450,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     // If not all files are selected, select them
     this.currentFolder.files.forEach((file) => {
-      const filePath = joinPaths(this.currentPath, file.name);
+      const filePath = joinPaths(this.currentPath, file.path);
       this.selectFileService.addFile(filePath);
     });
     this.areAllFilesSelected = true;
@@ -463,7 +465,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (this.currentFolder === null) {
       return false;
     }
-    const allFiles = this.currentFolder.files.map(f => joinPaths(this.currentPath, f.name));
+    const allFiles = this.currentFolder.files.map(f => joinPaths(this.currentPath, f.path));
     return allFiles.every(file => this.selectedFiles.has(file));
   }
 
@@ -472,7 +474,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async moveFiles() {
-    const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.name)));
+    const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.path)));
 
     // Find only the files that are not in the current folder
     const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
@@ -496,8 +498,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   downloadFile(file: File) {
-    const filePath = joinPaths(this.currentPath, file.name);
+    const filePath = joinPaths(this.currentPath, file.path);
     this.fileService.downloadFile(filePath, this.groupId);
+  }
+
+  async openShareModal(file: File) {
+    this.share.setFilePath(file.path);
+    await this.share.loadPublicLink();
+    this.shareModal.show();
   }
 }
 
