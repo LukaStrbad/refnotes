@@ -7,14 +7,14 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'Frontend/**'
+      - 'src/Web/**'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./Frontend
+        working-directory: ./src/Web
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-          cache-dependency-path: './Frontend/pnpm-lock.yaml'
+          cache-dependency-path: './src/Web/pnpm-lock.yaml'
       - name: Install dependencies
         run: pnpm install
       - name: Run linting
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./Frontend
+        working-directory: ./src/Web
 
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-          cache-dependency-path: './Frontend/pnpm-lock.yaml'
+          cache-dependency-path: './src/Web/pnpm-lock.yaml'
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
