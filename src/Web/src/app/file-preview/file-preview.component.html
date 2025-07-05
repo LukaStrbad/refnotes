@@ -4,8 +4,19 @@
   }
 
   @case (LoadingState.NotFound) {
-    <div class="flex flex-col items-center justify-center h-full">
-      <h1 class="text-2xl font-bold" translate>preview.fileNotFound</h1>
+    <div
+      class="flex flex-col items-center justify-center h-full text-center p-8"
+    >
+      <i class="bi bi-file-earmark-x text-6xl text-error mb-4"></i>
+      <h1 class="text-2xl font-bold mb-2" translate>preview.fileNotFound</h1>
+      <p class="mb-4 text-base text-base-content/70" translate>
+        @if (isPublicFile) {
+          preview.publicFileNotFound-description
+        } @else {
+          preview.fileNotFound-description
+        }
+      </p>
+      <app-home-button></app-home-button>
     </div>
   }
 

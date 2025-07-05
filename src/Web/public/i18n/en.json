@@ -198,7 +198,9 @@
       "file-modified": "Modified: {{time}}",
       "file-size": "Size"
     },
-    "fileNotFound": "File not found"
+    "fileNotFound": "File not found",
+    "publicFileNotFound-description": "The file you are looking for is not available. It may have been deleted, the link is invalid, or sharing has been disabled.",
+    "fileNotFound-description": "The file you are looking for could not be found. It may have been moved or deleted."
   },
   "error": {
     "file-already-exists": "File with same name already exists",
@@ -295,5 +297,9 @@
       "copied-to-clipboard": "Link copied to clipboard",
       "copy-failed": "Failed to copy link to clipboard"
     }
-  }
+  },
+  "home-button": {
+    "go-to-browser": "Go to File Browser"
+  },
+  "home-button-go-to-login": "Go to Login page"
 }

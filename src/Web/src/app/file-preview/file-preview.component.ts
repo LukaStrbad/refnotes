@@ -18,10 +18,11 @@ import { updateFileTime } from '../../utils/date-utils';
 import { FileProvider } from './file-provider';
 import { LoggerService } from '../../services/logger.service';
 import { getStatusCode } from '../../utils/errorHandler';
+import { HomeButtonComponent } from "../components/home-button/home-button.component";
 
 @Component({
   selector: 'app-file-preview',
-  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective, ByteSizePipe],
+  imports: [TranslatePipe, TranslateDirective, NgClass, TestTagDirective, ByteSizePipe, HomeButtonComponent],
   templateUrl: './file-preview.component.html',
   styleUrl: './file-preview.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -31,6 +32,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   fileName?: string;
   readonly groupId?: number;
   readonly fileProvider: FileProvider;
+  readonly isPublicFile: boolean;
 
   loadingState: LoadingState = LoadingState.Loading;
   tags: string[] = [];
@@ -60,6 +62,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
         fileService,
         publicFileHash,
       );
+      this.isPublicFile = true;
     } else {
       const path = route.snapshot.paramMap.get('path') as string;
       const groupId = route.snapshot.paramMap.get('groupId');
@@ -73,6 +76,7 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
         path,
         this.groupId,
       );
+      this.isPublicFile = false;
     }
 
     effect(() => {
@@ -85,39 +89,46 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    (async () => {
-      const path = await this.fileProvider.filePath;
-      const [, fileName] = splitDirAndName(path);
-      this.fileName = fileName;
-      this.fileType = fileUtils.getFileType(this.fileName);
-
-      this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
-        this.settings.mdEditor().showLineNumbers,
-        (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
-      );
-
-      const promises: Promise<void>[] = [];
-
-      if (this.fileType === 'image') {
-        promises.push(this.loadImage());
-      } else if (this.fileType === 'markdown' || this.fileType === 'text') {
-        promises.push(this.loadFile());
+    this.init().catch(error => {
+      const statusCode = getStatusCode(error);
+      if (statusCode === 404) {
+        this.loadingState = LoadingState.NotFound;
       }
+    });
+  }
 
-      const listTagsPromise = this.fileProvider.listTags().then(tags => {
-        this.tags = tags;
-      }).catch(async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
-      });
-      promises.push(listTagsPromise);
+  private async init() {
+    const path = await this.fileProvider.filePath;
+    const [, fileName] = splitDirAndName(path);
+    this.fileName = fileName;
+    this.fileType = fileUtils.getFileType(this.fileName);
 
-      const fileInfoPromise = this.fileProvider.getFileInfo().then(async fileInfo => {
-        this.fileInfo = await updateFileTime(fileInfo, this.translate, this.translate.currentLang);
-      });
-      promises.push(fileInfoPromise);
+    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
+      this.settings.mdEditor().showLineNumbers,
+      (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
+    );
 
-      await Promise.all(promises);
-    })();
+    const promises: Promise<void>[] = [];
+
+    if (this.fileType === 'image') {
+      promises.push(this.loadImage());
+    } else if (this.fileType === 'markdown' || this.fileType === 'text') {
+      promises.push(this.loadFile());
+    }
+
+    const listTagsPromise = this.fileProvider.listTags().then(tags => {
+      this.tags = tags;
+    }).catch(async () => {
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
+    });
+    promises.push(listTagsPromise);
+
+    const fileInfoPromise = this.fileProvider.getFileInfo().then(async fileInfo => {
+      this.fileInfo = await updateFileTime(fileInfo, this.translate, this.translate.currentLang);
+    });
+    promises.push(fileInfoPromise);
+
+    await Promise.all(promises);
   }
 
   ngOnDestroy(): void {

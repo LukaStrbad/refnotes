@@ -198,7 +198,9 @@
       "file-modified": "Zadnja izmjena: {{time}}",
       "file-size": "Veličina"
     },
-    "fileNotFound": "Datoteka nije pronađena"
+    "fileNotFound": "Datoteka nije pronađena",
+    "fileNotFound-description": "Datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana.",
+    "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno."
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",
@@ -295,5 +297,9 @@
       "copied-to-clipboard": "Veza kopirana u međuspremnik",
       "copy-failed": "Greška prilikom kopiranja veze"
     }
+  },
+  "home-button-go-to-login": "Idite na stranicu za prijavu",
+  "home-button": {
+    "go-to-browser": "Idite na preglednik"
   }
 }

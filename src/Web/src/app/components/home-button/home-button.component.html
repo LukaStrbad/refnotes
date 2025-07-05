@@ -1,0 +1,11 @@
+@if (authService.isUserLoggedIn()) {
+  <a class="btn btn-primary" routerLink="/browser">
+    <i class="fas fa-folder"></i>
+    <span translate>home-button.go-to-browser</span>
+  </a>
+} @else {
+  <a class="btn btn-primary" routerLink="/login">
+    <i class="fas fa-sign-in-alt"></i>
+    <span translate>home-button-go-to-login</span>
+  </a>
+}
