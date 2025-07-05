@@ -141,7 +141,8 @@ describe('FileService', () => {
 
   it('should get public file info', async () => {
     const mockInfo: File = {
-      path: "test.txt",
+      path: "/test.txt",
+      name: "test.txt",
       size: 1024,
       tags: [],
       created: new Date(),

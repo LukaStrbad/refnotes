@@ -68,7 +68,8 @@ describe('FilePreviewComponent', () => {
 
     tagService.listFileTags.and.resolveTo(['tag1', 'tag2']);
     fileService.getFileInfo.and.resolveTo({
-      path: 'test.md',
+      path: '/test.md',
+      name: 'test.md',
       size: 1234,
       modified: new Date(),
       created: new Date(),
@@ -179,7 +180,8 @@ describe('FilePreviewComponent with groupId', () => {
 
     tagService.listFileTags.and.resolveTo(['tag1', 'tag2']);
     fileService.getFileInfo.and.resolveTo({
-      path: 'test.md',
+      path: '/test.md',
+      name: 'test.md',
       size: 1234,
       modified: new Date(),
       created: new Date(),

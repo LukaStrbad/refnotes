@@ -18,7 +18,7 @@ import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
 
 function createFile(name: string): File {
-  return { name: name, path: name, tags: [], size: 0, created: new Date(), modified: new Date() };
+  return { name: name, path: `/${name}`, tags: [], size: 0, created: new Date(), modified: new Date() };
 }
 
 function setupTestBed(groupId?: string) {
@@ -184,7 +184,7 @@ describe('BrowserComponent', () => {
     );
 
     expect(fileTrs.length).toBe(1);
-    const fileNames = component.currentFolder!.files.map((f) => f.path);
+    const fileNames = component.currentFolder!.files.map((f) => f.name);
     expect(fileNames).toContain('test.txt');
     expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '', undefined);
   });
@@ -212,7 +212,7 @@ describe('BrowserComponent', () => {
     );
     component.ngOnInit();
     await component.loadingPromise;
-    expect(component.currentFolder?.files.map((f) => f.path)).toContain(
+    expect(component.currentFolder?.files.map((f) => f.name)).toContain(
       'test.txt',
     );
 

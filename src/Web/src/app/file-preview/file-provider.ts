@@ -56,12 +56,10 @@ export class FileProvider {
     fileService: FileService,
     fileHash: string,
   ): FileProvider {
-    const directoryPath = '/';
-
     const fileInfoPromise = fileService.getPublicFileInfo(fileHash);
 
     const filePath = fileInfoPromise.then(info => info.path);
-    const getImage = (path: string) => fileService.getImage(directoryPath, path);
+    const getImage = (path: string) => fileService.getPublicImage(fileHash, path);
     const listTags = () => Promise.resolve([]);
     const getFileInfo = () => fileInfoPromise;
     const getFile = () => fileService.getPublicFile(fileHash);

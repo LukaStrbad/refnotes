@@ -237,7 +237,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   async deleteFile(file: File) {
     await this.notificationService.awaitAndNotifyError(
-      this.fileService.deleteFile(this.currentPath, file.path, this.groupId),
+      this.fileService.deleteFile(this.currentPath, file.name, this.groupId),
       {
         404: await getTranslation(this.translateService, 'error.file-not-found'),
       }

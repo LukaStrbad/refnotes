@@ -161,7 +161,8 @@
       "makePublic": "Is public",
       "publicLink": "Public link",
       "copy": "Copy",
-      "close": "Close"
+      "close": "Close",
+      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images."
     }
   },
   "auth": {

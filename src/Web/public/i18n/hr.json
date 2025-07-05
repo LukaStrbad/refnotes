@@ -161,7 +161,8 @@
       "copy": "Kopiraj",
       "makePublic": "Javno",
       "publicLink": "Javna veza",
-      "title": "Podijeliti datoteku {{fileName}}?"
+      "title": "Podijeliti datoteku {{fileName}}?",
+      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike."
     }
   },
   "auth": {
