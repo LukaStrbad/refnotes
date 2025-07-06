@@ -19,6 +19,7 @@ public class TestDatabaseFixture : IAsyncLifetime
     private readonly Lock _isDatabaseCreatedLock = new();
 
     private static TestDatabaseFixture? _instance;
+    private bool _reuseTestContainer;
 
     public static TestDatabaseFixture Instance
     {
@@ -63,16 +64,19 @@ public class TestDatabaseFixture : IAsyncLifetime
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Test.json", optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
         var connectionString = config["Db:ConnectionString"];
+        _reuseTestContainer = config.GetValue<bool>("TestContainers:Reuse");
 
         // Start a test container if no connection string is provided
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             _mysqlContainer = new MySqlBuilder()
                 .WithImage("mysql:8.4")
-                .WithReuse(true)
+                .WithTmpfsMount("/var/lib/mysql")
+                .WithReuse(_reuseTestContainer)
                 .Build();
 
             await _mysqlContainer.StartAsync();
@@ -86,7 +90,7 @@ public class TestDatabaseFixture : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
-        if (_mysqlContainer is not null)
+        if (_mysqlContainer is not null && !_reuseTestContainer)
         {
             await _mysqlContainer.StopAsync();
         }
