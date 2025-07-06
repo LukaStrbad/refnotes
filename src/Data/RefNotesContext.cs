@@ -16,6 +16,8 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<GroupAccessCode> GroupAccessCodes { get; set; }
     public DbSet<PublicFile> PublicFiles { get; set; }
     public DbSet<PublicFileImage> PublicFileImages { get; set; }
+    public DbSet<FileFavorite> FileFavorites { get; set; }
+    public DbSet<DirectoryFavorite> DirectoryFavorites { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
