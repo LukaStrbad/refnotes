@@ -1,5 +1,4 @@
-﻿using Api.Extensions;
-using Api.Model;
+﻿using Api.Model;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
@@ -25,8 +24,8 @@ public sealed class FavoriteService : IFavoriteService
     public async Task FavoriteFile(EncryptedFile file)
     {
         var user = await _userService.GetUser();
-        var existingFavorite = await _context.FileFavorites.Where(f => f.User == user)
-            .FirstOrDefaultAsync(f => f.EncryptedFile == file);
+        var existingFavorite = await _context.FileFavorites.Where(f => f.UserId == user.Id)
+            .FirstOrDefaultAsync(f => f.EncryptedFileId == file.Id);
         if (existingFavorite is not null)
             return;
 
@@ -42,8 +41,8 @@ public sealed class FavoriteService : IFavoriteService
     public async Task UnfavoriteFile(EncryptedFile file)
     {
         var user = await _userService.GetUser();
-        var existingFavorite = await _context.FileFavorites.Where(f => f.User == user)
-            .FirstOrDefaultAsync(f => f.EncryptedFile == file);
+        var existingFavorite = await _context.FileFavorites.Where(f => f.UserId == user.Id)
+            .FirstOrDefaultAsync(f => f.EncryptedFileId == file.Id);
         if (existingFavorite is null)
             return;
 
@@ -54,15 +53,17 @@ public sealed class FavoriteService : IFavoriteService
     public async Task<List<FileFavoriteDetails>> GetFavoriteFiles()
     {
         var user = await _userService.GetUser();
-        var favorites = await _context.FileFavorites.Where(f => f.User == user)
+        var favorites = await _context.FileFavorites.Where(f => f.UserId == user.Id)
+            .Select(f => new { f.EncryptedFileId, f.FavoriteDate })
             .ToListAsync();
 
         var favoriteDetailsList = new List<FileFavoriteDetails>();
         foreach (var favorite in favorites)
         {
             var fileInfo = await _fileService.GetFileInfoAsync(favorite.EncryptedFileId);
+            var groupId = await _fileService.GetGroupIdFromFileAsync(favorite.EncryptedFileId);
             if (fileInfo is not null)
-                favoriteDetailsList.Add(new FileFavoriteDetails(fileInfo, favorite.FavoriteDate));
+                favoriteDetailsList.Add(new FileFavoriteDetails(fileInfo, groupId, favorite.FavoriteDate));
         }
 
         return favoriteDetailsList;
@@ -71,8 +72,8 @@ public sealed class FavoriteService : IFavoriteService
     public async Task FavoriteDirectory(EncryptedDirectory directory)
     {
         var user = await _userService.GetUser();
-        var existingFavorite = await _context.DirectoryFavorites.Where(f => f.User == user)
-            .FirstOrDefaultAsync(f => f.EncryptedDirectory == directory);
+        var existingFavorite = await _context.DirectoryFavorites.Where(f => f.UserId == user.Id)
+            .FirstOrDefaultAsync(f => f.EncryptedDirectoryId == directory.Id);
         if (existingFavorite is not null)
             return;
 
@@ -88,8 +89,8 @@ public sealed class FavoriteService : IFavoriteService
     public async Task UnfavoriteDirectory(EncryptedDirectory directory)
     {
         var user = await _userService.GetUser();
-        var existingFavorite = await _context.DirectoryFavorites.Where(f => f.User == user)
-            .FirstOrDefaultAsync(f => f.EncryptedDirectory == directory);
+        var existingFavorite = await _context.DirectoryFavorites.Where(f => f.UserId == user.Id)
+            .FirstOrDefaultAsync(f => f.EncryptedDirectoryId == directory.Id);
         if (existingFavorite is null)
             return;
 
@@ -100,18 +101,18 @@ public sealed class FavoriteService : IFavoriteService
     public async Task<List<DirectoryFavoriteDetails>> GetFavoriteDirectories()
     {
         var user = await _userService.GetUser();
-        var favorites = _context.DirectoryFavorites
-            .Include(f => f.EncryptedDirectory)
-            .Where(f => f.User == user);
 
-        var favoriteDetailsList = new List<DirectoryFavoriteDetails>();
-        foreach (var favorite in favorites)
+        var favoritesQuery = from favorite in _context.DirectoryFavorites
+            join directory in _context.Directories on favorite.EncryptedDirectoryId equals directory.Id
+            where favorite.UserId == user.Id
+            select new { directory.Path, directory.GroupId, favorite.FavoriteDate };
+
+        var favorites = await favoritesQuery.ToListAsync();
+
+        return favorites.Select(favorite =>
         {
-            var path = favorite.EncryptedDirectory?.DecryptedPath(_encryptionService);
-            if (path is not null)
-                favoriteDetailsList.Add(new DirectoryFavoriteDetails(path, favorite.FavoriteDate));
-        }
-
-        return favoriteDetailsList;
+            var decryptedPath = _encryptionService.DecryptAesStringBase64(favorite.Path);
+            return new DirectoryFavoriteDetails(decryptedPath, favorite.GroupId, favorite.FavoriteDate);
+        }).ToList();
     }
 }

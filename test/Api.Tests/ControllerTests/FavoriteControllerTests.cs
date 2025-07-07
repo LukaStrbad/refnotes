@@ -109,9 +109,9 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
         var favorites = new List<FileFavoriteDetails>
         {
             new(new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
-                DateTime.UtcNow),
+                null, DateTime.UtcNow),
             new(new FileDto("test2.txt", "/test2.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
-                DateTime.UtcNow)
+                null, DateTime.UtcNow)
         };
         _favoriteService.GetFavoriteFiles().Returns(favorites);
         
@@ -200,8 +200,8 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     {
         var favorites = new List<DirectoryFavoriteDetails>
         {
-            new("/test1", DateTime.UtcNow),
-            new("/test2", DateTime.UtcNow)
+            new("/test1", null, DateTime.UtcNow),
+            new("/test2", null, DateTime.UtcNow)
         };
         _favoriteService.GetFavoriteDirectories().Returns(favorites);
         

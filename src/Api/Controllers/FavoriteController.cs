@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
+[ApiController]
+[Route("[controller]")]
 public sealed class FavoriteController : GroupPermissionControllerBase
 {
     private readonly IFavoriteService _favoriteService;
@@ -28,6 +30,7 @@ public sealed class FavoriteController : GroupPermissionControllerBase
     [HttpPost("favoriteFile")]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> FavoriteFile(string filePath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -44,6 +47,7 @@ public sealed class FavoriteController : GroupPermissionControllerBase
     [HttpPost("unfavoriteFile")]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UnfavoriteFile(string filePath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -68,6 +72,7 @@ public sealed class FavoriteController : GroupPermissionControllerBase
     [HttpPost("favoriteDirectory")]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> FavoriteDirectory(string directoryPath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -84,6 +89,7 @@ public sealed class FavoriteController : GroupPermissionControllerBase
     [HttpPost("unfavoriteDirectory")]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> UnfavoriteDirectory(string directoryPath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
