@@ -31,7 +31,7 @@ public class TagController : GroupPermissionControllerBase
     [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> ListAllGroupTags(int groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         return Ok(await _tagService.ListAllGroupTags(groupId));
@@ -41,7 +41,7 @@ public class TagController : GroupPermissionControllerBase
     [ProducesResponseType<string[]>(StatusCodes.Status200OK)]
     public async Task<ActionResult> ListFileTags(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         return Ok(await _tagService.ListFileTags(directoryPath, name, groupId));
@@ -51,7 +51,7 @@ public class TagController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         await _tagService.AddFileTag(directoryPath, name, tag, groupId);
@@ -62,7 +62,7 @@ public class TagController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> RemoveFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         await _tagService.RemoveFileTag(directoryPath, name, tag, groupId);
