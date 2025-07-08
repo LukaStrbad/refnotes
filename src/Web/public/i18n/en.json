@@ -36,7 +36,8 @@
     "routes": {
       "home": "Home",
       "settings": "Settings",
-      "groups": "Groups"
+      "groups": "Groups",
+      "favorites": "Favorites"
     }
   },
   "login": {
@@ -301,5 +302,17 @@
   "home-button": {
     "go-to-browser": "Go to File Browser"
   },
-  "home-button-go-to-login": "Go to Login page"
+  "home-button-go-to-login": "Go to Login page",
+  "favorites": {
+    "error": {
+      "loading": "Error loading favorites"
+    },
+    "label": {
+      "loading": "Loading favorites...",
+      "noFavorites": "You have no favorites",
+      "fileFavorites": "Favorite files",
+      "directoryFavorites": "Favorite directories",
+      "title": "Favorites"
+    }
+  }
 }

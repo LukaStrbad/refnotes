@@ -8,6 +8,7 @@ import { FilePreviewComponent } from './file-preview/file-preview.component';
 import { GroupsComponent } from './groups/groups.component';
 import { GroupMembersListComponent } from './groups/group-members-list/group-members-list.component';
 import { authGuard } from '../../guards/auth.guard';
+import { FavoritesComponent } from './favorites/favorites.component';
 
 export const routes: Routes = [
   {
@@ -89,6 +90,11 @@ export const routes: Routes = [
   {
     path: "join-group/:id/:code",
     component: GroupsComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: "favorites",
+    component: FavoritesComponent,
     canActivate: [authGuard],
   }
 ];

@@ -36,7 +36,8 @@
     "routes": {
       "home": "Početna",
       "settings": "Postavke",
-      "groups": "Grupe"
+      "groups": "Grupe",
+      "favorites": "Favoriti"
     }
   },
   "login": {
@@ -301,5 +302,17 @@
   "home-button-go-to-login": "Idite na stranicu za prijavu",
   "home-button": {
     "go-to-browser": "Idite na preglednik"
+  },
+  "favorites": {
+    "error": {
+      "loading": "Greška prilikom učitavanja favorita"
+    },
+    "label": {
+      "directoryFavorites": "Omiljeni direktoriji",
+      "fileFavorites": "Omiljene datoteke",
+      "loading": "Učitavanje favorita ...",
+      "noFavorites": "Nema favorita",
+      "title": "Favoriti"
+    }
   }
 }
