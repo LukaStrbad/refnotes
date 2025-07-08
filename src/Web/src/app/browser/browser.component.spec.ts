@@ -16,6 +16,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Directory } from '../../model/directory';
 import { FileService } from '../../services/file.service';
 import { File } from '../../model/file';
+import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
+import { signal } from '@angular/core';
 
 function createFile(name: string): File {
   return { name: name, path: `/${name}`, tags: [], size: 0, created: new Date(), modified: new Date() };
@@ -34,6 +36,10 @@ function setupTestBed(groupId?: string) {
   ]);
   const authService = jasmine.createSpyObj<AuthService>('AuthService', [], ['user']);
   const storage: Record<string, string> = {};
+  const favorite = jasmine.createSpyObj<BrowserFavoriteService>('BrowserFavoriteService', ['setGroupId', 'favoriteFile', 'removeLocalFileFavorite', 'unfavoriteFile', 'favoriteDirectory', 'removeLocalDirectoryFavorite', 'unfavoriteDirectory'], {
+    fileFavorites: signal([]),
+    directoryFavorites: signal([]),
+  });
 
   // All tests here sometimes fail because AuthService cannot decode a token, probably because of test parallelization
   // This mocks localStorage to avoid the issue
@@ -73,6 +79,7 @@ function setupTestBed(groupId?: string) {
     { provide: AuthService, useValue: authService },
     { provide: BrowserService, useValue: browserService },
     { provide: FileService, useValue: fileService },
+    { provide: BrowserFavoriteService, useValue: favorite },
   ];
 
   // Add ActivatedRoute mock only if groupId is provided
@@ -86,7 +93,7 @@ function setupTestBed(groupId?: string) {
     providers.push({ provide: ActivatedRoute, useValue: mockActivatedRoute });
   }
 
-  return { browserService, fileService, authService, storage, providers, imports };
+  return { browserService, fileService, authService, storage, favorite, providers, imports };
 }
 
 describe('BrowserComponent', () => {
@@ -94,11 +101,13 @@ describe('BrowserComponent', () => {
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
   let fileService: jasmine.SpyObj<FileService>;
+  let favorite: jasmine.SpyObj<BrowserFavoriteService>;
 
   beforeEach(async () => {
     const setup = setupTestBed();
     browserService = setup.browserService;
     fileService = setup.fileService;
+    favorite = setup.favorite;
 
     await TestBed.configureTestingModule({
       imports: setup.imports,
@@ -140,13 +149,13 @@ describe('BrowserComponent', () => {
     const refreshPromise = component.refreshRoute();
     await component.refreshRouteInnerPromise;
 
-    expect(component.currentFolder).toBe(cachedDirectory);
+    expect(component.currentFolder()).toBe(cachedDirectory);
 
     sub.next(networkDirectory);
     sub.complete();
 
     await refreshPromise;
-    expect(component.currentFolder).toBe(networkDirectory);
+    expect(component.currentFolder()).toBe(networkDirectory);
   });
 
   it('should list cached directory on refresh route', async () => {
@@ -168,7 +177,7 @@ describe('BrowserComponent', () => {
     expect(folderTrs.length).toBe(1);
     expect(fileTrs.length).toBe(1);
 
-    expect(component.currentFolder).toEqual(mockDirectory);
+    expect(component.currentFolder()).toEqual(mockDirectory);
   });
 
   it('should create a new file', async () => {
@@ -184,8 +193,7 @@ describe('BrowserComponent', () => {
     );
 
     expect(fileTrs.length).toBe(1);
-    const fileNames = component.currentFolder!.files.map((f) => f.name);
-    expect(fileNames).toContain('test.txt');
+    expect(component.files()).toContain(jasmine.objectContaining({ name: 'test.txt' }));
     expect(fileService.addTextFile).toHaveBeenCalledWith('/', 'test.txt', '', undefined);
   });
 
@@ -202,7 +210,7 @@ describe('BrowserComponent', () => {
     );
 
     expect(folderTrs.length).toBe(1);
-    expect(component.currentFolder!.directories).toContain('newFolder');
+    expect(component.directories()).toContain(jasmine.objectContaining({ name: 'newFolder' }));
     expect(browserService.addDirectory).toHaveBeenCalledWith('/newFolder', undefined);
   });
 
@@ -212,9 +220,7 @@ describe('BrowserComponent', () => {
     );
     component.ngOnInit();
     await component.loadingPromise;
-    expect(component.currentFolder?.files.map((f) => f.name)).toContain(
-      'test.txt',
-    );
+    expect(component.files()).toContain(jasmine.objectContaining({ name: 'test.txt' }));
 
     fileService.deleteFile.and.callFake(() => {
       browserService.listCached.and.returnValue(
@@ -231,7 +237,8 @@ describe('BrowserComponent', () => {
     );
 
     expect(fileTrs.length).toBe(0);
-    expect(component.currentFolder?.files).not.toContain('test.txt');
+    expect(component.files()).not.toContain(jasmine.objectContaining({ name: 'test.txt' }));
+    expect(favorite.removeLocalFileFavorite).toHaveBeenCalledWith(jasmine.objectContaining({ name: 'test.txt' }));
   });
 
   it('should delete a folder', async () => {
@@ -240,7 +247,7 @@ describe('BrowserComponent', () => {
     );
     component.ngOnInit();
     await component.loadingPromise;
-    expect(component.currentFolder?.directories).toContain('testFolder');
+    expect(component.directories()).toContain(jasmine.objectContaining({ name: 'testFolder' }));
 
     browserService.deleteDirectory.and.callFake(() => {
       browserService.listCached.and.returnValue(
@@ -257,7 +264,8 @@ describe('BrowserComponent', () => {
     );
 
     expect(folderTrs.length).toBe(0);
-    expect(component.currentFolder?.directories).not.toContain('testFolder');
+    expect(component.directories()).not.toContain(jasmine.objectContaining({ name: 'testFolder' }));
+    expect(favorite.removeLocalDirectoryFavorite).toHaveBeenCalledWith('/testFolder');
   });
 
   it('should navigate to folder', async () => {
@@ -292,11 +300,11 @@ describe('BrowserComponent', () => {
   });
 
   it('should show moving files', async () => {
-    component.currentFolder = {
+    component.currentFolder.set({
       name: '/',
       files: [createFile('test.txt')],
       directories: [],
-    };
+    });
     fixture.detectChanges();
 
     const checkboxes = fixture.nativeElement.querySelectorAll(
@@ -322,10 +330,12 @@ describe('BrowserComponent with groupId', () => {
   let component: BrowserComponent;
   let fixture: ComponentFixture<BrowserComponent>;
   let browserService: jasmine.SpyObj<BrowserService>;
+  let favorite: jasmine.SpyObj<BrowserFavoriteService>;
 
   beforeEach(async () => {
     const setup = setupTestBed('1'); // Pass groupId to setup function
     browserService = setup.browserService;
+    favorite = setup.favorite;
 
     await TestBed.configureTestingModule({
       imports: setup.imports,
@@ -342,6 +352,7 @@ describe('BrowserComponent with groupId', () => {
   it('should set groupId from route parameters and update linkBasePath', () => {
     expect(component.groupId).toBe(1);
     expect(component.linkBasePath).toBe('/groups/1');
+    expect(favorite.setGroupId).toHaveBeenCalledWith(1);
   });
 
   it('should navigate to folder with group path when groupId is set', async () => {
@@ -367,11 +378,11 @@ describe('BrowserComponent with groupId', () => {
   });
 
   it('should call browserService.addDirectory with groupId when creating new folder', async () => {
-    component.currentFolder = {
+    component.currentFolder.set({
       name: '/',
       files: [],
       directories: []
-    };
+    });
 
     await component.createNewFolder('testFolder');
 
@@ -402,11 +413,11 @@ describe('BrowserComponent with groupId', () => {
   });
 
   it('should call browserService.addDirectory with groupId in nested folder paths', async () => {
-    component.currentFolder = {
+    component.currentFolder.set({
       name: '/parent',
       files: [],
       directories: []
-    };
+    });
     component.currentPath = '/parent';
 
     await component.createNewFolder('newChild');
