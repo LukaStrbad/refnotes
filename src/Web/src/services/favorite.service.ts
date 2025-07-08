@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
 import { generateHttpParams } from '../utils/http-utils';
 import { DirectoryFavoriteDetails } from '../model/directory-favorite-details';
 import { FileFavoriteDetails } from '../model/file-favorite-details';
+import { SimpleCache } from './utils/simple-cache';
 
 const apiUrl = environment.apiUrl + '/favorite';
 
@@ -12,52 +13,54 @@ const apiUrl = environment.apiUrl + '/favorite';
   providedIn: 'root'
 })
 export class FavoriteService {
+  private readonly fileFavoriteCache = new SimpleCache<FileFavoriteDetails[]>(60000);
+  private readonly directoryFavoriteCache = new SimpleCache<DirectoryFavoriteDetails[]>(60000);
 
   constructor(
     private http: HttpClient,
   ) { }
 
-  favoriteFile(filePath: string, groupId?: number): Promise<void> {
+  async favoriteFile(filePath: string, groupId?: number): Promise<void> {
     const params = generateHttpParams({
       filePath: filePath,
       groupId: groupId,
     });
 
-    return firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteFile`, null, { params }));
+    return await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteFile`, null, { params }));
   }
 
-  unfavoriteFile(filePath: string, groupId?: number): Promise<void> {
+  async unfavoriteFile(filePath: string, groupId?: number): Promise<void> {
     const params = generateHttpParams({
       filePath: filePath,
       groupId: groupId,
     });
 
-    return firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteFile`, null, { params }));
+    return await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteFile`, null, { params }));
   }
 
-  getFavoriteFiles(): Promise<FileFavoriteDetails[]> {
-    return firstValueFrom(this.http.get<FileFavoriteDetails[]>(`${apiUrl}/getFavoriteFiles`));
+  async getFavoriteFiles(): Promise<FileFavoriteDetails[]> {
+    return await this.fileFavoriteCache.getOrProvide(() => firstValueFrom(this.http.get<FileFavoriteDetails[]>(`${apiUrl}/getFavoriteFiles`)));
   }
 
-  favoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
+  async favoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
     const params = generateHttpParams({
       directoryPath: directoryPath,
       groupId: groupId,
     });
 
-    return firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteDirectory`, null, { params }));
+    return await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteDirectory`, null, { params }));
   }
 
-  unfavoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
+  async unfavoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
     const params = generateHttpParams({
       directoryPath: directoryPath,
       groupId: groupId,
     });
 
-    return firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteDirectory`, null, { params }));
+    return await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteDirectory`, null, { params }));
   }
 
-  getFavoriteDirectories(): Promise<DirectoryFavoriteDetails[]> {
-    return firstValueFrom(this.http.get<DirectoryFavoriteDetails[]>(`${apiUrl}/getFavoriteDirectories`));
+  async getFavoriteDirectories(): Promise<DirectoryFavoriteDetails[]> {
+    return await this.directoryFavoriteCache.getOrProvide(() => firstValueFrom(this.http.get<DirectoryFavoriteDetails[]>(`${apiUrl}/getFavoriteDirectories`)));
   }
 }
