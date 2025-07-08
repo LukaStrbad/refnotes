@@ -1,25 +1,19 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { FavoriteService } from '../favorite.service';
 import { FileFavoriteDetails } from '../../model/file-favorite-details';
 import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
 import { LoggerService } from '../logger.service';
 import { File } from '../../model/file';
-import { LRUCache } from 'lru-cache';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BrowserFavoriteService {
-  private fileFavorites: FileFavoriteDetails[] | null = null;
-  private directoryFavorites: DirectoryFavoriteDetails[] | null = null;
-  private readonly favoriteFileCache = new LRUCache<File, boolean>({
-    max: 100,
-    ttl: 60000, // 1 minute
-  });
-  private readonly favoriteDirectoryCache = new LRUCache<string, boolean>({
-    max: 100,
-    ttl: 60000, // 1 minute
-  });
+  private readonly _fileFavorites = signal<FileFavoriteDetails[]>([]);
+  private readonly _directoryFavorites = signal<DirectoryFavoriteDetails[]>([]);
+
+  readonly fileFavorites = this._fileFavorites.asReadonly();
+  readonly directoryFavorites = this._directoryFavorites.asReadonly();
 
   private groupId?: number;
 
@@ -31,8 +25,8 @@ export class BrowserFavoriteService {
       this.favoriteService.getFavoriteFiles(),
       this.favoriteService.getFavoriteDirectories(),
     ]).then(([fileFavorites, directoryFavorites]) => {
-      this.fileFavorites = fileFavorites;
-      this.directoryFavorites = directoryFavorites;
+      this._fileFavorites.set(fileFavorites);
+      this._directoryFavorites.set(directoryFavorites);
     }).catch((error) => {
       this.logger.error('Error loading favorites', error);
     });
@@ -42,77 +36,83 @@ export class BrowserFavoriteService {
     this.groupId = groupId;
   }
 
+  /**
+   * Favorites a file in the current group.
+   * @param file File to favorite
+   */
   async favoriteFile(file: File) {
     await this.favoriteService.favoriteFile(file.path, this.groupId);
 
     // Add to local favorites
-    this.fileFavorites?.push({
-      fileInfo: file,
-      groupId: this.groupId,
-      favoriteDate: new Date(),
-    });
+    this._fileFavorites.update(favorites => [
+      ...favorites,
+      {
+        fileInfo: file,
+        groupId: this.groupId,
+        favoriteDate: new Date(),
+      }
+    ]);
   }
 
+  /**
+   * Removes a file from favorites in the current group.
+   * This just removes it locally, not from the server.
+   * @param file File to remove from favorites
+   */
+  removeLocalFileFavorite(file: File) {
+    this._fileFavorites.update(favorites => favorites.filter(fav => fav.fileInfo.path !== file.path || fav.groupId !== this.groupId));
+    this.favoriteService.clearFileFavoritesCache();
+  }
+
+  /**
+   * Unfavorites a file in the current group.
+   * This will remove it from the server and also from local favorites.
+   * @param file File to unfavorite
+   */
   async unfavoriteFile(file: File) {
     await this.favoriteService.unfavoriteFile(file.path, this.groupId);
 
     // Remove from local favorites
-    const index = this.fileFavorites?.findIndex(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
-    if (index !== -1 && index !== undefined) {
-      this.fileFavorites?.splice(index, 1);
-    }
+    this.removeLocalFileFavorite(file);
   }
 
+  /**
+   * Favorites a directory in the current group.
+   * @param path Path of the directory to favorite
+   */
   async favoriteDirectory(path: string) {
     await this.favoriteService.favoriteDirectory(path, this.groupId);
 
     // Add to local favorites
-    this.directoryFavorites?.push({
-      directoryPath: path,
-      groupId: this.groupId,
-      favoriteDate: new Date(),
-    });
+    this._directoryFavorites.update(favorites => [
+      ...favorites,
+      {
+        path: path,
+        groupId: this.groupId,
+        favoriteDate: new Date(),
+      }
+    ]);
   }
 
+  /**
+   * Removes a directory from favorites in the current group.
+   * This just removes it locally, not from the server.
+   * @param path Path of the directory to remove from favorites
+   */
+  removeLocalDirectoryFavorite(path: string) {
+    this._directoryFavorites.update(favorites => favorites.filter(fav => fav.path !== path || fav.groupId !== this.groupId));
+    this.favoriteService.clearDirectoryFavoritesCache();
+  }
+
+  /**
+   * Unfavorites a directory in the current group.
+   * This will remove it from the server and also from local favorites.
+   * @param path Path of the directory to unfavorite
+   */
   async unfavoriteDirectory(path: string) {
     await this.favoriteService.unfavoriteDirectory(path, this.groupId);
 
     // Remove from local favorites
-    const index = this.directoryFavorites?.findIndex(fav => fav.directoryPath === path && fav.groupId === this.groupId);
-    if (index !== -1 && index !== undefined) {
-      this.directoryFavorites?.splice(index, 1);
-    }
-  }
-
-  isFavoriteFile(file: File): boolean {
-    console.log(`Checking if file is favorite: ${file.path}`);
-    if (this.fileFavorites === null) {
-      return false;
-    }
-    // Check cache first
-    let isFavorite = this.favoriteFileCache.get(file);
-    // console.log(`Checking favorite for ${file.path}: ${isFavorite}`)
-    if (isFavorite !== undefined) {
-      return isFavorite;
-    }
-
-    isFavorite = this.fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
-    this.favoriteFileCache.set(file, isFavorite);
-    // console.log(`File favorite cache updated for ${file.path}: ${isFavorite}`);
-    return isFavorite;
-  }
-
-  isFavoriteDirectory(path: string): boolean {
-    if (this.directoryFavorites === null) {
-      return false;
-    }
-
-    // Check cache first
-    let isFavorite = this.favoriteDirectoryCache.get(path);
-    if (isFavorite !== undefined) {
-      return isFavorite;
-    }
-
-    return this.directoryFavorites.some(fav => fav.directoryPath === path && fav.groupId === this.groupId);
+    this.removeLocalDirectoryFavorite(path);
   }
 }

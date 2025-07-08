@@ -1,6 +1,6 @@
 
 export interface DirectoryFavoriteDetails {
-  directoryPath: string;
+  path: string;
   groupId?: number;
   favoriteDate: Date;
 }

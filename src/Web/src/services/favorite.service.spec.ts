@@ -29,7 +29,7 @@ function createFileDetails(name: string, groupId?: number): FileFavoriteDetails 
 
 function createDirectoryDetails(path: string, groupId?: number): DirectoryFavoriteDetails {
   return {
-    directoryPath: path,
+    path: path,
     groupId,
     favoriteDate: new Date(),
   };

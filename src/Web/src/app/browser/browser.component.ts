@@ -1,4 +1,4 @@
-import { Component, computed, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, Signal, signal, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';
@@ -34,6 +34,8 @@ import { updateFileTime } from '../../utils/date-utils';
 import { ShareService } from '../../services/components/modals/share.service';
 import { ShareModalComponent } from '../components/modals/share/share.component';
 import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
+import { FileFavoriteDetails } from '../../model/file-favorite-details';
+import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
 
 @Component({
   selector: 'app-browser',
@@ -61,9 +63,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
   readonly linkBasePath: string = '';
   readonly breadcrumbs: BreadcrumbItem[] = [];
   readonly currentFolder = signal<Directory | null>(null);
-  readonly files = computed<BrowserComponentFile[]>(() => {
+  readonly files = computed(() => {
     const folder = this.currentFolder();
-    return folder === null ? [] : this.mapDirectoryFiles(folder);
+    const fileFavorites = this.favorite.fileFavorites();
+    return folder === null ? [] : this.mapDirectoryFiles(folder, fileFavorites);
+  });
+  readonly directories = computed(() => {
+    const folder = this.currentFolder();
+    const folderFavorites = this.favorite.directoryFavorites();
+    return folder === null ? [] : this.mapDirectorySubdirectories(folder, folderFavorites);
   });
 
   // Public
@@ -248,6 +256,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
+    this.favorite.removeLocalFileFavorite(file);
   }
 
   async deleteSelectedFiles() {
@@ -283,8 +292,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async deleteFolder(name: string) {
-    const path =
-      this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
+    const path = joinPaths(this.currentPath, name);
 
     await this.notificationService.awaitAndNotifyError(this.browser.deleteDirectory(path, this.groupId),
       {
@@ -294,6 +302,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-deleted'));
     await this.refreshRoute();
+    this.favorite.removeLocalDirectoryFavorite(path);
   }
 
   async navigateToFolder(path: string) {
@@ -518,11 +527,23 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.shareModal.show();
   }
 
-  private mapDirectoryFiles(directory: Directory): BrowserComponentFile[] {
+  private mapDirectoryFiles(directory: Directory, fileFavorites: FileFavoriteDetails[]): BrowserComponentFile[] {
     return directory.files.map((file: BrowserComponentFile) => {
-      const isFavorite = this.favorite.isFavoriteFile(file);
+      const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
       file.isFavorite = isFavorite;
       return file;
+    });
+  }
+
+  private mapDirectorySubdirectories(directory: Directory, folderFavorites: DirectoryFavoriteDetails[]): BrowserComponentDirectory[] {
+    return directory.directories.map((name) => {
+      const path = joinPaths(this.currentPath, name);
+      const isFavorite = folderFavorites.some(fav => fav.path === path && fav.groupId === this.groupId);
+      return {
+        name,
+        path,
+        isFavorite,
+      };
     });
   }
 }
@@ -535,4 +556,10 @@ interface BreadcrumbItem {
 
 interface BrowserComponentFile extends FileWithTime {
   isFavorite?: boolean;
+}
+
+interface BrowserComponentDirectory {
+  name: string;
+  path: string;
+  isFavorite: boolean;
 }

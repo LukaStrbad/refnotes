@@ -46,6 +46,10 @@ export class FavoriteService {
     return await this.fileFavoriteCache.getOrProvide(() => firstValueFrom(this.http.get<FileFavoriteDetails[]>(`${apiUrl}/getFavoriteFiles`)));
   }
 
+  clearFileFavoritesCache(): void {
+    this.fileFavoriteCache.clear();
+  }
+
   async favoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
     const params = generateHttpParams({
       directoryPath: directoryPath,
@@ -70,5 +74,9 @@ export class FavoriteService {
 
   async getFavoriteDirectories(): Promise<DirectoryFavoriteDetails[]> {
     return await this.directoryFavoriteCache.getOrProvide(() => firstValueFrom(this.http.get<DirectoryFavoriteDetails[]>(`${apiUrl}/getFavoriteDirectories`)));
+  }
+
+  clearDirectoryFavoritesCache(): void {
+    this.directoryFavoriteCache.clear();
   }
 }
