@@ -91,7 +91,9 @@
     },
     "files-deleted": "Files deleted",
     "download": "Download",
-    "share": "Share"
+    "share": "Share",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites"
   },
   "editor": {
     "viewType": {

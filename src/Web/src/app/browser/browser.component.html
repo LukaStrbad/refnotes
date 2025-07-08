@@ -79,10 +79,7 @@
       </li>
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a
-            [routerLink]="breadcrumb.path"
-            testTag="breadcrumb-item"
-          >
+          <a [routerLink]="breadcrumb.path" testTag="breadcrumb-item">
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
             {{ breadcrumb.name }}
           </a>
@@ -183,6 +180,9 @@
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
                 <div>{{ file.name }}</div>
+                @if (isFavoriteFile(file)) {
+                  <i class="bi bi-star-fill text-yellow-300"></i>
+                }
 
                 @for (tag of limitTags(file.tags); track tag) {
                   <div class="badge badge-soft badge-primary">{{ tag }}</div>
@@ -271,10 +271,22 @@
                   <button
                     class="btn btn-sm btn-accent"
                     (click)="openShareModal(file)"
-                    >
+                  >
                     <i class="bi bi-share"></i>
                     {{ "browser.share" | translate }}
                   </button>
+
+                  @if (isFavoriteFile(file)) {
+                    <button class="btn btn-sm btn-warning" (click)="unfavoriteFile(file)">
+                      <i class="bi bi-star"></i>
+                      {{ "browser.unfavorite" | translate }}
+                    </button>
+                  } @else {
+                    <button class="btn btn-sm btn-warning" (click)="favoriteFile(file)">
+                      <i class="bi bi-star-fill"></i>
+                      {{ "browser.favorite" | translate }}
+                    </button>
+                  }
 
                   <button
                     class="btn btn-sm btn-error"

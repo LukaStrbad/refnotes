@@ -91,7 +91,9 @@
     },
     "files-deleted": "Datoteke izbrisane",
     "download": "Preuzmi",
-    "share": "Podijeli"
+    "share": "Podijeli",
+    "favorite": "Dodaj u favorite",
+    "unfavorite": "Ukloni iz favorita"
   },
   "editor": {
     "viewType": {

@@ -26,7 +26,9 @@ export class FavoriteService {
       groupId: groupId,
     });
 
-    return await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteFile`, null, { params }));
+    await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteFile`, null, { params }));
+    // Invalidate the cache after favoriting a file
+    this.fileFavoriteCache.clear();
   }
 
   async unfavoriteFile(filePath: string, groupId?: number): Promise<void> {
@@ -35,7 +37,9 @@ export class FavoriteService {
       groupId: groupId,
     });
 
-    return await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteFile`, null, { params }));
+    await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteFile`, null, { params }));
+    // Invalidate the cache after unfavoriting a file
+    this.fileFavoriteCache.clear();
   }
 
   async getFavoriteFiles(): Promise<FileFavoriteDetails[]> {
@@ -48,7 +52,9 @@ export class FavoriteService {
       groupId: groupId,
     });
 
-    return await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteDirectory`, null, { params }));
+    await firstValueFrom(this.http.post<void>(`${apiUrl}/favoriteDirectory`, null, { params }));
+    // Invalidate the cache after favoriting a directory
+    this.directoryFavoriteCache.clear();
   }
 
   async unfavoriteDirectory(directoryPath: string, groupId?: number): Promise<void> {
@@ -57,7 +63,9 @@ export class FavoriteService {
       groupId: groupId,
     });
 
-    return await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteDirectory`, null, { params }));
+    await firstValueFrom(this.http.post<void>(`${apiUrl}/unfavoriteDirectory`, null, { params }));
+    // Invalidate the cache after unfavoriting a directory
+    this.directoryFavoriteCache.clear();
   }
 
   async getFavoriteDirectories(): Promise<DirectoryFavoriteDetails[]> {
