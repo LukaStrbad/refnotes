@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, merge, Observable, of, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { generateHttpParams } from '../utils/http-utils';
 import { DirectoryFavoriteDetails } from '../model/directory-favorite-details';
 import { FileFavoriteDetails } from '../model/file-favorite-details';

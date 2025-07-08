@@ -19,7 +19,7 @@ import { FavoriteDirectoryItemComponent } from "./favorite-directory-item/favori
 export class FavoritesComponent implements OnInit {
   fileFavorites: FileFavoriteDetails[] = [];
   directoryFavorites: DirectoryFavoriteDetails[] = [];
-  favoriteCount: number = 0;
+  favoriteCount = 0;
   loadingState = LoadingState.Loading;
 
   LoadingState = LoadingState;

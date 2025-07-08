@@ -1,4 +1,4 @@
-import { Component, computed, OnDestroy, OnInit, Signal, signal, ViewChild } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';

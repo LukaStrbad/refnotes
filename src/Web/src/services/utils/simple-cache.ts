@@ -1,6 +1,6 @@
 export class SimpleCache<T> {
   private value?: T;
-  private updatedAt: number = 0;
+  private updatedAt = 0;
 
   constructor(private readonly cacheDuration: number) { }
 
