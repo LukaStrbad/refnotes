@@ -88,7 +88,7 @@
     </ul>
   </div>
 
-  @if (currentFolder) {
+  @if (currentFolder(); as folder) {
     <table class="table table-pin-rows">
       <thead>
         <tr>
@@ -99,7 +99,7 @@
         </tr>
       </thead>
 
-      @if (currentFolder.directories.length > 0) {
+      @if (folder.directories.length > 0) {
         <thead>
           <tr>
             <th colspan="7" translate>browser.table.folders</th>
@@ -107,7 +107,7 @@
         </thead>
       }
       <tbody>
-        @for (folderName of currentFolder.directories; track folderName) {
+        @for (folderName of folder.directories; track folderName) {
           <tr class="hover:bg-base-300" testTag="folder-tr">
             <td>
               <i class="bi bi-folder"></i>
@@ -134,7 +134,7 @@
         }
       </tbody>
 
-      @if (currentFolder.files.length > 0) {
+      @if (files().length > 0) {
         <thead>
           <tr>
             <th>
@@ -157,7 +157,7 @@
         </thead>
       }
       <tbody>
-        @for (file of files; track file.path) {
+        @for (file of files(); track file.path) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
@@ -180,7 +180,7 @@
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
                 <div>{{ file.name }}</div>
-                @if (favorite.isFavoriteFile(file)) {
+                @if (file.isFavorite) {
                   <i class="bi bi-star-fill text-yellow-300"></i>
                 }
 
@@ -276,7 +276,7 @@
                     {{ "browser.share" | translate }}
                   </button>
 
-                  @if (favorite.isFavoriteFile(file)) {
+                  @if (file.isFavorite) {
                     <button class="btn btn-sm btn-warning" (click)="favorite.unfavoriteFile(file)">
                       <i class="bi bi-star"></i>
                       {{ "browser.unfavorite" | translate }}

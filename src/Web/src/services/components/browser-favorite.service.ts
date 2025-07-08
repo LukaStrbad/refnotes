@@ -31,7 +31,6 @@ export class BrowserFavoriteService {
       this.favoriteService.getFavoriteFiles(),
       this.favoriteService.getFavoriteDirectories(),
     ]).then(([fileFavorites, directoryFavorites]) => {
-      this.logger.info('Loaded favorites', { fileFavorites, directoryFavorites });
       this.fileFavorites = fileFavorites;
       this.directoryFavorites = directoryFavorites;
     }).catch((error) => {
@@ -86,6 +85,7 @@ export class BrowserFavoriteService {
   }
 
   isFavoriteFile(file: File): boolean {
+    console.log(`Checking if file is favorite: ${file.path}`);
     if (this.fileFavorites === null) {
       return false;
     }
@@ -113,8 +113,6 @@ export class BrowserFavoriteService {
       return isFavorite;
     }
 
-    isFavorite = this.directoryFavorites.some(fav => fav.directoryPath === path && fav.groupId === this.groupId);
-    this.favoriteDirectoryCache.set(path, isFavorite);
-    return isFavorite;
+    return this.directoryFavorites.some(fav => fav.directoryPath === path && fav.groupId === this.groupId);
   }
 }
