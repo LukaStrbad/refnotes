@@ -180,7 +180,7 @@
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
                 <div>{{ file.name }}</div>
-                @if (isFavoriteFile(file)) {
+                @if (favorite.isFavoriteFile(file)) {
                   <i class="bi bi-star-fill text-yellow-300"></i>
                 }
 
@@ -276,13 +276,13 @@
                     {{ "browser.share" | translate }}
                   </button>
 
-                  @if (isFavoriteFile(file)) {
-                    <button class="btn btn-sm btn-warning" (click)="unfavoriteFile(file)">
+                  @if (favorite.isFavoriteFile(file)) {
+                    <button class="btn btn-sm btn-warning" (click)="favorite.unfavoriteFile(file)">
                       <i class="bi bi-star"></i>
                       {{ "browser.unfavorite" | translate }}
                     </button>
                   } @else {
-                    <button class="btn btn-sm btn-warning" (click)="favoriteFile(file)">
+                    <button class="btn btn-sm btn-warning" (click)="favorite.favoriteFile(file)">
                       <i class="bi bi-star-fill"></i>
                       {{ "browser.favorite" | translate }}
                     </button>

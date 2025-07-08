@@ -33,9 +33,7 @@ import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
 import { ShareService } from '../../services/components/modals/share.service';
 import { ShareModalComponent } from '../components/modals/share/share.component';
-import { FileFavoriteDetails } from '../../model/file-favorite-details';
-import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
-import { FavoriteService } from '../../services/favorite.service';
+import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
 
 @Component({
   selector: 'app-browser',
@@ -62,8 +60,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
   readonly groupId?: number;
   readonly linkBasePath: string = '';
   readonly breadcrumbs: BreadcrumbItem[] = [];
-  readonly fileFavorites: FileFavoriteDetails[] = [];
-  readonly directoryFavorites: DirectoryFavoriteDetails[] = [];
 
   // Public
   currentFolder: Directory | null = null;
@@ -123,8 +119,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private translateService: TranslateService,
     private askModal: AskModalService,
-    private favoriteService: FavoriteService,
     public share: ShareService,
+    public favorite: BrowserFavoriteService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
 
@@ -137,6 +133,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (groupId) {
       this.groupId = Number(groupId);
       this.linkBasePath = `/groups/${this.groupId}`;
+      this.favorite.setGroupId(this.groupId);
     }
   }
 
@@ -148,17 +145,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
       });
 
     this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs.bind(this));
-
-    Promise.all([
-      this.favoriteService.getFavoriteFiles(),
-      this.favoriteService.getFavoriteDirectories(),
-    ]).then(([fileFavorites, directoryFavorites]) => {
-      this.fileFavorites.push(...fileFavorites);
-      this.directoryFavorites.push(...directoryFavorites);
-      console.log(fileFavorites);
-    }).catch((error) => {
-      this.logger.error('Error loading favorites', error);
-    });
   }
 
   ngOnDestroy(): void {
@@ -523,35 +509,6 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.share.setFilePath(file.path);
     await this.share.loadPublicLink();
     this.shareModal.show();
-  }
-
-  async favoriteFile(file: File) {
-    await this.favoriteService.favoriteFile(file.path, this.groupId);
-
-    // Add to local favorites
-    this.fileFavorites.push({
-      fileInfo: file,
-      groupId: this.groupId,
-      favoriteDate: new Date(),
-    });
-  }
-
-  async unfavoriteFile(file: File) {
-    await this.favoriteService.unfavoriteFile(file.path, this.groupId);
-
-    // Remove from local favorites
-    const index = this.fileFavorites.findIndex(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
-    if (index !== -1) {
-      this.fileFavorites.splice(index, 1);
-    }
-  }
-
-  isFavoriteFile(file: File): boolean {
-    return this.fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
-  }
-
-  isFavoriteDirectory(path: string): boolean {
-    return this.directoryFavorites.some(fav => fav.directoryPath === path && fav.groupId === this.groupId);
   }
 }
 
