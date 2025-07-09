@@ -1,3 +1,10 @@
-﻿namespace Api.Model;
+﻿using System.Text.Json.Serialization;
 
-public record DirectoryFavoriteDetails(string Path, int? GroupId, DateTime FavoriteDate);
+namespace Api.Model;
+
+public record DirectoryFavoriteDetails(
+    string Path,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    int? GroupId,
+    DateTime FavoriteDate
+);

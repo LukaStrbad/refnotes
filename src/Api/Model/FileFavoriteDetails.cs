@@ -1,3 +1,10 @@
-﻿namespace Api.Model;
+﻿using System.Text.Json.Serialization;
 
-public record FileFavoriteDetails(FileDto FileInfo, int? GroupId, DateTime FavoriteDate);
+namespace Api.Model;
+
+public record FileFavoriteDetails(
+    FileDto FileInfo,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    int? GroupId,
+    DateTime FavoriteDate
+);
