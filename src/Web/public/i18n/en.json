@@ -332,5 +332,18 @@
       "edit": "Edit file",
       "remove": "Remove from favorites"
     }
+  },
+  "favorite-directory": {
+    "label": {
+      "favorited": "Favorited: {{time}}"
+    },
+    "button": {
+      "open": "Open",
+      "remove": "Remove"
+    },
+    "button-tooltip": {
+      "remove": "Remove from favorites",
+      "open": "Open folder"
+    }
   }
 }

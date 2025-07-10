@@ -332,5 +332,18 @@
       "preview": "Pregled datoteke",
       "remove": "Ukloni iz favorita"
     }
+  },
+  "favorite-directory": {
+    "button-tooltip": {
+      "open": "Otvori direktorij",
+      "remove": "Ukloni iz favorita"
+    },
+    "button": {
+      "open": "Otvori",
+      "remove": "Ukloni"
+    },
+    "label": {
+      "favorited": "Dodano u favorite: {{time}}"
+    }
   }
 }

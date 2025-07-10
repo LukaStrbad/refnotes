@@ -13,9 +13,26 @@
   }
 
   @case (LoadingState.Loaded) {
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 mb-8">
       <h1 class="text-2xl font-bold" translate>favorites.label.title</h1>
       <div class="flex flex-col gap-4">
+        @if (directoryFavorites.length > 0) {
+          <div class="flex flex-col gap-2">
+            <h2 class="text-xl font-semibold" translate>
+              favorites.label.directoryFavorites
+            </h2>
+            <ul class="list-none p-0">
+              @for (favorite of directoryFavorites; track favorite) {
+                <li class="not-last:mb-2">
+                  <app-favorite-directory-item
+                    [favorite]="favorite"
+                  ></app-favorite-directory-item>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
         @if (fileFavorites.length > 0) {
           <div class="flex flex-col gap-2">
             <h2 class="text-xl font-semibold" translate>
@@ -28,23 +45,6 @@
                     [favorite]="favorite"
                     (removeFavorite)="onRemoveFileFavorite($event)"
                   ></app-favorite-file-item>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-
-        @if (directoryFavorites.length > 0) {
-          <div class="flex flex-col gap-2">
-            <h2 class="text-xl font-semibold" translate>
-              favorites.label.directoryFavorites
-            </h2>
-            <ul class="list-none p-0">
-              @for (favorite of directoryFavorites; track favorite) {
-                <li>
-                  <app-favorite-directory-item
-                    [favorite]="favorite"
-                  ></app-favorite-directory-item>
                 </li>
               }
             </ul>

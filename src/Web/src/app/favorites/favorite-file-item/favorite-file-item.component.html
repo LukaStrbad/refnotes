@@ -49,7 +49,7 @@
           translate
           [translateParams]="{ time: favoriteDateFormatted }"
         >
-          <i class="bi bi-heart-fill"></i>
+          <i class="bi bi-star-fill"></i>
           favorite-file.label.favorited
         </span>
         <span
@@ -70,7 +70,7 @@
     <div class="tooltip hover:z-10" [attr.data-tip]="'favorite-file.button-tooltip.preview' | translate">
       <a
         class="btn btn-sm btn-primary flex-1 sm:flex-none"
-        [routerLink]="['/file', favorite().fileInfo.path, 'preview']"
+        [routerLink]="previewRouterLink()"
       >
         <i class="bi bi-eye"></i>
         <span class="sm:hidden" translate>favorite-file.button.preview</span>
@@ -82,7 +82,7 @@
       <div class="tooltip hover:z-10" [attr.data-tip]="'favorite-file.button-tooltip.edit' | translate">
         <a
           class="btn btn-sm btn-accent flex-1 sm:flex-none"
-          [routerLink]="['/file', favorite().fileInfo.path, 'edit']"
+          [routerLink]="editRouterLink()"
           testTag="favorite-file.button.edit"
         >
           <i class="bi bi-pencil"></i>

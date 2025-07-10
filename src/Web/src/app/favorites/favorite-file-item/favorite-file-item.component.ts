@@ -22,11 +22,13 @@ export class FavoriteFileItemComponent implements OnInit, OnDestroy {
   readonly removeFavorite = output<FileFavoriteDetails>();
 
   readonly isEditable = computed(() => isEditable(this.favorite().fileInfo.path));
+  readonly previewRouterLink = computed(this.getPreviewLink.bind(this));
+  readonly editRouterLink = computed(this.getEditLink.bind(this));
 
   favoriteDateFormatted = '';
   modifiedDateFormatted = '';
 
-  langChangeSubscription?: Subscription;
+  private langChangeSubscription?: Subscription;
 
   constructor(
     private translate: TranslateService
@@ -51,5 +53,17 @@ export class FavoriteFileItemComponent implements OnInit, OnDestroy {
 
   onRemoveFavorite(): void {
     this.removeFavorite.emit(this.favorite());
+  }
+
+  private getPreviewLink(): string[] {
+    const favorite = this.favorite();
+    const routePrefix = favorite.groupId ? `/groups/${favorite.groupId}` : ''
+    return [routePrefix, 'file', favorite.fileInfo.path, 'preview'];
+  }
+
+  private getEditLink(): string[] {
+    const favorite = this.favorite();
+    const routePrefix = favorite.groupId ? `/groups/${favorite.groupId}` : ''
+    return [routePrefix, 'file', favorite.fileInfo.path, 'edit'];
   }
 }
