@@ -17,6 +17,7 @@ using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
 using Bogus;
 using Quartz;
+using StackExchange.Redis;
 
 namespace Api.Tests.Data;
 
@@ -46,7 +47,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IPublicFileImageService),
         typeof(IGroupPermissionService),
         typeof(IPublicFileService),
-        typeof(IPublicFileScheduler)
+        typeof(IPublicFileScheduler),
+        typeof(IConnectionMultiplexer)
     ];
 
     private readonly List<Type> _realizedMocks = [];

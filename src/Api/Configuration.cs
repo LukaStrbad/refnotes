@@ -94,6 +94,7 @@ public static class Configuration
 
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = maxFileSize; });
         builder.Services.AddMemoryCache();
+        builder.AddRedisDistributedCache(connectionName: "cache");
     }
 
     private static void RegisterScheduler(this IHostApplicationBuilder builder)
@@ -119,7 +120,10 @@ public static class Configuration
         );
 
         app.UseExceptionHandlerMiddleware();
-
+        app.UseWebSockets(new WebSocketOptions
+        {
+            KeepAliveTimeout = TimeSpan.FromSeconds(60)
+        });
         app.MapControllers();
     }
 
