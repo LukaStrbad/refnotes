@@ -9,10 +9,11 @@ import { LoadingState } from '../../model/loading-state';
 import { LoggerService } from '../../services/logger.service';
 import { FavoriteFileItemComponent } from "./favorite-file-item/favorite-file-item.component";
 import { FavoriteDirectoryItemComponent } from "./favorite-directory-item/favorite-directory-item.component";
+import { TestTagDirective } from '../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-favorites',
-  imports: [TranslateDirective, FavoriteFileItemComponent, FavoriteDirectoryItemComponent],
+  imports: [TranslateDirective, FavoriteFileItemComponent, FavoriteDirectoryItemComponent, TestTagDirective],
   templateUrl: './favorites.component.html',
   styleUrl: './favorites.component.css'
 })
@@ -68,4 +69,20 @@ export class FavoritesComponent implements OnInit {
       this.notificationService.error(errorMessage);
     }
   }
+
+  async onRemoveDirectoryFavorite(favorite: DirectoryFavoriteDetails): Promise<void> {
+    try {
+      await this.favoriteService.unfavoriteDirectory(favorite.path, favorite.groupId);
+      this.directoryFavorites = this.directoryFavorites.filter(f => f !== favorite);
+      this.favoriteCount = this.fileFavorites.length + this.directoryFavorites.length;
+
+      const successMessage = await getTranslation(this.translate, 'favorites.success.removed');
+      this.notificationService.success(successMessage);
+    } catch (error) {
+      this.log.error('Error removing directory favorite', error);
+      const errorMessage = await getTranslation(this.translate, 'favorites.error.removing');
+      this.notificationService.error(errorMessage);
+    }
+  }
+
 }

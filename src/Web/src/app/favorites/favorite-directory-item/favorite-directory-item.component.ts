@@ -6,10 +6,11 @@ import { convertDateLocale, getFormattedDate } from '../../../utils/date-utils';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { joinPaths, splitDirAndName } from '../../../utils/path-utils';
+import { TestTagDirective } from '../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-favorite-directory-item',
-  imports: [CommonModule, RouterLink, TranslateDirective, TranslatePipe],
+  imports: [CommonModule, RouterLink, TranslateDirective, TranslatePipe, TestTagDirective],
   templateUrl: './favorite-directory-item.component.html',
   styleUrl: './favorite-directory-item.component.css'
 })
@@ -30,7 +31,7 @@ export class FavoriteDirectoryItemComponent implements OnInit, OnDestroy {
 
   constructor(
     private translate: TranslateService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     let lang = convertDateLocale(this.translate.currentLang);

@@ -23,9 +23,10 @@
             </h2>
             <ul class="list-none p-0">
               @for (favorite of directoryFavorites; track favorite) {
-                <li class="not-last:mb-2">
+                <li class="not-last:mb-2" testTag="favorites.directory-item">
                   <app-favorite-directory-item
                     [favorite]="favorite"
+                    (removeFavorite)="onRemoveDirectoryFavorite($event)"
                   ></app-favorite-directory-item>
                 </li>
               }
@@ -40,7 +41,7 @@
             </h2>
             <ul class="list-none p-0">
               @for (favorite of fileFavorites; track favorite) {
-                <li class="not-last:mb-2">
+                <li class="not-last:mb-2" testTag="favorites.file-item">
                   <app-favorite-file-item
                     [favorite]="favorite"
                     (removeFavorite)="onRemoveFileFavorite($event)"

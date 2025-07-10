@@ -5,6 +5,7 @@ import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-tran
 import { ActivatedRoute } from '@angular/router';
 import { FileFavoriteDetails } from '../../../model/file-favorite-details';
 import { click } from '../../../tests/click-utils';
+import { createFileFavoriteDetails } from '../../../tests/favorite-utils';
 
 describe('FavoriteFileItemComponent', () => {
   let component: FavoriteFileItemComponent;
@@ -32,20 +33,6 @@ describe('FavoriteFileItemComponent', () => {
       .compileComponents();
   });
 
-  function createFavoriteDetails(name: string): FileFavoriteDetails {
-    return {
-      fileInfo: {
-        name: name,
-        path: `/${name}`,
-        size: 1234,
-        tags: [],
-        modified: new Date(),
-        created: new Date(),
-      },
-      favoriteDate: new Date(),
-    };
-  };
-
   function createFixture(favorite: FileFavoriteDetails) {
     fixture = TestBed.createComponent(FavoriteFileItemComponent);
     component = fixture.componentInstance;
@@ -56,12 +43,12 @@ describe('FavoriteFileItemComponent', () => {
   }
 
   it('should create', () => {
-    createFixture(createFavoriteDetails('test-file.md'));
+    createFixture(createFileFavoriteDetails('test-file.md'));
     expect(component).toBeTruthy();
   });
 
-  it('should diplay edit button for editable filex', () => {
-    const favorite = createFavoriteDetails('test-file.md');
+  it('should display edit button for editable files', () => {
+    const favorite = createFileFavoriteDetails('test-file.md');
     createFixture(favorite);
 
     const editButton = nativeElement.querySelector('[data-test="favorite-file.button.edit"]');
@@ -71,7 +58,7 @@ describe('FavoriteFileItemComponent', () => {
 
   it('should not display edit button for non-editable files', () => {
     // Images are not editable
-    const favorite = createFavoriteDetails('test-file.png');
+    const favorite = createFileFavoriteDetails('test-file.png');
     createFixture(favorite);
 
     const editButton = nativeElement.querySelector('[data-test="favorite-file.button.edit"]');
@@ -80,7 +67,7 @@ describe('FavoriteFileItemComponent', () => {
   });
 
   it('should send removeFavorite event when remove button is clicked', () => {
-    const favorite = createFavoriteDetails('test-file.md');
+    const favorite = createFileFavoriteDetails('test-file.md');
     createFixture(favorite);
 
     const emitSpy = spyOn(component.removeFavorite, 'emit');

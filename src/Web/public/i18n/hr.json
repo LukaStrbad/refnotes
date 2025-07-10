@@ -307,7 +307,8 @@
   },
   "favorites": {
     "error": {
-      "loading": "Greška prilikom učitavanja favorita"
+      "loading": "Greška prilikom učitavanja favorita",
+      "removing": "Greška prilikom uklanjanja favorita"
     },
     "label": {
       "directoryFavorites": "Omiljeni direktoriji",
@@ -315,6 +316,9 @@
       "loading": "Učitavanje favorita ...",
       "noFavorites": "Nema favorita",
       "title": "Favoriti"
+    },
+    "success": {
+      "removed": "Uspješno uklonjen favorit"
     }
   },
   "favorite-file": {

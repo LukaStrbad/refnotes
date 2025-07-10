@@ -307,7 +307,8 @@
   "home-button-go-to-login": "Go to Login page",
   "favorites": {
     "error": {
-      "loading": "Error loading favorites"
+      "loading": "Error loading favorites",
+      "removing": "Error removing a favorite"
     },
     "label": {
       "loading": "Loading favorites...",
@@ -315,6 +316,9 @@
       "fileFavorites": "Favorite files",
       "directoryFavorites": "Favorite directories",
       "title": "Favorites"
+    },
+    "success": {
+      "removed": "Successfully removed a favorite"
     }
   },
   "favorite-file": {
