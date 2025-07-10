@@ -15,6 +15,12 @@
         <div class="flex flex-col gap-1">
           <h3 class="font-semibold text-base break-words">
             {{ directoryName() }}
+
+            @if (favorite().group; as group) {
+              <span class="text-xs text-base-content/70">
+                (<i class="bi bi-people text-xs"></i> {{ group.name }})
+              </span>
+            }
           </h3>
           <p class="text-sm text-base-content/70 break-all">
             {{ favorite().path }}
