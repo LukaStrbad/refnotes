@@ -1,1 +1,106 @@
-<p>favorite-file-item works!</p>
+<div
+  class="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 bg-base-100 rounded-lg shadow-sm hover:bg-base-200 transition-colors duration-200 w-full"
+>
+  <!-- File Icon -->
+  <div class="flex-shrink-0 hidden sm:block">
+    <app-file-icon [fileName]="favorite().fileInfo.name"></app-file-icon>
+  </div>
+
+  <!-- File Information -->
+  <div class="flex-1 min-w-0 w-full sm:w-auto">
+    <div class="flex flex-col gap-2">
+      <!-- File Name and Path -->
+      <div class="flex sm:flex-col gap-1 items-center sm:items-start">
+        <app-file-icon
+          class="sm:hidden mr-2"
+          [fileName]="favorite().fileInfo.name"
+        ></app-file-icon>
+
+        <div class="flex flex-col gap-1">
+          <h3 class="font-semibold text-base break-words">
+            {{ favorite().fileInfo.name }}
+          </h3>
+
+          <p class="text-sm text-base-content/70 break-all">
+            {{ favorite().fileInfo.path }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      @if (favorite().fileInfo.tags.length > 0) {
+        <div class="flex gap-1 flex-wrap">
+          @for (tag of favorite().fileInfo.tags; track tag) {
+            <span class="badge badge-primary text-xs">{{ tag }}</span>
+          }
+        </div>
+      }
+
+      <!-- File Metadata -->
+      <div
+        class="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs text-base-content/60"
+      >
+        <span class="flex items-center gap-1">
+          <i class="bi bi-hdd"></i>
+          {{ favorite().fileInfo.size | byteSize }}
+        </span>
+        <span
+          class="flex items-center gap-1"
+          translate
+          [translateParams]="{ time: favoriteDateFormatted }"
+        >
+          <i class="bi bi-heart-fill"></i>
+          favorite-file.label.favorited
+        </span>
+        <span
+          class="flex items-center gap-1"
+          translate
+          [translateParams]="{ time: modifiedDateFormatted }"
+        >
+          <i class="bi bi-pencil"></i>
+          favorite-file.label.modified
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+    <!-- Preview Button -->
+    <div class="tooltip hover:z-10" [attr.data-tip]="'favorite-file.button-tooltip.preview' | translate">
+      <a
+        class="btn btn-sm btn-primary flex-1 sm:flex-none"
+        [routerLink]="['/file', favorite().fileInfo.path, 'preview']"
+      >
+        <i class="bi bi-eye"></i>
+        <span class="sm:hidden" translate>favorite-file.button.preview</span>
+      </a>
+    </div>
+
+    <!-- Edit Button (only for editable files) -->
+    @if (isEditable()) {
+      <div class="tooltip hover:z-10" [attr.data-tip]="'favorite-file.button-tooltip.edit' | translate">
+        <a
+          class="btn btn-sm btn-accent flex-1 sm:flex-none"
+          [routerLink]="['/file', favorite().fileInfo.path, 'edit']"
+          testTag="favorite-file.button.edit"
+        >
+          <i class="bi bi-pencil"></i>
+          <span class="sm:hidden" translate>favorite-file.button.edit</span>
+        </a>
+      </div>
+    }
+
+    <!-- Remove from Favorites Button -->
+    <div class="tooltip hover:z-10" [attr.data-tip]="'favorite-file.button-tooltip.remove' | translate">
+      <button
+        class="btn btn-sm btn-warning btn-outline flex-1 sm:flex-none"
+        (click)="onRemoveFavorite()"
+        testTag="favorite-file.button.remove"
+      >
+        <i class="bi bi-star"></i>
+        <span class="sm:hidden" translate>favorite-file.button.remove</span>
+      </button>
+    </div>
+  </div>
+</div>

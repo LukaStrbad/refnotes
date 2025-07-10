@@ -53,4 +53,19 @@ export class FavoritesComponent implements OnInit {
       this.loadingState = LoadingState.Loaded;
     })();
   }
+
+  async onRemoveFileFavorite(favorite: FileFavoriteDetails): Promise<void> {
+    try {
+      await this.favoriteService.unfavoriteFile(favorite.fileInfo.path, favorite.groupId);
+      this.fileFavorites = this.fileFavorites.filter(f => f !== favorite);
+      this.favoriteCount = this.fileFavorites.length + this.directoryFavorites.length;
+
+      const successMessage = await getTranslation(this.translate, 'favorites.success.removed');
+      this.notificationService.success(successMessage);
+    } catch (error) {
+      this.log.error('Error removing file favorite', error);
+      const errorMessage = await getTranslation(this.translate, 'favorites.error.removing');
+      this.notificationService.error(errorMessage);
+    }
+  }
 }

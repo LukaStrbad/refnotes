@@ -30,7 +30,7 @@ import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
-import { updateFileTime } from '../../utils/date-utils';
+import { convertDateLocale, updateFileTime } from '../../utils/date-utils';
 import { ShareService } from '../../services/components/modals/share.service';
 import { ShareModalComponent } from '../components/modals/share/share.component';
 import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
@@ -109,10 +109,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   private set dateLang(value: string) {
-    if (value === 'en') {
-      value = 'en-UK';
-    }
-    this._dateLang = value;
+    this._dateLang = convertDateLocale(value);
   }
 
   constructor(

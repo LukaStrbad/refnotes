@@ -316,5 +316,21 @@
       "directoryFavorites": "Favorite directories",
       "title": "Favorites"
     }
+  },
+  "favorite-file": {
+    "label": {
+      "favorited": "Favorited: {{time}}",
+      "modified": "Modified: {{time}}"
+    },
+    "button": {
+      "preview": "Preview",
+      "edit": "Edit",
+      "remove": "Remove"
+    },
+    "button-tooltip": {
+      "preview": "Preview file",
+      "edit": "Edit file",
+      "remove": "Remove from favorites"
+    }
   }
 }

@@ -1,0 +1,10 @@
+<i
+  class="bi text-2xl"
+  [ngClass]="{
+    'bi-filetype-md text-primary': fileType() === 'markdown',
+    'bi-file-text text-accent': fileType() === 'text',
+    'bi-file-image text-success': fileType() === 'image',
+    'bi-file-earmark text-base-content':
+      fileType() === 'unknown',
+  }"
+></i>

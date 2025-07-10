@@ -316,5 +316,21 @@
       "noFavorites": "Nema favorita",
       "title": "Favoriti"
     }
+  },
+  "favorite-file": {
+    "button": {
+      "edit": "Uredi",
+      "preview": "Pregled",
+      "remove": "Ukloni"
+    },
+    "label": {
+      "favorited": "Dodano u favorite: {{time}}",
+      "modified": "Zadnja izmjena: {{time}}"
+    },
+    "button-tooltip": {
+      "edit": "Uredi datoteku",
+      "preview": "Pregled datoteke",
+      "remove": "Ukloni iz favorita"
+    }
   }
 }

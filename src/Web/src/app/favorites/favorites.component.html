@@ -18,11 +18,16 @@
       <div class="flex flex-col gap-4">
         @if (fileFavorites.length > 0) {
           <div class="flex flex-col gap-2">
-            <h2 class="text-xl font-semibold" translate>favorites.label.fileFavorites</h2>
+            <h2 class="text-xl font-semibold" translate>
+              favorites.label.fileFavorites
+            </h2>
             <ul class="list-none p-0">
               @for (favorite of fileFavorites; track favorite) {
-                <li>
-                  <app-favorite-file-item [favorite]="favorite"></app-favorite-file-item>
+                <li class="not-last:mb-2">
+                  <app-favorite-file-item
+                    [favorite]="favorite"
+                    (removeFavorite)="onRemoveFileFavorite($event)"
+                  ></app-favorite-file-item>
                 </li>
               }
             </ul>
@@ -31,11 +36,15 @@
 
         @if (directoryFavorites.length > 0) {
           <div class="flex flex-col gap-2">
-            <h2 class="text-xl font-semibold" translate>favorites.label.directoryFavorites</h2>
+            <h2 class="text-xl font-semibold" translate>
+              favorites.label.directoryFavorites
+            </h2>
             <ul class="list-none p-0">
               @for (favorite of directoryFavorites; track favorite) {
                 <li>
-                  <app-favorite-directory-item [favorite]="favorite"></app-favorite-directory-item>
+                  <app-favorite-directory-item
+                    [favorite]="favorite"
+                  ></app-favorite-directory-item>
                 </li>
               }
             </ul>
@@ -43,7 +52,9 @@
         }
 
         @if (favoriteCount === 0) {
-          <p class="text-center text-lg" translate>favorites.label.noFavorites</p>
+          <p class="text-center text-lg" translate>
+            favorites.label.noFavorites
+          </p>
         }
       </div>
     </div>
