@@ -384,4 +384,34 @@ public class FileServiceTests : BaseTests
         Assert.NotNull(relativeFile);
         Assert.Equal(file2.Id, relativeFile.Id);
     }
+
+    [Theory, AutoData]
+    public async Task GetGroupIdFromFileAsync_ReturnsNull_ForUserFile(
+        Sut<FileService> sut,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var groupId = await sut.Value.GetGroupIdFromFileAsync(file.Id);
+
+        Assert.Null(groupId);
+    }
+
+    [Theory, AutoData]
+    public async Task GetGroupIdFromFileAsync_ReturnsGroupId_ForGroupFile(
+        Sut<FileService> sut,
+        [FixtureGroup] UserGroup group,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var groupId = await sut.Value.GetGroupIdFromFileAsync(file.Id);
+
+        Assert.NotNull(groupId);
+        Assert.Equal(group.Id, groupId);
+    }
 }

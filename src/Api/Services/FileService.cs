@@ -410,11 +410,11 @@ public class FileService(
 
     public async Task<int?> GetGroupIdFromFileAsync(int encryptedFileId)
     {
-        var groupId = await context.Directories
-            .Where(d => d.Id == encryptedFileId)
-            .Select(d => d.GroupId)
-            .FirstOrDefaultAsync();
+        var query = from file in context.Files
+            join directory in context.Directories on file.EncryptedDirectoryId equals directory.Id
+            where file.Id == encryptedFileId
+            select directory.GroupId;
 
-        return groupId;
+        return await query.FirstOrDefaultAsync();
     }
 }
