@@ -27,7 +27,7 @@ public class BrowserController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> List(string path, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var directory = await _browserService.List(groupId, path);
@@ -44,7 +44,7 @@ public class BrowserController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> AddDirectory(string path, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         await _browserService.AddDirectory(path, groupId);
@@ -57,7 +57,7 @@ public class BrowserController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> DeleteDirectory(string path, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         try

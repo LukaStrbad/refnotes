@@ -47,6 +47,7 @@ public static class Configuration
         builder.Services.AddScoped<IAppDomainService, AppDomainService>();
         builder.Services.AddScoped<IPublicFileImageService, PublicFileImageService>();
         builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
+        builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
         builder.Services.AddAuthentication(x =>
         {

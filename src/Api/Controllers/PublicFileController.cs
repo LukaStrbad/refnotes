@@ -47,7 +47,7 @@ public class PublicFileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> CreatePublicFile(string filePath, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        if (await GetGroupAccess(groupId, UserGroupRoleType.Admin) == GroupAccessStatus.AccessDenied)
         {
             _logger.LogWarning("User {username} tried to create a public file at path {path}", User.Identity?.Name,
                 StringSanitizer.SanitizeLog(filePath));
@@ -68,7 +68,7 @@ public class PublicFileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> DeletePublicFile(string filePath, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId, UserGroupRoleType.Admin))
+        if (await GetGroupAccess(groupId, UserGroupRoleType.Admin) == GroupAccessStatus.AccessDenied)
         {
             _logger.LogWarning("User {username} tried to delete a public file at path {path}", User.Identity?.Name,
                 StringSanitizer.SanitizeLog(filePath));

@@ -15,19 +15,29 @@ public abstract class GroupPermissionControllerBase : ControllerBase
         _userService = userService;
     }
 
-    protected async Task<bool> GroupAccessForbidden(int? groupId)
+    protected async Task<GroupAccessStatus> GetGroupAccess(int? groupId)
     {
         if (groupId is null)
-            return false;
+            return GroupAccessStatus.NoGroup;
 
-        return !await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId);
+        var hasAccess = await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId);
+        return hasAccess ? GroupAccessStatus.AccessGranted : GroupAccessStatus.AccessDenied;
     }
 
-    protected async Task<bool> GroupAccessForbidden(int? groupId, UserGroupRoleType minRole)
+    protected async Task<GroupAccessStatus> GetGroupAccess(int? groupId, UserGroupRoleType minRole)
     {
         if (groupId is null)
-            return false;
+            return GroupAccessStatus.NoGroup;
 
-        return !await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId, minRole);
+        var hasAccess =
+            await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId, minRole);
+        return hasAccess ? GroupAccessStatus.AccessGranted : GroupAccessStatus.AccessDenied;
+    }
+
+    protected enum GroupAccessStatus
+    {
+        NoGroup,
+        AccessDenied,
+        AccessGranted
     }
 }

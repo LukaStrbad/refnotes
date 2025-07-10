@@ -38,7 +38,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddFile(string directoryPath, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var files = Request.Form.Files;
@@ -56,7 +56,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> AddTextFile(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         using var sr = new StreamReader(Request.Body);
@@ -71,7 +71,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> MoveFile(string oldName, string newName, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         await _fileService.MoveFile(oldName, newName, groupId);
@@ -83,7 +83,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetFile(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
@@ -118,7 +118,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetImage(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         try
@@ -170,7 +170,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var filePath = FileUtils.NormalizePath(Path.Join(directoryPath, name));
@@ -191,7 +191,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DeleteFile(string directoryPath, string name, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var fileName = await _fileService.GetFilesystemFilePath(directoryPath, name, groupId);
@@ -219,7 +219,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var fileInfo = await _fileService.GetFileInfo(filePath, groupId);
@@ -247,7 +247,7 @@ public class FileController : GroupPermissionControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> DownloadFile(string path, int? groupId)
     {
-        if (await GroupAccessForbidden(groupId))
+        if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
         var (directoryPath, name) = FileUtils.SplitDirAndFile(path);

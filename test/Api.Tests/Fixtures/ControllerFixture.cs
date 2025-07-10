@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Api.Tests.Extensions;
+using Api.Utils;
 
 namespace Api.Tests.Fixtures;
 
@@ -34,6 +35,8 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
         services.AddScopedSubstitute<IPublicFileService>();
         services.AddScopedSubstitute<IAppDomainService>();
         services.AddScopedSubstitute<IPublicFileScheduler>();
+        services.AddScopedSubstitute<IFavoriteService>();
+        services.AddScopedSubstitute<IFileServiceUtils>();
         services.AddScopedSubstitute<HttpContext>();
 
         // The controller

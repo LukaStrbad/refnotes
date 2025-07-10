@@ -5,6 +5,7 @@ using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Api.Extensions;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Api.Services;
 
@@ -73,11 +74,11 @@ public interface IFileService
     /// <param name="groupId">ID of the group where the file belongs to</param>
     /// <returns>EncryptedFile object</returns>
     Task<EncryptedFile?> GetEncryptedFileAsync(string filePath, int? groupId);
-    
+
     Task<User?> GetUserFromFile(EncryptedFile encryptedFile);
-    
+
     Task<UserGroup?> GetUserGroupFromFile(EncryptedFile encryptedFile);
-    
+
     /// <summary>
     /// Gets the file owner of the group
     /// </summary>
@@ -100,7 +101,7 @@ public interface IFileService
     /// <param name="group">Group of the file</param>
     /// <returns></returns>
     Task<EncryptedFile?> GetEncryptedFileForGroupAsync(string filePath, UserGroup group);
-    
+
     Task<EncryptedFile?> GetEncryptedFileForOwnerAsync(string filePath, DirOwner owner);
 
     /// <summary>
@@ -111,6 +112,8 @@ public interface IFileService
     Task<string> GetFilePathAsync(EncryptedFile file);
 
     Task<EncryptedFile?> GetEncryptedFileByRelativePathAsync(EncryptedFile encryptedFile, string relativePath);
+
+    Task<GroupDetails?> GetGroupDetailsFromFileIdAsync(int encryptedFileId);
 }
 
 public class FileService(
@@ -118,7 +121,8 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    IFileServiceUtils utils) : IFileService
+    IFileServiceUtils utils,
+    IUserGroupService userGroupService) : IFileService
 {
     public async Task<string> AddFile(string directoryPath, string name, int? groupId)
     {
@@ -232,24 +236,27 @@ public class FileService(
 
     public async Task<FileDto?> GetFileInfoAsync(int fileId)
     {
-        var file = await context.Files
-            .Include(f => f.EncryptedDirectory)
-            .Include(f => f.Tags)
-            .FirstOrDefaultAsync(f => f.Id == fileId);
-        var directory = file?.EncryptedDirectory;
+        var file = await context.Files.FindAsync(fileId);
 
-        if (file is null || directory is null)
+        if (file is null)
             return null;
 
-        var directoryPath = directory.DecryptedPath(encryptionService);
+        var encryptedDirectoryPath = await context.Entry(file).Reference(f => f.EncryptedDirectory)
+            .Query().Select(d => d.Path).FirstAsync();
+
+        var directoryPath = encryptionService.DecryptAesStringBase64(encryptedDirectoryPath);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 
         var fileName = file.DecryptedName(encryptionService);
         var fullPath = FileUtils.NormalizePath(Path.Join(directoryPath, fileName));
 
+        var fileTags = await context.Entry(file).Collection(f => f.Tags).Query()
+            .Select(t => t.Name)
+            .ToListAsync();
+
         return new FileDto(fileName,
             fullPath,
-            file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
+            fileTags.Select(encryptionService.DecryptAesStringBase64),
             fileSize,
             file.Created,
             file.Modified);
@@ -275,7 +282,7 @@ public class FileService(
         await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
         if (encryptedFile.EncryptedDirectory is null)
             throw new Exception("File has no directory");
-        
+
         var directory = encryptedFile.EncryptedDirectory;
         await context.Entry(directory).Reference(d => d.Owner).LoadAsync();
         return directory.Owner;
@@ -286,7 +293,7 @@ public class FileService(
         await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
         if (encryptedFile.EncryptedDirectory is null)
             throw new Exception("File has no directory");
-        
+
         var directory = encryptedFile.EncryptedDirectory;
         await context.Entry(directory).Reference(d => d.Group).LoadAsync();
         return directory.Group;
@@ -297,16 +304,16 @@ public class FileService(
         await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
         if (encryptedFile.EncryptedDirectory is null)
             throw new Exception("File has no directory");
-        
+
         var directory = encryptedFile.EncryptedDirectory;
         await context.Entry(directory).Reference(d => d.Owner).LoadAsync();
         if (directory.Owner is not null)
             return new DirOwner(directory.Owner);
-        
+
         await context.Entry(directory).Reference(d => d.Group).LoadAsync();
         if (directory.Group is not null)
             return new DirOwner(directory.Group);
-        
+
         throw new Exception("File has no owner or group");
     }
 
@@ -352,10 +359,10 @@ public class FileService(
     {
         if (owner.User is not null)
             return await GetEncryptedFileForUserAsync(filePath, owner.User);
-        
+
         if (owner.Group is not null)
             return await GetEncryptedFileForGroupAsync(filePath, owner.Group);
-        
+
         throw new Exception("File owner is not a user or group");
     }
 
@@ -377,7 +384,7 @@ public class FileService(
         await context.Entry(encryptedFile).Reference(f => f.EncryptedDirectory).LoadAsync();
         if (encryptedFile.EncryptedDirectory is null)
             throw new Exception("File has no directory");
-        
+
         var directory = encryptedFile.EncryptedDirectory;
         await context.Entry(directory).Reference(d => d.Owner).LoadAsync();
         await context.Entry(directory).Reference(d => d.Group).LoadAsync();
@@ -388,18 +395,32 @@ public class FileService(
             var dirPath = directory.DecryptedPath(encryptionService);
             // Resolve the relative path of the file
             var absoluteFilePath = FileUtils.ResolveRelativeFolderPath(dirPath, relativePath);
-            
+
             if (directory.Group is not null)
                 return await GetEncryptedFileForGroupAsync(absoluteFilePath, directory.Group);
 
             if (directory.Owner is not null)
                 return await GetEncryptedFileForUserAsync(absoluteFilePath, directory.Owner);
-            
+
             throw new Exception("File has no owner or group");
         }
         catch (DirectoryNotFoundException)
         {
             return null;
         }
+    }
+
+    public async Task<GroupDetails?> GetGroupDetailsFromFileIdAsync(int encryptedFileId)
+    {
+        var query = from file in context.Files
+            join directory in context.Directories on file.EncryptedDirectoryId equals directory.Id
+            where file.Id == encryptedFileId
+            select directory.GroupId;
+
+        var groupId = await query.FirstOrDefaultAsync();
+        if (groupId is null)
+            return null;
+        
+        return await userGroupService.GetGroupDetailsAsync(groupId.Value);
     }
 }

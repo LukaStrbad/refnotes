@@ -4,6 +4,7 @@ using Api.Model;
 using Api.Services;
 using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
+using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Mocks;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
@@ -317,5 +318,19 @@ public class UserGroupServiceTests : BaseTests
         var groupMembers = await sut.Value.GetGroupMembers(group.Id);
 
         Assert.Single(groupMembers);
+    }
+
+    [Theory, AutoData]
+    public async Task GetGroupDetailsAsync_ReturnsGroupDetails(
+        Sut<UserGroupService> sut,
+        UserGroupFakerImplementation groupFaker)
+    {
+        var group = groupFaker.CreateFaker().Generate();
+        
+        var groupDetails = await sut.Value.GetGroupDetailsAsync(group.Id);
+        
+        Assert.NotNull(groupDetails);
+        Assert.Equal(group.Id, groupDetails.Id);
+        Assert.Equal(group.Name, groupDetails.Name);
     }
 }
