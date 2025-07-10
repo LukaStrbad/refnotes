@@ -20,11 +20,11 @@ RefNotes is a note-taking application built with .NET and Angular.
 - File and folder search
 - User groups
 - Public notes (accessed through a public URL)
+- File favorites
 
 ## Planned Features
 
 - File sharing
-- File favorites
 - Autocomplete for image paths
 
 ## Getting Started
