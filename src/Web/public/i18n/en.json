@@ -36,7 +36,8 @@
     "routes": {
       "home": "Home",
       "settings": "Settings",
-      "groups": "Groups"
+      "groups": "Groups",
+      "favorites": "Favorites"
     }
   },
   "login": {
@@ -90,7 +91,9 @@
     },
     "files-deleted": "Files deleted",
     "download": "Download",
-    "share": "Share"
+    "share": "Share",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites"
   },
   "editor": {
     "viewType": {
@@ -301,5 +304,50 @@
   "home-button": {
     "go-to-browser": "Go to File Browser"
   },
-  "home-button-go-to-login": "Go to Login page"
+  "home-button-go-to-login": "Go to Login page",
+  "favorites": {
+    "error": {
+      "loading": "Error loading favorites",
+      "removing": "Error removing a favorite"
+    },
+    "label": {
+      "loading": "Loading favorites...",
+      "noFavorites": "You have no favorites",
+      "fileFavorites": "Favorite files",
+      "directoryFavorites": "Favorite directories",
+      "title": "Favorites"
+    },
+    "success": {
+      "removed": "Successfully removed a favorite"
+    }
+  },
+  "favorite-file": {
+    "label": {
+      "favorited": "Favorited: {{time}}",
+      "modified": "Modified: {{time}}"
+    },
+    "button": {
+      "preview": "Preview",
+      "edit": "Edit",
+      "remove": "Remove"
+    },
+    "button-tooltip": {
+      "preview": "Preview file",
+      "edit": "Edit file",
+      "remove": "Remove from favorites"
+    }
+  },
+  "favorite-directory": {
+    "label": {
+      "favorited": "Favorited: {{time}}"
+    },
+    "button": {
+      "open": "Open",
+      "remove": "Remove"
+    },
+    "button-tooltip": {
+      "remove": "Remove from favorites",
+      "open": "Open folder"
+    }
+  }
 }

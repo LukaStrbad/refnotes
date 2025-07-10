@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';
@@ -30,9 +30,12 @@ import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { AskModalService } from '../../services/ask-modal.service';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
-import { updateFileTime } from '../../utils/date-utils';
+import { convertDateLocale, updateFileTime } from '../../utils/date-utils';
 import { ShareService } from '../../services/components/modals/share.service';
 import { ShareModalComponent } from '../components/modals/share/share.component';
+import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
+import { FileFavoriteDetails } from '../../model/file-favorite-details';
+import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
 
 @Component({
   selector: 'app-browser',
@@ -48,7 +51,7 @@ import { ShareModalComponent } from '../components/modals/share/share.component'
     RenameFileModalComponent,
     ByteSizePipe,
     ShareModalComponent
-],
+  ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
 })
@@ -59,9 +62,19 @@ export class BrowserComponent implements OnInit, OnDestroy {
   readonly groupId?: number;
   readonly linkBasePath: string = '';
   readonly breadcrumbs: BreadcrumbItem[] = [];
+  readonly currentFolder = signal<Directory | null>(null);
+  readonly files = computed(() => {
+    const folder = this.currentFolder();
+    const fileFavorites = this.favorite.fileFavorites();
+    return folder === null ? [] : this.mapDirectoryFiles(folder, fileFavorites);
+  });
+  readonly directories = computed(() => {
+    const folder = this.currentFolder();
+    const folderFavorites = this.favorite.directoryFavorites();
+    return folder === null ? [] : this.mapDirectorySubdirectories(folder, folderFavorites);
+  });
 
   // Public
-  currentFolder: Directory | null = null;
   pathStack: string[] = [];
   currentPath = '/';
   uploadProgress: Record<string, number | null> = {};
@@ -96,14 +109,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   private set dateLang(value: string) {
-    if (value === 'en') {
-      value = 'en-UK';
-    }
-    this._dateLang = value;
-  }
-
-  get files(): FileWithTime[] {
-    return this.currentFolder?.files ?? [];
+    this._dateLang = convertDateLocale(value);
   }
 
   constructor(
@@ -119,6 +125,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private askModal: AskModalService,
     public share: ShareService,
+    public favorite: BrowserFavoriteService,
   ) {
     this.selectedFiles = this.selectFileService.selectedFiles;
 
@@ -131,6 +138,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (groupId) {
       this.groupId = Number(groupId);
       this.linkBasePath = `/groups/${this.groupId}`;
+      this.favorite.setGroupId(this.groupId);
     }
   }
 
@@ -149,7 +157,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async refreshRoute() {
-    this.currentFolder = null;
+    this.currentFolder.set(null);
     // Get the current path from the URL (removes the leading /browser)
     const urlSplit = this.router.url.split('/');
     const browserIndex = urlSplit.indexOf('browser');
@@ -160,10 +168,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const observable = this.browser.listCached(this.currentPath, this.groupId);
     // Cached
     this.refreshRouteInnerPromise = firstValueFrom(observable);
-    this.currentFolder = await this.refreshRouteInnerPromise;
+    this.currentFolder.set(await this.refreshRouteInnerPromise);
     // From server
     this.refreshRouteInnerPromise = lastValueFrom(observable);
-    this.currentFolder = await this.refreshRouteInnerPromise;
+    this.currentFolder.set(await this.refreshRouteInnerPromise);
 
     this.areAllFilesSelected = this.checkIfAllFilesAreSelected();
 
@@ -245,6 +253,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
     await this.refreshRoute();
+    this.favorite.removeLocalFileFavorite(file);
   }
 
   async deleteSelectedFiles() {
@@ -280,8 +289,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async deleteFolder(name: string) {
-    const path =
-      this.currentPath == '/' ? `/${name}` : `${this.currentPath}/${name}`;
+    const path = joinPaths(this.currentPath, name);
 
     await this.notificationService.awaitAndNotifyError(this.browser.deleteDirectory(path, this.groupId),
       {
@@ -291,6 +299,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-deleted'));
     await this.refreshRoute();
+    this.favorite.removeLocalDirectoryFavorite(path);
   }
 
   async navigateToFolder(path: string) {
@@ -315,7 +324,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
                 : null;
             } else if (event.type === HttpEventType.Response) {
               if (event.status === 200) {
-                this.currentFolder?.files.push(createFromJsFile(file, this.currentPath));
+                this.currentFolder.update((folder) => {
+                  if (!folder) {
+                    return null;
+                  }
+                  folder?.files.push(createFromJsFile(file, this.currentPath));
+                  return { ...folder };
+                });
               } else {
                 getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
                   .then((translation) => {
@@ -367,7 +382,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.add-file-tag'),
     });
 
-    const file = this.currentFolder?.files.find((f) => f.path === fileName);
+    const file = this.files().find((f) => f.path === fileName);
     if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
     }
@@ -378,7 +393,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.remove-file-tag'),
     });
 
-    const file = this.currentFolder?.files.find((f) => f.path === fileName);
+    const file = this.files().find((f) => f.path === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
       if (index !== -1) {
@@ -391,7 +406,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const oldFilePath = joinPaths(this.currentPath, oldFileName);
     const newFilePath = joinPaths(this.currentPath, newFileName);
     await this.fileService.moveFile(oldFilePath, newFilePath, this.groupId);
-    const file = this.currentFolder?.files.find((f) => f.path === oldFileName);
+    const file = this.files().find((f) => f.path === oldFileName);
     if (file) {
       file.path = newFileName;
       file.modified = new Date();
@@ -411,12 +426,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
       if (this.lastCheckedFile === null) {
         this.lastCheckedFile = file;
       }
-      const lastCheckedIndex = this.currentFolder?.files.findIndex(f => f === this.lastCheckedFile) ?? -1;
-      const currentIndex = this.currentFolder?.files.findIndex(f => f === file) ?? -1;
+      const currentFiles = this.files();
+      const lastCheckedIndex = currentFiles.findIndex(f => f === this.lastCheckedFile) ?? -1;
+      const currentIndex = currentFiles.findIndex(f => f === file) ?? -1;
       if (lastCheckedIndex !== -1 && currentIndex !== -1) {
         const start = Math.min(lastCheckedIndex, currentIndex);
         const end = Math.max(lastCheckedIndex, currentIndex);
-        files = this.currentFolder?.files.slice(start, end + 1) ?? [file];
+        files = currentFiles.slice(start, end + 1) ?? [file];
       }
     }
 
@@ -440,7 +456,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     // If all files are selected, deselect them
     if (this.areAllFilesSelected) {
-      this.currentFolder.files.forEach((file) => {
+      this.files().forEach((file) => {
         const filePath = joinPaths(this.currentPath, file.path);
         this.selectFileService.removeFile(filePath);
       });
@@ -449,7 +465,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     // If not all files are selected, select them
-    this.currentFolder.files.forEach((file) => {
+    this.files().forEach((file) => {
       const filePath = joinPaths(this.currentPath, file.path);
       this.selectFileService.addFile(filePath);
     });
@@ -465,7 +481,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (this.currentFolder === null) {
       return false;
     }
-    const allFiles = this.currentFolder.files.map(f => joinPaths(this.currentPath, f.path));
+    const allFiles = this.files().map(f => joinPaths(this.currentPath, f.path));
     return allFiles.every(file => this.selectedFiles.has(file));
   }
 
@@ -474,7 +490,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async moveFiles() {
-    const filesFromCurrentFolder = new Set(this.currentFolder?.files.map(f => joinPaths(this.currentPath, f.path)));
+    const filesFromCurrentFolder = new Set(this.files().map(f => joinPaths(this.currentPath, f.path)));
 
     // Find only the files that are not in the current folder
     const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
@@ -492,8 +508,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   private async updateFileTimes() {
-    for (const file of this.files) {
-      updateFileTime(file, this.translateService, this.dateLang)
+    for (const file of this.files()) {
+      await updateFileTime(file, this.translateService, this.dateLang)
     }
   }
 
@@ -507,10 +523,40 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.share.loadPublicLink();
     this.shareModal.show();
   }
+
+  private mapDirectoryFiles(directory: Directory, fileFavorites: FileFavoriteDetails[]): BrowserComponentFile[] {
+    return directory.files.map((file: BrowserComponentFile) => {
+      const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.group?.id === this.groupId);
+      file.isFavorite = isFavorite;
+      return file;
+    });
+  }
+
+  private mapDirectorySubdirectories(directory: Directory, folderFavorites: DirectoryFavoriteDetails[]): BrowserComponentDirectory[] {
+    return directory.directories.map((name) => {
+      const path = joinPaths(this.currentPath, name);
+      const isFavorite = folderFavorites.some(fav => fav.path === path && fav.group?.id === this.groupId);
+      return {
+        name,
+        path,
+        isFavorite,
+      };
+    });
+  }
 }
 
 interface BreadcrumbItem {
   name: string;
   path: string[];
   icon: string;
+}
+
+interface BrowserComponentFile extends FileWithTime {
+  isFavorite?: boolean;
+}
+
+interface BrowserComponentDirectory {
+  name: string;
+  path: string;
+  isFavorite: boolean;
 }

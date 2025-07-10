@@ -36,7 +36,8 @@
     "routes": {
       "home": "Početna",
       "settings": "Postavke",
-      "groups": "Grupe"
+      "groups": "Grupe",
+      "favorites": "Favoriti"
     }
   },
   "login": {
@@ -90,7 +91,9 @@
     },
     "files-deleted": "Datoteke izbrisane",
     "download": "Preuzmi",
-    "share": "Podijeli"
+    "share": "Podijeli",
+    "favorite": "Dodaj u favorite",
+    "unfavorite": "Ukloni iz favorita"
   },
   "editor": {
     "viewType": {
@@ -301,5 +304,50 @@
   "home-button-go-to-login": "Idite na stranicu za prijavu",
   "home-button": {
     "go-to-browser": "Idite na preglednik"
+  },
+  "favorites": {
+    "error": {
+      "loading": "Greška prilikom učitavanja favorita",
+      "removing": "Greška prilikom uklanjanja favorita"
+    },
+    "label": {
+      "directoryFavorites": "Omiljeni direktoriji",
+      "fileFavorites": "Omiljene datoteke",
+      "loading": "Učitavanje favorita ...",
+      "noFavorites": "Nema favorita",
+      "title": "Favoriti"
+    },
+    "success": {
+      "removed": "Uspješno uklonjen favorit"
+    }
+  },
+  "favorite-file": {
+    "button": {
+      "edit": "Uredi",
+      "preview": "Pregled",
+      "remove": "Ukloni"
+    },
+    "label": {
+      "favorited": "Dodano u favorite: {{time}}",
+      "modified": "Zadnja izmjena: {{time}}"
+    },
+    "button-tooltip": {
+      "edit": "Uredi datoteku",
+      "preview": "Pregled datoteke",
+      "remove": "Ukloni iz favorita"
+    }
+  },
+  "favorite-directory": {
+    "button-tooltip": {
+      "open": "Otvori direktorij",
+      "remove": "Ukloni iz favorita"
+    },
+    "button": {
+      "open": "Otvori",
+      "remove": "Ukloni"
+    },
+    "label": {
+      "favorited": "Dodano u favorite: {{time}}"
+    }
   }
 }

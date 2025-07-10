@@ -79,10 +79,7 @@
       </li>
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a
-            [routerLink]="breadcrumb.path"
-            testTag="breadcrumb-item"
-          >
+          <a [routerLink]="breadcrumb.path" testTag="breadcrumb-item">
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
             {{ breadcrumb.name }}
           </a>
@@ -91,7 +88,7 @@
     </ul>
   </div>
 
-  @if (currentFolder) {
+  @if (currentFolder(); as folder) {
     <table class="table table-pin-rows">
       <thead>
         <tr>
@@ -102,7 +99,7 @@
         </tr>
       </thead>
 
-      @if (currentFolder.directories.length > 0) {
+      @if (directories().length > 0) {
         <thead>
           <tr>
             <th colspan="7" translate>browser.table.folders</th>
@@ -110,7 +107,7 @@
         </thead>
       }
       <tbody>
-        @for (folderName of currentFolder.directories; track folderName) {
+        @for (folder of directories(); track folder.path) {
           <tr class="hover:bg-base-300" testTag="folder-tr">
             <td>
               <i class="bi bi-folder"></i>
@@ -119,25 +116,65 @@
             <td
               colspan="3"
               class="text-start cursor-pointer"
-              (click)="openFolder(folderName)"
+              (click)="openFolder(folder.name)"
             >
-              {{ folderName }}
+              <div class="flex gap-2 items-center">
+                {{ folder.name }}
+                @if (folder.isFavorite) {
+                  <i class="bi bi-star-fill text-yellow-300"></i>
+                }
+              </div>
             </td>
 
             <td class="flex gap-2 justify-end">
-              <button
-                class="btn btn-sm btn-error"
-                (click)="deleteFolder(folderName)"
-              >
-                <i class="bi bi-trash"></i>
-                {{ "browser.delete" | translate }}
-              </button>
+              <!-- Dropdown for more actions -->
+              <div class="dropdown dropdown-end">
+                <div
+                  tabindex="0"
+                  role="button"
+                  class="btn btn-sm btn-info btn-circle"
+                >
+                  <i class="bi bi-three-dots text-2xl"></i>
+                </div>
+                <ul
+                  tabindex="0"
+                  class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 flex flex-col gap-2"
+                >
+                  <h1 translate>browser.label.more-actions</h1>
+
+                  @if (folder.isFavorite) {
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="favorite.unfavoriteDirectory(folder.path)"
+                    >
+                      <i class="bi bi-star"></i>
+                      {{ "browser.unfavorite" | translate }}
+                    </button>
+                  } @else {
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="favorite.favoriteDirectory(folder.path)"
+                    >
+                      <i class="bi bi-star-fill"></i>
+                      {{ "browser.favorite" | translate }}
+                    </button>
+                  }
+
+                  <button
+                    class="btn btn-sm btn-error"
+                    (click)="deleteFolder(folder.name)"
+                  >
+                    <i class="bi bi-trash"></i>
+                    {{ "browser.delete" | translate }}
+                  </button>
+                </ul>
+              </div>
             </td>
           </tr>
         }
       </tbody>
 
-      @if (currentFolder.files.length > 0) {
+      @if (files().length > 0) {
         <thead>
           <tr>
             <th>
@@ -160,7 +197,7 @@
         </thead>
       }
       <tbody>
-        @for (file of files; track file.path) {
+        @for (file of files(); track file.path) {
           <tr class="hover:bg-base-300 group" testTag="file-tr">
             <td class="w-20">
               <input
@@ -183,6 +220,9 @@
             <td class="text-start cursor-pointer" (click)="openPreview(file)">
               <div class="flex gap-2">
                 <div>{{ file.name }}</div>
+                @if (file.isFavorite) {
+                  <i class="bi bi-star-fill text-yellow-300"></i>
+                }
 
                 @for (tag of limitTags(file.tags); track tag) {
                   <div class="badge badge-soft badge-primary">{{ tag }}</div>
@@ -271,10 +311,28 @@
                   <button
                     class="btn btn-sm btn-accent"
                     (click)="openShareModal(file)"
-                    >
+                  >
                     <i class="bi bi-share"></i>
                     {{ "browser.share" | translate }}
                   </button>
+
+                  @if (file.isFavorite) {
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="favorite.unfavoriteFile(file)"
+                    >
+                      <i class="bi bi-star"></i>
+                      {{ "browser.unfavorite" | translate }}
+                    </button>
+                  } @else {
+                    <button
+                      class="btn btn-sm btn-warning"
+                      (click)="favorite.favoriteFile(file)"
+                    >
+                      <i class="bi bi-star-fill"></i>
+                      {{ "browser.favorite" | translate }}
+                    </button>
+                  }
 
                   <button
                     class="btn btn-sm btn-error"

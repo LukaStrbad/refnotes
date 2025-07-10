@@ -1,0 +1,63 @@
+@switch (loadingState) {
+  @case (LoadingState.Loading) {
+    <div class="w-full flex items-center justify-center gap-2">
+      <span class="text-xl" translate>favorites.label.loading</span>
+      <span class="loading loading-dots loading-xl"></span>
+    </div>
+  }
+
+  @case (LoadingState.Error) {
+    <div class="w-full flex justify-center">
+      <span class="text-xl" translate>favorites.error.loading</span>
+    </div>
+  }
+
+  @case (LoadingState.Loaded) {
+    <div class="flex flex-col gap-4 mb-8">
+      <h1 class="text-2xl font-bold" translate>favorites.label.title</h1>
+      <div class="flex flex-col gap-4">
+        @if (directoryFavorites.length > 0) {
+          <div class="flex flex-col gap-2">
+            <h2 class="text-xl font-semibold" translate>
+              favorites.label.directoryFavorites
+            </h2>
+            <ul class="list-none p-0">
+              @for (favorite of directoryFavorites; track favorite) {
+                <li class="not-last:mb-2" testTag="favorites.directory-item">
+                  <app-favorite-directory-item
+                    [favorite]="favorite"
+                    (removeFavorite)="onRemoveDirectoryFavorite($event)"
+                  ></app-favorite-directory-item>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (fileFavorites.length > 0) {
+          <div class="flex flex-col gap-2">
+            <h2 class="text-xl font-semibold" translate>
+              favorites.label.fileFavorites
+            </h2>
+            <ul class="list-none p-0">
+              @for (favorite of fileFavorites; track favorite) {
+                <li class="not-last:mb-2" testTag="favorites.file-item">
+                  <app-favorite-file-item
+                    [favorite]="favorite"
+                    (removeFavorite)="onRemoveFileFavorite($event)"
+                  ></app-favorite-file-item>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (favoriteCount === 0) {
+          <p class="text-center text-lg" translate>
+            favorites.label.noFavorites
+          </p>
+        }
+      </div>
+    </div>
+  }
+}

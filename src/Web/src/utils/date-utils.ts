@@ -3,16 +3,14 @@ import { FileInfo, FileWithTime } from "../model/file";
 import { getPluralTranslation, getTranslation } from "./translation-utils";
 
 export function mapFileDates(file: FileInfo): FileInfo {
-  // + 'Z' is added to make the date interpreted as UTC
-  // without this, the date is interpreted as local time
-  file.modified = new Date(file.modified + 'Z');
-  file.created = new Date(file.created + 'Z');
+  file.modified = new Date(file.modified);
+  file.created = new Date(file.created);
   return file;
 }
 
 export async function getFormattedDate(
   translateService: TranslateService,
-  date: Date,
+  date: Date | string,
   lang: string,
   long = false
 ): Promise<string> {
@@ -20,6 +18,10 @@ export async function getFormattedDate(
 
   if (long) {
     return date.toLocaleString(lang);
+  }
+
+  if (typeof date === 'string') {
+    date = new Date(date);
   }
 
   const currentTime = now.getTime();
@@ -59,4 +61,12 @@ export async function updateFileTime(file: FileWithTime, translateService: Trans
   file.modifiedLong = await getFormattedDate(translateService, modified, lang, true);
   file.modifiedShort = await getFormattedDate(translateService, modified, lang, false);
   return file;
+}
+
+export function convertDateLocale(original: string): string {
+  if (original === 'en') {
+    return 'en-UK';
+  }
+
+  return original;
 }
