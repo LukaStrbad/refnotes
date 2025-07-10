@@ -5,6 +5,6 @@ namespace Api.Model;
 public record FileFavoriteDetails(
     FileDto FileInfo,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    int? GroupId,
+    GroupDetails? Group,
     DateTime FavoriteDate
 );

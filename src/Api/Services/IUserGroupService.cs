@@ -108,4 +108,6 @@ public interface IUserGroupService
 
     public Task<UserGroupRole?> GetUserGroupRoleAsync(int groupId, int userId);
     Task<UserGroupRoleType?> GetGroupRoleTypeAsync(int groupId, int userId);
+    
+    Task<GroupDetails?> GetGroupDetailsAsync(int groupId);
 }

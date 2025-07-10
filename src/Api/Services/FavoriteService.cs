@@ -11,14 +11,16 @@ public sealed class FavoriteService : IFavoriteService
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
     private readonly IEncryptionService _encryptionService;
+    private readonly IUserGroupService _userGroupService;
 
     public FavoriteService(RefNotesContext context, IUserService userService, IFileService fileService,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService, IUserGroupService userGroupService)
     {
         _context = context;
         _userService = userService;
         _fileService = fileService;
         _encryptionService = encryptionService;
+        _userGroupService = userGroupService;
     }
 
     public async Task FavoriteFile(EncryptedFile file)
@@ -61,9 +63,9 @@ public sealed class FavoriteService : IFavoriteService
         foreach (var favorite in favorites)
         {
             var fileInfo = await _fileService.GetFileInfoAsync(favorite.EncryptedFileId);
-            var groupId = await _fileService.GetGroupIdFromFileAsync(favorite.EncryptedFileId);
+            var groupDetails = await _fileService.GetGroupDetailsFromFileIdAsync(favorite.EncryptedFileId);
             if (fileInfo is not null)
-                favoriteDetailsList.Add(new FileFavoriteDetails(fileInfo, groupId, favorite.FavoriteDate));
+                favoriteDetailsList.Add(new FileFavoriteDetails(fileInfo, groupDetails, favorite.FavoriteDate));
         }
 
         return favoriteDetailsList;
@@ -109,10 +111,17 @@ public sealed class FavoriteService : IFavoriteService
 
         var favorites = await favoritesQuery.ToListAsync();
 
-        return favorites.Select(favorite =>
+        var tasks = favorites.Select(async favorite =>
         {
             var decryptedPath = _encryptionService.DecryptAesStringBase64(favorite.Path);
-            return new DirectoryFavoriteDetails(decryptedPath, favorite.GroupId, favorite.FavoriteDate);
+            var groupDetails = favorite.GroupId is null
+                ? null
+                : await _userGroupService.GetGroupDetailsAsync((int)favorite.GroupId);
+            return new DirectoryFavoriteDetails(decryptedPath, groupDetails, favorite.FavoriteDate);
         }).ToList();
+        
+        await Task.WhenAll(tasks);
+        
+        return tasks.Select(t => t.Result).ToList();
     }
 }

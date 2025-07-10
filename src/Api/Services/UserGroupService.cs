@@ -218,4 +218,14 @@ public class UserGroupService(
         var role = await GetUserGroupRoleAsync(groupId, userId);
         return role?.Role;
     }
+
+    public async Task<GroupDetails?> GetGroupDetailsAsync(int groupId)
+    {
+        var groupDetails = await context.UserGroups.FirstOrDefaultAsync(g => g.Id == groupId);
+        if (groupDetails is null)
+            return null;
+        
+        var decryptedName = groupDetails.Name is null ? "" : encryptionService.DecryptAesStringBase64(groupDetails.Name);
+        return new GroupDetails(groupDetails.Id, decryptedName);
+    }
 }

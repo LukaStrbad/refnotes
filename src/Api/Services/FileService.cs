@@ -5,6 +5,7 @@ using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Api.Extensions;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Api.Services;
 
@@ -112,7 +113,7 @@ public interface IFileService
 
     Task<EncryptedFile?> GetEncryptedFileByRelativePathAsync(EncryptedFile encryptedFile, string relativePath);
 
-    Task<int?> GetGroupIdFromFileAsync(int encryptedFileId);
+    Task<GroupDetails?> GetGroupDetailsFromFileIdAsync(int encryptedFileId);
 }
 
 public class FileService(
@@ -120,7 +121,8 @@ public class FileService(
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     AppConfiguration appConfiguration,
-    IFileServiceUtils utils) : IFileService
+    IFileServiceUtils utils,
+    IUserGroupService userGroupService) : IFileService
 {
     public async Task<string> AddFile(string directoryPath, string name, int? groupId)
     {
@@ -408,13 +410,17 @@ public class FileService(
         }
     }
 
-    public async Task<int?> GetGroupIdFromFileAsync(int encryptedFileId)
+    public async Task<GroupDetails?> GetGroupDetailsFromFileIdAsync(int encryptedFileId)
     {
         var query = from file in context.Files
             join directory in context.Directories on file.EncryptedDirectoryId equals directory.Id
             where file.Id == encryptedFileId
             select directory.GroupId;
 
-        return await query.FirstOrDefaultAsync();
+        var groupId = await query.FirstOrDefaultAsync();
+        if (groupId is null)
+            return null;
+        
+        return await userGroupService.GetGroupDetailsAsync(groupId.Value);
     }
 }
