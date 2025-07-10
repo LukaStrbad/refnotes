@@ -60,7 +60,7 @@ export class BrowserFavoriteService {
    * @param file File to remove from favorites
    */
   removeLocalFileFavorite(file: File) {
-    this._fileFavorites.update(favorites => favorites.filter(fav => fav.fileInfo.path !== file.path || fav.groupId !== this.groupId));
+    this._fileFavorites.update(favorites => favorites.filter(fav => fav.fileInfo.path !== file.path || fav.group?.id !== this.groupId));
     this.favoriteService.clearFileFavoritesCache();
   }
 
@@ -100,7 +100,7 @@ export class BrowserFavoriteService {
    * @param path Path of the directory to remove from favorites
    */
   removeLocalDirectoryFavorite(path: string) {
-    this._directoryFavorites.update(favorites => favorites.filter(fav => fav.path !== path || fav.groupId !== this.groupId));
+    this._directoryFavorites.update(favorites => favorites.filter(fav => fav.path !== path || fav.group?.id !== this.groupId));
     this.favoriteService.clearDirectoryFavoritesCache();
   }
 

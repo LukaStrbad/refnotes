@@ -1,7 +1,8 @@
 import { DirectoryFavoriteDetails } from "../model/directory-favorite-details";
 import { FileFavoriteDetails } from "../model/file-favorite-details";
+import { GroupDetails } from "../model/user-group";
 
-export function createFileFavoriteDetails(name: string, groupId?: number): FileFavoriteDetails {
+export function createFileFavoriteDetails(name: string, group?: GroupDetails): FileFavoriteDetails {
     return {
         fileInfo: {
             name: name,
@@ -12,14 +13,14 @@ export function createFileFavoriteDetails(name: string, groupId?: number): FileF
             created: new Date(),
         },
         favoriteDate: new Date(),
-        groupId,
+        group,
     };
 };
 
-export function createDirectoryFavoriteDetails(path: string, groupId?: number): DirectoryFavoriteDetails {
+export function createDirectoryFavoriteDetails(path: string, group?: GroupDetails): DirectoryFavoriteDetails {
     return {
         path,
         favoriteDate: new Date(),
-        groupId,
+        group,
     };
 }

@@ -9,31 +9,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { DirectoryFavoriteDetails } from '../model/directory-favorite-details';
 import { FileFavoriteDetails } from '../model/file-favorite-details';
+import { createDirectoryFavoriteDetails, createFileFavoriteDetails } from '../tests/favorite-utils';
 
 const apiUrl = environment.apiUrl + '/favorite';
-
-function createFileDetails(name: string, groupId?: number): FileFavoriteDetails {
-  return {
-    fileInfo: {
-      name,
-      path: `/${name}`,
-      size: 1024,
-      tags: [],
-      created: new Date(),
-      modified: new Date(),
-    },
-    groupId,
-    favoriteDate: new Date(),
-  };
-}
-
-function createDirectoryDetails(path: string, groupId?: number): DirectoryFavoriteDetails {
-  return {
-    path: path,
-    groupId,
-    favoriteDate: new Date(),
-  };
-}
 
 describe('FavoriteService', () => {
   let service: FavoriteService;
@@ -105,8 +83,8 @@ describe('FavoriteService', () => {
 
   it('should get favorite files', async () => {
     const mockFavoriteFiles: FileFavoriteDetails[] = [
-      createFileDetails('file1.txt', 1),
-      createFileDetails('file2.txt', 2),
+      createFileFavoriteDetails('file1.txt', { id: 1, name: 'Group 1' }),
+      createFileFavoriteDetails('file2.txt', { id: 2, name: 'Group 2' }),
     ];
 
     const promise = service.getFavoriteFiles();
@@ -165,8 +143,8 @@ describe('FavoriteService', () => {
 
   it('should get favorite directories', async () => {
     const mockFavoriteDirectories: DirectoryFavoriteDetails[] = [
-      createDirectoryDetails('/test/dir1', 1),
-      createDirectoryDetails('/test/dir2', 2),
+      createDirectoryFavoriteDetails('/test/dir1', { id: 1, name: 'Group 1' }),
+      createDirectoryFavoriteDetails('/test/dir2', { id: 2, name: 'Group 2' }),
     ];
 
     const promise = service.getFavoriteDirectories();

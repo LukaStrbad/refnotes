@@ -526,7 +526,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   private mapDirectoryFiles(directory: Directory, fileFavorites: FileFavoriteDetails[]): BrowserComponentFile[] {
     return directory.files.map((file: BrowserComponentFile) => {
-      const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.groupId === this.groupId);
+      const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.group?.id === this.groupId);
       file.isFavorite = isFavorite;
       return file;
     });
@@ -535,7 +535,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   private mapDirectorySubdirectories(directory: Directory, folderFavorites: DirectoryFavoriteDetails[]): BrowserComponentDirectory[] {
     return directory.directories.map((name) => {
       const path = joinPaths(this.currentPath, name);
-      const isFavorite = folderFavorites.some(fav => fav.path === path && fav.groupId === this.groupId);
+      const isFavorite = folderFavorites.some(fav => fav.path === path && fav.group?.id === this.groupId);
       return {
         name,
         path,

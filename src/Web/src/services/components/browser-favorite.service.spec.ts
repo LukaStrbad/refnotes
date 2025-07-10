@@ -2,8 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BrowserFavoriteService } from './browser-favorite.service';
 import { FavoriteService } from '../favorite.service';
-import { FileFavoriteDetails } from '../../model/file-favorite-details';
-import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
+import { createDirectoryFavoriteDetails, createFileFavoriteDetails } from '../../tests/favorite-utils';
 
 describe('BrowserFavoriteService', () => {
   let service: BrowserFavoriteService;
@@ -27,8 +26,8 @@ describe('BrowserFavoriteService', () => {
   });
 
   it('should initialize with values from FavoriteService', fakeAsync(() => {
-    const mockFileFavorites: FileFavoriteDetails[] = [{ fileInfo: { name: 'file1.txt', path: '/file1.txt', tags: [], size: 1024, created: new Date(), modified: new Date() }, groupId: 1, favoriteDate: new Date() }];
-    const mockDirectoryFavorites: DirectoryFavoriteDetails[] = [{ path: '/', groupId: 1, favoriteDate: new Date() }];
+    const mockFileFavorites = [createFileFavoriteDetails('file1.txt', { id: 1, name: 'Group 1' })];
+    const mockDirectoryFavorites = [createDirectoryFavoriteDetails('/dir1', { id: 1, name: 'Group 1' })];
 
     favoriteService.getFavoriteFiles.and.resolveTo(mockFileFavorites);
     favoriteService.getFavoriteDirectories.and.resolveTo(mockDirectoryFavorites);
@@ -73,7 +72,7 @@ describe('BrowserFavoriteService', () => {
     expect(favoriteService.unfavoriteFile).toHaveBeenCalledWith(mockFile.path, 1);
     expect(service.fileFavorites()).not.toContain(jasmine.objectContaining({
       fileInfo: mockFile,
-      groupId: 1
+      group: { id: 1, name: 'Group 1' }
     }));
   }));
 
@@ -104,7 +103,7 @@ describe('BrowserFavoriteService', () => {
     expect(favoriteService.unfavoriteDirectory).toHaveBeenCalledWith(mockDirectory.path, 1);
     expect(service.directoryFavorites()).not.toContain(jasmine.objectContaining({
       path: mockDirectory.path,
-      groupId: 1
+      group: { id: 1, name: 'Group 1' }
     }));
   }));
 });

@@ -57,7 +57,7 @@ export class FavoritesComponent implements OnInit {
 
   async onRemoveFileFavorite(favorite: FileFavoriteDetails): Promise<void> {
     try {
-      await this.favoriteService.unfavoriteFile(favorite.fileInfo.path, favorite.groupId);
+      await this.favoriteService.unfavoriteFile(favorite.fileInfo.path, favorite.group?.id);
       this.fileFavorites = this.fileFavorites.filter(f => f !== favorite);
       this.favoriteCount = this.fileFavorites.length + this.directoryFavorites.length;
 
@@ -72,7 +72,7 @@ export class FavoritesComponent implements OnInit {
 
   async onRemoveDirectoryFavorite(favorite: DirectoryFavoriteDetails): Promise<void> {
     try {
-      await this.favoriteService.unfavoriteDirectory(favorite.path, favorite.groupId);
+      await this.favoriteService.unfavoriteDirectory(favorite.path, favorite.group?.id);
       this.directoryFavorites = this.directoryFavorites.filter(f => f !== favorite);
       this.favoriteCount = this.fileFavorites.length + this.directoryFavorites.length;
 

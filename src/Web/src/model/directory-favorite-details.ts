@@ -1,6 +1,7 @@
+import { GroupDetails } from "./user-group";
 
 export interface DirectoryFavoriteDetails {
   path: string;
-  groupId?: number;
+  group?: GroupDetails;
   favoriteDate: Date;
 }

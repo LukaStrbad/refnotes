@@ -24,3 +24,8 @@ export interface AssignRoleDto {
     userId: number;
     role: UserGroupRole;
 }
+
+export interface GroupDetails {
+    id: number;
+    name: string;
+}

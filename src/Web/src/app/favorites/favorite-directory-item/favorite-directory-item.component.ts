@@ -53,7 +53,7 @@ export class FavoriteDirectoryItemComponent implements OnInit, OnDestroy {
 
   private getRouterLink(): string {
     const favorite = this.favorite();
-    const basePath = favorite.groupId ? `/groups/${favorite.groupId}/browser` : '/browser';
+    const basePath = favorite.group ? `/groups/${favorite.group.id}/browser` : '/browser';
     return joinPaths(basePath, favorite.path);
   }
 }

@@ -57,13 +57,13 @@ export class FavoriteFileItemComponent implements OnInit, OnDestroy {
 
   private getPreviewLink(): string[] {
     const favorite = this.favorite();
-    const routePrefix = favorite.groupId ? `/groups/${favorite.groupId}` : ''
+    const routePrefix = favorite.group ? `/groups/${favorite.group.id}` : ''
     return [routePrefix, 'file', favorite.fileInfo.path, 'preview'];
   }
 
   private getEditLink(): string[] {
     const favorite = this.favorite();
-    const routePrefix = favorite.groupId ? `/groups/${favorite.groupId}` : ''
+    const routePrefix = favorite.group ? `/groups/${favorite.group.id}` : ''
     return [routePrefix, 'file', favorite.fileInfo.path, 'edit'];
   }
 }

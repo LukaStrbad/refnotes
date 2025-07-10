@@ -1,8 +1,9 @@
 import { File } from './file';
+import { GroupDetails } from './user-group';
 
 
 export interface FileFavoriteDetails {
   fileInfo: File;
-  groupId?: number;
+  group?: GroupDetails;
   favoriteDate: Date | string;
 }

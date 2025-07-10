@@ -49,7 +49,7 @@ describe('FavoritesComponent', () => {
   it('should display file favorites', async () => {
     const fileFavorites = [
       createFileFavoriteDetails('test1.md'),
-      createFileFavoriteDetails('test2.md', 123),
+      createFileFavoriteDetails('test2.md', { id: 123, name: 'Group 1' }),
     ];
     favoriteService.getFavoriteFiles.and.resolveTo(fileFavorites);
 
@@ -68,7 +68,7 @@ describe('FavoritesComponent', () => {
   it('should display directory favorites', async () => {
     const directoryFavorites = [
       createDirectoryFavoriteDetails('/path/to/dir1'),
-      createDirectoryFavoriteDetails('/path/to/dir2', 456),
+      createDirectoryFavoriteDetails('/path/to/dir2', { id: 456, name: 'Group 2' }),
     ];
     favoriteService.getFavoriteDirectories.and.resolveTo(directoryFavorites);
 
@@ -95,7 +95,7 @@ describe('FavoritesComponent', () => {
     component.onRemoveFileFavorite(favorite);
     await fixture.whenStable();
 
-    expect(favoriteService.unfavoriteFile).toHaveBeenCalledWith(favorite.fileInfo.path, favorite.groupId);
+    expect(favoriteService.unfavoriteFile).toHaveBeenCalledWith(favorite.fileInfo.path, favorite.group?.id);
     expect(component.fileFavorites.length).toBe(0);
     expect(component.favoriteCount).toBe(0);
   });
@@ -111,7 +111,7 @@ describe('FavoritesComponent', () => {
     component.onRemoveDirectoryFavorite(favorite);
     await fixture.whenStable();
 
-    expect(favoriteService.unfavoriteDirectory).toHaveBeenCalledWith(favorite.path, favorite.groupId);
+    expect(favoriteService.unfavoriteDirectory).toHaveBeenCalledWith(favorite.path, favorite.group?.id);
     expect(component.directoryFavorites.length).toBe(0);
     expect(component.favoriteCount).toBe(0);
   });
