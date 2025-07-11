@@ -52,7 +52,7 @@ public interface IFileService
     /// <param name="directoryPath">Path of the directory containing the file</param>
     /// <param name="name">Name of the file to update</param>
     /// <param name="groupId">ID of the group where the file belongs to</param>
-    Task UpdateTimestamp(string directoryPath, string name, int? groupId);
+    Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId);
 
     /// <summary>
     /// Get information about a file at the specified path.
@@ -212,12 +212,14 @@ public class FileService(
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateTimestamp(string directoryPath, string name, int? groupId)
+    public async Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId)
     {
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
-        file.Modified = DateTime.UtcNow;
+        var modified = DateTime.UtcNow;
+        file.Modified = modified;
         context.Entry(file).State = EntityState.Modified;
         await context.SaveChangesAsync();
+        return modified;
     }
 
     public async Task<FileDto> GetFileInfo(string filePath, int? groupId)

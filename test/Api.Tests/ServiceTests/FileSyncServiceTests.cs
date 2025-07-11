@@ -1,4 +1,6 @@
-﻿using Api.Services;
+﻿using System.Text.Json;
+using Api.Model;
+using Api.Services;
 using Api.Tests.Data;
 using NSubstitute;
 using StackExchange.Redis;
@@ -13,14 +15,16 @@ public sealed class FileSyncServiceTests
     public async Task SendSyncSignalAsync_SendsSignal(Sut<FileSyncService> sut, ISubscriber subscriber)
     {
         const int fileId = 123;
-        const long unixMillis = 1640995200000;
-        var lastModified = DateTimeOffset.FromUnixTimeMilliseconds(unixMillis);
+        var lastModified = DateTime.Now;
+        var clientId = Guid.NewGuid().ToString();
+        var channelMessage = new FileSyncChannelMessage(lastModified, clientId);
+        var channelMessageJson = JsonSerializer.Serialize(channelMessage);
 
-        await sut.Value.SendSyncSignalAsync(fileId, lastModified, _cts.Token);
+        await sut.Value.SendSyncSignalAsync(fileId, channelMessage, _cts.Token);
 
         await subscriber.Received(1).PublishAsync(
             Arg.Is<RedisChannel>(c => c.ToString().EndsWith(fileId.ToString())),
-            Arg.Is<RedisValue>(unixMillis),
+            Arg.Is<RedisValue>(channelMessageJson),
             CommandFlags.FireAndForget);
     }
 
@@ -29,8 +33,10 @@ public sealed class FileSyncServiceTests
     {
         // Arrange
         const int fileId = 456;
-        var testTime = DateTimeOffset.UtcNow;
-        var unixTime = testTime.ToUnixTimeMilliseconds();
+        var testTime = DateTime.Now;
+        var clientId = Guid.NewGuid().ToString();
+        var channelMessage = new FileSyncChannelMessage(testTime, clientId);
+        var channelMessageJson = JsonSerializer.Serialize(channelMessage);
         var channelName = $"FileSync-pub-{fileId}";
 
         var redisChannel = RedisChannel.Literal(channelName);
@@ -43,25 +49,26 @@ public sealed class FileSyncServiceTests
             CommandFlags.FireAndForget
         ).Returns(Task.CompletedTask);
 
-        DateTime? received = null;
+        FileSyncChannelMessage? receivedMessage = null;
         var tcs = new TaskCompletionSource();
-        
+
         // Act
-        await sut.Value.SubscribeToSyncSignalAsync(fileId, dt =>
+        await sut.Value.SubscribeToSyncSignalAsync(fileId, message =>
         {
-            received = dt;
+            receivedMessage = message;
             tcs.SetResult();
             return Task.CompletedTask;
         }, _cts.Token);
 
         // Simulate a message from Redis
-        capturedHandler?.Invoke(redisChannel, unixTime);
-        
+        capturedHandler?.Invoke(redisChannel, channelMessageJson);
+
         // Wait for the callback to complete
         await tcs.Task;
 
         // Assert
-        Assert.NotNull(received);
-        Assert.Equal(testTime.UtcDateTime, received.Value, TimeSpan.FromMilliseconds(1));
+        Assert.NotNull(receivedMessage);
+        Assert.Equal(testTime, receivedMessage.UpdatedAt, TimeSpan.FromMilliseconds(1));
+        Assert.Equal(clientId, receivedMessage.ClientId);
     }
 }

@@ -403,7 +403,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileService.GetEncryptedFileAsync($"{directoryPath}/{name}", null).Returns(encryptedFile);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var result = await _controller.SaveTextFile(directoryPath, name, null);
+        var result = await _controller.SaveTextFile(directoryPath, name, null, null);
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(filesystemName, Arg.Any<Stream>());
@@ -419,7 +419,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         _fileService.GetFilesystemFilePath(directoryPath, name, null).Returns((string?)null);
 
-        var result = await _controller.SaveTextFile(directoryPath, name, null);
+        var result = await _controller.SaveTextFile(directoryPath, name, null, null);
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
@@ -438,7 +438,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var result = await _controller.SaveTextFile(directoryPath, name, groupId);
+        var result = await _controller.SaveTextFile(directoryPath, name, groupId, null);
 
         Assert.IsType<ForbidResult>(result);
         await _fileService.DidNotReceive().UpdateTimestamp(directoryPath, name, groupId);

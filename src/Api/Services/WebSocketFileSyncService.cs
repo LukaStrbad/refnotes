@@ -13,7 +13,6 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService, IDispo
     private readonly SemaphoreSlim _readLock = new(1);
     private readonly SemaphoreSlim _writeLock = new(1);
     private readonly byte[] _readBuffer = new byte[1024];
-    private readonly Guid _clientId = Guid.NewGuid();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -28,15 +27,32 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService, IDispo
 
     public async Task HandleFileSync(WebSocket webSocket, int fileId, CancellationToken cancellationToken)
     {
-        // Send the client ID first
-        await WriteMessageObj(webSocket, new UserIdMessage(_clientId.ToString()), cancellationToken);
-        
-        _ = _fileSyncService.SubscribeToSyncSignalAsync(fileId, async updateTime =>
+        string? clientId = null;
+        await _fileSyncService.SubscribeToSyncSignalAsync(fileId, async channelMessage =>
         {
-            var message = new FileUpdatedMessage(updateTime);
-            await WriteMessageObj(webSocket, message, cancellationToken);
+            // Don't send the message to the client that updated the file
+            if (clientId == channelMessage.ClientId) return;
+            
+            var message = new FileUpdatedMessage(channelMessage.UpdatedAt, channelMessage.ClientId);
+            await WriteMessage(webSocket, message, cancellationToken);
         }, cancellationToken);
 
+        while (webSocket.State == WebSocketState.Open)
+        {
+            var readResult = await ReadMessage(webSocket, cancellationToken);
+            if (readResult.Closed)
+                break;
+            
+            _logger.LogInformation("Received message: {Message}", readResult.Message);
+
+            if (JsonSerializer.Deserialize<ClientIdMessage>(readResult.Message, JsonOptions) is { } clientIdMessage)
+            {
+                clientId = clientIdMessage.ClientId;
+                continue;
+            }
+            
+            _logger.LogInformation("Received message: {Message}", readResult.Message);
+        }
 
         await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Sync finished", cancellationToken);
     }
@@ -56,6 +72,8 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService, IDispo
 
             if (receiveResult.CloseStatus.HasValue)
                 return new ReadMessageResult(true, "");
+            
+            ms.Write(_readBuffer, 0, receiveResult.Count);
 
             var stringValue = Encoding.UTF8.GetString(ms.ToArray());
             return new ReadMessageResult(false, stringValue);
@@ -81,7 +99,8 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService, IDispo
         }
     }
 
-    private async Task WriteMessageObj<T>(WebSocket webSocket, T message, CancellationToken cancellationToken)
+    private async Task WriteMessage<T>(WebSocket webSocket, T message, CancellationToken cancellationToken)
+        where T : FileSyncMessage
     {
         var json = JsonSerializer.Serialize(message, JsonOptions);
         await WriteMessage(webSocket, json, cancellationToken);

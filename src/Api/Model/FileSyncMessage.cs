@@ -9,26 +9,28 @@ public class FileUpdatedMessage : FileSyncMessage
 {
     public override FileSyncMessageType MessageType => FileSyncMessageType.UpdateTime;
     public DateTime Time { get; }
+    public string SenderClientId { get; }
 
-    public FileUpdatedMessage(DateTime time)
+    public FileUpdatedMessage(DateTime time, string senderClientId)
     {
         Time = time;
+        SenderClientId = senderClientId;
     }
 }
 
-public class UserIdMessage : FileSyncMessage
+public class ClientIdMessage : FileSyncMessage
 {
-    public override FileSyncMessageType MessageType => FileSyncMessageType.UserId;
-    public string UserId { get; }
+    public override FileSyncMessageType MessageType => FileSyncMessageType.ClientId;
+    public string ClientId { get; }
 
-    public UserIdMessage(string userId)
+    public ClientIdMessage(string clientId)
     {
-        UserId = userId;
+        ClientId = clientId;
     }
 }
 
 public enum FileSyncMessageType
 {
     UpdateTime,
-    UserId
+    ClientId
 }

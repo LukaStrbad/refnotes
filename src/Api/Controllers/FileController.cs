@@ -33,7 +33,7 @@ public class FileController : GroupPermissionControllerBase
         IPublicFileService publicFileService,
         IPublicFileScheduler publicFileScheduler,
         ILogger<FileController> logger,
-        IFileSyncService fileSyncService, 
+        IFileSyncService fileSyncService,
         IWebSocketFileSyncService webSocketFileSyncService) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
@@ -179,7 +179,7 @@ public class FileController : GroupPermissionControllerBase
     [HttpPost("saveTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId)
+    public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId, string? clientId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
@@ -192,9 +192,11 @@ public class FileController : GroupPermissionControllerBase
         }
 
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
-        await _fileService.UpdateTimestamp(directoryPath, name, groupId);
+        var modified = await _fileService.UpdateTimestamp(directoryPath, name, groupId);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
-        await _fileSyncService.SendSyncSignalAsync(encryptedFile.Id, DateTime.Now, HttpContext.RequestAborted);
+
+        var syncMessage = new FileSyncChannelMessage(modified, clientId ?? Guid.NewGuid().ToString());
+        await _fileSyncService.SendSyncSignalAsync(encryptedFile.Id, syncMessage, HttpContext.RequestAborted);
         return Ok();
     }
 
@@ -283,7 +285,7 @@ public class FileController : GroupPermissionControllerBase
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
-        
+
         if (!HttpContext.WebSockets.IsWebSocketRequest)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -323,38 +325,5 @@ public class FileController : GroupPermissionControllerBase
                     throw;
             }
         }
-    }
-
-    private async Task Echo(WebSocket webSocket, int fileId, CancellationToken cancellationToken)
-    {
-        var buffer = new byte[1024 * 4];
-        var receiveResult = await webSocket.ReceiveAsync(
-            new ArraySegment<byte>(buffer), cancellationToken);
-        
-        // Discard the task to run the subscription in the background 
-        _ = _fileSyncService.SubscribeToSyncSignalAsync(fileId, async updateTime =>
-        {
-            var message = $"File updated at {updateTime:yyyy-MM-dd HH:mm:ss}";
-            var messageBytes = Encoding.UTF8.GetBytes(message);
-            await webSocket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true,
-                cancellationToken);
-        }, cancellationToken);
-
-        while (!receiveResult.CloseStatus.HasValue)
-        {
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(buffer, 0, receiveResult.Count),
-                receiveResult.MessageType,
-                receiveResult.EndOfMessage,
-                CancellationToken.None);
-
-            receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), cancellationToken);
-        }
-
-        await webSocket.CloseAsync(
-            receiveResult.CloseStatus.Value,
-            receiveResult.CloseStatusDescription,
-            CancellationToken.None);
     }
 }
