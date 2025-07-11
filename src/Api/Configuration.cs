@@ -49,6 +49,9 @@ public static class Configuration
         builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
         builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
+        builder.Services.AddTransient<IFileSyncService, FileSyncService>();
+        builder.Services.AddTransient<IWebSocketFileSyncService, WebSocketFileSyncService>();
+
         builder.Services.AddAuthentication(x =>
         {
             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

@@ -19,6 +19,12 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
 
     private async Task HandleException(Exception e, HttpContext httpContext)
     {
+        if (httpContext.WebSockets.IsWebSocketRequest)
+        {
+            logger.LogError(e, "WebSocket exception");
+            return;
+        }
+        
         switch (e)
         {
             case NoNameException noNameException:
