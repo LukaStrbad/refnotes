@@ -107,7 +107,8 @@
     "buttonEditTags": "Edit tags",
     "labelTags": "Tags:",
     "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'",
-    "buttonShare": "Share"
+    "buttonShare": "Share",
+    "file-updated": "File updated by another user"
   },
   "modals": {
     "create": {

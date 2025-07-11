@@ -107,7 +107,8 @@
     "buttonEditTags": "Uredi oznake",
     "labelTags": "Oznake:",
     "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
-    "buttonShare": "Podijeli"
+    "buttonShare": "Podijeli",
+    "file-updated": "Datoteka ažurirana od strane drugog korisnika"
   },
   "modals": {
     "create": {
