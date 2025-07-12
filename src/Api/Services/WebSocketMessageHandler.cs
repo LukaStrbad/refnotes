@@ -65,6 +65,5 @@ public sealed class WebSocketMessageHandler : IWebSocketMessageHandler, IDisposa
     {
         _readLock.Dispose();
         _writeLock.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

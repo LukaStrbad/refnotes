@@ -11,7 +11,7 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService
     private readonly IWebSocketMessageHandler _webSocketMessageHandler;
     private readonly ILogger<WebSocketFileSyncService> _logger;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    public static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
@@ -48,10 +48,7 @@ public sealed class WebSocketFileSyncService : IWebSocketFileSyncService
             {
                 // ReSharper disable once RedundantAssignment
                 clientId = clientIdMessage.ClientId;
-                continue;
             }
-
-            _logger.LogInformation("Received message: {Message}", readResult.Message);
         }
 
         await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Sync finished", cancellationToken);
