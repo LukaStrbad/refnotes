@@ -22,6 +22,8 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
         if (httpContext.WebSockets.IsWebSocketRequest)
         {
             logger.LogError(e, "WebSocket exception");
+            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await httpContext.Response.WriteAsync("An error occurred");
             return;
         }
         

@@ -283,6 +283,8 @@ public class FileController : GroupPermissionControllerBase
         if (encryptedFile is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("File not found");
             return;
         }
 
