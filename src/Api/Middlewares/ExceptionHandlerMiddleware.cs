@@ -4,7 +4,6 @@ namespace Api.Middlewares;
 
 public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
 {
-
     public async Task Invoke(HttpContext httpContext)
     {
         try
@@ -26,7 +25,7 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
             await httpContext.Response.WriteAsync("An error occurred");
             return;
         }
-        
+
         switch (e)
         {
             case NoNameException noNameException:

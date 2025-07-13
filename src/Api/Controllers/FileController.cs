@@ -276,7 +276,7 @@ public class FileController : GroupPermissionControllerBase
         return File(stream, contentType ?? "application/octet-stream", name);
     }
 
-    [HttpGet("ws/fileSync")]
+    [Route("/ws/fileSync")]
     public async Task FileSync(string filePath, int? groupId)
     {
         var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
