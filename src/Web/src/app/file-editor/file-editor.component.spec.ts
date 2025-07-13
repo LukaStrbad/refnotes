@@ -14,6 +14,7 @@ import { TagService } from '../../services/tag.service';
 import { mockActivatedRoute } from '../../tests/route-utils';
 import { Location } from '@angular/common';
 import { ShareService } from '../../services/components/modals/share.service';
+import { FileSyncMessageType } from '../../model/file-sync-message';
 
 @Component({
   selector: 'app-md-editor',
@@ -22,17 +23,20 @@ import { ShareService } from '../../services/components/modals/share.service';
 class MdEditorStubComponent { }
 
 function setupTestBed() {
-  const fileService = jasmine.createSpyObj('FileService', [
+  const fileService = jasmine.createSpyObj<FileService>('FileService', [
     'getFile',
     'saveTextFile',
     'moveFile',
+    'createFileSyncSocket',
   ]);
-  const tagService = jasmine.createSpyObj('TagService', [
+  const webSocket = jasmine.createSpyObj<WebSocket>('WebSocket', ['addEventListener', 'close']);
+  fileService.createFileSyncSocket.and.returnValue(webSocket);
+  const tagService = jasmine.createSpyObj<TagService>('TagService', [
     'listFileTags',
     'addFileTag',
     'removeFileTag',
   ]);
-  const shareService = jasmine.createSpyObj('ShareService', ['setPublicState', 'loadPublicLink', 'setFilePath'], {
+  const shareService = jasmine.createSpyObj<ShareService>('ShareService', ['setPublicState', 'loadPublicLink', 'setFilePath'], {
     fileName: signal(''),
     isPublic: signal(false),
     publicLink: signal<string | null>(null),
@@ -167,6 +171,7 @@ describe('FileEditorComponent', () => {
       'test.txt',
       'test',
       undefined,
+      jasmine.any(String),
     );
   });
 
@@ -259,6 +264,86 @@ describe('FileEditorComponent', () => {
       undefined,
     );
   });
+
+  it('should create file sync socket on init', async () => {
+    tagService.listFileTags.and.resolveTo([]);
+    mockActivatedRoute({
+      path: '/test.txt',
+    });
+
+    const webSocket = jasmine.createSpyObj<WebSocket>('WebSocket', ['addEventListener', 'close']);
+    fileService.createFileSyncSocket.and.returnValue(webSocket);
+
+    fixture = TestBed.createComponent(FileEditorComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fileService.createFileSyncSocket).toHaveBeenCalledWith(
+      '/test.txt',
+      undefined,
+    );
+  });
+
+  it('should send client ID on socket open', async () => {
+    tagService.listFileTags.and.resolveTo([]);
+    mockActivatedRoute({
+      path: '/test.txt',
+    });
+
+    const webSocket = jasmine.createSpyObj<WebSocket>('WebSocket', ['addEventListener', 'send', 'close']);
+    fileService.createFileSyncSocket.and.returnValue(webSocket);
+
+    fixture = TestBed.createComponent(FileEditorComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(webSocket.addEventListener).toHaveBeenCalledWith('open', jasmine.any(Function));
+    const openCallback = webSocket.addEventListener.calls.all()
+      .find(call => call.args[0] === 'open')?.args[1];
+    if (typeof openCallback === 'function') {
+      openCallback(new Event('open'));
+    }
+
+    expect(webSocket.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        messageType: FileSyncMessageType.ClientId,
+        clientId: component['clientId'],
+      }),
+    );
+  });
+
+  it('should handle file update message', async () => {
+    tagService.listFileTags.and.resolveTo([]);
+    mockActivatedRoute({
+      path: '/test.txt',
+    });
+
+    const webSocket = jasmine.createSpyObj<WebSocket>('WebSocket', ['addEventListener', 'send', 'close']);
+    fileService.createFileSyncSocket.and.returnValue(webSocket);
+
+    fixture = TestBed.createComponent(FileEditorComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // Clear getFile call to avoid conflicts
+    fileService.getFile.calls.reset();
+
+    expect(webSocket.addEventListener).toHaveBeenCalledWith('message', jasmine.any(Function));
+    const messageCallback = webSocket.addEventListener.calls.all()
+      .find(call => call.args[0] === 'message')?.args[1];
+    if (typeof messageCallback === 'function') {
+      const event = new MessageEvent('message', {
+        data: JSON.stringify({
+          messageType: FileSyncMessageType.UpdateTime,
+          senderClientId: 'other-client',
+        }),
+      });
+      messageCallback(event);
+    }
+
+    expect(fileService.getFile).toHaveBeenCalled();
+  });
+
 });
 
 describe('FileEditorComponent with groupId', () => {
@@ -321,6 +406,7 @@ describe('FileEditorComponent with groupId', () => {
       'test.txt',
       'test content',
       123,
+      jasmine.any(String),
     );
   });
 

@@ -141,11 +141,12 @@ export class FileService {
     return result;
   }
 
-  async saveTextFile(directoryPath: string, name: string, content: string, groupId?: number) {
+  async saveTextFile(directoryPath: string, name: string, content: string, groupId?: number, clientId?: string) {
     const params = generateHttpParams({
       directoryPath: directoryPath,
       name: name,
       groupId: groupId,
+      clientId: clientId,
     });
 
     await firstValueFrom(
@@ -201,5 +202,15 @@ export class FileService {
       this.http.get<FileInfo>(`${apiUrl}/public/getFileInfo`, { params }),
     );
     return mapFileDates(fileInfo);
+  }
+
+  createFileSyncSocket(filePath: string, groupId?: number): WebSocket {
+    const params = generateHttpParams({
+      filePath: filePath,
+      groupId: groupId,
+    });
+
+    const socketUrl = `${environment.wsApiUrl}/ws/fileSync?${params.toString()}`;
+    return new WebSocket(socketUrl);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,8 @@ import { getTranslation } from '../../utils/translation-utils';
 import { Location } from '@angular/common';
 import { ShareModalComponent } from "../components/modals/share/share.component";
 import { ShareService } from '../../services/components/modals/share.service';
+import { ClientIdMessage, FileSyncMessage, FileSyncMessageType, FileUpdatedMessage } from '../../model/file-sync-message';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-file-editor',
@@ -24,14 +26,20 @@ import { ShareService } from '../../services/components/modals/share.service';
     EditTagsModalComponent,
     RenameFileModalComponent,
     ShareModalComponent
-],
+  ],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
 })
-export class FileEditorComponent {
+export class FileEditorComponent implements OnInit, OnDestroy {
   readonly directoryPath: string;
   readonly groupId?: number;
   readonly linkBasePath: string = '';
+  // It's fine if this changes in for each file editor instance,
+  // as the clientId is used to identify the client for file sync.
+  // It does not need to be persistent across sessions.
+  private readonly clientId = this.createClientId();
+
+  private socket?: WebSocket;
 
   fileName: string;
   content = '';
@@ -49,6 +57,7 @@ export class FileEditorComponent {
     private notificationService: NotificationService,
     private router: Router,
     private location: Location,
+    private log: LoggerService,
 
     public share: ShareService,
   ) {
@@ -60,13 +69,7 @@ export class FileEditorComponent {
       this.linkBasePath = `/groups/${this.groupId}`;
     }
 
-    fileService.getFile(this.directoryPath, this.fileName, this.groupId)
-      .then((content) => {
-        this.content = new TextDecoder().decode(content);
-        this.loading = false;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
-      });
+    this.loadFile();
 
     tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
       .then((tags) => {
@@ -76,12 +79,61 @@ export class FileEditorComponent {
       });
   }
 
+  ngOnInit(): void {
+    const filePath = joinPaths(this.directoryPath, this.fileName);
+    const socket = this.fileService.createFileSyncSocket(filePath, this.groupId);
+    this.socket = socket;
+
+    socket.addEventListener('open', () => {
+      this.log.info('File sync socket opened for file:', filePath);
+      const message: ClientIdMessage = {
+        messageType: FileSyncMessageType.ClientId,
+        clientId: this.clientId,
+      };
+      // Send the client ID message to the server
+      socket.send(JSON.stringify(message));
+    });
+
+    socket.addEventListener('message', async (event) => {
+      const data = JSON.parse(event.data) as FileSyncMessage;
+
+      if (data.messageType == FileSyncMessageType.UpdateTime) {
+        const updateMessage = data as FileUpdatedMessage;
+        // Update the file if the update is not from this client
+        if (updateMessage.senderClientId !== this.clientId) {
+          await this.loadFile();
+          this.notificationService.info(await getTranslation(this.translate, 'editor.file-updated'));
+        }
+      }
+    });
+
+    socket.addEventListener('error', async (error) => {
+      console.error('File sync socket error:', error);
+      this.notificationService.error(await getTranslation(this.translate, 'error.file-sync-socket'));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.socket?.close();
+  }
+
+  async loadFile() {
+    try {
+      const content = await this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
+      this.content = new TextDecoder().decode(content);
+      this.loading = false;
+    } catch {
+      this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
+    }
+  }
+
   async saveContent() {
     await this.notificationService.awaitAndNotifyError(this.fileService.saveTextFile(
       this.directoryPath,
       this.fileName,
       this.content,
       this.groupId,
+      this.clientId,
     ), {
       default: await getTranslation(this.translate, 'error.save-file'),
     });
@@ -126,5 +178,15 @@ export class FileEditorComponent {
     this.share.setFilePath(joinPaths(this.directoryPath, this.fileName));
     await this.share.loadPublicLink();
     this.shareModal.show();
+  }
+
+  private createClientId(): string {
+    // Use crypto API for generating a unique client ID
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+
+    // Fallback for environments where crypto.randomUUID is not available
+    return 'client-' + Math.random().toString(36).substring(2, 15) + '-' + Date.now();
   }
 }
