@@ -210,9 +210,7 @@ export class FileService {
       groupId: groupId,
     });
 
-    const apiUrlNoProtocol = apiUrl.replace(/(^\w+:|^)\/\//, '');
-
-    const socketUrl = `ws://localhost:5002/file/ws/fileSync?${params.toString()}`;
+    const socketUrl = `${environment.wsApiUrl}/ws/fileSync?${params.toString()}`;
     return new WebSocket(socketUrl);
   }
 }
