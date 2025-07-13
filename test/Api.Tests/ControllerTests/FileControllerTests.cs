@@ -23,6 +23,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     private readonly DefaultHttpContext _httpContext;
     private readonly IPublicFileScheduler _publicFileScheduler;
     private readonly IWebSocketFileSyncService _webSocketFileSyncService;
+    private readonly IFileSyncService _fileSyncService;
 
     private readonly CancellationTokenSource _cts = new();
 
@@ -36,6 +37,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _publicFileService = serviceProvider.GetRequiredService<IPublicFileService>();
         _publicFileScheduler = serviceProvider.GetRequiredService<IPublicFileScheduler>();
         _webSocketFileSyncService = serviceProvider.GetRequiredService<IWebSocketFileSyncService>();
+        _fileSyncService = serviceProvider.GetRequiredService<IFileSyncService>();
         _controller = serviceProvider.GetRequiredService<FileController>();
 
         _httpContext = new DefaultHttpContext();
@@ -397,6 +399,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         const string name = "test_file_name";
         const string filesystemName = "test_file_name.bin";
         const string content = "test content";
+        var clientId = Guid.NewGuid().ToString();
 
         var encryptedFile = new EncryptedFile(filesystemName, name)
         {
@@ -405,12 +408,13 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileService.GetEncryptedFileAsync($"{directoryPath}/{name}", null).Returns(encryptedFile);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var result = await _controller.SaveTextFile(directoryPath, name, null, null);
+        var result = await _controller.SaveTextFile(directoryPath, name, null, clientId);
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(filesystemName, Arg.Any<Stream>());
         await _fileService.Received(1).UpdateTimestamp(directoryPath, name, null);
         await _publicFileScheduler.Received(1).ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
+        await _fileSyncService.Received(1).SendSyncSignalAsync(encryptedFile.Id, Arg.Is<FileSyncChannelMessage>(msg => msg.ClientId == clientId), Arg.Any<CancellationToken>());
     }
 
     [Fact]
