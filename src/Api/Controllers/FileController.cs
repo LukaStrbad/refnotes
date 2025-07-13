@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System.Net.WebSockets;
+using System.Text;
 using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
 using Api.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -19,6 +21,9 @@ public class FileController : GroupPermissionControllerBase
     private readonly IFileStorageService _fileStorageService;
     private readonly IPublicFileService _publicFileService;
     private readonly IPublicFileScheduler _publicFileScheduler;
+    private readonly ILogger<FileController> _logger;
+    private readonly IFileSyncService _fileSyncService;
+    private readonly IWebSocketFileSyncService _webSocketFileSyncService;
 
     public FileController(
         IFileService fileService,
@@ -26,12 +31,18 @@ public class FileController : GroupPermissionControllerBase
         IGroupPermissionService groupPermissionService,
         IUserService userService,
         IPublicFileService publicFileService,
-        IPublicFileScheduler publicFileScheduler) : base(groupPermissionService, userService)
+        IPublicFileScheduler publicFileScheduler,
+        ILogger<FileController> logger,
+        IFileSyncService fileSyncService,
+        IWebSocketFileSyncService webSocketFileSyncService) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
         _fileStorageService = fileStorageService;
         _publicFileService = publicFileService;
         _publicFileScheduler = publicFileScheduler;
+        _logger = logger;
+        _fileSyncService = fileSyncService;
+        _webSocketFileSyncService = webSocketFileSyncService;
     }
 
     [HttpPost("addFile")]
@@ -168,7 +179,7 @@ public class FileController : GroupPermissionControllerBase
     [HttpPost("saveTextFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId)
+    public async Task<ActionResult> SaveTextFile(string directoryPath, string name, int? groupId, string? clientId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
@@ -181,8 +192,11 @@ public class FileController : GroupPermissionControllerBase
         }
 
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
-        await _fileService.UpdateTimestamp(directoryPath, name, groupId);
+        var modified = await _fileService.UpdateTimestamp(directoryPath, name, groupId);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
+
+        var syncMessage = new FileSyncChannelMessage(modified, clientId ?? Guid.NewGuid().ToString());
+        await _fileSyncService.SendSyncSignalAsync(encryptedFile.Id, syncMessage, HttpContext.RequestAborted);
         return Ok();
     }
 
@@ -260,5 +274,58 @@ public class FileController : GroupPermissionControllerBase
         new FileExtensionContentTypeProvider().TryGetContentType(path, out var contentType);
         var stream = _fileStorageService.GetFile(fileName);
         return File(stream, contentType ?? "application/octet-stream", name);
+    }
+
+    [Route("/ws/fileSync")]
+    public async Task FileSync(string filePath, int? groupId)
+    {
+        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (encryptedFile is null)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("File not found");
+            return;
+        }
+
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("Only WebSocket requests are supported on this endpoint");
+            return;
+        }
+
+        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        try
+        {
+            _logger.LogInformation("File sync connection opened for file with ID {fileId}", encryptedFile.Id);
+            await _webSocketFileSyncService.HandleFileSync(webSocket, encryptedFile.Id, HttpContext.RequestAborted);
+        }
+        // Some common exceptions that happen when a connection is closed prematurely
+        catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+        {
+            // No need to log the error as we know the reason for this exception
+            _logger.LogWarning("WebSocket connection closed prematurely");
+        }
+        catch (ConnectionAbortedException e)
+        {
+            _logger.LogWarning(e, "WebSocket connection aborted");
+        }
+        catch (OperationCanceledException e)
+        {
+            switch (e.InnerException)
+            {
+                case WebSocketException { WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely }:
+                    // No need to log the error as we know the reason for this exception
+                    _logger.LogWarning("WebSocket connection closed prematurely");
+                    return;
+                case ObjectDisposedException objectDisposedException:
+                    _logger.LogWarning(objectDisposedException, "WebSocket connection closed due to a disposed object");
+                    return;
+                default:
+                    throw;
+            }
+        }
     }
 }

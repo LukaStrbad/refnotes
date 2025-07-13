@@ -1,10 +1,11 @@
-﻿using Api.Model;
+﻿using System.Text.Json;
+using Api.Model;
 using Api.Utils;
 using Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Data.Model;
 using Api.Extensions;
+using StackExchange.Redis;
 
 namespace Api.Services;
 
@@ -22,10 +23,10 @@ public sealed class SearchService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
-    IMemoryCache cache,
+    IConnectionMultiplexer muxer,
     IUserService userService) : ISearchService
 {
-    private async Task<bool> ShouldIncludeInFullText(FileSearchResultDto file)
+    private async Task<bool> ShouldIncludeInFullText(FileSearchResultInternal file)
     {
         if (!FileUtils.IsTextFile(file.Path) && !FileUtils.IsMarkdownFile(file.Path))
             return false;
@@ -36,30 +37,32 @@ public sealed class SearchService(
 
     private async IAsyncEnumerable<FileSearchResultDto> SearchFilesInDirectory(User user,
         IQueryable<EncryptedFile> filesQuery, EncryptedDirectory directory, string searchTerm, bool includeFullText,
-        Func<IEnumerable<FileSearchResultDto>, IEnumerable<FileSearchResultDto>> filesFilter)
+        Func<IEnumerable<FileSearchResultInternal>, IEnumerable<FileSearchResultInternal>> filesFilter)
     {
+        var redis = muxer.GetDatabase();
         var directoryPath = directory.DecryptedPath(encryptionService);
-        List<FileSearchResultDto> directoryFiles;
+        List<FileSearchResultInternal> directoryFiles;
 
         // Search term should not be included because searchTerm is only used after the directory files are fetched
         var cacheKey = $"{nameof(SearchFilesInDirectory)}-{directoryPath}-{user.Id}";
-
-        if (cache.TryGetValue(cacheKey, out List<FileSearchResultDto>? cachedFiles) && cachedFiles is not null)
+        
+        var cacheValue = await redis.StringGetAsync(cacheKey);
+        if (cacheValue.HasValue)
         {
-            directoryFiles = cachedFiles;
+            directoryFiles = JsonSerializer.Deserialize<List<FileSearchResultInternal>>(cacheValue.ToString()) ?? [];
         }
         else
         {
-            directoryFiles = await filesQuery.Select(file => file.ToSearchResultDto(directoryPath, encryptionService))
+            directoryFiles = await filesQuery.Select(file => file.ToSearchResultDto(directoryPath, encryptionService).ToInternal())
                 .ToListAsync();
-            cache.Set(cacheKey, directoryFiles, TimeSpan.FromMinutes(1));
+            await redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(directoryFiles), TimeSpan.FromMinutes(1));
         }
 
         foreach (var file in filesFilter(directoryFiles))
         {
             if (file.Path.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
             {
-                yield return file;
+                yield return file.ToDto();
                 continue;
             }
 
@@ -68,21 +71,23 @@ public sealed class SearchService(
             string fileText;
 
             var fileCacheKey = $"{nameof(SearchFilesInDirectory)}-{file.FilesystemName}-{user.Id}";
-            if (cache.TryGetValue(fileCacheKey, out string? cachedFileText) && cachedFileText is not null)
+            cacheValue = await redis.StringGetAsync(fileCacheKey);
+            if (cacheValue.HasValue)
             {
-                fileText = cachedFileText;
+                fileText = encryptionService.DecryptAesStringBase64(cacheValue.ToString());
             }
             else
             {
                 var fileContent = fileStorageService.GetFile(file.FilesystemName);
                 using var sr = new StreamReader(fileContent);
                 fileText = await sr.ReadToEndAsync();
-                cache.Set(fileCacheKey, fileText, TimeSpan.FromMinutes(1));
+                // Store data encrypted
+                await redis.StringSetAsync(fileCacheKey, encryptionService.EncryptAesStringBase64(fileText), TimeSpan.FromMinutes(1));
             }
 
             if (fileText.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase))
             {
-                yield return file with { FoundByFullText = true };
+                yield return (file with { FoundByFullText = true }).ToDto();
             }
         }
     }
@@ -117,7 +122,7 @@ public sealed class SearchService(
         }
     }
 
-    private static Func<IEnumerable<FileSearchResultDto>, IEnumerable<FileSearchResultDto>> GetFilesFilter(
+    private static Func<IEnumerable<FileSearchResultInternal>, IEnumerable<FileSearchResultInternal>> GetFilesFilter(
         SearchOptionsDto searchOptions)
     {
         var tags = searchOptions.Tags ?? [];
@@ -133,7 +138,7 @@ public sealed class SearchService(
 
         return FilterFunc;
 
-        IEnumerable<FileSearchResultDto> FilterFunc(IEnumerable<FileSearchResultDto> files)
+        IEnumerable<FileSearchResultInternal> FilterFunc(IEnumerable<FileSearchResultInternal> files)
         {
             var filesEnumerable = files;
 

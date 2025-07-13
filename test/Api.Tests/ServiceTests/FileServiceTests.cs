@@ -318,7 +318,7 @@ public class FileServiceTests : BaseTests
 
         sut.ServiceProvider.GetRequiredService<IFileStorageService>()
             .GetFileSize(Arg.Any<string>())
-            .Returns(Task.FromResult(1024L));
+            .Returns(1024L);
         // fileStorageService.GetFileSize(Arg.Any<string>())
         //     .Returns(Task.FromResult(1024L));
 
@@ -348,7 +348,7 @@ public class FileServiceTests : BaseTests
 
         await sut.Value.AddFile(subdirectoryPath, fileName, group?.Id);
         fileStorageService.GetFileSize(Arg.Any<string>())
-            .Returns(Task.FromResult(1024L));
+            .Returns(1024L);
 
         var encryptedFile = await sut.Value.GetEncryptedFileAsync(filePath, group?.Id);
         Assert.NotNull(encryptedFile);
@@ -414,5 +414,102 @@ public class FileServiceTests : BaseTests
         Assert.NotNull(result);
         Assert.Equal(group.Id, result.Id);
         Assert.Equal(group.Name, result.Name);
+    }
+
+    [Theory, AutoData]
+    public async Task GetUserFromFile_ReturnsUser(
+        Sut<FileService> sut,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var user = await sut.Value.GetUserFromFile(file);
+
+        Assert.NotNull(user);
+        Assert.Equal(sut.DefaultUser.Id, user.Id);
+    }
+
+    [Theory, AutoData]
+    public async Task GetUserGroupFromFile_ReturnsGroup(
+        Sut<FileService> sut,
+        [FixtureGroup] UserGroup group,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var groupResult = await sut.Value.GetUserGroupFromFile(file);
+
+        Assert.NotNull(groupResult);
+        Assert.Equal(group.Id, groupResult.Id);
+    }
+
+    [Theory, AutoData]
+    public async Task GetDirOwnerAsync_ReturnsUser_ForUserOwner(
+        Sut<FileService> sut,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var owner = await sut.Value.GetDirOwnerAsync(file);
+
+        Assert.Null(owner.Group);
+        Assert.NotNull(owner.User);
+        Assert.Equal(sut.DefaultUser.Id, owner.User.Id);
+    }
+
+    [Theory, AutoData]
+    public async Task GetDirOwnerAsync_ReturnsGroup_ForGroupOwner(
+        Sut<FileService> sut,
+        [FixtureGroup] UserGroup group,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+
+        var owner = await sut.Value.GetDirOwnerAsync(file);
+
+        Assert.Null(owner.User);
+        Assert.NotNull(owner.Group);
+        Assert.Equal(group.Id, owner.Group.Id);
+    }
+
+    [Theory, AutoData]
+    public async Task GetEncryptedFileForUserAsync_ReturnsFile(
+        Sut<FileService> sut,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        var filePath = $"{dir.Path}/{file.Name}";
+
+        var fileResult = await sut.Value.GetEncryptedFileForUserAsync(filePath, sut.DefaultUser);
+
+        Assert.NotNull(fileResult);
+        Assert.Equal(file.Id, fileResult.Id);
+    }
+
+    [Theory, AutoData]
+    public async Task GetEncryptedFileForGroupAsync_ReturnsFile(
+        Sut<FileService> sut,
+        [FixtureGroup] UserGroup group,
+        EncryptedFileFakerImplementation fileFaker,
+        EncryptedDirectoryFakerImplementation dirFaker)
+    {
+        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
+        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        var filePath = $"{dir.Path}/{file.Name}";
+
+        var fileResult = await sut.Value.GetEncryptedFileForGroupAsync(filePath, group);
+
+        Assert.NotNull(fileResult);
+        Assert.Equal(file.Id, fileResult.Id);
     }
 }

@@ -4,7 +4,6 @@ namespace Api.Middlewares;
 
 public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
 {
-
     public async Task Invoke(HttpContext httpContext)
     {
         try
@@ -19,6 +18,14 @@ public class ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionH
 
     private async Task HandleException(Exception e, HttpContext httpContext)
     {
+        if (httpContext.WebSockets.IsWebSocketRequest)
+        {
+            logger.LogError(e, "WebSocket exception");
+            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await httpContext.Response.WriteAsync("An error occurred");
+            return;
+        }
+
         switch (e)
         {
             case NoNameException noNameException:

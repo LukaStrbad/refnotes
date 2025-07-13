@@ -15,8 +15,10 @@ using Api;
 using Api.Services.Schedulers;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Extensions;
 using Bogus;
 using Quartz;
+using StackExchange.Redis;
 
 namespace Api.Tests.Data;
 
@@ -46,7 +48,9 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IPublicFileImageService),
         typeof(IGroupPermissionService),
         typeof(IPublicFileService),
-        typeof(IPublicFileScheduler)
+        typeof(IPublicFileScheduler),
+        typeof(IFileSyncService),
+        typeof(IWebSocketMessageHandler)
     ];
 
     private readonly List<Type> _realizedMocks = [];
@@ -239,6 +243,14 @@ public sealed class AutoDataResolver : IAsyncDisposable
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
         services.AddLogging();
+        services.AddScopedSubstitute<IConnectionMultiplexer>();
+        services.AddScoped<ISubscriber>(implementationFactory: serviceProvider =>
+        {
+            var muxer = serviceProvider.GetRequiredService<IConnectionMultiplexer>();
+            var subscriber = Substitute.For<ISubscriber>();
+            muxer.GetSubscriber().Returns(subscriber);
+            return subscriber;
+        });
 
         var classType = _methodInfo.DeclaringType;
         if (classType is null)

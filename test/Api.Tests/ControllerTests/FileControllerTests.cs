@@ -1,11 +1,9 @@
-﻿using System.Text;
+﻿using System.Net.WebSockets;
+using System.Text;
 using Api.Controllers;
 using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
-using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Fixtures;
 using Data.Model;
 using Microsoft.AspNetCore.Http;
@@ -24,6 +22,10 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     private readonly IPublicFileService _publicFileService;
     private readonly DefaultHttpContext _httpContext;
     private readonly IPublicFileScheduler _publicFileScheduler;
+    private readonly IWebSocketFileSyncService _webSocketFileSyncService;
+    private readonly IFileSyncService _fileSyncService;
+
+    private readonly CancellationTokenSource _cts = new();
 
     public FileControllerTests(ControllerFixture<FileController> fixture)
     {
@@ -34,6 +36,8 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
         _publicFileService = serviceProvider.GetRequiredService<IPublicFileService>();
         _publicFileScheduler = serviceProvider.GetRequiredService<IPublicFileScheduler>();
+        _webSocketFileSyncService = serviceProvider.GetRequiredService<IWebSocketFileSyncService>();
+        _fileSyncService = serviceProvider.GetRequiredService<IFileSyncService>();
         _controller = serviceProvider.GetRequiredService<FileController>();
 
         _httpContext = new DefaultHttpContext();
@@ -315,9 +319,9 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileService.GetFileInfoAsync(image.Id).Returns(imageInfo);
         var stream = Substitute.For<Stream>();
         _fileStorageService.GetFile(image.FilesystemName).Returns(stream);
-        
+
         var result = await _controller.GetPublicImage(urlHash, imagePath);
-        
+
         var okResult = Assert.IsType<FileStreamResult>(result);
         Assert.Equal(stream, okResult.FileStream);
     }
@@ -339,10 +343,10 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _publicFileService.IsPublicFileActive(urlHash).Returns(true);
         _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath).Returns(image);
         _publicFileService.HasAccessToFileThroughHash(urlHash, image).Returns(false);
-        
+
         var result = await _controller.GetPublicImage(urlHash, imagePath);
-        
-        Assert.IsType<ForbidResult>(result); 
+
+        Assert.IsType<ForbidResult>(result);
     }
 
     [Fact]
@@ -395,6 +399,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         const string name = "test_file_name";
         const string filesystemName = "test_file_name.bin";
         const string content = "test content";
+        var clientId = Guid.NewGuid().ToString();
 
         var encryptedFile = new EncryptedFile(filesystemName, name)
         {
@@ -403,12 +408,13 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _fileService.GetEncryptedFileAsync($"{directoryPath}/{name}", null).Returns(encryptedFile);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var result = await _controller.SaveTextFile(directoryPath, name, null);
+        var result = await _controller.SaveTextFile(directoryPath, name, null, clientId);
 
         Assert.IsType<OkResult>(result);
         await _fileStorageService.Received(1).SaveFileAsync(filesystemName, Arg.Any<Stream>());
         await _fileService.Received(1).UpdateTimestamp(directoryPath, name, null);
         await _publicFileScheduler.Received(1).ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
+        await _fileSyncService.Received(1).SendSyncSignalAsync(encryptedFile.Id, Arg.Is<FileSyncChannelMessage>(msg => msg.ClientId == clientId), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -419,7 +425,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         _fileService.GetFilesystemFilePath(directoryPath, name, null).Returns((string?)null);
 
-        var result = await _controller.SaveTextFile(directoryPath, name, null);
+        var result = await _controller.SaveTextFile(directoryPath, name, null, null);
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
@@ -438,7 +444,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         _groupPermissionService.HasGroupAccessAsync(Arg.Any<User>(), groupId).Returns(false);
         _httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
-        var result = await _controller.SaveTextFile(directoryPath, name, groupId);
+        var result = await _controller.SaveTextFile(directoryPath, name, groupId, null);
 
         Assert.IsType<ForbidResult>(result);
         await _fileService.DidNotReceive().UpdateTimestamp(directoryPath, name, groupId);
@@ -507,5 +513,67 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("File not found.", notFoundResult.Value);
+    }
+
+    private WebSocket SetupWebSocketManager(bool isWebSocketRequest)
+    {
+        var httpContext = Substitute.For<HttpContext>();
+        var webSocketManager = Substitute.For<WebSocketManager>();
+        var webSocket = Substitute.For<WebSocket>();
+
+        webSocketManager.IsWebSocketRequest.Returns(isWebSocketRequest);
+        webSocketManager.AcceptWebSocketAsync().Returns(webSocket);
+        httpContext.WebSockets.Returns(webSocketManager);
+        httpContext.RequestAborted.Returns(_cts.Token);
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
+
+        return webSocket;
+    }
+
+    [Fact]
+    public async Task FileSync_CallsFileSyncHandler()
+    {
+        var webSocket = SetupWebSocketManager(true);
+
+        const string filePath = "/test.txt";
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        {
+            Id = 123
+        };
+        _fileService.GetEncryptedFileAsync(filePath, null).Returns(encryptedFile);
+
+        await _controller.FileSync(filePath, null);
+
+        await _webSocketFileSyncService.Received(1).HandleFileSync(webSocket, encryptedFile.Id, _cts.Token);
+    }
+
+    [Fact]
+    public async Task FileSync_ReturnsBadRequest_WhenWebSocketIsNotRequested()
+    {
+        const string filePath = "/test.txt";
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        {
+            Id = 123
+        };
+        _fileService.GetEncryptedFileAsync(filePath, null).Returns(encryptedFile);
+
+        await _controller.FileSync(filePath, null);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, _httpContext.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task FileSync_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        const string filePath = "/test.txt";
+        _fileService.GetEncryptedFileAsync(filePath, null).Returns((EncryptedFile?)null);
+
+        await _controller.FileSync(filePath, null);
+
+        Assert.Equal(StatusCodes.Status404NotFound, _httpContext.Response.StatusCode);
     }
 }

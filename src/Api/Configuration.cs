@@ -49,6 +49,10 @@ public static class Configuration
         builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
         builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
+        builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
+        builder.Services.AddTransient<IFileSyncService, FileSyncService>();
+        builder.Services.AddTransient<IWebSocketFileSyncService, WebSocketFileSyncService>();
+
         builder.Services.AddAuthentication(x =>
         {
             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -94,6 +98,7 @@ public static class Configuration
 
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = maxFileSize; });
         builder.Services.AddMemoryCache();
+        builder.AddRedisDistributedCache(connectionName: "cache");
     }
 
     private static void RegisterScheduler(this IHostApplicationBuilder builder)
@@ -119,7 +124,10 @@ public static class Configuration
         );
 
         app.UseExceptionHandlerMiddleware();
-
+        app.UseWebSockets(new WebSocketOptions
+        {
+            KeepAliveTimeout = TimeSpan.FromSeconds(60)
+        });
         app.MapControllers();
     }
 
