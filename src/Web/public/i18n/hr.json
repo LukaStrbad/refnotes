@@ -222,7 +222,8 @@
     "load-file-tags": "Pogreška kod učitavanja oznaka datoteka",
     "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka",
     "access-code-not-allowed": "Nemaš dopuštenje za kreiranje pristupnih kodova za ovu grupu",
-    "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda"
+    "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda",
+    "file-sync-socket": "Pogreška povezivanja za sinkronizaciju datoteka"
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",

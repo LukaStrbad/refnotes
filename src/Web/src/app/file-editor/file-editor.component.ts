@@ -14,6 +14,7 @@ import { Location } from '@angular/common';
 import { ShareModalComponent } from "../components/modals/share/share.component";
 import { ShareService } from '../../services/components/modals/share.service';
 import { ClientIdMessage, FileSyncMessage, FileSyncMessageType, FileUpdatedMessage } from '../../model/file-sync-message';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-file-editor',
@@ -38,11 +39,12 @@ export class FileEditorComponent implements OnInit, OnDestroy {
   // It does not need to be persistent across sessions.
   private readonly clientId = this.createClientId();
 
+  private socket?: WebSocket;
+
   fileName: string;
   content = '';
   loading = true;
   tags: string[] = [];
-  socket?: WebSocket;
 
   @ViewChild('shareModal')
   shareModal!: ShareModalComponent;
@@ -55,6 +57,7 @@ export class FileEditorComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private router: Router,
     private location: Location,
+    private log: LoggerService,
 
     public share: ShareService,
   ) {
@@ -81,30 +84,33 @@ export class FileEditorComponent implements OnInit, OnDestroy {
     const socket = this.fileService.createFileSyncSocket(filePath, this.groupId);
     this.socket = socket;
 
-    socket.onopen = () => {
+    socket.addEventListener('open', () => {
+      this.log.info('File sync socket opened for file:', filePath);
       const message: ClientIdMessage = {
         messageType: FileSyncMessageType.ClientId,
         clientId: this.clientId,
       };
       // Send the client ID message to the server
       socket.send(JSON.stringify(message));
-    };
+    });
 
-    socket.onmessage = async (event) => {
+    socket.addEventListener('message', async (event) => {
       const data = JSON.parse(event.data) as FileSyncMessage;
 
       if (data.messageType == FileSyncMessageType.UpdateTime) {
         const updateMessage = data as FileUpdatedMessage;
+        // Update the file if the update is not from this client
         if (updateMessage.senderClientId !== this.clientId) {
           await this.loadFile();
           this.notificationService.info(await getTranslation(this.translate, 'editor.file-updated'));
         }
       }
-    };
+    });
 
-    socket.onerror = (error) => {
+    socket.addEventListener('error', async (error) => {
       console.error('File sync socket error:', error);
-    };
+      this.notificationService.error(await getTranslation(this.translate, 'error.file-sync-socket'));
+    });
   }
 
   ngOnDestroy(): void {

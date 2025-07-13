@@ -222,7 +222,8 @@
     "load-file-tags": "Error loading file tags",
     "deleting-files": "An error occurred deleting some files",
     "access-code-not-allowed": "You are not allowed to create group access codes",
-    "error-creating-access-code": "Error generating group access code"
+    "error-creating-access-code": "Error generating group access code",
+    "file-sync-socket": "Error connecting to file sync socket"
   },
   "time": {
     "just-now": "Just now",
