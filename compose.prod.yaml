@@ -1,7 +1,7 @@
 services:
   caddy:
     volumes:
-      - ${CADDYFILE_PATH:-./docker/Caddyfile}:/etc/caddy/Caddyfile
+      - ${CADDYFILE_PATH:-./docker/caddy/Caddyfile}:/etc/caddy/Caddyfile
     restart: always
     networks:
       - internal
@@ -21,6 +21,7 @@ services:
 volumes: !override
   caddy-data:
   caddy-config:
+  scheduler-mysql-data:
 
 networks:
   internal:

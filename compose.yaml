@@ -35,6 +35,8 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy
+      scheduler-db:
+        condition: service_healthy
     volumes:
       - ${REFNOTES_CONFIG:-./}:/root/.config/refnotes
       - refnotes-data:/data
@@ -51,6 +53,8 @@ services:
     env_file: .env
     depends_on:
       mysql-db:
+        condition: service_healthy
+      scheduler-db:
         condition: service_healthy
     networks:
       - internal
@@ -73,8 +77,33 @@ services:
     networks:
       - internal
 
+  scheduler-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: scheduler 
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_SCHEDULER:-root}
+    ports:
+      - "${DB_EXPOSE_PORT_SCHEDULER:-0}:3306"
+    volumes:
+      - scheduler-mysql-data:/var/lib/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+
+  redis:
+    image: redis:8.0.3-alpine
+    networks:
+      - internal
+
 volumes:
   mysql-data:
+  scheduler-mysql-data:
   caddy-data:
   caddy-config:
   refnotes-data:
