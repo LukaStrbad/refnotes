@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, effect, ElementRef, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, effect, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { TagService } from '../../services/tag.service';
@@ -20,6 +20,7 @@ import { LoggerService } from '../../services/logger.service';
 import { getStatusCode } from '../../utils/errorHandler';
 import { HomeButtonComponent } from "../components/home-button/home-button.component";
 import { FileLoadingState } from '../../model/loading-state';
+import { FileSyncMessage, FileSyncMessageType } from '../../model/file-sync-message';
 
 @Component({
   selector: 'app-file-preview',
@@ -28,12 +29,14 @@ import { FileLoadingState } from '../../model/loading-state';
   styleUrl: './file-preview.component.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class FilePreviewComponent implements OnDestroy, AfterViewInit {
+export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
   private markdownHighlighter?: MarkdownHighlighter;
   fileName?: string;
   readonly groupId?: number;
   readonly fileProvider: FileProvider;
   readonly isPublicFile: boolean;
+
+  private socket?: WebSocket;
 
   loadingState: FileLoadingState = FileLoadingState.Loading;
   tags: string[] = [];
@@ -87,6 +90,31 @@ export class FilePreviewComponent implements OnDestroy, AfterViewInit {
       }
       this.markdownHighlighter.showLineNumbers = showLineNumbers;
     });
+  }
+
+  ngOnInit(): void {
+    const socket = this.fileProvider.createSyncSocket();
+    this.socket = socket;
+
+    socket.addEventListener('open', () => {
+      this.log.info('File sync socket opened');
+      // No need to send client ID as that is only needed for editing
+    });
+
+    socket.addEventListener('message', async (event) => {
+      const data = JSON.parse(event.data) as FileSyncMessage;
+
+      if (data.messageType == FileSyncMessageType.UpdateTime) {
+        await this.loadFile();
+        this.notificationService.info(await getTranslation(this.translate, 'editor.file-updated'));
+      }
+    });
+
+    socket.addEventListener('error', async (error) => {
+      console.error('File sync socket error:', error);
+      this.notificationService.error(await getTranslation(this.translate, 'error.file-sync-socket'));
+    });
+
   }
 
   ngAfterViewInit(): void {

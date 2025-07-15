@@ -9,8 +9,10 @@ import { By } from '@angular/platform-browser';
 import { mockActivatedRoute } from '../../tests/route-utils';
 
 function setupTestBed() {
-  const fileService = jasmine.createSpyObj('FileService', ['getFile', 'getImage', 'getFileInfo', 'getPublicFileInfo']);
-  const tagService = jasmine.createSpyObj('TagService', ['listFileTags']);
+  const fileService = jasmine.createSpyObj<FileService>('FileService', ['getFile', 'getImage', 'getFileInfo', 'getPublicFileInfo', 'createFileSyncSocket']);
+  const webSocket = jasmine.createSpyObj<WebSocket>('WebSocket', ['addEventListener', 'close']);
+  fileService.createFileSyncSocket.and.returnValue(webSocket);
+  const tagService = jasmine.createSpyObj<TagService>('TagService', ['listFileTags']);
 
   const imports = [
     FilePreviewComponent,
