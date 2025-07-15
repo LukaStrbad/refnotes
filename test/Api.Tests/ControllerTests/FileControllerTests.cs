@@ -576,4 +576,39 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
         Assert.Equal(StatusCodes.Status404NotFound, _httpContext.Response.StatusCode);
     }
+
+    [Fact]
+    public async Task PublicFileSync_CallsFileSyncHandler()
+    {
+        var webSocket = SetupWebSocketManager(true);
+
+        const string urlHash = "url-hash";
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        {
+            Id = 123
+        };
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(true);
+
+        await _controller.PublicFileSync(urlHash);
+
+        await _webSocketFileSyncService.Received(1).HandleFileSync(webSocket, encryptedFile.Id, _cts.Token);
+    }
+
+    [Fact]
+    public async Task PublicFileSync_ReturnsNotFound_WhenPublicFileIsNotActive()
+    {
+        const string urlHash = "url-hash";
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        {
+            Id = 123
+        };
+        _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
+        _publicFileService.IsPublicFileActive(urlHash).Returns(false);
+
+        await _controller.PublicFileSync(urlHash);
+
+        await _publicFileService.Received(1).IsPublicFileActive(urlHash);
+        Assert.Equal(StatusCodes.Status404NotFound, _httpContext.Response.StatusCode);
+    }
 }

@@ -328,4 +328,59 @@ public class FileController : GroupPermissionControllerBase
             }
         }
     }
+
+    [Route("/ws/publicFileSync")]
+    [AllowAnonymous]
+    public async Task PublicFileSync(string urlHash)
+    {
+        var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);
+
+        if (encryptedFile is null || !await _publicFileService.IsPublicFileActive(urlHash))
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("File not found");
+            return;
+        }
+
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("Only WebSocket requests are supported on this endpoint");
+            return;
+        }
+
+        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        try
+        {
+            _logger.LogInformation("File sync connection opened for file with ID {fileId}", encryptedFile.Id);
+            await _webSocketFileSyncService.HandleFileSync(webSocket, encryptedFile.Id, HttpContext.RequestAborted);
+        }
+        // Some common exceptions that happen when a connection is closed prematurely
+        catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+        {
+            // No need to log the error as we know the reason for this exception
+            _logger.LogWarning("WebSocket connection closed prematurely");
+        }
+        catch (ConnectionAbortedException e)
+        {
+            _logger.LogWarning(e, "WebSocket connection aborted");
+        }
+        catch (OperationCanceledException e)
+        {
+            switch (e.InnerException)
+            {
+                case WebSocketException { WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely }:
+                    // No need to log the error as we know the reason for this exception
+                    _logger.LogWarning("WebSocket connection closed prematurely");
+                    return;
+                case ObjectDisposedException objectDisposedException:
+                    _logger.LogWarning(objectDisposedException, "WebSocket connection closed due to a disposed object");
+                    return;
+                default:
+                    throw;
+            }
+        }
+    }
 }
