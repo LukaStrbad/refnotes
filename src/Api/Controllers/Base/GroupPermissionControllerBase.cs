@@ -20,7 +20,7 @@ public abstract class GroupPermissionControllerBase : ControllerBase
         if (groupId is null)
             return GroupAccessStatus.NoGroup;
 
-        var hasAccess = await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId);
+        var hasAccess = await _groupPermissionService.HasGroupAccessAsync(await _userService.GetCurrentUser(), (int)groupId);
         return hasAccess ? GroupAccessStatus.AccessGranted : GroupAccessStatus.AccessDenied;
     }
 
@@ -30,7 +30,7 @@ public abstract class GroupPermissionControllerBase : ControllerBase
             return GroupAccessStatus.NoGroup;
 
         var hasAccess =
-            await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), (int)groupId, minRole);
+            await _groupPermissionService.HasGroupAccessAsync(await _userService.GetCurrentUser(), (int)groupId, minRole);
         return hasAccess ? GroupAccessStatus.AccessGranted : GroupAccessStatus.AccessDenied;
     }
 

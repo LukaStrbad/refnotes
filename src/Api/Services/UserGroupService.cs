@@ -42,7 +42,7 @@ public class UserGroupService(
 
     public async Task<GroupDto> Create(string? name = null)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
         return await Create(user, name);
     }
 
@@ -55,7 +55,7 @@ public class UserGroupService(
 
     public async Task<List<GroupDto>> GetUserGroups()
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
 
         var groups = from groupRole in context.UserGroupRoles
                      join userGroup in context.UserGroups on groupRole.UserGroupId equals userGroup.Id
@@ -129,7 +129,7 @@ public class UserGroupService(
             throw new UserIsOwnerException("Owner cannot be removed from the group");
         }
 
-        var currentUser = await userService.GetUser();
+        var currentUser = await userService.GetCurrentUser();
 
         // Users can always remove themselves from the group, except in the case of owners
         if (currentUser.Id == userId)
@@ -145,7 +145,7 @@ public class UserGroupService(
 
     public async Task<string> GenerateGroupAccessCode(int groupId, DateTime expiryTime)
     {
-        var currentUser = await userService.GetUser();
+        var currentUser = await userService.GetCurrentUser();
 
         var group = await GetGroupAsync(groupId);
         var groupAccessCode = TokenService.GenerateGroupAccessCode(currentUser, group, expiryTime);
@@ -158,7 +158,7 @@ public class UserGroupService(
 
     public async Task AddCurrentUserToGroup(int groupId, string accessCode)
     {
-        var currentUser = await userService.GetUser();
+        var currentUser = await userService.GetCurrentUser();
         var existingRole = await GetUserGroupRoleAsync(groupId, currentUser.Id);
 
         if (existingRole is not null)

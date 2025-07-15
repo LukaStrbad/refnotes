@@ -65,7 +65,7 @@ public class BrowserService(
 
     public async Task AddDirectory(string path, int? groupId)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
 
         path = FileUtils.NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
@@ -117,7 +117,7 @@ public class BrowserService(
 
     public async Task DeleteDirectory(string path, int? groupId)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
 
         path = FileUtils.NormalizePath(path);
 

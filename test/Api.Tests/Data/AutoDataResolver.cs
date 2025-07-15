@@ -381,7 +381,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
 
         // The first user will be set in the UserService by default
         var userService = _serviceProvider.GetRequiredService<IUserService>();
-        userService.GetUser().Returns(user);
+        userService.GetCurrentUser().Returns(user);
 
         return user;
     }

@@ -5,24 +5,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services;
 
-public interface IUserService
+public class UserService : IUserService
 {
-    /// <summary>
-    /// Gets currently logged-in user
-    /// </summary>
-    Task<User> GetUser();
-}
+    private readonly RefNotesContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-public class UserService(
-    RefNotesContext context,
-    IHttpContextAccessor httpContextAccessor) : IUserService
-{
     // UserService should be a scoped dependency, so _user will be different for every request
     private User? _user;
 
-    public async Task<User> GetUser()
+    public UserService(RefNotesContext context,
+        IHttpContextAccessor httpContextAccessor)
     {
-        var claimsPrincipal = httpContextAccessor.HttpContext?.User;
+        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public async Task<User> GetCurrentUser()
+    {
+        var claimsPrincipal = _httpContextAccessor.HttpContext?.User;
         if (claimsPrincipal?.Identity?.Name is not { } name || name == "")
         {
             throw new NoNameException();
@@ -30,8 +30,8 @@ public class UserService(
 
         if (_user is not null)
         {
-            if (context.Entry(_user).State == EntityState.Detached)
-                context.Users.Attach(_user);
+            if (_context.Entry(_user).State == EntityState.Detached)
+                _context.Users.Attach(_user);
 
             return _user;
         }
@@ -41,7 +41,7 @@ public class UserService(
             throw new UnauthorizedException();
         }
 
-        _user = await context.Users.FirstOrDefaultAsync(u => u.Username == name);
+        _user = await _context.Users.FirstOrDefaultAsync(u => u.Username == name);
 
         if (_user is null)
         {

@@ -30,7 +30,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
         var userService = serviceProvider.GetRequiredService<IUserService>();
         _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
 
-        userService.GetUser().Returns(_testUser);
+        userService.GetCurrentUser().Returns(_testUser);
     }
 
     [Fact]
