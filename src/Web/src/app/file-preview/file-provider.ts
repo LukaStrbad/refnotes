@@ -11,6 +11,7 @@ export class FileProvider {
     public listTags: () => Promise<string[]>,
     public getFileInfo: () => Promise<File>,
     public getFile: () => Promise<ArrayBuffer>,
+    public createSyncSocket: () => WebSocket,
   ) { }
 
   async createMarkdownHighlighter(
@@ -42,6 +43,7 @@ export class FileProvider {
     const listTags = () => tagService.listFileTags(directoryPath, fileName, groupId);
     const getFileInfo = () => fileService.getFileInfo(filePath, groupId);
     const getFile = () => fileService.getFile(directoryPath, fileName, groupId);
+    const createSyncSocket = () => fileService.createFileSyncSocket(filePath, groupId);
 
     return new FileProvider(
       Promise.resolve(filePath),
@@ -49,6 +51,7 @@ export class FileProvider {
       listTags,
       getFileInfo,
       getFile,
+      createSyncSocket,
     );
   }
 
@@ -63,6 +66,7 @@ export class FileProvider {
     const listTags = () => Promise.resolve([]);
     const getFileInfo = () => fileInfoPromise;
     const getFile = () => fileService.getPublicFile(fileHash);
+    const createSyncSocket = () => fileService.createPublicFileSyncSocket(fileHash);
 
     return new FileProvider(
       filePath,
@@ -70,6 +74,7 @@ export class FileProvider {
       listTags,
       getFileInfo,
       getFile,
+      createSyncSocket,
     );
   }
 }

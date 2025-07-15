@@ -213,4 +213,11 @@ export class FileService {
     const socketUrl = `${environment.wsApiUrl}/ws/fileSync?${params.toString()}`;
     return new WebSocket(socketUrl);
   }
+
+  createPublicFileSyncSocket(urlHash: string): WebSocket {
+    const params = generateHttpParams({ urlHash: urlHash });
+
+    const socketUrl = `${environment.wsApiUrl}/ws/publicFileSync?${params.toString()}`;
+    return new WebSocket(socketUrl);
+  }
 }
