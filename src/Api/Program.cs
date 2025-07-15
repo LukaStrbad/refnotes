@@ -13,5 +13,6 @@ app.MapGet("/ping", () => "pong");
 
 app.RegisterMiddlewares();
 app.RegisterAppServices();
+app.RegisterAppSettingsReloadWatcher();
 
 app.Run();

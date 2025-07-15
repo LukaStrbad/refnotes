@@ -47,22 +47,19 @@ public class AuthService : IAuthService
 {
     private readonly byte[] _privateKey;
     private readonly RefNotesContext _context;
-    private readonly TimeSpan _accessTokenExpiry;
+    private readonly AppSettings _appSettings;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         RefNotesContext context,
         AppConfiguration appConfig,
-        IConfiguration configuration,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger, AppSettings appSettings)
     {
         _context = context;
         _privateKey = appConfig.JwtPrivateKeyBytes;
 
-        var expirySetting = configuration.GetValue<string>("AccessTokenExpiry");
-        _accessTokenExpiry = TimeParser.ParseTimeString(expirySetting);
-
         _logger = logger;
+        _appSettings = appSettings;
     }
 
     public async Task<Tokens> Login(UserCredentials credentials)
@@ -152,12 +149,12 @@ public class AuthService : IAuthService
             SecurityAlgorithms.HmacSha256);
 
         _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds",
-            StringSanitizer.SanitizeLog(user.Username), _accessTokenExpiry.TotalSeconds);
+            StringSanitizer.SanitizeLog(user.Username), _appSettings.AccessTokenExpiry.TotalSeconds);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             SigningCredentials = credentials,
-            Expires = DateTime.UtcNow.Add(_accessTokenExpiry),
+            Expires = DateTime.UtcNow.Add(_appSettings.AccessTokenExpiry),
             Subject = GenerateClaims(user)
         };
 

@@ -14,13 +14,13 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IAppDomainService _appDomainService;
-    private readonly bool _cookieSecure;
+    private readonly AppSettings _appSettings;
 
-    public AuthController(IAuthService authService, IConfiguration configuration, IAppDomainService appDomainService)
+    public AuthController(IAuthService authService, IAppDomainService appDomainService, AppSettings appSettings)
     {
         _authService = authService;
         _appDomainService = appDomainService;
-        _cookieSecure = configuration.GetValue<bool?>("CookieSecure") ?? false;
+        _appSettings = appSettings;
     }
 
     private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.Strict,
             IsEssential = true,
             HttpOnly = httpOnly,
-            Secure = _cookieSecure
+            Secure = _appSettings.CookieSecure
         };
 
         if (expires is not null)

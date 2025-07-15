@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
 using Api.Services.Schedulers;
+using Microsoft.Extensions.Primitives;
 using ServiceDefaults;
 
 namespace Api;
@@ -30,6 +31,7 @@ public static class Configuration
         builder.Services.AddSingleton(appConfig);
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
+        builder.Services.AddSingleton(AppSettings.Initialize);
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IBrowserService, BrowserService>();
@@ -110,15 +112,12 @@ public static class Configuration
 
     public static void RegisterMiddlewares(this WebApplication app)
     {
-        var allowedOrigins = app.Configuration.GetSection("CorsOrigin").Get<string>();
-        if (allowedOrigins is null)
-        {
-            throw new Exception("CorsOrigin not found in configuration.");
-        }
+        using var scope = app.Services.CreateScope();
+        var appSettings = scope.ServiceProvider.GetRequiredService<AppSettings>();
 
         app.UseCors(builder => builder
             .AllowCredentials()
-            .WithOrigins(allowedOrigins)
+            .WithOrigins(appSettings.CorsOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
         );
@@ -136,6 +135,17 @@ public static class Configuration
         if (!app.Environment.IsDevelopment()) return;
         app.MapOpenApi();
         app.MapScalarApiReference(options => { options.AddDocument("v1", routePattern: "openapi/v1.json"); });
+    }
+
+    public static void RegisterAppSettingsReloadWatcher(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var appSettings = scope.ServiceProvider.GetRequiredService<AppSettings>();
+        ChangeToken.OnChange(
+            () => config.GetReloadToken(),
+            () => appSettings.ReloadConfig()
+        );
     }
 
     public static AppConfiguration LoadAppConfig()
