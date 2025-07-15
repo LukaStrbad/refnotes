@@ -15,7 +15,7 @@ services:
       - internal
 
   web:
-    build: 
+    build:
       context: .
       dockerfile: ./docker/web/Dockerfile
     image: angular-app
@@ -37,15 +37,17 @@ services:
         condition: service_healthy
       scheduler-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ${REFNOTES_CONFIG:-./}:/root/.config/refnotes
       - refnotes-data:/data
     restart: on-failure:3
-    extra_hosts: 
+    extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
       - internal
-  
+
   migrations:
     build:
       context: .
@@ -70,7 +72,7 @@ services:
       - mysql-data:/var/lib/mysql
     restart: always
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,7 +82,7 @@ services:
   scheduler-db:
     image: mysql:8.4
     environment:
-      MYSQL_DATABASE: scheduler 
+      MYSQL_DATABASE: scheduler
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_SCHEDULER:-root}
     ports:
       - "${DB_EXPOSE_PORT_SCHEDULER:-0}:3306"
@@ -88,16 +90,20 @@ services:
       - scheduler-mysql-data:/var/lib/mysql
     restart: always
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - internal
 
-
   redis:
     image: redis:8.0.3-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - internal
 

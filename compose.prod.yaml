@@ -12,7 +12,7 @@ services:
       - ${REFNOTES_DATA_DIR}:/data
 
   mysql-db:
-    ports: !override []
+    ports: !override [ ]
     expose:
       - "3306"
     volumes:
