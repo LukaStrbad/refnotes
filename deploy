@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Create a compose function to avoid duplicating it
+compose() {
+    docker compose -f compose.yaml -f compose.prod.yaml "$@"
+}
+
+echo "Building the compose file"
+compose build
+
+echo "Starting databases"
+compose up -d mysql-db
+compose up -d scheduler-db
+
+echo "Starting redis"
+compose up -d redis
+
+echo "Running migrations"
+compose up migrations
+
+echo "Runing the backend service"
+compose up -d backend
+
+echo "Running the web"
+compose up -d web
+
+echo "Running caddy"
+compose up -d caddy
