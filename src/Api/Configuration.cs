@@ -50,6 +50,7 @@ public static class Configuration
         builder.Services.AddScoped<IPublicFileImageService, PublicFileImageService>();
         builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
         builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();

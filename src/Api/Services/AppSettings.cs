@@ -12,6 +12,7 @@ public sealed class AppSettings
     public TimeSpan AccessTokenExpiry { get; private set; }
     public string[] CorsOrigins { get; private set; } = [];
     public HashSet<string> AppDomains { get; private set; } = [];
+    public EmailSettings? EmailSettings { get; private set; }
 
     public AppSettings(IConfiguration configuration, ILogger<AppSettings> logger)
     {
@@ -35,6 +36,7 @@ public sealed class AppSettings
 
             CorsOrigins = GetCorsOrigins();
             AppDomains = GetAppDomains();
+            EmailSettings = GetEmailSettings();
         }
     }
 
@@ -76,6 +78,18 @@ public sealed class AppSettings
         throw new InvalidConfigurationException("CorsOrigins list is empty");
     }
 
+    private EmailSettings? GetEmailSettings()
+    {
+        var host = _configuration.GetValue<string>("Email:Host");
+        var username = _configuration.GetValue<string>("Email:Username");
+        var password = _configuration.GetValue<string>("Email:Password");
+        var from = _configuration.GetValue<string>("Email:From");
+        if (host is null || username is null || password is null || from is null)
+            return null;
+
+        return new EmailSettings(host, username, password, from);
+    }
+
     public static AppSettings Initialize(IServiceProvider serviceProvider)
     {
         var appSettings = new AppSettings(
@@ -86,3 +100,5 @@ public sealed class AppSettings
         return appSettings;
     }
 }
+
+public record EmailSettings(string Host, string Username, string Password, string From);
