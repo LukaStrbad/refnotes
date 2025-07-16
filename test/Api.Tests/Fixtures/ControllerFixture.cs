@@ -19,8 +19,13 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
     {
         var services = new ServiceCollection();
 
-        services.AddScoped<IConfiguration>(
-            implementationFactory: static _ => new ConfigurationManager());
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection([
+            new KeyValuePair<string, string?>("AppDomain", "localhost"),
+            new KeyValuePair<string, string?>("CorsOrigin", "http://localhost:4200"),
+            new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")
+        ]).Build();
+        services.AddScoped<IConfiguration>(implementationFactory: _ => configuration);
+        services.AddScoped(AppSettings.Initialize);
 
         services.AddScopedSubstitute<IBrowserService>();
         services.AddScopedSubstitute<IGroupPermissionService>();

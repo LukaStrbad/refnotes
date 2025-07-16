@@ -242,7 +242,15 @@ public sealed class AutoDataResolver : IAsyncDisposable
             DataDir = _testFolder,
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
+        var config = new ConfigurationBuilder().AddInMemoryCollection([
+            new KeyValuePair<string, string?>("AppDomain", "localhost"),
+            new KeyValuePair<string, string?>("CorsOrigin", "http://localhost:4200"),
+            new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")
+        ]).Build();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddSingleton(AppSettings.Initialize);
         services.AddLogging();
+        
         services.AddScopedSubstitute<IConnectionMultiplexer>();
         services.AddScoped<ISubscriber>(implementationFactory: serviceProvider =>
         {

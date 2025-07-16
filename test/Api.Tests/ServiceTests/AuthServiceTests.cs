@@ -10,20 +10,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Tests.ServiceTests;
 
-[ConfigurationData(nameof(Configuration))]
 public class AuthServiceTests : BaseTests
 {
     private readonly User _newUser;
 
     private const string DefaultPassword = "password";
-
-    public static IConfiguration Configuration()
-    {
-        // Set access token expiry to 5 minutes
-        return new ConfigurationBuilder()
-            .AddInMemoryCollection([new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")])
-            .Build();
-    }
 
     public AuthServiceTests()
     {

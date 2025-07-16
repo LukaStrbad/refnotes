@@ -13,7 +13,7 @@ public sealed class AppSettings
     public string[] CorsOrigins { get; private set; } = [];
     public HashSet<string> AppDomains { get; private set; } = [];
 
-    private AppSettings(IConfiguration configuration, ILogger<AppSettings> logger)
+    public AppSettings(IConfiguration configuration, ILogger<AppSettings> logger)
     {
         _configuration = configuration;
         _logger = logger;
