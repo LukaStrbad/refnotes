@@ -28,5 +28,12 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/.angular
 LICENSE
 README.md
+
+/.github
+/.idea
+compose.*.yaml
+/images
+/src/Web/dist
