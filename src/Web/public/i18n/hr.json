@@ -351,5 +351,25 @@
     "label": {
       "favorited": "Dodano u favorite: {{time}}"
     }
+  },
+  "confirm-email": {
+    "button": {
+      "homepage": "Povratak na početnu stranicu",
+      "resend": "Ponovno pošalji potvrdu"
+    },
+    "error": {
+      "generic": "Došlo je do pogreške prilikom provjere e-pošte",
+      "invalid-token": "Token za potvrdu je nevažeći ili je istekao",
+      "message": "Dogodila se pogreška prilikom potvrde vaše e-pošte. Pokušajte ponovno ili zatražite novu potvrdu e-pošte.",
+      "resend": "E-pošta je već potvrđena",
+      "resend-generic": "Došlo je do pogreške prilikom ponovnog slanja potvrde e-pošte",
+      "title": "Potvrda e-pošte nije uspjela"
+    },
+    "loading": "Potvrđujemo vašu e-poštu, pričekajte...",
+    "success": {
+      "message": "Vaša e-pošta je uspješno potvrđena.",
+      "resend": "Potvrda e-pošte je uspješno ponovno poslana",
+      "title": "E-pošta potvrđena!"
+    }
   }
 }

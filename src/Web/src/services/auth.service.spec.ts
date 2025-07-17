@@ -5,6 +5,7 @@ import { HttpBackend, HttpClient, HttpErrorResponse } from '@angular/common/http
 import { createExpiredAccessToken, createValidAccessToken } from '../tests/token-utils';
 import { of } from 'rxjs';
 import { CookieService } from './cookie.service';
+import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -38,6 +39,14 @@ describe('AuthService', () => {
 
     localStorage.clear();
     TestBed.configureTestingModule({
+      imports: [
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useClass: TranslateFakeLoader,
+          },
+        }),
+      ],
       providers: [
         { provide: HttpBackend },
         { provide: Router, useValue: router },

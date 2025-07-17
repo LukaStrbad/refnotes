@@ -351,5 +351,25 @@
       "remove": "Remove from favorites",
       "open": "Open folder"
     }
+  },
+  "confirm-email": {
+    "error": {
+      "invalid-token": "The confirmation token is invalid or is expired",
+      "resend": "Email is alredy confirmed",
+      "resend-generic": "There was an error resending email confirmation",
+      "generic": "An error occurred trying to verify the email",
+      "title": "Email confirmation failed",
+      "message": "An error occurred confirming your email. Please try again or resend the email."
+    },
+    "success": {
+      "resend": "Email confirmation successfully resent",
+      "title": "Email confirmed!",
+      "message": "Your email has been successfully confirmed."
+    },
+    "button": {
+      "resend": "Resend confirmation",
+      "homepage": "Go to Homepage"
+    },
+    "loading": "Confirming your email, please wait..."
   }
 }

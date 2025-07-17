@@ -1,0 +1,45 @@
+@switch (loadingState) {
+  @case (LoadingState.Loading) {
+    <div class="flex flex-col items-center justify-center min-h-[300px]">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="mt-4 text-lg text-gray-600" translate>confirm-email.loading</p>
+    </div>
+  }
+  @case (LoadingState.Error) {
+    <div
+      class="flex flex-col items-center justify-center min-h-[300px] text-center p-8"
+    >
+      <span class="text-3xl text-error mb-4">❌</span>
+      <h1 class="text-2xl font-bold mb-2" translate>
+        confirm-email.error.title
+      </h1>
+      <p class="mb-4 text-base text-base-content/70" translate>
+        confirm-email.error.message
+      </p>
+      <button
+        class="btn btn-primary"
+        (click)="resendEmailConfirmation()"
+        [disabled]="sentConfirmationEmail"
+        translate
+      >
+        confirm-email.button.resend
+      </button>
+    </div>
+  }
+  @case (LoadingState.Loaded) {
+    <div
+      class="flex flex-col items-center justify-center min-h-[300px] text-center p-8"
+    >
+      <span class="text-3xl text-success mb-4">✅</span>
+      <h1 class="text-2xl font-bold mb-2" translate>
+        confirm-email.success.title
+      </h1>
+      <p class="mb-4 text-base text-base-content/70" translate>
+        confirm-email.success.message
+      </p>
+      <a class="btn btn-primary" routerLink="/" translate
+        >confirm-email.button.homepage</a
+      >
+    </div>
+  }
+}

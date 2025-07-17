@@ -1,6 +1,7 @@
 using Api.Controllers;
 using Api.Model;
 using Api.Services;
+using Api.Services.Schedulers;
 using Api.Tests.Fixtures;
 using Api.Tests.Mocks;
 using Data.Model;
@@ -16,6 +17,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     private readonly IUserService _userService;
     private readonly IEmailConfirmService _emailConfirmService;
     private readonly IAuthService _authService;
+    private readonly IEmailScheduler _emailScheduler;
     private readonly UserController _controller;
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
@@ -26,8 +28,9 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
         _userService = serviceProvider.GetRequiredService<IUserService>();
         _emailConfirmService = serviceProvider.GetRequiredService<IEmailConfirmService>();
         _authService = serviceProvider.GetRequiredService<IAuthService>();
+        _emailScheduler = serviceProvider.GetRequiredService<IEmailScheduler>();
         _controller = serviceProvider.GetRequiredService<UserController>();
-        
+
         var httpContext = serviceProvider.GetRequiredService<HttpContext>();
         _requestCookies = new RequestCookieCollection();
         _responseCookies = new ResponseCookies();
@@ -38,7 +41,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
             HttpContext = httpContext
         };
     }
-    
+
     private void AssertCookiesContainTokens(string accessToken, string refreshToken)
     {
         var hasAccessTokenCookie = _responseCookies.Cookies.TryGetValue("accessToken", out var accessTokenCookie);
@@ -81,15 +84,46 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     public async Task ConfirmEmail_ReturnsBadRequest_WhenEmailNotConfirmed()
     {
         var token = Guid.NewGuid().ToString();
-        var user = new User("test_user", "Test User", "test@test.com", "password123")
-        {
-            Id = 1535
-        };
         // Simulate email confirmation failure
         _emailConfirmService.ConfirmEmail(token).Returns((null, false));
 
         var result = await _controller.ConfirmEmail(token);
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ResendEmailConfirmation_ReturnsOk_WhenEmailConfirmationIsSent()
+    {
+        var token = Guid.NewGuid().ToString();
+        const string lang = "en";
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 432
+        };
+        _userService.GetCurrentUser().Returns(user);
+        _emailConfirmService.GenerateToken(user.Id).Returns(token);
+
+        var result = await _controller.ResendEmailConfirmation(lang);
+
+        Assert.IsType<OkObjectResult>(result);
+        await _emailScheduler.Received(1).ScheduleVerificationEmail(user.Email, user.Name, token, lang);
+    }
+
+    [Fact]
+    public async Task ResendEmailConfirmation_ReturnsBadRequest_WhenEmailAlreadyConfirmed()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 432,
+            EmailConfirmed = true
+        };
+        _userService.GetCurrentUser().Returns(user);
+
+        var result = await _controller.ResendEmailConfirmation("en");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        await _emailScheduler.DidNotReceiveWithAnyArgs()
+            .ScheduleVerificationEmail(user.Email, user.Name, Arg.Any<string>(), "en");
     }
 }

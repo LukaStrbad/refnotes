@@ -1,4 +1,5 @@
 using Api.Jobs;
+using Api.Utils;
 using Quartz;
 
 namespace Api.Services.Schedulers;
@@ -35,7 +36,7 @@ public sealed class EmailScheduler : IEmailScheduler
 
     public async Task ScheduleVerificationEmail(string sendTo, string name, string token, string lang)
     {
-        _logger.LogInformation("Scheduled email send to {SendTo}", sendTo);
+        _logger.LogInformation("Scheduled email send to {SendTo}", StringSanitizer.SanitizeLog(sendTo));
 
         var guid = Guid.NewGuid().ToString();
         var jobId = $"{VerificationEmailJob.Name}-{guid}";
@@ -44,7 +45,7 @@ public sealed class EmailScheduler : IEmailScheduler
     
     public async Task SchedulePasswordResetEmail(string sendTo, string name, string token, string lang)
     {
-        _logger.LogInformation("Scheduled email send to {SendTo}", sendTo);
+        _logger.LogInformation("Scheduled email send to {SendTo}", StringSanitizer.SanitizeLog(sendTo));
 
         var guid = Guid.NewGuid().ToString();
         var jobId = $"{PasswordResetEmailJob.Name}-{guid}";
