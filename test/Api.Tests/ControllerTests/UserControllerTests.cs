@@ -218,6 +218,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
         Assert.Equal(updatedUser.Name, userResponse.Name);
         Assert.Equal(updatedUser.Email, userResponse.Email);
 
+        await _userService.Received(1).UnconfirmEmail(updatedUser.Id);
         await _emailConfirmService.Received(1).DeleteTokensForUser(updatedUser.Id);
         await _emailScheduler.Received(1)
             .ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token, Arg.Any<string>());

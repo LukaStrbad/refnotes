@@ -1,32 +1,51 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, Resource, resource, ResourceRef, Signal } from '@angular/core';
 import { UserService } from '../../services/user.service';
 import { UserResponse } from '../../model/user-response';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { NgClass } from '@angular/common';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { EditAccountFormComponent } from "./edit-account-form/edit-account-form.component";
+import { EditUserRequest } from '../../model/edit-user-request';
+import { NotificationService } from '../../services/notification.service';
+import { LoggerService } from '../../services/logger.service';
+import { getTranslation } from '../../utils/translation-utils';
 
 @Component({
   selector: 'app-account',
-  imports: [TranslateDirective, TranslatePipe, NgClass, TestTagDirective],
+  imports: [TranslateDirective, TranslatePipe, NgClass, TestTagDirective, FormsModule, CommonModule, ReactiveFormsModule, EditAccountFormComponent],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css'
 })
-export class AccountComponent implements OnInit {
+export class AccountComponent {
   private readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  private readonly notification = inject(NotificationService);
+  private readonly log = inject(LoggerService);
 
-  accountInfo?: UserResponse;
   sentConfirmationEmail = false;
+  editingProfile = false;
 
-  avatarInitials = '';
-  avatarColor?: string;
+  readonly accountInfoResource: Resource<UserResponse | undefined>;
+  readonly avatarInitials: Signal<string>;
+  readonly avatarColor: Signal<string>;
 
-  ngOnInit(): void {
-    this.userService.getAccountInfo().then(user => {
-      this.avatarInitials = this.getAvatarInitials(user);
-      this.avatarColor = this.getAvatarColor(this.avatarInitials);
-      this.accountInfo = user;
+  constructor() {
+    this.accountInfoResource = resource({
+      params: () => ({ user: this.auth.user() }),
+      loader: async () => await this.userService.getAccountInfo(),
+    }).asReadonly();
+
+    this.avatarInitials = computed(() => {
+      const resourceValue = this.accountInfoResource.value();
+      return resourceValue ? this.getAvatarInitials(resourceValue) : '';
+    });
+
+    this.avatarColor = computed(() => {
+      const initials = this.avatarInitials();
+      return initials ? this.getAvatarColor(initials) : '';
     });
   }
 
@@ -59,7 +78,25 @@ export class AccountComponent implements OnInit {
   }
 
   editProfile(): void {
-    throw new Error('Edit profile functionality is not implemented yet.');
+    this.editingProfile = true;
+  }
+
+  cancelEdit(): void {
+    this.editingProfile = false;
+  }
+
+  async saveChanges(updatedUser: EditUserRequest) {
+    await this.notification.awaitAndNotifyError(
+      this.userService.editAccount(updatedUser, this.translate.currentLang),
+      {
+        400: 'account.error.edit-username-exists',
+        default: 'account.error.edit-failed'
+      },
+      this.log
+    );
+
+    this.notification.success(await getTranslation(this.translate, 'account.success.edit-success'));
+    this.editingProfile = false;
   }
 
   changePassword(): void {

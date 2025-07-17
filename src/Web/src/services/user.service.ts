@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UserResponse } from '../model/user-response';
+import { EditUserRequest } from '../model/edit-user-request';
 
 const apiUrl = environment.apiUrl + '/user';
 
@@ -34,5 +35,15 @@ export class UserService {
     await firstValueFrom(
       this.http.post(`${apiUrl}/resendEmailConfirmation?lang=${lang}`, {}, { responseType: 'text' }),
     );
+  }
+
+  async editAccount(editUserRequest: EditUserRequest, lang: string) {
+    const user = await firstValueFrom(
+      this.http.post<UserResponse>(`${apiUrl}/edit?lang=${lang}`, editUserRequest)
+    );
+
+    // Update the auth service with the new user data
+    this.auth.setUserAndToken();
+    return user;
   }
 }

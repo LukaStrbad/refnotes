@@ -35,6 +35,20 @@ public sealed class UserServiceTests
     }
 
     [Theory, AutoData]
+    public async Task EditUser_UpdatesUser_WithSameUsername(Sut<UserService> sut, UserFakerImplementation userFaker)
+    {
+        var user = userFaker.CreateFaker().Generate();
+        var request = new EditUserRequest("New Name", user.Username, "new_username@example.com");
+        
+        var updatedUser = await sut.Value.EditUser(user.Id, request);
+        
+        Assert.Equal(user.Id, updatedUser.Id);
+        Assert.Equal(request.NewName, updatedUser.Name);
+        Assert.Equal(request.NewUsername, updatedUser.Username);
+        Assert.Equal(request.NewEmail, updatedUser.Email);
+    }
+
+    [Theory, AutoData]
     public async Task EditUser_ThrowException_IfUsernameIsTaken(Sut<UserService> sut, UserFakerImplementation userFaker)
     {
         var user1 = userFaker.CreateFaker().Generate();
@@ -43,5 +57,16 @@ public sealed class UserServiceTests
 
         await Assert.ThrowsAsync<UserExistsException>(() =>
             sut.Value.EditUser(user2.Id, request));
+    }
+
+    [Theory, AutoData]
+    public async Task UnconfirmEmail_UnconfirmsEmail(Sut<UserService> sut, UserFakerImplementation userFaker)
+    {
+        var user = userFaker.CreateFaker().WithConfirmedEmail().Generate();
+        
+        await sut.Value.UnconfirmEmail(user.Id);
+
+        await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
+        Assert.False(user.EmailConfirmed);
     }
 }

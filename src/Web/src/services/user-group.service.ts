@@ -33,7 +33,7 @@ export class UserGroupService {
   }
 
   getUserGroupsCached(): Observable<GroupDto[]> {
-    const userId = this.auth.user?.id ?? -1;
+    const userId = this.auth.user()?.id ?? -1;
     const cached = this.membersCache.get(userId);
 
     const network = this.http.get<GroupDto[]>(`${apiUrl}/getUserGroups`).pipe(

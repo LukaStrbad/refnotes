@@ -13,4 +13,6 @@ public interface IUserService
     Task<User> GetByUsername(string username);
 
     Task<User> EditUser(int userId, EditUserRequest details);
+    
+    Task UnconfirmEmail(int userId);
 }

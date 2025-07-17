@@ -65,7 +65,9 @@ public class UserService : IUserService
 
     public async Task<User> EditUser(int userId, EditUserRequest details)
     {
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == details.NewUsername);
+        var existingUser = await _context.Users
+            .Where(u => u.Id != userId) // Ensure we don't check the user being edited
+            .FirstOrDefaultAsync(u => u.Username == details.NewUsername);
         if (existingUser is not null)
         {
             throw new UserExistsException("User already exists with this username.");
@@ -78,5 +80,16 @@ public class UserService : IUserService
         user.Email = details.NewEmail;
         await _context.SaveChangesAsync();
         return user;
+    }
+
+    public async Task UnconfirmEmail(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+        {
+            throw new UserNotFoundException($"User with ID {userId} not found.");
+        }
+        user.EmailConfirmed = false;
+        await _context.SaveChangesAsync();
     }
 }

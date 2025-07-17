@@ -83,4 +83,28 @@ describe('UserService', () => {
     req.flush({});
     await promise;
   });
+
+  it('should edit account and call setUserAndToken', async () => {
+    const editRequest = {
+      newName: 'New Name',
+      newUsername: 'newusername',
+      newEmail: 'newemail@test.com'
+    };
+    const mockResponse: UserResponse = {
+      id: 1,
+      username: 'newusername',
+      name: 'New Name',
+      email: 'newemail@test.com',
+      roles: ['user'],
+      emailConfirmed: false,
+    };
+
+    const promise = service.editAccount(editRequest, 'en');
+    const req = httpMock.expectOne(`${apiUrl}/edit?lang=en`);
+    expect(req.request.method).toBe('POST');
+    req.flush(mockResponse);
+    const response = await promise;
+    expect(response).toEqual(mockResponse);
+  });
+
 });

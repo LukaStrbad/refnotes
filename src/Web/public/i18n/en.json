@@ -388,6 +388,24 @@
       "title": "Actions",
       "change-password": "Change password",
       "logout": "Logout"
+    },
+    "error": {
+      "edit-username-exists": "User with the same username already exists",
+      "edit-failed": "An error occurred trying to edit account details"
+    },
+    "success": {
+      "edit-success": "Successfully edited account details"
+    }
+  },
+  "account-edit-form": {
+    "label": {
+      "name": "Name",
+      "username": "Username",
+      "email": "E-mail"
+    },
+    "button": {
+      "save": "Save",
+      "cancel": "Cancel"
     }
   }
 }

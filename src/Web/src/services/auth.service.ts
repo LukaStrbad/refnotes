@@ -16,16 +16,17 @@ const apiUrl = environment.apiUrl + '/auth';
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly _user = signal<User | null>(null);
   /**
    * The currently logged-in user, or null if no user is logged in.
    */
-  user: User | null = null;
+  public readonly user = this._user.asReadonly();
   /**
    * The authentication token, or null if no user is logged in.
    */
   private token: DecodedToken | null = null;
-  private _isUserLoggedIn: WritableSignal<boolean> = signal(false);
-  public isUserLoggedIn: Signal<boolean> = this._isUserLoggedIn;
+  private readonly _isUserLoggedIn: WritableSignal<boolean> = signal(false);
+  public readonly isUserLoggedIn = this._isUserLoggedIn.asReadonly();
   private refreshTokenPromise: Promise<boolean> | null = null;
 
   private http!: HttpClient;
@@ -153,7 +154,7 @@ export class AuthService {
   }
 
   private unsetUserAndToken() {
-    this.user = null;
+    this._user.set(null);
     this.token = null;
     this._isUserLoggedIn.set(false);
     // Remove the access token cookie
@@ -161,13 +162,13 @@ export class AuthService {
   }
 
   private setUser(token: DecodedToken) {
-    this.user = {
+    this._user.set({
       id: parseInt(token.id),
       username: token.unique_name,
       name: token.given_name,
       email: token.email,
       role: token.role
-    };
+    });
   }
 
   async logout(reason: undefined | string = undefined, navigateToLogin = true) {

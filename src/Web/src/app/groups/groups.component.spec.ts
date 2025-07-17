@@ -10,6 +10,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../model/user';
+import { signal } from '@angular/core';
 
 describe('GroupsComponent', () => {
   let component: GroupsComponent;
@@ -35,7 +36,7 @@ describe('GroupsComponent', () => {
   beforeEach(async () => {
     userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode', 'removeUser']);
     notificationService = jasmine.createSpyObj('NotificationService', ['awaitAndNotifyError', 'success']);
-    authService = jasmine.createSpyObj('AuthService', [], { user: user });
+    authService = jasmine.createSpyObj('AuthService', [], { user: signal(user) });
 
     // Setup default spy behavior
     userGroupService.getUserGroupsCached.and.returnValue(of(mockGroups));

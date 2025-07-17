@@ -85,6 +85,7 @@ public sealed class UserController : AuthControllerBase
 
             if (emailsDifferent)
             {
+                await _userService.UnconfirmEmail(updatedUser.Id);
                 await _emailConfirmService.DeleteTokensForUser(updatedUser.Id);
                 var token = await _emailConfirmService.GenerateToken(updatedUser.Id);
                 await _emailScheduler.ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token,

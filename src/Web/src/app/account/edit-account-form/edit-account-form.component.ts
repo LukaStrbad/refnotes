@@ -1,0 +1,58 @@
+import { Component, effect, input, output } from '@angular/core';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { UserResponse } from '../../../model/user-response';
+import { TranslateDirective } from '@ngx-translate/core';
+import { EditUserRequest } from '../../../model/edit-user-request';
+
+@Component({
+  selector: 'app-edit-account-form',
+  imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
+  templateUrl: './edit-account-form.component.html',
+  styleUrl: './edit-account-form.component.css'
+})
+export class EditAccountFormComponent {
+  readonly accountInfo = input.required<UserResponse | undefined>();
+  readonly saveChanges = output<EditUserRequest>();
+  readonly cancelEdit = output<void>();
+
+  readonly accountEditForm = new FormGroup({
+    username: new FormControl('', [
+      Validators.required,
+      Validators.minLength(4)
+    ]),
+    name: new FormControl('', [Validators.required]),
+    email: new FormControl('', [
+      Validators.required,
+      Validators.email
+    ]),
+  });
+
+  constructor() {
+    // Set form values every time accountInfo changes
+    effect(() => {
+      const accountInfo = this.accountInfo();
+      if (accountInfo) {
+        this.accountEditForm.patchValue({
+          username: accountInfo.username,
+          name: accountInfo.name,
+          email: accountInfo.email
+        });
+      }
+    });
+  }
+
+  onSaveChanges(): void {
+    const { name, username, email } = this.accountEditForm.value;
+    if (!name || !username || !email) {
+      return; // Form is invalid, do not proceed
+    }
+
+    const updatedUser: EditUserRequest = {
+      newName: name,
+      newUsername: username,
+      newEmail: email
+    };
+
+    this.saveChanges.emit(updatedUser);
+  }
+}
