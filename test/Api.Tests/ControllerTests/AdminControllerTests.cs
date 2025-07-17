@@ -54,10 +54,10 @@ public class AdminControllerTests : BaseTests, IClassFixture<ControllerFixture<A
     [Fact]
     public async Task ListUsers_ReturnsUsersList()
     {
-        List<ResponseUser> users =
+        List<UserResponse> users =
         [
-            new(new User("user1", "user1", "user1@user.com", "password")),
-            new(new User("user2", "user2", "user2@user.com", "password"))
+            new(0, "user1", "user1", "user1@user.com", ["administrator"], true),
+            new(1, "user2", "user2", "user2@user.com", [], false)
         ];
 
         _adminService.ListUsers().Returns(users);

@@ -1,3 +1,4 @@
+using Api.Model;
 using Data.Model;
 
 namespace Api.Services;

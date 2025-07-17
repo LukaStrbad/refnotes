@@ -62,6 +62,28 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     }
 
     [Fact]
+    public async Task AccountInfo_ReturnsAccountInfo()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 1534,
+            Roles = ["administrator", "user"]
+        };
+        _userService.GetCurrentUser().Returns(user);
+
+        var result = await _controller.AccountInfo();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var userResponse = Assert.IsType<UserResponse>(okResult.Value);
+        Assert.Equal(user.Id, userResponse.Id);
+        Assert.Equal(user.Username, userResponse.Username);
+        Assert.Equal(user.Name, userResponse.Name);
+        Assert.Equal(user.Email, userResponse.Email);
+        Assert.Equal(user.Roles, userResponse.Roles);
+        Assert.Equal(user.EmailConfirmed, userResponse.EmailConfirmed);
+    }
+
+    [Fact]
     public async Task ConfirmEmail_ReturnsOk_WhenEmailConfirmed()
     {
         var token = Guid.NewGuid().ToString();

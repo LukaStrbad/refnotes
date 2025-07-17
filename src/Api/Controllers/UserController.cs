@@ -1,4 +1,5 @@
 using Api.Controllers.Base;
+using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,14 @@ public sealed class UserController : AuthControllerBase
         _emailConfirmService = emailConfirmService;
         _authService = authService;
         _emailScheduler = emailScheduler;
+    }
+
+    [HttpGet("accountInfo")]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> AccountInfo()
+    {
+        var user = await _userService.GetCurrentUser();
+        return Ok(UserResponse.FromUser(user));
     }
 
     [HttpPost("confirmEmail/{token}")]

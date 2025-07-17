@@ -8,7 +8,7 @@ namespace Api.Services;
 public interface IAdminService
 {
     Task<List<string>> ModifyRoles(ModifyRolesRequest modifyRolesRequest);
-    Task<List<ResponseUser>> ListUsers();
+    Task<List<UserResponse>> ListUsers();
 }
 
 public class AdminService(RefNotesContext context) : IAdminService
@@ -32,8 +32,9 @@ public class AdminService(RefNotesContext context) : IAdminService
         return roles;
     }
 
-    public async Task<List<ResponseUser>> ListUsers()
+    public async Task<List<UserResponse>> ListUsers()
     {
-        return await context.Users.Select(u => new ResponseUser(u)).ToListAsync();
+        var users = await context.Users.ToListAsync();
+        return users.Select(UserResponse.FromUser).ToList();
     }
 }

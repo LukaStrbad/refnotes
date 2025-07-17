@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../environments/environment';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { UserResponse } from '../model/user-response';
 
 const apiUrl = environment.apiUrl + '/user';
 
@@ -42,6 +43,24 @@ describe('UserService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  it('should get account info', async () => {
+    const mockResponse: UserResponse = {
+      id: 1,
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@test.com',
+      roles: ['user'],
+      emailConfirmed: true,
+    };
+
+    const promise = service.getAccountInfo();
+    const req = httpMock.expectOne(`${apiUrl}/accountInfo`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockResponse);
+    const response = await promise;
+    expect(response).toEqual(mockResponse);
   });
 
   it('should call setUserAndToken after confirming email', async () => {
