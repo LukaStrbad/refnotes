@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Reflection.Emit;
 using Api.Services;
 using Api.Tests.Data.Attributes;
 using Api.Tests.Fixtures;
@@ -11,12 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Api;
 using Api.Services.Schedulers;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Extensions;
 using Bogus;
+using MailKit.Net.Smtp;
 using Quartz;
 using StackExchange.Redis;
 
@@ -50,7 +49,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IPublicFileService),
         typeof(IPublicFileScheduler),
         typeof(IFileSyncService),
-        typeof(IWebSocketMessageHandler)
+        typeof(IWebSocketMessageHandler),
+        typeof(ISmtpClient)
     ];
 
     private readonly List<Type> _realizedMocks = [];

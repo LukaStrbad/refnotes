@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
 using Api.Services.Schedulers;
+using MailKit.Net.Smtp;
 using Microsoft.Extensions.Primitives;
 using ServiceDefaults;
 
@@ -51,10 +52,13 @@ public static class Configuration
         builder.Services.AddScoped<IPublicFileScheduler, PublicFileScheduler>();
         builder.Services.AddScoped<IFavoriteService, FavoriteService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailScheduler, EmailScheduler>();
+        builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();
         builder.Services.AddTransient<IWebSocketFileSyncService, WebSocketFileSyncService>();
+        builder.Services.AddTransient<ISmtpClient>(implementationFactory: _ => new SmtpClient());
 
         builder.Services.AddAuthentication(x =>
         {

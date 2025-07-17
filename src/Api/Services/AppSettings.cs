@@ -13,6 +13,8 @@ public sealed class AppSettings
     public string[] CorsOrigins { get; private set; } = [];
     public HashSet<string> AppDomains { get; private set; } = [];
     public EmailSettings? EmailSettings { get; private set; }
+    public string EmailConfirmationBaseUrl { get; private set; } = "/";
+    public string PasswordResetBaseUrl { get; private set; } = "/";
 
     public AppSettings(IConfiguration configuration, ILogger<AppSettings> logger)
     {
@@ -33,6 +35,9 @@ public sealed class AppSettings
                 _logger.LogError("AccessTokenExpiry is set to zero or is less than zero, which is invalid");
                 throw new InvalidConfigurationException("AccessTokenExpiry is set to zero, which is invalid");
             }
+            
+            EmailConfirmationBaseUrl = _configuration.GetValue<string>("EmailConfirmationBaseUrl") ?? "/";
+            PasswordResetBaseUrl = _configuration.GetValue<string>("PasswordResetBaseUrl") ?? "/";
 
             CorsOrigins = GetCorsOrigins();
             AppDomains = GetAppDomains();

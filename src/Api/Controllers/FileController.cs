@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Scalar.AspNetCore;
 
 namespace Api.Controllers;
 
@@ -277,6 +278,7 @@ public class FileController : GroupPermissionControllerBase
     }
 
     [Route("/ws/fileSync")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task FileSync(string filePath, int? groupId)
     {
         var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
@@ -331,6 +333,7 @@ public class FileController : GroupPermissionControllerBase
 
     [Route("/ws/publicFileSync")]
     [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task PublicFileSync(string urlHash)
     {
         var encryptedFile = await _publicFileService.GetEncryptedFileAsync(urlHash);

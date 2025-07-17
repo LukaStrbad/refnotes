@@ -44,6 +44,7 @@ public sealed class ControllerFixture<T> : IDisposable where T : ControllerBase
         services.AddScopedSubstitute<IFileServiceUtils>();
         services.AddScopedSubstitute<IFileSyncService>();
         services.AddScopedSubstitute<IWebSocketFileSyncService>();
+        services.AddScopedSubstitute<IEmailScheduler>();
         services.AddScopedSubstitute<HttpContext>();
         services.AddLogging();
 

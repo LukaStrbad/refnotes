@@ -1,6 +1,7 @@
 ﻿using Api.Exceptions;
 using Api.Model;
 using Api.Services;
+using Api.Services.Schedulers;
 using Data.Model;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +16,15 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IAppDomainService _appDomainService;
     private readonly AppSettings _appSettings;
+    private readonly IEmailScheduler _emailScheduler;
 
-    public AuthController(IAuthService authService, IAppDomainService appDomainService, AppSettings appSettings)
+    public AuthController(IAuthService authService, IAppDomainService appDomainService, AppSettings appSettings,
+        IEmailScheduler emailScheduler)
     {
         _authService = authService;
         _appDomainService = appDomainService;
         _appSettings = appSettings;
+        _emailScheduler = emailScheduler;
     }
 
     private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
@@ -71,12 +75,13 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
     [ProducesResponseType<BadRequest>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<string>> Register(User newUser)
+    public async Task<ActionResult<string>> Register([FromBody] User newUser, [FromQuery] string? lang)
     {
         try
         {
             var tokens = await _authService.Register(newUser);
             AddTokenCookies(tokens);
+            await _emailScheduler.ScheduleVerificationEmail(newUser.Email, newUser.Name, "test-token", lang ?? "en");
             return Ok();
         }
         catch (UserExistsException e)
@@ -126,8 +131,10 @@ public class AuthController : ControllerBase
     private void AddTokenCookies(Tokens tokens)
     {
         // Set an access token cookie (set the same expiration time as the refresh token)
-        HttpContext.Response.Cookies.Append("accessToken", tokens.AccessToken, GetCookieOptions(false, tokens.RefreshToken.ExpiryTime));
+        HttpContext.Response.Cookies.Append("accessToken", tokens.AccessToken,
+            GetCookieOptions(false, tokens.RefreshToken.ExpiryTime));
         // Set refresh token cookie   
-        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token, GetCookieOptions(true, tokens.RefreshToken.ExpiryTime));
+        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token,
+            GetCookieOptions(true, tokens.RefreshToken.ExpiryTime));
     }
 }

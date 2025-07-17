@@ -8,6 +8,8 @@ import { jwtDecode, JwtPayload } from "jwt-decode";
 import { LoginInfo } from "../app/login/login.component";
 import { getStatusCode } from '../utils/errorHandler';
 import { CookieService } from './cookie.service';
+import { TranslateService } from '@ngx-translate/core';
+import { convertDateLocale } from '../utils/date-utils';
 
 const apiUrl = environment.apiUrl + '/auth';
 
@@ -37,6 +39,7 @@ export class AuthService {
     private httpBackend: HttpBackend,
     private router: Router,
     private cookieService: CookieService,
+    private translate: TranslateService,
     @Inject('Window') private window: Window,
   ) {
     this.init().then();
@@ -122,8 +125,9 @@ export class AuthService {
   }
 
   async register(username: string, name: string, email: string, password: string, redirectUrl?: string) {
+    const lang = convertDateLocale(this.translate.currentLang);
     await firstValueFrom(
-      this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true })
+      this.http.post(`${apiUrl}/register?lang=${lang}`, { username, name, email, password }, { withCredentials: true })
     );
     this.setUserAndToken();
     await this.router.navigate([redirectUrl ?? '/browser']);

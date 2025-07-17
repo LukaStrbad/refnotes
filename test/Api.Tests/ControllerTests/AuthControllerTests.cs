@@ -2,6 +2,7 @@
 using Api.Exceptions;
 using Api.Model;
 using Api.Services;
+using Api.Services.Schedulers;
 using Api.Tests.Fixtures;
 using Api.Tests.Mocks;
 using Data.Model;
@@ -19,6 +20,7 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
 {
     private readonly IAuthService _authService;
     private readonly AuthController _controller;
+    private readonly IEmailScheduler _emailScheduler;
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
 
@@ -26,6 +28,7 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _authService = serviceProvider.GetRequiredService<IAuthService>();
+        _emailScheduler = serviceProvider.GetRequiredService<IEmailScheduler>();
         var httpContext = serviceProvider.GetRequiredService<HttpContext>();
         _requestCookies = new RequestCookieCollection();
         _responseCookies = new ResponseCookies();
@@ -99,14 +102,17 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     [Fact]
     public async Task Register_ReturnsOk_WhenUserIsRegistered()
     {
+        const string lang = "en";
         var newUser = new User(0, "newUser", "newUser", "newUser@newUser.com", "password");
         var tokens = new Tokens("access", new RefreshToken("token", DateTime.Now));
         _authService.Register(newUser).Returns(tokens);
 
-        var result = await _controller.Register(newUser);
+        var result = await _controller.Register(newUser, lang);
         Assert.IsType<OkResult>(result.Result);
 
         AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
+        await _emailScheduler.Received(1)
+            .ScheduleVerificationEmail(newUser.Email, newUser.Name, Arg.Any<string>(), lang);
     }
 
     [Fact]
@@ -115,10 +121,12 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
         var newUser = new User(0, "test", "test", "test@test.com", "password");
         _authService.Register(newUser).ThrowsAsync(new UserExistsException("User already exists"));
 
-        var result = await _controller.Register(newUser);
+        var result = await _controller.Register(newUser, "en");
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
 
         Assert.Equal("User already exists", badRequestResult.Value);
+        await _emailScheduler.DidNotReceiveWithAnyArgs()
+            .ScheduleVerificationEmail(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Fact]

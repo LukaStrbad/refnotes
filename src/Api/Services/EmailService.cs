@@ -1,38 +1,62 @@
-using System.Net;
-using System.Net.Mail;
-using System.Text;
+using MailKit.Net.Smtp;
+using Api.Model;
+using MimeKit;
 
 namespace Api.Services;
 
 public sealed class EmailService : IEmailService
 {
     private readonly AppSettings _appSettings;
+    private readonly ISmtpClient _smtpClient;
+    private readonly IEmailTemplateService _emailTemplateService;
 
-    public EmailService(AppSettings appSettings)
+    public EmailService(AppSettings appSettings, ISmtpClient smtpClient, IEmailTemplateService emailTemplateService)
     {
         _appSettings = appSettings;
+        _smtpClient = smtpClient;
+        _emailTemplateService = emailTemplateService;
     }
 
-    public async Task SendEmail(string to, string subject, string body)
+    private async Task SendEmail(string sendTo, string name, string subject, string body, bool isHtml)
     {
         var emailSettings = _appSettings.EmailSettings;
         if (emailSettings is null)
             throw new Exception("Email settings are null");
 
-        var smtpClient = new SmtpClient(emailSettings.Host)
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("RefNotes", emailSettings.From));
+        message.To.Add(new MailboxAddress(name, sendTo));
+        message.Subject = subject;
+        message.Body = new TextPart(isHtml ? "html" : "plain")
         {
-            Port = 587,
-            Credentials = new NetworkCredential(emailSettings.Username, emailSettings.Password),
-            EnableSsl = true
+            Text = body
         };
 
-        var mail = new MailMessage(emailSettings.From, to)
-        {
-            Subject = subject,
-            Body = body,
-            BodyEncoding = Encoding.UTF8
-        };
+        await _smtpClient.ConnectAsync(emailSettings.Host, 587, MailKit.Security.SecureSocketOptions.StartTls);
+        await _smtpClient.AuthenticateAsync(emailSettings.Username, emailSettings.Password);
+        await _smtpClient.SendAsync(message);
+        await _smtpClient.DisconnectAsync(true);
+    }
 
-        await smtpClient.SendMailAsync(mail);
+    public async Task SendVerificationEmail(string sendTo, string name, string token, string lang)
+    {
+        var (title, html) = _emailTemplateService.GetTemplate(EmailType.ConfirmEmail, lang);
+        var baseUrl = _appSettings.EmailConfirmationBaseUrl.TrimEnd('/');
+        var confirmationLink = $"{baseUrl}/{token}";
+        html = html.Replace("{{confirmation_link}}", confirmationLink);
+        html = html.Replace("{{name}}", name);
+
+        await SendEmail(sendTo, name, title, html, true);
+    }
+
+    public async Task SendPasswordResetEmail(string sendTo, string name, string token, string lang)
+    {
+        var (title, html) = _emailTemplateService.GetTemplate(EmailType.ResetPassword, lang);
+        var baseUrl = _appSettings.PasswordResetBaseUrl.TrimEnd('/');
+        var resetLink = $"{baseUrl}/{token}";
+        html = html.Replace("{{reset_link}}", resetLink);
+        html = html.Replace("{{name}}", name);
+        
+        await SendEmail(sendTo, name, title, html, true);
     }
 }
