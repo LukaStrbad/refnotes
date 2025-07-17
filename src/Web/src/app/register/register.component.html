@@ -21,31 +21,24 @@
       </div>
     </fieldset>
 
-    <div
-      #usernameError
-      [@reveal]="{
-        value: displayUsernameError,
-        params: {
-          startHeight: usernameError.clientHeight,
-        },
-      }"
-    >
-      @if (displayUsernameError) {
-        <div role="alert" class="alert alert-error mt-2" testTag="username-error">
-          <i class="bi bi-exclamation-triangle-fill"></i>
+    @if (displayUsernameError) {
+      <div
+        [@reveal]
+        role="alert"
+        class="alert alert-error mt-2"
+        testTag="username-error"
+      >
+        <i class="bi bi-exclamation-triangle-fill"></i>
 
-          <span translate>
-            @if (username?.hasError("required")) {
-              register.errors.usernameRequired
-            } @else if (username?.hasError("minlength")) {
-              register.errors.usernameMinLength
-            }
-          </span>
-        </div>
-      } @else {
-        <div></div>
-      }
-    </div>
+        <span translate>
+          @if (username?.hasError("required")) {
+            register.errors.usernameRequired
+          } @else if (username?.hasError("minlength")) {
+            register.errors.usernameMinLength
+          }
+        </span>
+      </div>
+    }
 
     <fieldset class="fieldset">
       <label class="fieldset-label" for="nameInput" translate>
@@ -64,28 +57,21 @@
       </div>
     </fieldset>
 
-    <div
-      #nameError
-      [@reveal]="{
-        value: displayNameError,
-        params: {
-          startHeight: nameError.clientHeight,
-        },
-      }"
-    >
-      @if (displayNameError) {
-        <div role="alert" class="alert alert-error mt-2" testTag="name-error">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <span translate>
-            @if (name?.hasError("required")) {
-              register.errors.nameRequired
-            }
-          </span>
-        </div>
-      } @else {
-        <div></div>
-      }
-    </div>
+    @if (displayNameError) {
+      <div
+        [@reveal]
+        role="alert"
+        class="alert alert-error mt-2"
+        testTag="name-error"
+      >
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span translate>
+          @if (name?.hasError("required")) {
+            register.errors.nameRequired
+          }
+        </span>
+      </div>
+    }
 
     <fieldset class="fieldset">
       <label class="fieldset-label" for="emailInput" translate>
@@ -104,30 +90,23 @@
       </div>
     </fieldset>
 
-    <div
-      #emailError
-      [@reveal]="{
-        value: displayEmailError,
-        params: {
-          startHeight: emailError.clientHeight,
-        },
-      }"
-    >
-      @if (displayEmailError) {
-        <div role="alert" class="alert alert-error mt-2" testTag="email-error">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <span translate>
-            @if (email?.hasError("required")) {
-              register.errors.emailRequired
-            } @else if (email?.hasError("email")) {
-              register.errors.emailInvalid
-            }
-          </span>
-        </div>
-      } @else {
-        <div></div>
-      }
-    </div>
+    @if (displayEmailError) {
+      <div
+        [@reveal]
+        role="alert"
+        class="alert alert-error mt-2"
+        testTag="email-error"
+      >
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span translate>
+          @if (email?.hasError("required")) {
+            register.errors.emailRequired
+          } @else if (email?.hasError("email")) {
+            register.errors.emailInvalid
+          }
+        </span>
+      </div>
+    }
 
     <fieldset class="fieldset">
       <label class="fieldset-label" for="passwordInput" translate>
@@ -146,30 +125,23 @@
       </div>
     </fieldset>
 
-    <div
-      #passwordError
-      [@reveal]="{
-        value: displayPasswordError,
-        params: {
-          startHeight: passwordError.clientHeight,
-        },
-      }"
-    >
-      @if (displayPasswordError) {
-        <div role="alert" class="alert alert-error mt-2" testTag="password-error">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <span translate>
-            @if (password?.hasError("required")) {
-              register.errors.passwordRequired
-            } @else if (password?.hasError("minlength")) {
-              register.errors.passwordMinLength
-            }
-          </span>
-        </div>
-      } @else {
-        <div></div>
-      }
-    </div>
+    @if (displayPasswordError) {
+      <div
+        [@reveal]
+        role="alert"
+        class="alert alert-error mt-2"
+        testTag="password-error"
+      >
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span translate>
+          @if (password?.hasError("required")) {
+            register.errors.passwordRequired
+          } @else if (password?.hasError("minlength")) {
+            register.errors.passwordMinLength
+          }
+        </span>
+      </div>
+    }
 
     <fieldset class="fieldset">
       <label class="fieldset-label" for="confirmPasswordInput" translate>
@@ -188,32 +160,25 @@
       </div>
     </fieldset>
 
-    <div
-      #confirmPasswordError
-      [@reveal]="{
-        value: displayConfirmPasswordError,
-        params: {
-          startHeight: confirmPasswordError.clientHeight,
-        },
-      }"
-    >
-      @if (displayConfirmPasswordError) {
-        <div role="alert" class="alert alert-error mt-2" testTag="confirmPassword-error">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-          <span translate>
-            @if (confirmPassword?.hasError("required")) {
-              register.errors.passwordConfirmRequired
-            } @else if (confirmPassword?.hasError("minlength")) {
-              register.errors.passwordMinLength
-            } @else if (confirmPassword?.hasError("passwordMismatch")) {
-              register.errors.passwordMismatch
-            }
-          </span>
-        </div>
-      } @else {
-        <div></div>
-      }
-    </div>
+    @if (displayConfirmPasswordError) {
+      <div
+        [@reveal]
+        role="alert"
+        class="alert alert-error mt-2"
+        testTag="confirmPassword-error"
+      >
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span translate>
+          @if (confirmPassword?.hasError("required")) {
+            register.errors.passwordConfirmRequired
+          } @else if (confirmPassword?.hasError("minlength")) {
+            register.errors.passwordMinLength
+          } @else if (confirmPassword?.hasError("passwordMismatch")) {
+            register.errors.passwordMismatch
+          }
+        </span>
+      </div>
+    }
 
     <fieldset class="fieldset mt-4">
       <button

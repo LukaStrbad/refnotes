@@ -14,8 +14,6 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import {
   animate,
-  group,
-  query,
   style,
   transition,
   trigger,
@@ -36,39 +34,30 @@ import { TestTagDirective } from "../../directives/test-tag.directive";
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
+  // changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('reveal', [
-      transition(
-        '* => *',
-        [
-          query(':self', [style({ height: '{{startHeight}}px' })]),
-          query(':enter', [style({ opacity: 0, scale: 0.0 })], {
-            optional: true,
-          }),
-          query(
-            ':leave',
-            [
-              style({ opacity: 1, scale: 1 }),
-              animate('0.2s ease-in', style({ opacity: 0, scale: 0.0 })),
-            ],
-            { optional: true },
-          ),
-          group([
-            query(':self', [animate('0.2s ease-in', style({ height: '*' }))]),
-            query(
-              ':enter',
-              [animate('0.2s ease-in', style({ opacity: 1, scale: 1 }))],
-              { optional: true },
-            ),
-          ]),
-        ],
-        { params: { startHeight: 0 } },
-      ),
+      transition(':enter', [
+        style({
+          opacity: 0,
+          transform: 'translateY(-5px) scale(0.95)'
+        }),
+        animate('120ms ease-out', style({
+          opacity: 1,
+          transform: 'translateY(0px) scale(1)'
+        }))
+      ]),
+      transition(':leave', [
+        animate('120ms ease-in', style({
+          opacity: 0,
+          transform: 'translateY(-5px) scale(0.95)'
+        }))
+      ])
     ]),
   ],
 })
 export class RegisterComponent {
-  registrationForm = new FormGroup({
+  readonly registrationForm = new FormGroup({
     username: new FormControl('', [
       Validators.required,
       Validators.minLength(4),
@@ -96,25 +85,13 @@ export class RegisterComponent {
       : null;
   }
 
-  get username() {
-    return this.registrationForm.get('username');
-  }
+  readonly username = this.registrationForm.get('username');
+  readonly name = this.registrationForm.get('name');
+  readonly email = this.registrationForm.get('email');
+  readonly password = this.registrationForm.get('password');
+  readonly confirmPassword = this.registrationForm.get('confirmPassword');
 
-  get name() {
-    return this.registrationForm.get('name');
-  }
-
-  get email() {
-    return this.registrationForm.get('email');
-  }
-
-  get password() {
-    return this.registrationForm.get('password');
-  }
-
-  get confirmPassword() {
-    return this.registrationForm.get('confirmPassword');
-  }
+  // displayUsernameError: boolean | null = null;
 
   get displayUsernameError() {
     return (
@@ -154,7 +131,7 @@ export class RegisterComponent {
     );
   }
 
-  redirectUrl?: string;
+  readonly redirectUrl?: string;
 
   constructor(
     private auth: AuthService,
