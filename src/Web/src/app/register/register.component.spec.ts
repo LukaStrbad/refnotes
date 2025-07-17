@@ -26,33 +26,25 @@ describe('RegisterComponent', () => {
     if (username) {
       usernameInput.value = username;
       usernameInput.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      fixture.detectChanges();
     }
     if (name) {
       nameInput.value = name;
       nameInput.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      fixture.detectChanges();
     }
     if (email) {
       emailInput.value = email;
       emailInput.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      fixture.detectChanges();
     }
     if (password) {
       passwordInput.value = password;
       passwordInput.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      fixture.detectChanges();
     }
     if (confirmPassword) {
       confirmPasswordInput.value = confirmPassword;
       confirmPasswordInput.dispatchEvent(new Event('input'));
-      await fixture.whenStable();
-      fixture.detectChanges();
     }
+    await fixture.whenStable();
+    fixture.detectChanges();
   }
 
   beforeEach(async () => {
