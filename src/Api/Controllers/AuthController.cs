@@ -75,7 +75,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
     [ProducesResponseType<BadRequest>(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<string>> Register([FromBody] User newUser, [FromQuery] string? lang)
+    public async Task<ActionResult<string>> Register([FromBody] RegisterUserRequest newUser, [FromQuery] string? lang)
     {
         try
         {

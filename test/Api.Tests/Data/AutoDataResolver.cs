@@ -397,7 +397,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
     private async Task<User> AddUserToDb(string username, params string[] roles)
     {
         // Add test user to db
-        var newUser = new User(0, username, username, $"{username}@test.com", "password")
+        var newUser = new User(username, username, $"{username}@test.com", "password")
         {
             Roles = roles
         };

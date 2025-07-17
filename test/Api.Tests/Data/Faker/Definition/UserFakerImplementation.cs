@@ -12,13 +12,14 @@ public sealed class UserFakerImplementation : FakerImplementationBase<User>
 
     public override Faker<User> CreateFaker()
     {
-        return BaseFaker.CustomInstantiator(_ => new User(0, "", "", "", ""))
+        return BaseFaker.CustomInstantiator(_ => new User("", "", "", ""))
             .StrictMode(true)
             .RuleFor(u => u.Id, f => 0)
             .RuleFor(u => u.Username, f => f.Internet.UserName())
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.Email, f => f.Internet.Email())
             .RuleFor(u => u.Password, f => f.Internet.Password())
-            .RuleFor(u => u.Roles, _ => []);
+            .RuleFor(u => u.Roles, _ => [])
+            .RuleFor(u => u.EmailConfirmed, _ => true);
     }
 }

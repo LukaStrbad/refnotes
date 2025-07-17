@@ -18,7 +18,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     private readonly IFavoriteService _favoriteService;
     private readonly IFileServiceUtils _fileServiceUtils;
     private readonly IGroupPermissionService _groupPermissionService;
-    private readonly User _testUser = new(123, "test", "test", "test@test.com", "password");
+    private readonly User _testUser = new("test", "test", "test@test.com", "password");
 
     public FavoriteControllerTests(ControllerFixture<FavoriteController> fixture)
     {

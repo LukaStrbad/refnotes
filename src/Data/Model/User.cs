@@ -6,14 +6,11 @@ namespace Data.Model;
 [Table("users")]
 public class User
 {
-    public User(
-        int id,
-        string username,
+    public User(string username,
         string name,
         string email,
         string password)
     {
-        Id = id;
         Username = username;
         Name = name;
         Email = email;
@@ -31,4 +28,5 @@ public class User
     [StringLength(4096)] public string Password { get; set; }
 
     public string[] Roles { get; set; } = [];
+    public bool EmailConfirmed { get; set; } = false;
 }

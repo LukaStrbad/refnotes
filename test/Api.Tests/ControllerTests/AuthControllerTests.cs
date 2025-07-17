@@ -103,7 +103,7 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     public async Task Register_ReturnsOk_WhenUserIsRegistered()
     {
         const string lang = "en";
-        var newUser = new User(0, "newUser", "newUser", "newUser@newUser.com", "password");
+        var newUser = new RegisterUserRequest("newUser", "newUser", "newUser@newUser.com", "password");
         var tokens = new Tokens("access", new RefreshToken("token", DateTime.Now));
         _authService.Register(newUser).Returns(tokens);
 
@@ -118,7 +118,7 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     [Fact]
     public async Task Register_ReturnsBadRequest_WhenUserExists()
     {
-        var newUser = new User(0, "test", "test", "test@test.com", "password");
+        var newUser = new RegisterUserRequest("test", "test", "test@test.com", "password");
         _authService.Register(newUser).ThrowsAsync(new UserExistsException("User already exists"));
 
         var result = await _controller.Register(newUser, "en");

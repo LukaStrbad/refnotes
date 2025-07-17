@@ -12,14 +12,15 @@ namespace Api.Tests.ServiceTests;
 
 public class AuthServiceTests : BaseTests
 {
-    private readonly User _newUser;
+    private readonly RegisterUserRequest _newUser;
 
     private const string DefaultPassword = "password";
 
     public AuthServiceTests()
     {
         var rndString = RandomString(32);
-        _newUser = new User(0, $"newUser_{rndString}", "newUser", $"new.{rndString}@new.com", DefaultPassword);
+        _newUser = new RegisterUserRequest($"newUser_{rndString}", "newUser", $"new.{rndString}@new.com",
+            DefaultPassword);
     }
 
     [Theory, AutoData]
@@ -37,20 +38,9 @@ public class AuthServiceTests : BaseTests
     [Theory, AutoData]
     public async Task Register_ThrowsExceptionIfUserExists(Sut<AuthService> sut, [FixtureUser] User existingUser)
     {
-        var newUser = new User(0, existingUser.Username, existingUser.Name, existingUser.Email, "Password123");
+        var newUser =
+            new RegisterUserRequest(existingUser.Username, existingUser.Name, existingUser.Email, "Password123");
         await Assert.ThrowsAsync<UserExistsException>(() => sut.Value.Register(newUser));
-    }
-
-    [Theory, AutoData]
-    public async Task Register_RolesStayEmpty(Sut<AuthService> sut)
-    {
-        _newUser.Roles = ["admin"];
-        await sut.Value.Register(_newUser);
-        var user = await sut.Context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username,
-            TestContext.Current.CancellationToken);
-
-        Assert.NotNull(user);
-        Assert.Empty(user.Roles);
     }
 
     [Theory, AutoData]

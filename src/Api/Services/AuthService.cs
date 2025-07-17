@@ -29,7 +29,7 @@ public interface IAuthService
     /// <param name="newUser">The new user to register</param>
     /// <returns>New access and refresh tokens</returns>
     /// <exception cref="UserExistsException">Thrown when a user with the same username already exists</exception>
-    Task<Tokens> Register(User newUser);
+    Task<Tokens> Register(RegisterUserRequest newUser);
 
     /// <summary>
     /// Refreshes an access token using a refresh token.
@@ -91,17 +91,18 @@ public class AuthService : IAuthService
         return tokens;
     }
 
-    public async Task<Tokens> Register(User newUser)
+    public async Task<Tokens> Register(RegisterUserRequest userRequest)
     {
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == newUser.Username);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == userRequest.Username);
         if (existingUser is not null)
         {
-            _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(newUser.Username));
+            _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(userRequest.Username));
             throw new UserExistsException("User already exists");
         }
+        
+        var newUser = userRequest.ToUser();
 
-        newUser.Roles = [];
-
+        // Hash the password before saving
         var passwordHasher = new PasswordHasher<UserCredentials>();
         newUser.Password =
             passwordHasher.HashPassword(new UserCredentials(newUser.Username, newUser.Password), newUser.Password);
