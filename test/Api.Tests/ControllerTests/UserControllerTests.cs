@@ -1,4 +1,5 @@
 using Api.Controllers;
+using Api.Exceptions;
 using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Api.Tests.ControllerTests;
 
@@ -147,5 +149,94 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
         Assert.IsType<BadRequestObjectResult>(result);
         await _emailScheduler.DidNotReceiveWithAnyArgs()
             .ScheduleVerificationEmail(user.Email, user.Name, Arg.Any<string>(), "en");
+    }
+
+    [Fact]
+    public async Task EditUser_ReturnsOk_WhenUserIsEdited()
+    {
+        // Arrange
+        var currentUser = new User("test_user", "Test User", "test@example.com", "password123")
+        {
+            Id = 123
+        };
+        var editUserRequest = new EditUserRequest("New Name", "new_username", "test@example.com");
+        var updatedUser = new User(editUserRequest.NewUsername, editUserRequest.NewName, editUserRequest.NewEmail,
+            "password123")
+        {
+            Id = 123
+        };
+        var tokens = new Tokens("access-token", new RefreshToken("refresh-token", DateTime.UtcNow.AddDays(7)));
+        _userService.GetCurrentUser().Returns(currentUser);
+        _userService.EditUser(currentUser.Id, editUserRequest).Returns(updatedUser);
+        _authService.ForceLogin(updatedUser.Id).Returns(tokens);
+
+        // Act
+        var result = await _controller.EditUser(editUserRequest, "en");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var userResponse = Assert.IsType<UserResponse>(okResult.Value);
+        Assert.Equal(updatedUser.Id, userResponse.Id);
+        Assert.Equal(updatedUser.Username, userResponse.Username);
+        Assert.Equal(updatedUser.Name, userResponse.Name);
+        Assert.Equal(updatedUser.Email, userResponse.Email);
+
+        await _emailScheduler.DidNotReceiveWithAnyArgs()
+            .ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, Arg.Any<string>(), Arg.Any<string>());
+        AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
+    }
+
+    [Fact]
+    public async Task EditUser_SchedulesEmail_WhenEmailIsDifferent()
+    {
+        // Arrange
+        var currentUser = new User("test_user", "Test User", "test@example.com", "password123")
+        {
+            Id = 123
+        };
+        var editUserRequest = new EditUserRequest("New Name", "new_username", "new_user@example.com");
+        var updatedUser = new User(editUserRequest.NewUsername, editUserRequest.NewName, editUserRequest.NewEmail,
+            "password123")
+        {
+            Id = 123
+        };
+        var token = Guid.NewGuid().ToString();
+        var tokens = new Tokens("access-token", new RefreshToken("refresh-token", DateTime.UtcNow.AddDays(7)));
+        _userService.GetCurrentUser().Returns(currentUser);
+        _userService.EditUser(currentUser.Id, editUserRequest).Returns(updatedUser);
+        _emailConfirmService.GenerateToken(currentUser.Id).Returns(token);
+        _authService.ForceLogin(updatedUser.Id).Returns(tokens);
+
+        // Act
+        var result = await _controller.EditUser(editUserRequest, "en");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var userResponse = Assert.IsType<UserResponse>(okResult.Value);
+        Assert.Equal(updatedUser.Id, userResponse.Id);
+        Assert.Equal(updatedUser.Username, userResponse.Username);
+        Assert.Equal(updatedUser.Name, userResponse.Name);
+        Assert.Equal(updatedUser.Email, userResponse.Email);
+
+        await _emailConfirmService.Received(1).DeleteTokensForUser(updatedUser.Id);
+        await _emailScheduler.Received(1)
+            .ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token, Arg.Any<string>());
+        AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
+    }
+
+    [Fact]
+    public async Task EditUser_ReturnsBadRequest_WhenUsernameIsTaken()
+    {
+        var currentUser = new User("test_user", "Test User", "test@example.com", "password123")
+        {
+            Id = 123
+        };
+        var editUserRequest = new EditUserRequest("New Name", "new_username", "new_user@example.com");
+        _userService.GetCurrentUser().Returns(currentUser);
+        _userService.EditUser(currentUser.Id, editUserRequest).ThrowsAsync(new UserExistsException(""));
+
+        var result = await _controller.EditUser(editUserRequest, "en");
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Username already exists.", badRequestResult.Value);
     }
 }

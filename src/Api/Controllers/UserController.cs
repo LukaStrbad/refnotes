@@ -1,4 +1,5 @@
 using Api.Controllers.Base;
+using Api.Exceptions;
 using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
@@ -18,7 +19,8 @@ public sealed class UserController : AuthControllerBase
     private readonly IEmailScheduler _emailScheduler;
 
     public UserController(IUserService userService, IEmailConfirmService emailConfirmService, IAuthService authService,
-        IAppDomainService appDomainService, AppSettings appSettings, IEmailScheduler emailScheduler) : base(appDomainService, appSettings)
+        IAppDomainService appDomainService, AppSettings appSettings, IEmailScheduler emailScheduler) : base(
+        appDomainService, appSettings)
     {
         _userService = userService;
         _emailConfirmService = emailConfirmService;
@@ -60,12 +62,43 @@ public sealed class UserController : AuthControllerBase
     public async Task<ActionResult> ResendEmailConfirmation([FromQuery] string? lang)
     {
         var user = await _userService.GetCurrentUser();
-        
+
         if (user.EmailConfirmed)
             return BadRequest("Email is already confirmed.");
-        
+
         var token = await _emailConfirmService.GenerateToken(user.Id);
         await _emailScheduler.ScheduleVerificationEmail(user.Email, user.Name, token, lang ?? "en");
         return Ok("Email confirmation link has been resent.");
+    }
+
+    [HttpPost("edit")]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> EditUser([FromBody] EditUserRequest request, [FromQuery] string? lang)
+    {
+        var currentUser = await _userService.GetCurrentUser();
+        
+        var emailsDifferent = currentUser.Email != request.NewEmail;
+
+        try
+        {
+            var updatedUser = await _userService.EditUser(currentUser.Id, request);
+
+            if (emailsDifferent)
+            {
+                await _emailConfirmService.DeleteTokensForUser(updatedUser.Id);
+                var token = await _emailConfirmService.GenerateToken(updatedUser.Id);
+                await _emailScheduler.ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token,
+                    lang ?? "en");
+            }
+
+            // Login the user after email confirmation
+            var tokens = await _authService.ForceLogin(updatedUser.Id);
+            AddTokenCookies(tokens);
+            return Ok(UserResponse.FromUser(updatedUser));
+        }
+        catch (UserExistsException)
+        {
+            return BadRequest("Username already exists.");
+        }
     }
 }
