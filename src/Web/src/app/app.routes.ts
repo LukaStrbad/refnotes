@@ -10,6 +10,7 @@ import { GroupMembersListComponent } from './groups/group-members-list/group-mem
 import { authGuard } from '../../guards/auth.guard';
 import { FavoritesComponent } from './favorites/favorites.component';
 import { ConfirmEmailComponent } from './confirm-email/confirm-email.component';
+import { AccountComponent } from './account/account.component';
 
 export const routes: Routes = [
   {
@@ -101,5 +102,10 @@ export const routes: Routes = [
   {
     path: "confirm-email/:token",
     component: ConfirmEmailComponent,
+  },
+  {
+    path: "account-info",
+    component: AccountComponent,
+    canActivate: [authGuard],
   }
 ];

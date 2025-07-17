@@ -37,7 +37,8 @@
       "home": "Home",
       "settings": "Settings",
       "groups": "Groups",
-      "favorites": "Favorites"
+      "favorites": "Favorites",
+      "account-info": "Account"
     }
   },
   "login": {
@@ -371,5 +372,22 @@
       "homepage": "Go to Homepage"
     },
     "loading": "Confirming your email, please wait..."
+  },
+  "account": {
+    "label": {
+      "loading": "Loading account data",
+      "emailConfirmed": "Email confirmed",
+      "emailNotConfirmed": "Email not confirmed",
+      "roles": "Roles:"
+    },
+    "button": {
+      "editProfile": "Edit profile",
+      "send-confirmation-email": "Send confirmation email"
+    },
+    "actions": {
+      "title": "Actions",
+      "change-password": "Change password",
+      "logout": "Logout"
+    }
   }
 }

@@ -37,7 +37,8 @@
       "home": "Početna",
       "settings": "Postavke",
       "groups": "Grupe",
-      "favorites": "Favoriti"
+      "favorites": "Favoriti",
+      "account-info": "Račun"
     }
   },
   "login": {
@@ -370,6 +371,23 @@
       "message": "Vaša e-pošta je uspješno potvrđena.",
       "resend": "Potvrda e-pošte je uspješno ponovno poslana",
       "title": "E-pošta potvrđena!"
+    }
+  },
+  "account": {
+    "button": {
+      "editProfile": "Uredi profil",
+      "send-confirmation-email": "Pošaljite e -poštu s potvrdom"
+    },
+    "label": {
+      "emailConfirmed": "Potvrđena E-pošta",
+      "emailNotConfirmed": "E-pošta nije potvrđena",
+      "loading": "Učitavanje podataka o računu",
+      "roles": "Role:"
+    },
+    "actions": {
+      "change-password": "Promijeni lozinku",
+      "logout": "Odjava",
+      "title": "Radnje"
     }
   }
 }
