@@ -11,4 +11,6 @@ public interface IUserService
     Task<User> GetCurrentUser();
 
     Task<User> GetByUsername(string username);
+
+    Task<User> EditUser(int userId, EditUserRequest details);
 }

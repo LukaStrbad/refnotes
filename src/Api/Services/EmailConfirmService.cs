@@ -27,9 +27,7 @@ public sealed class EmailConfirmService : IEmailConfirmService
         }
 
         // Delete any existing tokens for the user
-        await _context.EmailConfirmTokens
-            .Where(t => t.UserId == userId)
-            .ExecuteDeleteAsync();
+        await DeleteTokensForUser(userId);
 
         var emailConfirmToken = new EmailConfirmToken
         {
@@ -69,5 +67,12 @@ public sealed class EmailConfirmService : IEmailConfirmService
         _logger.LogInformation("Email confirmed for user {UserId}", user.Id);
 
         return (user, true);
+    }
+
+    public async Task DeleteTokensForUser(int userId)
+    {
+        await _context.EmailConfirmTokens
+            .Where(t => t.UserId == userId)
+            .ExecuteDeleteAsync();
     }
 }

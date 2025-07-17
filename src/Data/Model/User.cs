@@ -19,11 +19,11 @@ public class User
 
     public int Id { get; set; }
 
-    [StringLength(256)] public string Username { get; init; }
+    [StringLength(256)] public string Username { get; set; }
 
-    [StringLength(256)] public string Name { get; init; }
+    [StringLength(256)] public string Name { get; set; }
 
-    [StringLength(1024)] public string Email { get; init; }
+    [StringLength(1024)] public string Email { get; set; }
 
     [StringLength(4096)] public string Password { get; set; }
 

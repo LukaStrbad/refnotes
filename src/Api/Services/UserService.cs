@@ -59,7 +59,24 @@ public class UserService : IUserService
         {
             throw new UserNotFoundException($"User {username} not found.");
         }
+
+        return user;
+    }
+
+    public async Task<User> EditUser(int userId, EditUserRequest details)
+    {
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == details.NewUsername);
+        if (existingUser is not null)
+        {
+            throw new UserExistsException("User already exists with this username.");
+        }
+
+        var user = await _context.Users.FindAsync(userId) ?? throw new UserNotFoundException($"User with ID {userId} not found.");
         
+        user.Name = details.NewName;
+        user.Username = details.NewUsername;
+        user.Email = details.NewEmail;
+        await _context.SaveChangesAsync();
         return user;
     }
 }
