@@ -45,15 +45,14 @@ public sealed class EmailConfirmService : IEmailConfirmService
         return token;
     }
 
-    public async Task<bool> ConfirmEmail(string token, int userId)
+    public async Task<(User? User, bool Success)> ConfirmEmail(string token)
     {
         var emailConfirmToken = await _context.EmailConfirmTokens
             .Include(emailConfirmToken => emailConfirmToken.User)
-            .Where(emailConfirmToken => emailConfirmToken.UserId == userId)
             .FirstOrDefaultAsync(t => t.Value == token && t.ExpiresAt > DateTime.UtcNow);
 
         if (emailConfirmToken is null)
-            return false;
+            return (null, false);
 
         var user = emailConfirmToken.User;
         if (user is null)
@@ -69,6 +68,6 @@ public sealed class EmailConfirmService : IEmailConfirmService
 
         _logger.LogInformation("Email confirmed for user {UserId}", user.Id);
 
-        return true;
+        return (user, true);
     }
 }

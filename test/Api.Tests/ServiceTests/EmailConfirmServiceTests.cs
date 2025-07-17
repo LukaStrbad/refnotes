@@ -49,13 +49,14 @@ public sealed class EmailConfirmServiceTests
         var user = userFaker.CreateFaker().WithUnconfirmedEmail().Generate();
         var token = tokenFaker.CreateFaker().ForUser(user).Generate();
 
-        var result = await sut.Value.ConfirmEmail(token.Value, user.Id);
+        var (returnedUser, success) = await sut.Value.ConfirmEmail(token.Value);
 
         await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
-        Assert.True(result);
+        Assert.True(success);
         Assert.True(user.EmailConfirmed);
+        Assert.Equal(user.Id, returnedUser?.Id);
     }
-    
+
     [Theory, AutoData]
     public async Task ConfirmEmail_ReturnsFalse_WhenTokenIsExpired(
         Sut<EmailConfirmService> sut,
@@ -65,10 +66,11 @@ public sealed class EmailConfirmServiceTests
         var user = userFaker.CreateFaker().WithUnconfirmedEmail().Generate();
         var token = tokenFaker.CreateFaker().ForUser(user).WithExpiredToken().Generate();
 
-        var result = await sut.Value.ConfirmEmail(token.Value, user.Id);
+        var (returnedUser, success) = await sut.Value.ConfirmEmail(token.Value);
 
         await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
-        Assert.False(result);
+        Assert.False(success);
         Assert.False(user.EmailConfirmed);
+        Assert.Null(returnedUser);
     }
 }

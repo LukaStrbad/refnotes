@@ -17,7 +17,7 @@ public class User
         Password = password;
     }
 
-    public int Id { get; init; }
+    public int Id { get; set; }
 
     [StringLength(256)] public string Username { get; init; }
 

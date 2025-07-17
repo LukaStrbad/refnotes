@@ -41,6 +41,13 @@ public interface IAuthService
     /// <exception cref="RefreshTokenInvalid">Thrown when saved refresh token could not be found, or is expired</exception>
     /// <exception cref="SecurityTokenMalformedException">Thrown when provided access token is invalid</exception>
     Task<Tokens> RefreshAccessToken(string accessToken, string refreshToken);
+
+    /// <summary>
+    /// Bypasses the login flow and creates a new access token and refresh token for a user.
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <returns>New access and refresh tokens</returns>
+    Task<Tokens> ForceLogin(int userId);
 }
 
 public class AuthService : IAuthService
@@ -139,6 +146,17 @@ public class AuthService : IAuthService
 
         var newTokens = await AddUserRefreshToken(user);
         return newTokens;
+    }
+
+    public async Task<Tokens> ForceLogin(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+            throw new UserNotFoundException("User not found");
+        
+        _logger.LogInformation("Forcing login for user {User}", StringSanitizer.SanitizeLog(user.Username));
+        var tokens = await AddUserRefreshToken(user);
+        return tokens;
     }
 
     private Tokens CreateTokens(User user)

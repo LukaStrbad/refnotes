@@ -21,6 +21,8 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     private readonly IAuthService _authService;
     private readonly AuthController _controller;
     private readonly IEmailScheduler _emailScheduler;
+    private readonly IUserService _userService;
+    private readonly IEmailConfirmService _emailConfirmService;
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
 
@@ -29,6 +31,8 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
         var serviceProvider = fixture.CreateServiceProvider();
         _authService = serviceProvider.GetRequiredService<IAuthService>();
         _emailScheduler = serviceProvider.GetRequiredService<IEmailScheduler>();
+        _userService = serviceProvider.GetRequiredService<IUserService>();
+        _emailConfirmService = serviceProvider.GetRequiredService<IEmailConfirmService>();
         var httpContext = serviceProvider.GetRequiredService<HttpContext>();
         _requestCookies = new RequestCookieCollection();
         _responseCookies = new ResponseCookies();
@@ -103,16 +107,19 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     public async Task Register_ReturnsOk_WhenUserIsRegistered()
     {
         const string lang = "en";
+        var token = Guid.NewGuid().ToString();
         var newUser = new RegisterUserRequest("newUser", "newUser", "newUser@newUser.com", "password");
         var tokens = new Tokens("access", new RefreshToken("token", DateTime.Now));
         _authService.Register(newUser).Returns(tokens);
+        _userService.GetByUsername(newUser.Username).Returns(newUser.ToUser());
+        _emailConfirmService.GenerateToken(Arg.Any<int>()).Returns(token);
 
         var result = await _controller.Register(newUser, lang);
         Assert.IsType<OkResult>(result.Result);
 
         AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);
         await _emailScheduler.Received(1)
-            .ScheduleVerificationEmail(newUser.Email, newUser.Name, Arg.Any<string>(), lang);
+            .ScheduleVerificationEmail(newUser.Email, newUser.Name, token, lang);
     }
 
     [Fact]

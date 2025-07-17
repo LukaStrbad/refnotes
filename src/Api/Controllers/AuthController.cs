@@ -1,8 +1,8 @@
-﻿using Api.Exceptions;
+﻿using Api.Controllers.Base;
+using Api.Exceptions;
 using Api.Model;
 using Api.Services;
 using Api.Services.Schedulers;
-using Data.Model;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -11,47 +11,21 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : AuthControllerBase
 {
     private readonly IAuthService _authService;
-    private readonly IAppDomainService _appDomainService;
-    private readonly AppSettings _appSettings;
     private readonly IEmailScheduler _emailScheduler;
     private readonly IEmailConfirmService _emailConfirmService;
     private readonly IUserService _userService;
 
     public AuthController(IAuthService authService, IAppDomainService appDomainService, AppSettings appSettings,
-        IEmailScheduler emailScheduler, IEmailConfirmService emailConfirmService, IUserService userService)
+        IEmailScheduler emailScheduler, IEmailConfirmService emailConfirmService, IUserService userService) : base(
+        appDomainService, appSettings)
     {
         _authService = authService;
-        _appDomainService = appDomainService;
-        _appSettings = appSettings;
         _emailScheduler = emailScheduler;
         _emailConfirmService = emailConfirmService;
         _userService = userService;
-    }
-
-    private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
-    {
-        // Check if the request is from a valid domain, if not, set the cookie domain to localhost
-        var requestDomain = HttpContext.Request.Host.Host;
-        var cookieDomain = _appDomainService.IsAppDomain(requestDomain) ? requestDomain : "localhost";
-
-        var options = new CookieOptions
-        {
-            Domain = cookieDomain,
-            SameSite = SameSiteMode.Strict,
-            IsEssential = true,
-            HttpOnly = httpOnly,
-            Secure = _appSettings.CookieSecure
-        };
-
-        if (expires is not null)
-        {
-            options.Expires = expires;
-        }
-
-        return options;
     }
 
     [HttpPost("login")]
@@ -132,15 +106,5 @@ public class AuthController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-    }
-
-    private void AddTokenCookies(Tokens tokens)
-    {
-        // Set an access token cookie (set the same expiration time as the refresh token)
-        HttpContext.Response.Cookies.Append("accessToken", tokens.AccessToken,
-            GetCookieOptions(false, tokens.RefreshToken.ExpiryTime));
-        // Set refresh token cookie   
-        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken.Token,
-            GetCookieOptions(true, tokens.RefreshToken.ExpiryTime));
     }
 }
