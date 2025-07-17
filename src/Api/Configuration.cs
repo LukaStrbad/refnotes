@@ -54,6 +54,7 @@ public static class Configuration
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailScheduler, EmailScheduler>();
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+        builder.Services.AddScoped<IEmailConfirmService, EmailConfirmService>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();

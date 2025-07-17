@@ -50,4 +50,15 @@ public class UserService : IUserService
 
         return _user;
     }
+
+    public async Task<User> GetByUsername(string username)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        if (user is null)
+        {
+            throw new UserNotFoundException($"User {username} not found.");
+        }
+        
+        return user;
+    }
 }

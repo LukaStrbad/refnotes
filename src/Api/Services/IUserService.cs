@@ -8,4 +8,6 @@ public interface IUserService
     /// Gets currently logged-in user
     /// </summary>
     Task<User> GetCurrentUser();
+
+    Task<User> GetByUsername(string username);
 }

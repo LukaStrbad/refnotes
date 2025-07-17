@@ -17,14 +17,18 @@ public class AuthController : ControllerBase
     private readonly IAppDomainService _appDomainService;
     private readonly AppSettings _appSettings;
     private readonly IEmailScheduler _emailScheduler;
+    private readonly IEmailConfirmService _emailConfirmService;
+    private readonly IUserService _userService;
 
     public AuthController(IAuthService authService, IAppDomainService appDomainService, AppSettings appSettings,
-        IEmailScheduler emailScheduler)
+        IEmailScheduler emailScheduler, IEmailConfirmService emailConfirmService, IUserService userService)
     {
         _authService = authService;
         _appDomainService = appDomainService;
         _appSettings = appSettings;
         _emailScheduler = emailScheduler;
+        _emailConfirmService = emailConfirmService;
+        _userService = userService;
     }
 
     private CookieOptions GetCookieOptions(bool httpOnly, DateTimeOffset? expires = null)
@@ -81,7 +85,9 @@ public class AuthController : ControllerBase
         {
             var tokens = await _authService.Register(newUser);
             AddTokenCookies(tokens);
-            await _emailScheduler.ScheduleVerificationEmail(newUser.Email, newUser.Name, "test-token", lang ?? "en");
+            var user = await _userService.GetByUsername(newUser.Username);
+            var token = await _emailConfirmService.GenerateToken(user.Id);
+            await _emailScheduler.ScheduleVerificationEmail(newUser.Email, newUser.Name, token, lang ?? "en");
             return Ok();
         }
         catch (UserExistsException e)

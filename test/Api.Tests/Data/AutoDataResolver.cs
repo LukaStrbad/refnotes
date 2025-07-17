@@ -16,6 +16,7 @@ using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Extensions;
 using Bogus;
 using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Http;
 using Quartz;
 using StackExchange.Redis;
 
@@ -50,7 +51,8 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IPublicFileScheduler),
         typeof(IFileSyncService),
         typeof(IWebSocketMessageHandler),
-        typeof(ISmtpClient)
+        typeof(ISmtpClient),
+        typeof(IHttpContextAccessor)
     ];
 
     private readonly List<Type> _realizedMocks = [];
