@@ -6,6 +6,8 @@ import { AuthService } from '../../services/auth.service';
 import { UserResponse } from '../../model/user-response';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { click } from '../../tests/click-utils';
+import { signal, WritableSignal } from '@angular/core';
+import { User } from '../../model/user';
 
 describe('AccountComponent', () => {
   let component: AccountComponent;
@@ -13,10 +15,11 @@ describe('AccountComponent', () => {
   let userService: jasmine.SpyObj<UserService>;
   let authService: jasmine.SpyObj<AuthService>;
   let nativeElement: HTMLElement;
+  let userSignal = signal<User | null>(null);
 
   beforeEach(async () => {
     userService = jasmine.createSpyObj('UserService', ['getAccountInfo', 'resendEmailConfirmation']);
-    authService = jasmine.createSpyObj('AuthService', ['logout']);
+    authService = jasmine.createSpyObj('AuthService', ['logout'], { user: userSignal });
 
     await TestBed.configureTestingModule({
       imports: [
@@ -49,9 +52,10 @@ describe('AccountComponent', () => {
       roles: ['user'],
       emailConfirmed: true
     };
+    userSignal.set(mockUser);
     userService.getAccountInfo.and.resolveTo(mockUser);
 
-    component.ngOnInit();
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -59,7 +63,7 @@ describe('AccountComponent', () => {
     const usernameElement = nativeElement.querySelector('[data-test="account.username"]');
     const emailElement = nativeElement.querySelector('[data-test="account.email"]');
 
-    expect(component.accountInfo).toEqual(mockUser);
+    expect(component.accountInfoResource.value()).toEqual(mockUser);
     expect(nameElement?.textContent).toContain(mockUser.name);
     expect(usernameElement?.textContent).toContain(mockUser.username);
     expect(emailElement?.textContent).toContain(mockUser.email);
@@ -74,10 +78,11 @@ describe('AccountComponent', () => {
       roles: ['user'],
       emailConfirmed: false
     };
+    userSignal.set(mockUser);
     userService.getAccountInfo.and.resolveTo(mockUser);
     userService.resendEmailConfirmation.and.resolveTo();
 
-    component.ngOnInit();
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -102,13 +107,13 @@ describe('AccountComponent', () => {
       roles: ['user'],
       emailConfirmed: true
     };
+    userSignal.set(mockUser);
     userService.getAccountInfo.and.resolveTo(mockUser);
     authService.logout.and.resolveTo();
 
-    component.ngOnInit();
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-
 
     const logoutButton = nativeElement.querySelector('[data-test="account.button.logout"]') as HTMLButtonElement;
     expect(logoutButton).toBeTruthy();

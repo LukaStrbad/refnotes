@@ -1,11 +1,11 @@
-import { Component, computed, inject, Resource, resource, ResourceRef, Signal } from '@angular/core';
+import { Component, computed, inject, Resource, resource, Signal } from '@angular/core';
 import { UserService } from '../../services/user.service';
 import { UserResponse } from '../../model/user-response';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from '../../directives/test-tag.directive';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EditAccountFormComponent } from "./edit-account-form/edit-account-form.component";
 import { EditUserRequest } from '../../model/edit-user-request';
 import { NotificationService } from '../../services/notification.service';

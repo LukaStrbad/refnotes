@@ -46,4 +46,10 @@ export class UserService {
     this.auth.setUserAndToken();
     return user;
   }
+
+  async updatePassword(oldPassword: string, newPassword: string) {
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/updatePassword`, { oldPassword, newPassword }),
+    );
+  }
 }
