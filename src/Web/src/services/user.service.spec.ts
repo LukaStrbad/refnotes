@@ -7,6 +7,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { environment } from '../environments/environment';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UserResponse } from '../model/user-response';
+import { UpdatePasswordByTokenRequest } from '../model/update-password-by-token-request';
 
 const apiUrl = environment.apiUrl + '/user';
 
@@ -115,6 +116,32 @@ describe('UserService', () => {
     const req = httpMock.expectOne(`${apiUrl}/updatePassword`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ oldPassword, newPassword });
+    req.flush({});
+    await promise;
+  });
+
+  it('should update password by token', async () => {
+    const request: UpdatePasswordByTokenRequest = {
+      username: 'testuser',
+      password: 'newPassword',
+      token: 'test-token'
+    };
+
+    const promise = service.updatePasswordByToken(request);
+    const req = httpMock.expectOne(`${apiUrl}/updatePasswordByToken`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(request);
+    req.flush({});
+    await promise;
+  });
+
+  it('should send password reset email', async () => {
+    const username = 'testuser';
+    const lang = 'en';
+
+    const promise = service.sendPasswordResetEmail(username, lang);
+    const req = httpMock.expectOne(`${apiUrl}/sendPasswordResetEmail?username=${username}&lang=${lang}`);
+    expect(req.request.method).toBe('POST');
     req.flush({});
     await promise;
   });

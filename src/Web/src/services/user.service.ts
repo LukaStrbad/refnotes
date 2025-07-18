@@ -7,6 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UserResponse } from '../model/user-response';
 import { EditUserRequest } from '../model/edit-user-request';
 import { UpdatePasswordRequest } from '../model/update-password-request';
+import { UpdatePasswordByTokenRequest } from '../model/update-password-by-token-request';
+import { generateHttpParams } from '../utils/http-utils';
 
 const apiUrl = environment.apiUrl + '/user';
 
@@ -51,6 +53,19 @@ export class UserService {
   async updatePassword(updatePasswordRequest: UpdatePasswordRequest) {
     await firstValueFrom(
       this.http.post(`${apiUrl}/updatePassword`, updatePasswordRequest, { responseType: 'text' }),
+    );
+  }
+
+  async updatePasswordByToken(request: UpdatePasswordByTokenRequest) {
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/updatePasswordByToken`, request, { responseType: 'text' }),
+    );
+  }
+
+  async sendPasswordResetEmail(username: string, lang: string) {
+    const params = generateHttpParams({ username, lang });
+    await firstValueFrom(
+      this.http.post(`${apiUrl}/sendPasswordResetEmail`, null, { responseType: 'text', params })
     );
   }
 }

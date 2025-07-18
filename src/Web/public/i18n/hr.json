@@ -49,7 +49,15 @@
       "usernameNotFound": "Korisničko ime nije pronađeno",
       "invalidPassword": "Neispravna lozinka"
     },
-    "signUp": "Registracija?"
+    "signUp": "Registracija?",
+    "forgot-password": "Zaboravljena lozinka?",
+    "modal": {
+      "forgot-password": {
+        "body": "Upravo ćete poslati link za resetiranje lozinke za račun '{{username}}'. Je li to ispravno?",
+        "message": "Ovo će poslati E-poštu sa vezom za resetiranje lozinke.",
+        "title": "Zaboravljena lozinka?"
+      }
+    }
   },
   "browser": {
     "newFolder": "Nova mapa",

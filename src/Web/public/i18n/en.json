@@ -49,7 +49,15 @@
       "usernameNotFound": "Username not found",
       "invalidPassword": "Invalid password"
     },
-    "signUp": "Sign up instead?"
+    "signUp": "Sign up instead?",
+    "forgot-password": "Forgot password?",
+    "modal": {
+      "forgot-password": {
+        "title": "Forgot password?",
+        "message": "This will send an email with a password reset link.",
+        "body": "You are about to send a password reset link for the account '{{username}}'. Is this correct?"
+      }
+    }
   },
   "browser": {
     "newFolder": "New Folder",

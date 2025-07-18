@@ -6,7 +6,7 @@ import { AskModalService } from '../../../services/ask-modal.service';
 import { click } from '../../../tests/click-utils';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
-fdescribe('ChangePasswordFormComponent', () => {
+describe('ChangePasswordFormComponent', () => {
   let component: ChangePasswordFormComponent;
   let fixture: ComponentFixture<ChangePasswordFormComponent>;
   let askModal: jasmine.SpyObj<AskModalService>;

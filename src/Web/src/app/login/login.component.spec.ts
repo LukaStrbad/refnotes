@@ -5,14 +5,22 @@ import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService
 import { Navigation, provideRouter, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { UserService } from '../../services/user.service';
+import { AskModalService } from '../../services/ask-modal.service';
+import { click } from '../../tests/click-utils';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let auth: jasmine.SpyObj<AuthService>;
+  let askModal: jasmine.SpyObj<AskModalService>;
+  let userService: jasmine.SpyObj<UserService>;
+  let nativeElement: HTMLElement;
 
   beforeEach(async () => {
     auth = jasmine.createSpyObj('AuthService', ['login']);
+    askModal = jasmine.createSpyObj('AskModalService', ['confirm']);
+    userService = jasmine.createSpyObj('UserService', ['sendPasswordResetEmail']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -27,13 +35,17 @@ describe('LoginComponent', () => {
       providers: [
         provideRouter([]),
         TranslateService,
-        { provide: AuthService, useValue: auth }
+        { provide: AuthService, useValue: auth },
+        { provide: AskModalService, useValue: askModal },
+        { provide: UserService, useValue: userService },
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+
+    nativeElement = fixture.nativeElement as HTMLElement;
   });
 
   it('should create', () => {
@@ -41,8 +53,8 @@ describe('LoginComponent', () => {
   });
 
   it('should call auth.login with provided username and password', async () => {
-    component.username = 'testUser';
-    component.password = 'testPassword';
+    component.username.set('testUser');
+    component.password.set('testPassword');
     await component.login();
 
     expect(auth.login).toHaveBeenCalledWith('testUser', 'testPassword', undefined);
@@ -50,8 +62,8 @@ describe('LoginComponent', () => {
 
   it('should not set error on successful login', async () => {
     auth.login.and.resolveTo();
-    component.username = 'testUser';
-    component.password = 'testPassword';
+    component.username.set('testUser');
+    component.password.set('testPassword');
     await component.login();
 
     expect(component.error).toBeNull();
@@ -95,5 +107,31 @@ describe('LoginComponent', () => {
     const component = fixture.componentInstance;
 
     expect(component.message).toBe('test message');
+  });
+
+  it('should call userService.sendPasswordResetEmail with username and current language', async () => {
+    askModal.confirm.and.resolveTo(true);
+    const translate = TestBed.inject(TranslateService);
+    spyOnProperty(translate, 'currentLang', 'get').and.returnValue('en');
+
+    const forgotPasswordButton = nativeElement.querySelector('button[data-test="login.button.forgot-password"]') as HTMLButtonElement;
+    const usernameInput = nativeElement.querySelector('input[name="username"]') as HTMLInputElement;
+
+    // Disabled when username is invalid
+    expect(forgotPasswordButton.disabled).toBeTrue();
+
+    usernameInput.value = 'testUser';
+    usernameInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Enabled when username is valid
+    expect(forgotPasswordButton.disabled).toBeFalse();
+
+    // Simulate button click
+    click(forgotPasswordButton);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(userService.sendPasswordResetEmail).toHaveBeenCalledWith('testUser', 'en');
   });
 });
