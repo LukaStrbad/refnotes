@@ -48,6 +48,13 @@ public interface IAuthService
     /// <param name="userId">User ID</param>
     /// <returns>New access and refresh tokens</returns>
     Task<Tokens> ForceLogin(int userId);
+
+    /// <summary>
+    /// Verifies the password of a user
+    /// </summary>
+    /// <param name="credentials">Username and password</param>
+    /// <returns>True if password matches, false otherwise</returns>
+    Task<bool> VerifyPassword(UserCredentials credentials);
 }
 
 public class AuthService : IAuthService
@@ -106,7 +113,7 @@ public class AuthService : IAuthService
             _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(userRequest.Username));
             throw new UserExistsException("User already exists");
         }
-        
+
         var newUser = userRequest.ToUser();
 
         // Hash the password before saving
@@ -153,10 +160,23 @@ public class AuthService : IAuthService
         var user = await _context.Users.FindAsync(userId);
         if (user is null)
             throw new UserNotFoundException("User not found");
-        
+
         _logger.LogInformation("Forcing login for user {User}", StringSanitizer.SanitizeLog(user.Username));
         var tokens = await AddUserRefreshToken(user);
         return tokens;
+    }
+
+    public async Task<bool> VerifyPassword(UserCredentials credentials)
+    {
+        var dbPassword = await _context.Users.Where(u => u.Username == credentials.Username).Select(u => u.Password)
+            .FirstOrDefaultAsync();
+        if (dbPassword is null)
+            throw new UserNotFoundException("User not found");
+
+        var passwordHasher = new PasswordHasher<UserCredentials>();
+        var result = passwordHasher.VerifyHashedPassword(credentials, dbPassword, credentials.Password);
+
+        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
     }
 
     private Tokens CreateTokens(User user)

@@ -102,4 +102,22 @@ public sealed class UserController : AuthControllerBase
             return BadRequest("Username already exists.");
         }
     }
+
+    [HttpPost("updatePassword")]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordRequest request)
+    {
+        var currentUser = await _userService.GetCurrentUser();
+
+        // Validate the old password
+        if (!await _authService.VerifyPassword(new UserCredentials(currentUser.Username, request.OldPassword)))
+        {
+            return BadRequest("Invalid old password.");
+        }
+        
+        // Update the password
+        await _userService.UpdatePassword(new UserCredentials(currentUser.Username, request.NewPassword));
+        return Ok("Password updated successfully.");
+    }
 }

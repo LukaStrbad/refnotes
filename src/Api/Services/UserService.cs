@@ -2,6 +2,7 @@
 using Api.Model;
 using Data;
 using Data.Model;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services;
@@ -73,8 +74,9 @@ public class UserService : IUserService
             throw new UserExistsException("User already exists with this username.");
         }
 
-        var user = await _context.Users.FindAsync(userId) ?? throw new UserNotFoundException($"User with ID {userId} not found.");
-        
+        var user = await _context.Users.FindAsync(userId) ??
+                   throw new UserNotFoundException($"User with ID {userId} not found.");
+
         user.Name = details.NewName;
         user.Username = details.NewUsername;
         user.Email = details.NewEmail;
@@ -89,7 +91,21 @@ public class UserService : IUserService
         {
             throw new UserNotFoundException($"User with ID {userId} not found.");
         }
+
         user.EmailConfirmed = false;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdatePassword(UserCredentials newCredentials)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == newCredentials.Username);
+        if (user is null)
+        {
+            throw new UserNotFoundException($"User {newCredentials.Username} not found.");
+        }
+
+        var passwordHasher = new PasswordHasher<UserCredentials>();
+        user.Password = passwordHasher.HashPassword(newCredentials, newCredentials.Password);
         await _context.SaveChangesAsync();
     }
 }

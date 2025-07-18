@@ -15,4 +15,6 @@ public interface IUserService
     Task<User> EditUser(int userId, EditUserRequest details);
     
     Task UnconfirmEmail(int userId);
+
+    Task UpdatePassword(UserCredentials newCredentials);
 }
