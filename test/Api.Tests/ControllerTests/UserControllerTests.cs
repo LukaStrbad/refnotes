@@ -20,6 +20,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     private readonly IEmailConfirmService _emailConfirmService;
     private readonly IAuthService _authService;
     private readonly IEmailScheduler _emailScheduler;
+    private readonly IPasswordResetService _passwordResetService;
     private readonly UserController _controller;
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
@@ -31,6 +32,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
         _emailConfirmService = serviceProvider.GetRequiredService<IEmailConfirmService>();
         _authService = serviceProvider.GetRequiredService<IAuthService>();
         _emailScheduler = serviceProvider.GetRequiredService<IEmailScheduler>();
+        _passwordResetService = serviceProvider.GetRequiredService<IPasswordResetService>();
         _controller = serviceProvider.GetRequiredService<UserController>();
 
         var httpContext = serviceProvider.GetRequiredService<HttpContext>();
@@ -152,6 +154,99 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     }
 
     [Fact]
+    public async Task UpdatePasswordByToken_ReturnsOk_WhenPasswordUpdated()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 4379,
+            EmailConfirmed = true
+        };
+        var request = new UpdatePasswordByTokenRequest(user.Username, "password123", Guid.NewGuid().ToString());
+        _userService.GetByUsername(user.Username).Returns(user);
+        _passwordResetService.ValidateToken(user.Id, request.Token).Returns(true);
+
+        var result = await _controller.UpdatePasswordByToken(request);
+
+        Assert.IsType<OkResult>(result);
+        await _userService.Received(1).UpdatePassword(Arg.Is<UserCredentials>(cred =>
+            cred.Username == user.Username && cred.Password == request.Password));
+        await _passwordResetService.Received(1).DeleteTokensForUser(user.Id);
+    }
+
+    [Fact]
+    public async Task UpdatePasswordByToken_ReturnsBadRequest_WhenEmailIsNotConfirmed()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 4380,
+            EmailConfirmed = false
+        };
+        var request = new UpdatePasswordByTokenRequest(user.Username, "password123", Guid.NewGuid().ToString());
+        _userService.GetByUsername(user.Username).Returns(user);
+
+        var result = await _controller.UpdatePasswordByToken(request);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+
+        await _userService.DidNotReceiveWithAnyArgs().UpdatePassword(Arg.Any<UserCredentials>());
+    }
+    
+    [Fact]
+    public async Task UpdatePasswordByToken_ReturnsBadRequest_WhenTokenIsInvalid()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 4381,
+            EmailConfirmed = true
+        };
+        var request = new UpdatePasswordByTokenRequest(user.Username, "password123", Guid.NewGuid().ToString());
+        _userService.GetByUsername(user.Username).Returns(user);
+        _passwordResetService.ValidateToken(user.Id, request.Token).Returns(false);
+
+        var result = await _controller.UpdatePasswordByToken(request);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+
+        await _userService.DidNotReceiveWithAnyArgs().UpdatePassword(Arg.Any<UserCredentials>());
+    }
+
+    [Fact]
+    public async Task SendPasswordResetEmail_ReturnsOk_WhenEmailIsSent()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 786,
+            EmailConfirmed = true
+        };
+        var token = Guid.NewGuid().ToString();
+        _userService.GetByUsername(user.Username).Returns(user);
+        _passwordResetService.GenerateToken(user.Id).Returns(token);
+
+        var result = await _controller.SendPasswordResetEmail(user.Username, "en");
+
+        Assert.IsType<OkResult>(result);
+        await _emailScheduler.Received(1)
+            .SchedulePasswordResetEmail(user.Email, user.Name, token, "en");
+    }
+
+    [Fact]
+    public async Task SendPasswordResetEmail_ReturnsBadRequest_WhenEmailIsNotConfirmed()
+    {
+        var user = new User("test_user", "Test User", "test@test.com", "password123")
+        {
+            Id = 786,
+            EmailConfirmed = false
+        };
+        _userService.GetByUsername(user.Username).Returns(user);
+
+        var result = await _controller.SendPasswordResetEmail(user.Username, "en");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        await _emailScheduler.DidNotReceiveWithAnyArgs()
+            .SchedulePasswordResetEmail(user.Email, user.Name, Arg.Any<string>(), "en");
+    }
+
+    [Fact]
     public async Task EditUser_ReturnsOk_WhenUserIsEdited()
     {
         // Arrange
@@ -220,6 +315,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
 
         await _userService.Received(1).UnconfirmEmail(updatedUser.Id);
         await _emailConfirmService.Received(1).DeleteTokensForUser(updatedUser.Id);
+        await _passwordResetService.Received(1).DeleteTokensForUser(updatedUser.Id);
         await _emailScheduler.Received(1)
             .ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token, Arg.Any<string>());
         AssertCookiesContainTokens(tokens.AccessToken, tokens.RefreshToken.Token);

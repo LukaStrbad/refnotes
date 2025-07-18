@@ -17,15 +17,18 @@ public sealed class UserController : AuthControllerBase
     private readonly IEmailConfirmService _emailConfirmService;
     private readonly IAuthService _authService;
     private readonly IEmailScheduler _emailScheduler;
+    private readonly IPasswordResetService _passwordResetService;
 
     public UserController(IUserService userService, IEmailConfirmService emailConfirmService, IAuthService authService,
-        IAppDomainService appDomainService, AppSettings appSettings, IEmailScheduler emailScheduler) : base(
+        IAppDomainService appDomainService, AppSettings appSettings, IEmailScheduler emailScheduler,
+        IPasswordResetService passwordResetService) : base(
         appDomainService, appSettings)
     {
         _userService = userService;
         _emailConfirmService = emailConfirmService;
         _authService = authService;
         _emailScheduler = emailScheduler;
+        _passwordResetService = passwordResetService;
     }
 
     [HttpGet("accountInfo")]
@@ -71,12 +74,55 @@ public sealed class UserController : AuthControllerBase
         return Ok("Email confirmation link has been resent.");
     }
 
+    [HttpPost("updatePasswordByToken")]
+    [AllowAnonymous]
+    public async Task<ActionResult> UpdatePasswordByToken([FromBody] UpdatePasswordByTokenRequest request)
+    {
+        try
+        {
+            var user = await _userService.GetByUsername(request.Username);
+            if (!user.EmailConfirmed)
+                return BadRequest("Email is not confirmed. Cannot reset password.");
+            if (!await _passwordResetService.ValidateToken(user.Id, request.Token))
+                return BadRequest("Invalid or expired password reset token.");
+            
+            await _userService.UpdatePassword(new UserCredentials(request.Username, request.Password));
+            await _passwordResetService.DeleteTokensForUser(user.Id);
+            return Ok();
+        } catch (UserNotFoundException)
+        {
+            return BadRequest("User not found.");
+        }
+    }
+
+    [HttpPost("sendPasswordResetEmail")]
+    [AllowAnonymous]
+    public async Task<ActionResult> SendPasswordResetEmail([FromQuery] string username, [FromQuery] string? lang)
+    {
+        try
+        {
+            var user = await _userService.GetByUsername(username);
+
+            if (!user.EmailConfirmed)
+                return BadRequest("Email is not confirmed. Cannot send password reset email.");
+
+            var token = await _passwordResetService.GenerateToken(user.Id);
+            await _emailScheduler.SchedulePasswordResetEmail(user.Email, user.Name, token, lang ?? "en");
+
+            return Ok();
+        }
+        catch (UserNotFoundException)
+        {
+            return BadRequest("User not found.");
+        }
+    }
+
     [HttpPost("edit")]
     [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult> EditUser([FromBody] EditUserRequest request, [FromQuery] string? lang)
     {
         var currentUser = await _userService.GetCurrentUser();
-        
+
         var emailsDifferent = currentUser.Email != request.NewEmail;
 
         try
@@ -87,6 +133,7 @@ public sealed class UserController : AuthControllerBase
             {
                 await _userService.UnconfirmEmail(updatedUser.Id);
                 await _emailConfirmService.DeleteTokensForUser(updatedUser.Id);
+                await _passwordResetService.DeleteTokensForUser(updatedUser.Id);
                 var token = await _emailConfirmService.GenerateToken(updatedUser.Id);
                 await _emailScheduler.ScheduleVerificationEmail(updatedUser.Email, updatedUser.Name, token,
                     lang ?? "en");
@@ -115,7 +162,7 @@ public sealed class UserController : AuthControllerBase
         {
             return BadRequest("Invalid old password.");
         }
-        
+
         // Update the password
         await _userService.UpdatePassword(new UserCredentials(currentUser.Username, request.NewPassword));
         return Ok("Password updated successfully.");
