@@ -3,10 +3,11 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { UserResponse } from '../../../model/user-response';
 import { TranslateDirective } from '@ngx-translate/core';
 import { EditUserRequest } from '../../../model/edit-user-request';
+import { TestTagDirective } from '../../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-edit-account-form',
-  imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
+  imports: [TranslateDirective, FormsModule, ReactiveFormsModule, TestTagDirective],
   templateUrl: './edit-account-form.component.html',
   styleUrl: './edit-account-form.component.css'
 })

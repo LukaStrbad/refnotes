@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserResponse } from '../../model/user-response';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { click } from '../../tests/click-utils';
-import { signal, WritableSignal } from '@angular/core';
+import { signal } from '@angular/core';
 import { User } from '../../model/user';
 
 describe('AccountComponent', () => {
@@ -15,7 +15,7 @@ describe('AccountComponent', () => {
   let userService: jasmine.SpyObj<UserService>;
   let authService: jasmine.SpyObj<AuthService>;
   let nativeElement: HTMLElement;
-  let userSignal = signal<User | null>(null);
+  const userSignal = signal<User | null>(null);
 
   beforeEach(async () => {
     userService = jasmine.createSpyObj('UserService', ['getAccountInfo', 'resendEmailConfirmation']);

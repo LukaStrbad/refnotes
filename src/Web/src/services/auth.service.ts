@@ -1,4 +1,4 @@
-import { Inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { Inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
