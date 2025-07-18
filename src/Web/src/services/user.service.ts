@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UserResponse } from '../model/user-response';
 import { EditUserRequest } from '../model/edit-user-request';
+import { UpdatePasswordRequest } from '../model/update-password-request';
 
 const apiUrl = environment.apiUrl + '/user';
 
@@ -47,9 +48,9 @@ export class UserService {
     return user;
   }
 
-  async updatePassword(oldPassword: string, newPassword: string) {
+  async updatePassword(updatePasswordRequest: UpdatePasswordRequest) {
     await firstValueFrom(
-      this.http.post(`${apiUrl}/updatePassword`, { oldPassword, newPassword }),
+      this.http.post(`${apiUrl}/updatePassword`, updatePasswordRequest, { responseType: 'text' }),
     );
   }
 }

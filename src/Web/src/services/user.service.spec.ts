@@ -111,7 +111,7 @@ describe('UserService', () => {
     const oldPassword = 'oldPassword';
     const newPassword = 'newPassword';
 
-    const promise = service.updatePassword(oldPassword, newPassword);
+    const promise = service.updatePassword({ oldPassword, newPassword });
     const req = httpMock.expectOne(`${apiUrl}/updatePassword`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ oldPassword, newPassword });

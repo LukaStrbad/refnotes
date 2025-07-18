@@ -11,10 +11,22 @@ import { EditUserRequest } from '../../model/edit-user-request';
 import { NotificationService } from '../../services/notification.service';
 import { LoggerService } from '../../services/logger.service';
 import { getTranslation } from '../../utils/translation-utils';
+import { ChangePasswordFormComponent } from "./change-password-form/change-password-form.component";
+import { UpdatePasswordRequest } from '../../model/update-password-request';
 
 @Component({
   selector: 'app-account',
-  imports: [TranslateDirective, TranslatePipe, NgClass, TestTagDirective, FormsModule, CommonModule, ReactiveFormsModule, EditAccountFormComponent],
+  imports: [
+    TranslateDirective,
+    TranslatePipe,
+    NgClass,
+    TestTagDirective,
+    FormsModule,
+    CommonModule,
+    ReactiveFormsModule,
+    EditAccountFormComponent,
+    ChangePasswordFormComponent
+  ],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css'
 })
@@ -26,7 +38,8 @@ export class AccountComponent {
   private readonly log = inject(LoggerService);
 
   sentConfirmationEmail = false;
-  editingProfile = false;
+  accountAction = AccountAction.None;
+  readonly AccountAction = AccountAction;
 
   readonly accountInfoResource: Resource<UserResponse | undefined>;
   readonly avatarInitials: Signal<string>;
@@ -40,7 +53,7 @@ export class AccountComponent {
 
     this.avatarInitials = computed(() => {
       const resourceValue = this.accountInfoResource.value();
-      return resourceValue ? this.getAvatarInitials(resourceValue) : '';
+      return resourceValue ? this.getAvatarInitials(resourceValue) : 'U';
     });
 
     this.avatarColor = computed(() => {
@@ -78,32 +91,52 @@ export class AccountComponent {
   }
 
   editProfile(): void {
-    this.editingProfile = true;
+    this.accountAction = AccountAction.EditProfile;
   }
 
-  cancelEdit(): void {
-    this.editingProfile = false;
+  cancelAction(): void {
+    this.accountAction = AccountAction.None;
   }
 
   async saveChanges(updatedUser: EditUserRequest) {
     await this.notification.awaitAndNotifyError(
       this.userService.editAccount(updatedUser, this.translate.currentLang),
       {
-        400: 'account.error.edit-username-exists',
-        default: 'account.error.edit-failed'
+        400: await getTranslation(this.translate, 'account.error.edit-username-exists'),
+        default: await getTranslation(this.translate, 'account.error.edit-failed')
       },
       this.log
     );
 
     this.notification.success(await getTranslation(this.translate, 'account.success.edit-success'));
-    this.editingProfile = false;
+    this.cancelAction();
   }
 
   changePassword(): void {
-    throw new Error('Change password functionality is not implemented yet.');
+    this.accountAction = AccountAction.ChangePassword;
   }
 
   async logout(): Promise<void> {
     await this.auth.logout(undefined, true);
   }
+
+  async savePasswordChange(updatePasswordRequest: UpdatePasswordRequest): Promise<void> {
+    await this.notification.awaitAndNotifyError(
+      this.userService.updatePassword(updatePasswordRequest),
+      {
+        400: await getTranslation(this.translate, 'change-password.error.current-password-invalid'),
+        default: await getTranslation(this.translate, 'change-password.error.update-failed')
+      },
+      this.log
+    );
+
+    this.notification.success(await getTranslation(this.translate, 'change-password.success.update-success'));
+    this.cancelAction();
+  }
+}
+
+enum AccountAction {
+  None,
+  EditProfile,
+  ChangePassword,
 }

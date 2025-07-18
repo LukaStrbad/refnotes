@@ -413,5 +413,32 @@
       "confirm-title": "Update profile?",
       "confirm-message": "Are you sure you want to update your profile?"
     }
+  },
+  "change-password": {
+    "modal": {
+      "confirm-title": "Update password?",
+      "confirm-message": "Are you sure you want to update your password?"
+    },
+    "error": {
+      "current-password-invalid": "Current password is invalid",
+      "update-failed": "Failed to update password"
+    },
+    "success": {
+      "update-success": "Successfully updated the password"
+    }
+  },
+  "change-password-form": {
+    "label": {
+      "current-password": "Current password",
+      "new-password": "New password",
+      "confirm-password": "Confirm new password"
+    },
+    "error": {
+      "password-mismatch": "Passwords do not match"
+    },
+    "button": {
+      "save": "Save password",
+      "cancel": "Cancel"
+    }
   }
 }

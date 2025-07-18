@@ -96,7 +96,6 @@ describe('EditAccountFormComponent', () => {
     fixture.detectChanges();
 
     click(submitButton);
-
     await fixture.whenStable();
 
     expect(component.saveChanges.emit).toHaveBeenCalledWith({

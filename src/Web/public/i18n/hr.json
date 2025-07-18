@@ -413,5 +413,32 @@
       "confirm-message": "Jeste li sigurni da želite ažurirati svoj profil?",
       "confirm-title": "Ažurirajte profil?"
     }
+  },
+  "change-password-form": {
+    "button": {
+      "cancel": "Otkaži",
+      "save": "Spremi lozinku"
+    },
+    "error": {
+      "password-mismatch": "Lozinke se ne podudaraju"
+    },
+    "label": {
+      "confirm-password": "Potvrdite novu lozinku",
+      "current-password": "Trenutna lozinka",
+      "new-password": "Nova lozinka"
+    }
+  },
+  "change-password": {
+    "error": {
+      "current-password-invalid": "Trenutna lozinka je neispravna",
+      "update-failed": "Došlo je do pogreške prilikom ažuriranja lozinke"
+    },
+    "modal": {
+      "confirm-message": "Jeste li sigurni da želite ažurirati lozinku?",
+      "confirm-title": "Ažurirati lozinku?"
+    },
+    "success": {
+      "update-success": "Lozinka uspješno ažurirana"
+    }
   }
 }
