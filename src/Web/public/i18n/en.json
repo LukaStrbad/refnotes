@@ -407,5 +407,11 @@
       "save": "Save",
       "cancel": "Cancel"
     }
+  },
+  "account-edit": {
+    "modal": {
+      "confirm-title": "Update profile?",
+      "confirm-message": "Are you sure you want to update your profile?"
+    }
   }
 }

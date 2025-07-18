@@ -388,6 +388,30 @@
       "change-password": "Promijeni lozinku",
       "logout": "Odjava",
       "title": "Radnje"
+    },
+    "error": {
+      "edit-failed": "Došlo je do pogreške pri uređivanju podataka o računu",
+      "edit-username-exists": "Korisnik s istim korisničkim imenom već postoji"
+    },
+    "success": {
+      "edit-success": "Uspješno uređeni detalji računa"
+    }
+  },
+  "account-edit-form": {
+    "button": {
+      "cancel": "Otkaži",
+      "save": "Spremi"
+    },
+    "label": {
+      "email": "E-mail",
+      "name": "Ime",
+      "username": "Korisničko ime"
+    }
+  },
+  "account-edit": {
+    "modal": {
+      "confirm-message": "Jeste li sigurni da želite ažurirati svoj profil?",
+      "confirm-title": "Ažurirajte profil?"
     }
   }
 }

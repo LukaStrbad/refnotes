@@ -1,9 +1,10 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserResponse } from '../../../model/user-response';
 import { TranslateDirective } from '@ngx-translate/core';
 import { EditUserRequest } from '../../../model/edit-user-request';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
+import { AskModalService } from '../../../services/ask-modal.service';
 
 @Component({
   selector: 'app-edit-account-form',
@@ -15,6 +16,8 @@ export class EditAccountFormComponent {
   readonly accountInfo = input.required<UserResponse | undefined>();
   readonly saveChanges = output<EditUserRequest>();
   readonly cancelEdit = output<void>();
+
+  readonly askModal = inject(AskModalService);
 
   readonly accountEditForm = new FormGroup({
     username: new FormControl('', [
@@ -42,10 +45,19 @@ export class EditAccountFormComponent {
     });
   }
 
-  onSaveChanges(): void {
+  async onSaveChanges(): Promise<void>{
     const { name, username, email } = this.accountEditForm.value;
     if (!name || !username || !email) {
       return; // Form is invalid, do not proceed
+    }
+
+    const confirmed = await this.askModal.confirm(
+      'account-edit.modal.confirm-title',
+      'account-edit.modal.confirm-message',
+      { translate: true }
+    );
+    if (!confirmed) {
+      return;
     }
 
     const updatedUser: EditUserRequest = {

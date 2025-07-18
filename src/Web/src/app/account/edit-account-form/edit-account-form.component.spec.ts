@@ -4,13 +4,17 @@ import { EditAccountFormComponent } from './edit-account-form.component';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { UserResponse } from '../../../model/user-response';
 import { click } from '../../../tests/click-utils';
+import { AskModalService } from '../../../services/ask-modal.service';
 
 describe('EditAccountFormComponent', () => {
   let component: EditAccountFormComponent;
   let fixture: ComponentFixture<EditAccountFormComponent>;
+  let askModal: jasmine.SpyObj<AskModalService>;
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
+    askModal = jasmine.createSpyObj('AskModalService', ['confirm', 'prompt']);
+
     await TestBed.configureTestingModule({
       imports: [
         EditAccountFormComponent,
@@ -20,6 +24,9 @@ describe('EditAccountFormComponent', () => {
             useClass: TranslateFakeLoader,
           },
         }),
+      ],
+      providers: [
+        { provide: AskModalService, useValue: askModal },
       ]
     })
       .compileComponents();
@@ -68,8 +75,9 @@ describe('EditAccountFormComponent', () => {
     expect(emailInput.value).toBe(mockUser.email);
   });
 
-  it('should emit saveChanges with updated user data on form submission', () => {
+  it('should emit saveChanges with updated user data on form submission', async () => {
     spyOn(component.saveChanges, 'emit');
+    askModal.confirm.and.resolveTo(true);
 
     const nameInput = nativeElement.querySelector('input[data-test="edit-account.name"]') as HTMLInputElement;
     const usernameInput = nativeElement.querySelector('input[data-test="edit-account.username"]') as HTMLInputElement;
@@ -88,6 +96,8 @@ describe('EditAccountFormComponent', () => {
     fixture.detectChanges();
 
     click(submitButton);
+
+    await fixture.whenStable();
 
     expect(component.saveChanges.emit).toHaveBeenCalledWith({
       newName: 'New Name',
