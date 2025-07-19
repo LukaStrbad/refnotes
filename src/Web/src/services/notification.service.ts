@@ -81,17 +81,19 @@ export class NotificationService {
         if (typeof errorObj === 'object' && 'errorCode' in errorObj) {
           const messageLabel = `error.response.${errorObj.errorCode}`;
           const titleLabel = `error.response.title.${errorObj.errorCode}`;
-          let [message, title] = await getTranslations(translate, [messageLabel, titleLabel]);
+          const [message, title] = await getTranslations(translate, [messageLabel, titleLabel]);
           // If the message is not found, use the default error message
           if (!message) {
             logger?.warn(`No translation found for ${messageLabel}, using default error message`);
-            message = messageLabel;
           }
-          this.error(message, title ?? undefined);
-          logger?.error(`Error occurred: ${message}`, error);
+          this.error(message ?? messageLabel, title ?? undefined);
+          logger?.error(`Error occurred: ${message ?? messageLabel}`, error);
           return;
         }
-      } catch { }
+      } catch (e) {
+        // If parsing fails, fall back to the generic error message
+        logger?.warn('Failed to parse error response, falling back to generic error message', e);
+      }
     }
 
     const message = await getTranslation(translate, 'error.response.generic');

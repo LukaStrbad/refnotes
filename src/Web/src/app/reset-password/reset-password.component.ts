@@ -7,10 +7,11 @@ import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { getRevealAnimations } from '../../utils/animations';
+import { TestTagDirective } from '../../directives/test-tag.directive';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [FormsModule, ReactiveFormsModule, TranslateDirective, RouterLink],
+  imports: [FormsModule, ReactiveFormsModule, TranslateDirective, RouterLink, TestTagDirective],
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.css',
   animations: [
