@@ -11,6 +11,7 @@ import { authGuard } from '../../guards/auth.guard';
 import { FavoritesComponent } from './favorites/favorites.component';
 import { ConfirmEmailComponent } from './confirm-email/confirm-email.component';
 import { AccountComponent } from './account/account.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 
 export const routes: Routes = [
   {
@@ -107,5 +108,9 @@ export const routes: Routes = [
     path: "account-info",
     component: AccountComponent,
     canActivate: [authGuard],
+  },
+  {
+    path: "reset-password/:token",
+    component: ResetPasswordComponent,
   }
 ];

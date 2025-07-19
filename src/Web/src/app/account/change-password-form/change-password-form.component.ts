@@ -4,31 +4,14 @@ import { AskModalService } from '../../../services/ask-modal.service';
 import { UpdatePasswordRequest } from '../../../model/update-password-request';
 import { TestTagDirective } from '../../../directives/test-tag.directive';
 import { TranslateDirective } from '@ngx-translate/core';
-import { animate, style, transition, trigger } from '@angular/animations';
+import { getRevealAnimations } from '../../../utils/animations';
 
 @Component({
   selector: 'app-change-password-form',
   imports: [FormsModule, ReactiveFormsModule, TranslateDirective, TestTagDirective],
   templateUrl: './change-password-form.component.html',
   animations: [
-    trigger('reveal', [
-      transition(':enter', [
-        style({
-          opacity: 0,
-          transform: 'translateY(-5px) scale(0.95)'
-        }),
-        animate('120ms ease-out', style({
-          opacity: 1,
-          transform: 'translateY(0px) scale(1)'
-        }))
-      ]),
-      transition(':leave', [
-        animate('120ms ease-in', style({
-          opacity: 0,
-          transform: 'translateY(-5px) scale(0.95)'
-        }))
-      ])
-    ]),
+    getRevealAnimations(),
   ],
 })
 export class ChangePasswordFormComponent {

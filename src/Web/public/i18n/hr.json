@@ -232,7 +232,14 @@
     "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka",
     "access-code-not-allowed": "Nemaš dopuštenje za kreiranje pristupnih kodova za ovu grupu",
     "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda",
-    "file-sync-socket": "Pogreška povezivanja za sinkronizaciju datoteka"
+    "file-sync-socket": "Pogreška povezivanja za sinkronizaciju datoteka",
+    "generic": "Došlo je do pogreške",
+    "response": {
+      "generic": "Došlo je do pogreške prilikom obrade vašeg zahtjeva",
+      "EMAIL_NOT_CONFIRMED": "E-pošta nije potvrđena",
+      "INVALID_OR_EXPIRED_TOKEN": "Nevažeći ili istekli token",
+      "USER_NOT_FOUND": "Korisnik nije pronađen"
+    }
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
@@ -447,6 +454,28 @@
     },
     "success": {
       "update-success": "Lozinka uspješno ažurirana"
+    }
+  },
+  "reset-password-form": {
+    "button": {
+      "reset": "Resetiraj lozinku"
+    }
+  },
+  "reset-password": {
+    "button": {
+      "login": "Povratak na prijavu"
+    },
+    "error": {
+      "invalid-link": "Veza za resetiranje lozinke je nevažeća",
+      "invalid-username": "Veza za resetiranje lozinke ne sadrži korisničko ime"
+    },
+    "errors": {
+      "username-required": "Potrebno korisničko ime"
+    },
+    "subtitle": "Resetiranje lozinke za korisnika '{{username}}'",
+    "title": "Resetiraj lozinku",
+    "success": {
+      "title": "Lozinka uspješno resetirana"
     }
   }
 }

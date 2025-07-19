@@ -232,7 +232,14 @@
     "deleting-files": "An error occurred deleting some files",
     "access-code-not-allowed": "You are not allowed to create group access codes",
     "error-creating-access-code": "Error generating group access code",
-    "file-sync-socket": "Error connecting to file sync socket"
+    "file-sync-socket": "Error connecting to file sync socket",
+    "generic": "An error occurred",
+    "response": {
+      "generic": "An error occurred while processing your request",
+      "EMAIL_NOT_CONFIRMED": "Your email is not confirmed",
+      "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
+      "USER_NOT_FOUND": "User not found"
+    }
   },
   "time": {
     "just-now": "Just now",
@@ -447,6 +454,28 @@
     "button": {
       "save": "Save password",
       "cancel": "Cancel"
+    }
+  },
+  "reset-password": {
+    "errors": {
+      "username-required": "Username required"
+    },
+    "error": {
+      "invalid-username": "The given password reset link doesn't contain a username",
+      "invalid-link": "The given password reset link is invalid"
+    },
+    "button": {
+      "login": "Return to login"
+    },
+    "title": "Reset password",
+    "subtitle": "Resetting password for user '{{username}}'",
+    "success": {
+      "title": "Password reset successfully"
+    }
+  },
+  "reset-password-form": {
+    "button": {
+      "reset": "Reset password"
     }
   }
 }

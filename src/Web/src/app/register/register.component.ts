@@ -12,13 +12,8 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
-import {
-  animate,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
 import { TestTagDirective } from "../../directives/test-tag.directive";
+import { getRevealAnimations } from '../../utils/animations';
 
 @Component({
   selector: 'app-register',
@@ -36,24 +31,7 @@ import { TestTagDirective } from "../../directives/test-tag.directive";
   styleUrl: './register.component.css',
   // changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
-    trigger('reveal', [
-      transition(':enter', [
-        style({
-          opacity: 0,
-          transform: 'translateY(-5px) scale(0.95)'
-        }),
-        animate('120ms ease-out', style({
-          opacity: 1,
-          transform: 'translateY(0px) scale(1)'
-        }))
-      ]),
-      transition(':leave', [
-        animate('120ms ease-in', style({
-          opacity: 0,
-          transform: 'translateY(-5px) scale(0.95)'
-        }))
-      ])
-    ]),
+    getRevealAnimations(),
   ],
 })
 export class RegisterComponent {
