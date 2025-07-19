@@ -49,11 +49,11 @@ public sealed class EmailService : IEmailService
         await SendEmail(sendTo, name, title, html, true);
     }
 
-    public async Task SendPasswordResetEmail(string sendTo, string name, string token, string lang)
+    public async Task SendPasswordResetEmail(string sendTo, string name, string username, string token, string lang)
     {
         var (title, html) = _emailTemplateService.GetTemplate(EmailType.ResetPassword, lang);
         var baseUrl = _appSettings.PasswordResetBaseUrl.TrimEnd('/');
-        var resetLink = $"{baseUrl}/{token}";
+        var resetLink = $"{baseUrl}/{token}?username={username}";
         html = html.Replace("{{reset_link}}", resetLink);
         html = html.Replace("{{name}}", name);
         

@@ -110,7 +110,7 @@ public sealed class UserController : AuthControllerBase
                 return BadRequest("Email is not confirmed. Cannot send password reset email.");
 
             var token = await _passwordResetService.GenerateToken(user.Id);
-            await _emailScheduler.SchedulePasswordResetEmail(user.Email, user.Name, token, lang ?? "en");
+            await _emailScheduler.SchedulePasswordResetEmail(user, token, lang ?? "en");
 
             return Ok();
         }

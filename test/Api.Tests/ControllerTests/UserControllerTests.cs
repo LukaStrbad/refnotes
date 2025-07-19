@@ -227,7 +227,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
 
         Assert.IsType<OkResult>(result);
         await _emailScheduler.Received(1)
-            .SchedulePasswordResetEmail(user.Email, user.Name, token, "en");
+            .SchedulePasswordResetEmail(user, token, "en");
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
 
         Assert.IsType<BadRequestObjectResult>(result);
         await _emailScheduler.DidNotReceiveWithAnyArgs()
-            .SchedulePasswordResetEmail(user.Email, user.Name, Arg.Any<string>(), "en");
+            .SchedulePasswordResetEmail(user, Arg.Any<string>(), "en");
     }
 
     [Fact]

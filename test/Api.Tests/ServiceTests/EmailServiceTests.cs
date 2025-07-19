@@ -52,6 +52,7 @@ public sealed class EmailServiceTests
     {
         const string sendTo = "test@mail.com";
         const string name = "Test User";
+        const string username = "testuser";
         const string token = "reset-token";
         const string lang = "en";
         const string template = "Name: {{name}} Link: {{reset_link}}";
@@ -59,7 +60,7 @@ public sealed class EmailServiceTests
         _emailTemplateService.GetTemplate(EmailType.ResetPassword, lang).Returns(("Title", template));
 
         var sut = CreateSut();
-        await sut.SendPasswordResetEmail(sendTo, name, token, lang);
+        await sut.SendPasswordResetEmail(sendTo, name, username, token, lang);
 
 #pragma warning disable xUnit1051
         await _smtpClient.Received(1).SendAsync(Arg.Is<MimeMessage>(msg =>
@@ -67,7 +68,7 @@ public sealed class EmailServiceTests
             msg.To[0].Name == name &&
             msg.Subject == "Title" &&
             msg.Body.ToString().Contains($"Name: {name}") &&
-            msg.Body.ToString().Contains($"Link: {PasswordResetBaseUrl}/{token}")
+            msg.Body.ToString().Contains($"Link: {PasswordResetBaseUrl}/{token}?username={username}")
         ));
 #pragma warning restore xUnit1051
     }

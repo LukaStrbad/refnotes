@@ -1,5 +1,6 @@
 using Api.Jobs;
 using Api.Utils;
+using Data.Model;
 using Quartz;
 
 namespace Api.Services.Schedulers;
@@ -15,14 +16,11 @@ public sealed class EmailScheduler : IEmailScheduler
         _schedulerFactory = schedulerFactory;
     }
 
-    private async Task ScheduleEmail<T>(string jobId, string sendTo, string name, string token, string lang) where T : IJob
+    private async Task ScheduleEmail<T>(string jobId, JobDataMap jobDataMap) where T : IJob
     {
         var job = JobBuilder.Create<T>()
             .WithIdentity(jobId)
-            .UsingJobData("sendTo", sendTo)
-            .UsingJobData("name", name)
-            .UsingJobData("token", token)
-            .UsingJobData("lang", lang)
+            .UsingJobData(jobDataMap)
             .Build();
 
         var trigger = TriggerBuilder.Create()
@@ -38,17 +36,33 @@ public sealed class EmailScheduler : IEmailScheduler
     {
         _logger.LogInformation("Scheduled email send to {SendTo}", StringSanitizer.SanitizeLog(sendTo));
 
+        var jobDataMap = new JobDataMap
+        {
+            { "sendTo", sendTo },
+            { "name", name },
+            { "token", token },
+            { "lang", lang }
+        };
+
         var guid = Guid.NewGuid().ToString();
         var jobId = $"{VerificationEmailJob.Name}-{guid}";
-        await ScheduleEmail<VerificationEmailJob>(jobId, sendTo, name, token, lang);
+        await ScheduleEmail<VerificationEmailJob>(jobId, jobDataMap);
     }
-    
-    public async Task SchedulePasswordResetEmail(string sendTo, string name, string token, string lang)
+
+    public async Task SchedulePasswordResetEmail(User user, string token, string lang)
     {
-        _logger.LogInformation("Scheduled email send to {SendTo}", StringSanitizer.SanitizeLog(sendTo));
+        _logger.LogInformation("Scheduled email send to {SendTo}", StringSanitizer.SanitizeLog(user.Email));
+        var jobDataMap = new JobDataMap
+        {
+            { "sendTo", user.Email },
+            { "name", user.Name },
+            { "username", user.Username },
+            { "token", token },
+            { "lang", lang }
+        };
 
         var guid = Guid.NewGuid().ToString();
         var jobId = $"{PasswordResetEmailJob.Name}-{guid}";
-        await ScheduleEmail<PasswordResetEmailJob>(jobId, sendTo, name, token, lang);
+        await ScheduleEmail<PasswordResetEmailJob>(jobId, jobDataMap);
     }
 }

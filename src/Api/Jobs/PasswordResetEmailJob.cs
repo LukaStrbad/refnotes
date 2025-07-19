@@ -27,9 +27,12 @@ public class PasswordResetEmailJob : IJob
         var name = dataMap.GetString("name");
         if (name is null)
             throw new Exception("Name property not found.");
+        var username = dataMap.GetString("username");
+        if (username is null)
+            throw new Exception("Username property not found.");
 
         var lang = dataMap.GetString("lang") ?? "en";
 
-        await _emailService.SendPasswordResetEmail(sendTo, name, token, lang);
+        await _emailService.SendPasswordResetEmail(sendTo, name, username, token, lang);
     }
 }
