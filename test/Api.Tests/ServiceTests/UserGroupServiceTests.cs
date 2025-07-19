@@ -133,7 +133,7 @@ public class UserGroupServiceTests : BaseTests
         await sut.Value.AssignRole(group.Id, secondUser.Id, UserGroupRoleType.Admin);
 
         // Second user demotes to member
-        userService.GetUser().Returns(secondUser);
+        userService.GetCurrentUser().Returns(secondUser);
         await sut.Value.AssignRole(group.Id, secondUser.Id, UserGroupRoleType.Member);
 
         var role = await sut.Context.UserGroupRoles.Where(role =>
@@ -228,10 +228,10 @@ public class UserGroupServiceTests : BaseTests
     {
         await sut.Value.AssignRole(group.Id, secondUser.Id, UserGroupRoleType.Admin);
 
-        userService.GetUser().Returns(secondUser);
+        userService.GetCurrentUser().Returns(secondUser);
         await sut.Value.RemoveUser(group.Id, secondUser.Id);
 
-        userService.GetUser().Returns(user);
+        userService.GetCurrentUser().Returns(user);
         var members = await sut.Value.GetGroupMembers(group.Id);
 
         Assert.Single(members);
@@ -280,7 +280,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var code = await sut.Value.GenerateGroupAccessCode(group.Id, DateTime.UtcNow.AddDays(1));
 
-        userService.GetUser().Returns(secondUser);
+        userService.GetCurrentUser().Returns(secondUser);
 
         await sut.Value.AddCurrentUserToGroup(group.Id, code);
 
@@ -299,7 +299,7 @@ public class UserGroupServiceTests : BaseTests
     {
         var code = await sut.Value.GenerateGroupAccessCode(group.Id, DateTime.UtcNow.AddDays(1));
 
-        userService.GetUser().Returns(secondUser);
+        userService.GetCurrentUser().Returns(secondUser);
 
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             sut.Value.AddCurrentUserToGroup(group.Id, "non-existing-code"));
@@ -314,7 +314,7 @@ public class UserGroupServiceTests : BaseTests
         await Assert.ThrowsAsync<AccessCodeInvalidException>(() =>
             sut.Value.AddCurrentUserToGroup(group.Id, code));
 
-        userService.GetUser().Returns(user);
+        userService.GetCurrentUser().Returns(user);
         var groupMembers = await sut.Value.GetGroupMembers(group.Id);
 
         Assert.Single(groupMembers);

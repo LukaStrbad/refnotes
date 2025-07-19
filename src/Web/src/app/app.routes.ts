@@ -9,6 +9,9 @@ import { GroupsComponent } from './groups/groups.component';
 import { GroupMembersListComponent } from './groups/group-members-list/group-members-list.component';
 import { authGuard } from '../../guards/auth.guard';
 import { FavoritesComponent } from './favorites/favorites.component';
+import { ConfirmEmailComponent } from './confirm-email/confirm-email.component';
+import { AccountComponent } from './account/account.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 
 export const routes: Routes = [
   {
@@ -96,5 +99,18 @@ export const routes: Routes = [
     path: "favorites",
     component: FavoritesComponent,
     canActivate: [authGuard],
+  },
+  {
+    path: "confirm-email/:token",
+    component: ConfirmEmailComponent,
+  },
+  {
+    path: "account-info",
+    component: AccountComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: "reset-password/:token",
+    component: ResetPasswordComponent,
   }
 ];

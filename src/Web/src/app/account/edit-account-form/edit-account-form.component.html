@@ -1,0 +1,60 @@
+<form
+  [formGroup]="accountEditForm"
+  class="card-body items-center text-center gap-4"
+>
+  <div class="form-control w-full max-w-xs">
+    <label class="label" for="name">
+      <span class="label-text" translate>account-edit-form.label.name</span>
+    </label>
+    <input
+      id="name"
+      type="text"
+      class="input input-bordered w-full"
+      formControlName="name"
+      testTag="edit-account.name"
+    />
+  </div>
+  <div class="form-control w-full max-w-xs">
+    <label class="label" for="username">
+      <span class="label-text" translate>account-edit-form.label.username</span>
+    </label>
+    <input
+      id="username"
+      type="text"
+      class="input input-bordered w-full"
+      formControlName="username"
+      testTag="edit-account.username"
+    />
+  </div>
+  <div class="form-control w-full max-w-xs">
+    <label class="label" for="email">
+      <span class="label-text" translate>account-edit-form.label.email</span>
+    </label>
+    <input
+      id="email"
+      type="email"
+      class="input input-bordered w-full"
+      formControlName="email"
+      testTag="edit-account.email"
+    />
+  </div>
+  <div class="flex gap-2 justify-center mt-4">
+    <button
+      class="btn btn-primary"
+      type="submit"
+      [disabled]="!accountEditForm.valid"
+      (click)="onSaveChanges()"
+      translate
+    >
+      account-edit-form.button.save
+    </button>
+    <button
+      class="btn btn-secondary"
+      type="button"
+      (click)="cancelEdit.emit()"
+      translate
+    >
+      account-edit-form.button.cancel
+    </button>
+  </div>
+</form>

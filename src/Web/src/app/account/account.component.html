@@ -1,0 +1,142 @@
+<div class="max-w-[30rem] mx-auto flex flex-col gap-4 mb-4">
+  <div class="flex flex-col items-center justify-center">
+    <div class="card w-full bg-base-100 shadow-xl">
+      @switch (accountAction) {
+        @case (AccountAction.EditProfile) {
+          <app-edit-account-form
+            [accountInfo]="accountInfoResource.value()"
+            (saveChanges)="saveChanges($event)"
+            (cancelEdit)="cancelAction()"
+          ></app-edit-account-form>
+        }
+
+        @case (AccountAction.ChangePassword) {
+          <app-change-password-form
+            (updatePassword)="savePasswordChange($event)"
+            (cancelEdit)="cancelAction()"
+          ></app-change-password-form>
+        }
+
+        @default {
+          <!-- Account info -->
+          @if (accountInfoResource.value(); as accountInfo) {
+            <div class="card-body items-center text-center">
+              <div class="avatar mb-4">
+                <div
+                  class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2"
+                >
+                  <div
+                    class="w-24 h-24 flex items-center justify-center rounded-full bg-primary text-base-100 text-4xl font-bold select-none"
+                    [style.backgroundColor]="avatarColor()"
+                  >
+                    {{ avatarInitials() }}
+                  </div>
+                </div>
+              </div>
+
+              <h2 class="card-title text-2xl font-bold" testTag="account.name">
+                {{ accountInfo.name }}
+              </h2>
+              <p class="text-gray-500 mb-1" testTag="account.username">
+                {{ accountInfo.username }}
+              </p>
+
+              <p class="text-gray-500 mb-2" testTag="account.email">
+                {{ accountInfo.email }}
+              </p>
+              <div class="mb-2">
+                <span
+                  class="badge"
+                  [ngClass]="
+                    accountInfo.emailConfirmed
+                      ? 'badge-success'
+                      : 'badge-warning'
+                  "
+                >
+                  {{
+                    accountInfo.emailConfirmed
+                      ? ("account.label.emailConfirmed" | translate)
+                      : ("account.label.emailNotConfirmed" | translate)
+                  }}
+                </span>
+
+                @if (!accountInfo.emailConfirmed) {
+                  <button
+                    class="btn btn-primary btn-xs ml-2"
+                    (click)="resendEmailConfirmation()"
+                    [disabled]="sentConfirmationEmail"
+                    testTag="account.resend-confirmation-email"
+                    translate
+                  >
+                    account.button.send-confirmation-email
+                  </button>
+                }
+              </div>
+
+              @if (accountInfo.roles.length > 0) {
+                <div class="mb-2 flex gap-2 items-center">
+                  <span translate>account.label.roles</span>
+                  <div class="flex flex-wrap gap-1">
+                    @for (role of accountInfo.roles; track role) {
+                      <span class="badge badge-outline badge-primary mr-1">{{
+                        role
+                      }}</span>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div class="card-actions justify-center mt-4">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  (click)="editProfile()"
+                  translate
+                >
+                  account.button.editProfile
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div
+              class="flex flex-col items-center justify-center min-h-[300px]"
+            >
+              <span
+                class="loading loading-spinner loading-lg text-primary"
+              ></span>
+              <p class="mt-4 text-lg text-gray-600" translate>
+                account.label.loading
+              </p>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title" translate>account.actions.title</h2>
+
+      <div class="flex flex-col gap-2">
+        <button
+          class="btn btn-secondary"
+          testTag="account.button.logout"
+          (click)="logout()"
+          translate
+        >
+          account.actions.logout
+        </button>
+
+        <button
+          class="btn btn-error"
+          (click)="changePassword()"
+          [disabled]="accountAction === AccountAction.ChangePassword"
+          translate
+        >
+          account.actions.change-password
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

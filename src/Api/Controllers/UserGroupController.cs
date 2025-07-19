@@ -39,7 +39,7 @@ public class UserGroupController : ControllerBase
     public async Task<ActionResult> Update(int groupId, [FromBody] UpdateGroupDto updateGroup)
     {
         // Only Admins and Owners can update groups
-        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId,
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetCurrentUser(), groupId,
                 UserGroupRoleType.Admin))
             return Forbid();
 
@@ -59,7 +59,7 @@ public class UserGroupController : ControllerBase
     [ProducesResponseType<IEnumerable<GroupUserDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetGroupMembers(int groupId)
     {
-        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId))
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetCurrentUser(), groupId))
             return Forbid();
 
         var members = await _userGroupService.GetGroupMembers(groupId);
@@ -69,7 +69,7 @@ public class UserGroupController : ControllerBase
     [HttpPost("{groupId:int}/assignRole")]
     public async Task<ActionResult> AssignRole(int groupId, [FromBody] AssignRoleDto assignRole)
     {
-        if (!await _groupPermissionService.CanManageRoleAsync(await _userService.GetUser(), groupId, assignRole.Role))
+        if (!await _groupPermissionService.CanManageRoleAsync(await _userService.GetCurrentUser(), groupId, assignRole.Role))
             return Forbid();
 
         try
@@ -90,7 +90,7 @@ public class UserGroupController : ControllerBase
     [HttpDelete("{groupId:int}/removeUser")]
     public async Task<ActionResult> RemoveUser(int groupId, [FromQuery] int userId)
     {
-        if (!await _groupPermissionService.CanManageUserAsync(await _userService.GetUser(), groupId, userId))
+        if (!await _groupPermissionService.CanManageUserAsync(await _userService.GetCurrentUser(), groupId, userId))
             return Forbid();
 
         try
@@ -108,7 +108,7 @@ public class UserGroupController : ControllerBase
     public async Task<ActionResult> GenerateAccessCode(int groupId, [FromBody] DateTime? expiryTime = null)
     {
         // Only Admins and Owners can generate access codes
-        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetUser(), groupId,
+        if (!await _groupPermissionService.HasGroupAccessAsync(await _userService.GetCurrentUser(), groupId,
                 UserGroupRoleType.Admin))
             return Forbid();
 

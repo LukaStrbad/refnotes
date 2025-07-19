@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { GENERIC_ERROR_CODE, getErrorMessage, HttpErrorMessages } from '../utils/errorHandler';
 import { TranslateService } from '@ngx-translate/core';
-import { getTranslation } from '../utils/translation-utils';
+import { getTranslation, getTranslations } from '../utils/translation-utils';
 import { LoggerService } from './logger.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +57,48 @@ export class NotificationService {
       logger?.error('Error occurred and notified user', e);
       throw e;
     }
+  }
+
+  /**
+   * Notifies the user of an error that occurred.
+   * If the error is an instance of HttpErrorResponse with an errorCode property, it will use that to get the translated error message.
+   * @param error Error to notify the user about
+   * @param translate Translate service to use for getting the error message
+   * @param logger Logger service to use for logging the error
+   */
+  async notifyError(error: unknown, translate: TranslateService, logger?: LoggerService): Promise<void> {
+    if (!(error instanceof HttpErrorResponse)) {
+      const message = await getTranslation(translate, 'error.generic');
+      this.error(message);
+      logger?.error('Error occurred and notified user', error);
+      return;
+    }
+
+    if (error instanceof HttpErrorResponse) {
+      try {
+        console.log(error.error);
+        const errorObj = JSON.parse(error.error);
+        if (typeof errorObj === 'object' && 'errorCode' in errorObj) {
+          const messageLabel = `error.response.${errorObj.errorCode}`;
+          const titleLabel = `error.response.title.${errorObj.errorCode}`;
+          const [message, title] = await getTranslations(translate, [messageLabel, titleLabel]);
+          // If the message is not found, use the default error message
+          if (!message) {
+            logger?.warn(`No translation found for ${messageLabel}, using default error message`);
+          }
+          this.error(message ?? messageLabel, title ?? undefined);
+          logger?.error(`Error occurred: ${message ?? messageLabel}`, error);
+          return;
+        }
+      } catch (e) {
+        // If parsing fails, fall back to the generic error message
+        logger?.warn('Failed to parse error response, falling back to generic error message', e);
+      }
+    }
+
+    const message = await getTranslation(translate, 'error.response.generic');
+    this.error(message);
+    logger?.error('Error occurred and notified user', error);
   }
 
   private addNotification(message: string, type: NotificationType, title?: string): Notification {

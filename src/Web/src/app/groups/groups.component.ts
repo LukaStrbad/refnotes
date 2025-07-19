@@ -134,7 +134,7 @@ export class GroupsComponent implements AfterViewInit {
   }
 
   async onLeaveGroup(group: GroupDto) {
-    const user = this.authService.user;
+    const user = this.authService.user();
     if (!user) {
       this.logger.error('User not found when trying to leave group');
       return;

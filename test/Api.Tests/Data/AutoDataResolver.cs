@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Reflection.Emit;
 using Api.Services;
 using Api.Tests.Data.Attributes;
 using Api.Tests.Fixtures;
@@ -11,12 +10,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Api;
 using Api.Services.Schedulers;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Extensions;
 using Bogus;
+using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Http;
 using Quartz;
 using StackExchange.Redis;
 
@@ -50,7 +50,9 @@ public sealed class AutoDataResolver : IAsyncDisposable
         typeof(IPublicFileService),
         typeof(IPublicFileScheduler),
         typeof(IFileSyncService),
-        typeof(IWebSocketMessageHandler)
+        typeof(IWebSocketMessageHandler),
+        typeof(ISmtpClient),
+        typeof(IHttpContextAccessor)
     ];
 
     private readonly List<Type> _realizedMocks = [];
@@ -242,7 +244,15 @@ public sealed class AutoDataResolver : IAsyncDisposable
             DataDir = _testFolder,
             JwtPrivateKey = "test_jwt_private_key_123456789234234247"
         });
+        var config = new ConfigurationBuilder().AddInMemoryCollection([
+            new KeyValuePair<string, string?>("AppDomain", "localhost"),
+            new KeyValuePair<string, string?>("CorsOrigin", "http://localhost:4200"),
+            new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")
+        ]).Build();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddSingleton(AppSettings.Initialize);
         services.AddLogging();
+        
         services.AddScopedSubstitute<IConnectionMultiplexer>();
         services.AddScoped<ISubscriber>(implementationFactory: serviceProvider =>
         {
@@ -381,7 +391,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
 
         // The first user will be set in the UserService by default
         var userService = _serviceProvider.GetRequiredService<IUserService>();
-        userService.GetUser().Returns(user);
+        userService.GetCurrentUser().Returns(user);
 
         return user;
     }
@@ -389,7 +399,7 @@ public sealed class AutoDataResolver : IAsyncDisposable
     private async Task<User> AddUserToDb(string username, params string[] roles)
     {
         // Add test user to db
-        var newUser = new User(0, username, username, $"{username}@test.com", "password")
+        var newUser = new User(username, username, $"{username}@test.com", "password")
         {
             Roles = roles
         };

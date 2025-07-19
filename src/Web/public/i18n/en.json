@@ -37,7 +37,8 @@
       "home": "Home",
       "settings": "Settings",
       "groups": "Groups",
-      "favorites": "Favorites"
+      "favorites": "Favorites",
+      "account-info": "Account"
     }
   },
   "login": {
@@ -48,7 +49,15 @@
       "usernameNotFound": "Username not found",
       "invalidPassword": "Invalid password"
     },
-    "signUp": "Sign up instead?"
+    "signUp": "Sign up instead?",
+    "forgot-password": "Forgot password?",
+    "modal": {
+      "forgot-password": {
+        "title": "Forgot password?",
+        "message": "This will send an email with a password reset link.",
+        "body": "You are about to send a password reset link for the account '{{username}}'. Is this correct?"
+      }
+    }
   },
   "browser": {
     "newFolder": "New Folder",
@@ -223,7 +232,14 @@
     "deleting-files": "An error occurred deleting some files",
     "access-code-not-allowed": "You are not allowed to create group access codes",
     "error-creating-access-code": "Error generating group access code",
-    "file-sync-socket": "Error connecting to file sync socket"
+    "file-sync-socket": "Error connecting to file sync socket",
+    "generic": "An error occurred",
+    "response": {
+      "generic": "An error occurred while processing your request",
+      "EMAIL_NOT_CONFIRMED": "Your email is not confirmed",
+      "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
+      "USER_NOT_FOUND": "User not found"
+    }
   },
   "time": {
     "just-now": "Just now",
@@ -350,6 +366,116 @@
     "button-tooltip": {
       "remove": "Remove from favorites",
       "open": "Open folder"
+    }
+  },
+  "confirm-email": {
+    "error": {
+      "invalid-token": "The confirmation token is invalid or is expired",
+      "resend": "Email is alredy confirmed",
+      "resend-generic": "There was an error resending email confirmation",
+      "generic": "An error occurred trying to verify the email",
+      "title": "Email confirmation failed",
+      "message": "An error occurred confirming your email. Please try again or resend the email."
+    },
+    "success": {
+      "resend": "Email confirmation successfully resent",
+      "title": "Email confirmed!",
+      "message": "Your email has been successfully confirmed."
+    },
+    "button": {
+      "resend": "Resend confirmation",
+      "homepage": "Go to Homepage"
+    },
+    "loading": "Confirming your email, please wait..."
+  },
+  "account": {
+    "label": {
+      "loading": "Loading account data",
+      "emailConfirmed": "Email confirmed",
+      "emailNotConfirmed": "Email not confirmed",
+      "roles": "Roles:"
+    },
+    "button": {
+      "editProfile": "Edit profile",
+      "send-confirmation-email": "Send confirmation email"
+    },
+    "actions": {
+      "title": "Actions",
+      "change-password": "Change password",
+      "logout": "Logout"
+    },
+    "error": {
+      "edit-username-exists": "User with the same username already exists",
+      "edit-failed": "An error occurred trying to edit account details"
+    },
+    "success": {
+      "edit-success": "Successfully edited account details"
+    }
+  },
+  "account-edit-form": {
+    "label": {
+      "name": "Name",
+      "username": "Username",
+      "email": "E-mail"
+    },
+    "button": {
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "account-edit": {
+    "modal": {
+      "confirm-title": "Update profile?",
+      "confirm-message": "Are you sure you want to update your profile?"
+    }
+  },
+  "change-password": {
+    "modal": {
+      "confirm-title": "Update password?",
+      "confirm-message": "Are you sure you want to update your password?"
+    },
+    "error": {
+      "current-password-invalid": "Current password is invalid",
+      "update-failed": "Failed to update password"
+    },
+    "success": {
+      "update-success": "Successfully updated the password"
+    }
+  },
+  "change-password-form": {
+    "label": {
+      "current-password": "Current password",
+      "new-password": "New password",
+      "confirm-password": "Confirm new password"
+    },
+    "error": {
+      "password-mismatch": "Passwords do not match"
+    },
+    "button": {
+      "save": "Save password",
+      "cancel": "Cancel"
+    }
+  },
+  "reset-password": {
+    "errors": {
+      "username-required": "Username required"
+    },
+    "error": {
+      "invalid-username": "The given password reset link doesn't contain a username",
+      "invalid-link": "The given password reset link is invalid"
+    },
+    "button": {
+      "login": "Return to login"
+    },
+    "title": "Reset password",
+    "subtitle": "Resetting password for user '{{username}}'",
+    "success": {
+      "title": "Password reset successfully"
+    }
+  },
+  "reset-password-form": {
+    "button": {
+      "reset": "Reset password"
     }
   }
 }

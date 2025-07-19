@@ -58,7 +58,7 @@ export class GroupMembersListComponent implements OnInit {
       return;
     }
 
-    const user = this.auth.user;
+    const user = this.auth.user();
     if (!user) {
       return;
     }

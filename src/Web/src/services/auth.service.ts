@@ -1,4 +1,4 @@
-import { Inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { Inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,7 @@ import { jwtDecode, JwtPayload } from "jwt-decode";
 import { LoginInfo } from "../app/login/login.component";
 import { getStatusCode } from '../utils/errorHandler';
 import { CookieService } from './cookie.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const apiUrl = environment.apiUrl + '/auth';
 
@@ -15,16 +16,17 @@ const apiUrl = environment.apiUrl + '/auth';
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly _user = signal<User | null>(null);
   /**
    * The currently logged-in user, or null if no user is logged in.
    */
-  user: User | null = null;
+  public readonly user = this._user.asReadonly();
   /**
    * The authentication token, or null if no user is logged in.
    */
   private token: DecodedToken | null = null;
-  private _isUserLoggedIn: WritableSignal<boolean> = signal(false);
-  public isUserLoggedIn: Signal<boolean> = this._isUserLoggedIn;
+  private readonly _isUserLoggedIn: WritableSignal<boolean> = signal(false);
+  public readonly isUserLoggedIn = this._isUserLoggedIn.asReadonly();
   private refreshTokenPromise: Promise<boolean> | null = null;
 
   private http!: HttpClient;
@@ -37,6 +39,7 @@ export class AuthService {
     private httpBackend: HttpBackend,
     private router: Router,
     private cookieService: CookieService,
+    private translate: TranslateService,
     @Inject('Window') private window: Window,
   ) {
     this.init().then();
@@ -122,14 +125,15 @@ export class AuthService {
   }
 
   async register(username: string, name: string, email: string, password: string, redirectUrl?: string) {
+    const lang = this.translate.currentLang;
     await firstValueFrom(
-      this.http.post(`${apiUrl}/register`, { username, name, email, password }, { withCredentials: true })
+      this.http.post(`${apiUrl}/register?lang=${lang}`, { username, name, email, password }, { withCredentials: true })
     );
     this.setUserAndToken();
     await this.router.navigate([redirectUrl ?? '/browser']);
   }
 
-  private setUserAndToken() {
+  setUserAndToken() {
     const accessToken = this.accessToken;
     if (!accessToken) {
       this.unsetUserAndToken();
@@ -150,7 +154,7 @@ export class AuthService {
   }
 
   private unsetUserAndToken() {
-    this.user = null;
+    this._user.set(null);
     this.token = null;
     this._isUserLoggedIn.set(false);
     // Remove the access token cookie
@@ -158,13 +162,13 @@ export class AuthService {
   }
 
   private setUser(token: DecodedToken) {
-    this.user = {
+    this._user.set({
       id: parseInt(token.id),
       username: token.unique_name,
       name: token.given_name,
       email: token.email,
       role: token.role
-    };
+    });
   }
 
   async logout(reason: undefined | string = undefined, navigateToLogin = true) {

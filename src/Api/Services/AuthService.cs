@@ -29,7 +29,7 @@ public interface IAuthService
     /// <param name="newUser">The new user to register</param>
     /// <returns>New access and refresh tokens</returns>
     /// <exception cref="UserExistsException">Thrown when a user with the same username already exists</exception>
-    Task<Tokens> Register(User newUser);
+    Task<Tokens> Register(RegisterUserRequest newUser);
 
     /// <summary>
     /// Refreshes an access token using a refresh token.
@@ -41,28 +41,39 @@ public interface IAuthService
     /// <exception cref="RefreshTokenInvalid">Thrown when saved refresh token could not be found, or is expired</exception>
     /// <exception cref="SecurityTokenMalformedException">Thrown when provided access token is invalid</exception>
     Task<Tokens> RefreshAccessToken(string accessToken, string refreshToken);
+
+    /// <summary>
+    /// Bypasses the login flow and creates a new access token and refresh token for a user.
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <returns>New access and refresh tokens</returns>
+    Task<Tokens> ForceLogin(int userId);
+
+    /// <summary>
+    /// Verifies the password of a user
+    /// </summary>
+    /// <param name="credentials">Username and password</param>
+    /// <returns>True if password matches, false otherwise</returns>
+    Task<bool> VerifyPassword(UserCredentials credentials);
 }
 
 public class AuthService : IAuthService
 {
     private readonly byte[] _privateKey;
     private readonly RefNotesContext _context;
-    private readonly TimeSpan _accessTokenExpiry;
+    private readonly AppSettings _appSettings;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         RefNotesContext context,
         AppConfiguration appConfig,
-        IConfiguration configuration,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger, AppSettings appSettings)
     {
         _context = context;
         _privateKey = appConfig.JwtPrivateKeyBytes;
 
-        var expirySetting = configuration.GetValue<string>("AccessTokenExpiry");
-        _accessTokenExpiry = TimeParser.ParseTimeString(expirySetting);
-
         _logger = logger;
+        _appSettings = appSettings;
     }
 
     public async Task<Tokens> Login(UserCredentials credentials)
@@ -94,17 +105,18 @@ public class AuthService : IAuthService
         return tokens;
     }
 
-    public async Task<Tokens> Register(User newUser)
+    public async Task<Tokens> Register(RegisterUserRequest userRequest)
     {
-        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == newUser.Username);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == userRequest.Username);
         if (existingUser is not null)
         {
-            _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(newUser.Username));
+            _logger.LogWarning("User {Username} already exists", StringSanitizer.SanitizeLog(userRequest.Username));
             throw new UserExistsException("User already exists");
         }
 
-        newUser.Roles = [];
+        var newUser = userRequest.ToUser();
 
+        // Hash the password before saving
         var passwordHasher = new PasswordHasher<UserCredentials>();
         newUser.Password =
             passwordHasher.HashPassword(new UserCredentials(newUser.Username, newUser.Password), newUser.Password);
@@ -143,6 +155,30 @@ public class AuthService : IAuthService
         return newTokens;
     }
 
+    public async Task<Tokens> ForceLogin(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user is null)
+            throw new UserNotFoundException("User not found");
+
+        _logger.LogInformation("Forcing login for user {User}", StringSanitizer.SanitizeLog(user.Username));
+        var tokens = await AddUserRefreshToken(user);
+        return tokens;
+    }
+
+    public async Task<bool> VerifyPassword(UserCredentials credentials)
+    {
+        var dbPassword = await _context.Users.Where(u => u.Username == credentials.Username).Select(u => u.Password)
+            .FirstOrDefaultAsync();
+        if (dbPassword is null)
+            throw new UserNotFoundException("User not found");
+
+        var passwordHasher = new PasswordHasher<UserCredentials>();
+        var result = passwordHasher.VerifyHashedPassword(credentials, dbPassword, credentials.Password);
+
+        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+    }
+
     private Tokens CreateTokens(User user)
     {
         var handler = new JwtSecurityTokenHandler();
@@ -152,12 +188,12 @@ public class AuthService : IAuthService
             SecurityAlgorithms.HmacSha256);
 
         _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds",
-            StringSanitizer.SanitizeLog(user.Username), _accessTokenExpiry.TotalSeconds);
+            StringSanitizer.SanitizeLog(user.Username), _appSettings.AccessTokenExpiry.TotalSeconds);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             SigningCredentials = credentials,
-            Expires = DateTime.UtcNow.Add(_accessTokenExpiry),
+            Expires = DateTime.UtcNow.Add(_appSettings.AccessTokenExpiry),
             Subject = GenerateClaims(user)
         };
 

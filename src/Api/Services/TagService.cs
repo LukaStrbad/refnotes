@@ -54,7 +54,7 @@ public class TagService(
 {
     public async Task<List<string>> ListAllTags()
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
         return await context.FileTags
             .Where(t => t.OwnerId == user.Id)
             .Select(t => t.DecryptedName(encryptionService))
@@ -77,7 +77,7 @@ public class TagService(
 
     public async Task AddFileTag(string directoryPath, string name, string tag, int? groupId)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
 
         var encryptedTag = encryptionService.EncryptAesStringBase64(tag);

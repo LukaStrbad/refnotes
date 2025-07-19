@@ -18,6 +18,8 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<PublicFileImage> PublicFileImages { get; set; }
     public DbSet<FileFavorite> FileFavorites { get; set; }
     public DbSet<DirectoryFavorite> DirectoryFavorites { get; set; }
+    public DbSet<EmailConfirmToken> EmailConfirmTokens { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,7 +29,7 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
             .UsingEntity(join => join.ToTable("encrypted_files_file_tags"));
 
         new UserGroupRoleConfiguration().Configure(modelBuilder.Entity<UserGroupRole>());
-        
+
         var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
             v => v.ToUniversalTime(),
             v => DateTime.SpecifyKind(v, DateTimeKind.Utc));

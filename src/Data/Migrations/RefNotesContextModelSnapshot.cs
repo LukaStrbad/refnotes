@@ -48,6 +48,37 @@ namespace MigrationService.Migrations
                     b.ToTable("directory_favorites");
                 });
 
+            modelBuilder.Entity("Data.Model.EmailConfirmToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Value");
+
+                    b.ToTable("email_confirm_tokens");
+                });
+
             modelBuilder.Entity("Data.Model.EncryptedDirectory", b =>
                 {
                     b.Property<int>("Id")
@@ -202,6 +233,37 @@ namespace MigrationService.Migrations
                     b.ToTable("group_access_codes");
                 });
 
+            modelBuilder.Entity("Data.Model.PasswordResetToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Value");
+
+                    b.ToTable("password_reset_tokens");
+                });
+
             modelBuilder.Entity("Data.Model.PublicFile", b =>
                 {
                     b.Property<int>("Id")
@@ -269,6 +331,9 @@ namespace MigrationService.Migrations
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("varchar(1024)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -400,6 +465,17 @@ namespace MigrationService.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Data.Model.EmailConfirmToken", b =>
+                {
+                    b.HasOne("Data.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Data.Model.EncryptedDirectory", b =>
                 {
                     b.HasOne("Data.Model.UserGroup", "Group")
@@ -483,6 +559,17 @@ namespace MigrationService.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Data.Model.PasswordResetToken", b =>
+                {
+                    b.HasOne("Data.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Data.Model.PublicFile", b =>

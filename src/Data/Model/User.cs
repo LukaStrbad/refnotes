@@ -4,23 +4,29 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Data.Model;
 
 [Table("users")]
-public class User(
-    int id,
-    string username,
-    string name,
-    string email,
-    string password
-)
+public class User
 {
-    public int Id { get; init; } = id;
+    public User(string username,
+        string name,
+        string email,
+        string password)
+    {
+        Username = username;
+        Name = name;
+        Email = email;
+        Password = password;
+    }
 
-    [StringLength(256)] public string Username { get; init; } = username;
+    public int Id { get; set; }
 
-    [StringLength(256)] public string Name { get; init; } = name;
+    [StringLength(256)] public string Username { get; set; }
 
-    [StringLength(1024)] public string Email { get; init; } = email;
+    [StringLength(256)] public string Name { get; set; }
 
-    [StringLength(4096)] public string Password { get; set; } = password;
+    [StringLength(1024)] public string Email { get; set; }
+
+    [StringLength(4096)] public string Password { get; set; }
 
     public string[] Roles { get; set; } = [];
+    public bool EmailConfirmed { get; set; } = false;
 }

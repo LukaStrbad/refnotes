@@ -1,5 +1,4 @@
-﻿using Api.Exceptions;
-using Api.Services;
+﻿using Api.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -8,23 +7,23 @@ namespace Api.Tests.ServiceTests;
 
 public class AppDomainServiceTests
 {
-    private readonly ILogger<AppDomainService> _logger = Substitute.For<ILogger<AppDomainService>>();
-
-    [Fact]
-    public void AppDomainService_ConstructorThrows_ForEmptyConfig()
+    private static AppSettings CreateAppSettings(List<KeyValuePair<string, string?>> config)
     {
-        var configuration = new ConfigurationBuilder().Build();
+        // Add default values to the configuration
+        config.Add(new KeyValuePair<string, string?>("CorsOrigin", "http://localhost"));
+        config.Add(new KeyValuePair<string, string?>("AccessTokenExpiry", "5m"));
 
-        Assert.Throws<InvalidConfigurationException>(() => new AppDomainService(configuration, _logger));
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(config).Build();
+        var appSettings = new AppSettings(configuration, Substitute.For<ILogger<AppSettings>>());
+        appSettings.ReloadConfig();
+        return appSettings;
     }
 
     [Fact]
     public void IsAppDomain_ReturnsTrue_IfAppDomainIsSet()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        configuration["AppDomain"] = "test";
-
-        var appDomainService = new AppDomainService(configuration, _logger);
+        var appDomainService =
+            new AppDomainService(CreateAppSettings([new KeyValuePair<string, string?>("AppDomain", "test")]));
 
         var isAppDomain = appDomainService.IsAppDomain("test");
         Assert.True(isAppDomain);
@@ -33,10 +32,8 @@ public class AppDomainServiceTests
     [Fact]
     public void IsAppDomain_ReturnsFalse_IfAppDomainIsNotSet()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        configuration["AppDomain"] = "test";
-
-        var appDomainService = new AppDomainService(configuration, _logger);
+        var appDomainService =
+            new AppDomainService(CreateAppSettings([new KeyValuePair<string, string?>("AppDomain", "test")]));
 
         var isAppDomain = appDomainService.IsAppDomain("test2");
         Assert.False(isAppDomain);
@@ -45,11 +42,10 @@ public class AppDomainServiceTests
     [Fact]
     public void IsAppDomain_ReturnsTrue_IfAppDomainsListIsSet()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        configuration["AppDomains:0"] = "test";
-        configuration["AppDomains:1"] = "test2";
-
-        var appDomainService = new AppDomainService(configuration, _logger);
+        var appDomainService = new AppDomainService(CreateAppSettings([
+            new KeyValuePair<string, string?>("AppDomains:0", "test"),
+            new KeyValuePair<string, string?>("AppDomains:1", "test2")
+        ]));
 
         Assert.True(appDomainService.IsAppDomain("test"));
         Assert.True(appDomainService.IsAppDomain("test2"));
@@ -59,10 +55,9 @@ public class AppDomainServiceTests
     [Fact]
     public void IsUrlAppDomain_ReturnsTrue_IfAppDomainIsSet()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        configuration["AppDomain"] = "test.com";
-
-        var appDomainService = new AppDomainService(configuration, _logger);
+        var appDomainService = new AppDomainService(CreateAppSettings([
+            new KeyValuePair<string, string?>("AppDomain", "test.com")
+        ]));
 
         var isAppDomain = appDomainService.IsUrlAppDomain("https://test.com");
         Assert.True(isAppDomain);

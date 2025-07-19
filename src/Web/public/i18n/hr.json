@@ -37,7 +37,8 @@
       "home": "Početna",
       "settings": "Postavke",
       "groups": "Grupe",
-      "favorites": "Favoriti"
+      "favorites": "Favoriti",
+      "account-info": "Račun"
     }
   },
   "login": {
@@ -48,7 +49,15 @@
       "usernameNotFound": "Korisničko ime nije pronađeno",
       "invalidPassword": "Neispravna lozinka"
     },
-    "signUp": "Registracija?"
+    "signUp": "Registracija?",
+    "forgot-password": "Zaboravljena lozinka?",
+    "modal": {
+      "forgot-password": {
+        "body": "Upravo ćete poslati link za resetiranje lozinke za račun '{{username}}'. Je li to ispravno?",
+        "message": "Ovo će poslati E-poštu sa vezom za resetiranje lozinke.",
+        "title": "Zaboravljena lozinka?"
+      }
+    }
   },
   "browser": {
     "newFolder": "Nova mapa",
@@ -223,7 +232,14 @@
     "deleting-files": "Dogodila se pogreška pri brisanju nekih datoteka",
     "access-code-not-allowed": "Nemaš dopuštenje za kreiranje pristupnih kodova za ovu grupu",
     "error-creating-access-code": "Pogreška prilikom stvaranja pristupnog koda",
-    "file-sync-socket": "Pogreška povezivanja za sinkronizaciju datoteka"
+    "file-sync-socket": "Pogreška povezivanja za sinkronizaciju datoteka",
+    "generic": "Došlo je do pogreške",
+    "response": {
+      "generic": "Došlo je do pogreške prilikom obrade vašeg zahtjeva",
+      "EMAIL_NOT_CONFIRMED": "E-pošta nije potvrđena",
+      "INVALID_OR_EXPIRED_TOKEN": "Nevažeći ili istekli token",
+      "USER_NOT_FOUND": "Korisnik nije pronađen"
+    }
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
@@ -350,6 +366,116 @@
     },
     "label": {
       "favorited": "Dodano u favorite: {{time}}"
+    }
+  },
+  "confirm-email": {
+    "button": {
+      "homepage": "Povratak na početnu stranicu",
+      "resend": "Ponovno pošalji potvrdu"
+    },
+    "error": {
+      "generic": "Došlo je do pogreške prilikom provjere e-pošte",
+      "invalid-token": "Token za potvrdu je nevažeći ili je istekao",
+      "message": "Dogodila se pogreška prilikom potvrde vaše e-pošte. Pokušajte ponovno ili zatražite novu potvrdu e-pošte.",
+      "resend": "E-pošta je već potvrđena",
+      "resend-generic": "Došlo je do pogreške prilikom ponovnog slanja potvrde e-pošte",
+      "title": "Potvrda e-pošte nije uspjela"
+    },
+    "loading": "Potvrđujemo vašu e-poštu, pričekajte...",
+    "success": {
+      "message": "Vaša e-pošta je uspješno potvrđena.",
+      "resend": "Potvrda e-pošte je uspješno ponovno poslana",
+      "title": "E-pošta potvrđena!"
+    }
+  },
+  "account": {
+    "button": {
+      "editProfile": "Uredi profil",
+      "send-confirmation-email": "Pošaljite e -poštu s potvrdom"
+    },
+    "label": {
+      "emailConfirmed": "Potvrđena E-pošta",
+      "emailNotConfirmed": "E-pošta nije potvrđena",
+      "loading": "Učitavanje podataka o računu",
+      "roles": "Role:"
+    },
+    "actions": {
+      "change-password": "Promijeni lozinku",
+      "logout": "Odjava",
+      "title": "Radnje"
+    },
+    "error": {
+      "edit-failed": "Došlo je do pogreške pri uređivanju podataka o računu",
+      "edit-username-exists": "Korisnik s istim korisničkim imenom već postoji"
+    },
+    "success": {
+      "edit-success": "Uspješno uređeni detalji računa"
+    }
+  },
+  "account-edit-form": {
+    "button": {
+      "cancel": "Otkaži",
+      "save": "Spremi"
+    },
+    "label": {
+      "email": "E-mail",
+      "name": "Ime",
+      "username": "Korisničko ime"
+    }
+  },
+  "account-edit": {
+    "modal": {
+      "confirm-message": "Jeste li sigurni da želite ažurirati svoj profil?",
+      "confirm-title": "Ažurirajte profil?"
+    }
+  },
+  "change-password-form": {
+    "button": {
+      "cancel": "Otkaži",
+      "save": "Spremi lozinku"
+    },
+    "error": {
+      "password-mismatch": "Lozinke se ne podudaraju"
+    },
+    "label": {
+      "confirm-password": "Potvrdite novu lozinku",
+      "current-password": "Trenutna lozinka",
+      "new-password": "Nova lozinka"
+    }
+  },
+  "change-password": {
+    "error": {
+      "current-password-invalid": "Trenutna lozinka je neispravna",
+      "update-failed": "Došlo je do pogreške prilikom ažuriranja lozinke"
+    },
+    "modal": {
+      "confirm-message": "Jeste li sigurni da želite ažurirati lozinku?",
+      "confirm-title": "Ažurirati lozinku?"
+    },
+    "success": {
+      "update-success": "Lozinka uspješno ažurirana"
+    }
+  },
+  "reset-password-form": {
+    "button": {
+      "reset": "Resetiraj lozinku"
+    }
+  },
+  "reset-password": {
+    "button": {
+      "login": "Povratak na prijavu"
+    },
+    "error": {
+      "invalid-link": "Veza za resetiranje lozinke je nevažeća",
+      "invalid-username": "Veza za resetiranje lozinke ne sadrži korisničko ime"
+    },
+    "errors": {
+      "username-required": "Potrebno korisničko ime"
+    },
+    "subtitle": "Resetiranje lozinke za korisnika '{{username}}'",
+    "title": "Resetiraj lozinku",
+    "success": {
+      "title": "Lozinka uspješno resetirana"
     }
   }
 }

@@ -6,6 +6,7 @@ import { AssignRoleDto, GroupDto, GroupUserDto, UpdateGroupDto, UserGroupRole } 
 import { provideHttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
+import { signal } from '@angular/core';
 
 describe('UserGroupService', () => {
   let service: UserGroupService;
@@ -14,7 +15,7 @@ describe('UserGroupService', () => {
   const apiUrl = environment.apiUrl + '/UserGroup';
 
   beforeEach(() => {
-    authService = jasmine.createSpyObj('AuthService', [], { user: { id: 1 } });
+    authService = jasmine.createSpyObj('AuthService', [], { user: signal({ id: 1 }) });
 
     TestBed.configureTestingModule({
       providers: [

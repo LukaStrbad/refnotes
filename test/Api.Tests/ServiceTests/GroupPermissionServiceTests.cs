@@ -8,7 +8,10 @@ namespace Api.Tests.ServiceTests;
 
 public class GroupPermissionServiceTests : BaseTests
 {
-    private readonly User _user = new(1, "user", "User", "user@mail.com", "password");
+    private readonly User _user = new("user", "User", "user@mail.com", "password")
+    {
+        Id = 1
+    };
 
     private void SetGroupRole(Sut<GroupPermissionService> sut, int groupId, UserGroupRoleType? role)
     {

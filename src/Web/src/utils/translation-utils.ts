@@ -6,7 +6,7 @@ export async function getTranslation(
   key: string,
   interpolateParams?: InterpolationParameters
 ): Promise<string> {
-  const value = await firstValueFrom(translateService.get(key, interpolateParams)) as Promise<Translation | TranslationObject>;
+  const value = await firstValueFrom(translateService.get(key, interpolateParams)) as Translation | TranslationObject;
 
   // If the translation is not a string, throw an error
   if (typeof value !== 'string') {
@@ -15,6 +15,42 @@ export async function getTranslation(
 
   // Otherwise, return the translation
   return value;
+}
+
+export async function getTranslations(
+  translateService: TranslateService,
+  keys: string[],
+): Promise<(string|null)[]> {
+  const translations = await firstValueFrom(translateService.get(keys)) as TranslationObject;
+
+  const result: (string|null)[] = [];
+
+  // Ensure all keys are present in the translations
+  for (const key of keys) {
+    const translation = translations[key];
+    if (typeof translation === 'string' && translation.length > 0 && translation !== key) {
+      result.push(translation);
+    } else {
+      result.push(null);
+    }
+  }
+
+  return result;
+}
+
+export async function hasTranslation(
+  translateService: TranslateService,
+  key: string
+): Promise<boolean> {
+  const translation = await firstValueFrom(translateService.get(key));
+
+  // Check if the translation is a string
+  const isString = typeof translation === 'string';
+  if (!isString || translation.length === 0) {
+    return false;
+  }
+
+  return translation !== key;
 }
 
 const pluralPoints = {

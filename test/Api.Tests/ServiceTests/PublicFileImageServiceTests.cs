@@ -64,8 +64,8 @@ public sealed class PublicFileImageServiceTests : BaseTests
     {
         var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
         var encryptedFile = fileFaker.CreateFaker().ForDir(dir).Generate();
-        var image1 = fileFaker.CreateFaker().AsImage().Generate();
-        var image2 = fileFaker.CreateFaker().AsImage().Generate();
+        var image1 = fileFaker.CreateFaker().WithName("image1.png").Generate();
+        var image2 = fileFaker.CreateFaker().WithName("image2.png").Generate();
         var publicFile = publicFileFaker.CreateFaker().ForFile(encryptedFile).Generate();
 
         var dirOwner = GetDirOwner(sut.DefaultUser, group);
@@ -104,8 +104,8 @@ public sealed class PublicFileImageServiceTests : BaseTests
     {
         var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
         var encryptedFile = fileFaker.CreateFaker().ForDir(dir).Generate();
-        var image1 = fileFaker.CreateFaker().AsImage().Generate();
-        var image2 = fileFaker.CreateFaker().AsImage().Generate();
+        var image1 = fileFaker.CreateFaker().WithName("image1.png").Generate();
+        var image2 = fileFaker.CreateFaker().WithName("image2.png").Generate();
         var publicFile = publicFileFaker.ForFile(encryptedFile).Generate();
 
         var dirOwner = GetDirOwner(sut.DefaultUser, group);

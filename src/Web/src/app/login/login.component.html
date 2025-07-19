@@ -13,6 +13,7 @@
           name="username"
           [(ngModel)]="username"
           #usernameInput="ngModel"
+          minlength="4"
           id="usernameInput"
         />
       </div>
@@ -31,6 +32,7 @@
           name="password"
           [(ngModel)]="password"
           #passwordInput="ngModel"
+          required
           id="passwordInput"
         />
       </div>
@@ -51,7 +53,17 @@
     }
 
     <fieldset class="fieldset mt-4">
-      <button class="btn btn-primary" (click)="login()" translate>
+      <button
+        class="btn btn-primary"
+        (click)="login()"
+        [disabled]="
+          !usernameInput.valid ||
+          usernameInput.pristine ||
+          !passwordInput.valid ||
+          passwordInput.pristine
+        "
+        translate
+      >
         login.login
       </button>
       <a routerLink="/signup" [queryParams]="{ redirectUrl }">
@@ -59,6 +71,19 @@
           login.signUp
         </button>
       </a>
+    </fieldset>
+
+    <!-- Forgot password button -->
+    <fieldset class="fieldset mt-4">
+      <button
+        class="btn btn-link w-full"
+        (click)="sendPasswordResetEmail()"
+        [disabled]="!usernameInput.valid || usernameInput.pristine"
+        testTag="login.button.forgot-password"
+        translate
+      >
+        login.forgot-password
+      </button>
     </fieldset>
   </form>
 </div>

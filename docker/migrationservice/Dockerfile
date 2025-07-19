@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ./src/ ./
+COPY --exclude=./src/Web ./src/ ./
 RUN dotnet restore --locked-mode ./MigrationService/
 
 RUN dotnet publish ./MigrationService --no-restore -c Release -o /app/publish

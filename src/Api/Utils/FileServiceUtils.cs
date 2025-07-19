@@ -35,7 +35,7 @@ public class FileServiceUtils(
 {
     public async Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
 
         var directoryQueryable = context.Directories.Where(x => x.Owner == user);
@@ -65,7 +65,7 @@ public class FileServiceUtils(
     public async Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
         int? groupId, bool includeTags = false)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
         var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
 
         var query = context.Directories

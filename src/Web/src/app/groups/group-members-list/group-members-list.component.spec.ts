@@ -8,7 +8,7 @@ import { LoggerService } from '../../../services/logger.service';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
 import { GroupUserDto, UserGroupRole } from '../../../model/user-group';
-import { ElementRef } from '@angular/core';
+import { ElementRef, signal, WritableSignal } from '@angular/core';
 import { of } from 'rxjs';
 import { User } from '../../../model/user';
 
@@ -47,7 +47,7 @@ describe('GroupMembersListComponent', () => {
     askModal = jasmine.createSpyObj('AskModalService', ['confirm']);
     logger = jasmine.createSpyObj('LoggerService', ['info', 'error']);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error']);
-    authService = jasmine.createSpyObj('AuthService', [], { user: mockUser });
+    authService = jasmine.createSpyObj('AuthService', [], { user: signal(mockUser) });
     router = jasmine.createSpyObj('Router', ['navigate']);
 
     askModal.confirm.and.resolveTo(true);
@@ -109,9 +109,7 @@ describe('GroupMembersListComponent', () => {
 
     it('should return true for admin', async () => {
       setupMockMembers(mockMembers);
-      Object.defineProperty(authService, 'user', {
-        get: () => ({ ...mockUser, id: 2, username: 'admin' })
-      });
+      (authService.user as unknown as WritableSignal<User>).set({...mockUser, id: 2, username: 'admin'});
       await component.fetchMembers();
 
       expect(component.canManageMembers).toBeTrue();
@@ -119,9 +117,7 @@ describe('GroupMembersListComponent', () => {
 
     it('should return false for regular member', async () => {
       setupMockMembers(mockMembers);
-      Object.defineProperty(authService, 'user', {
-        get: () => ({ ...mockUser, id: 3, username: 'member' })
-      });
+      (authService.user as unknown as WritableSignal<User>).set({...mockUser, id: 3, username: 'member'});
       await component.fetchMembers();
 
       expect(component.canManageMembers).toBeFalse();

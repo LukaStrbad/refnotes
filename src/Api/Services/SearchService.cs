@@ -94,7 +94,7 @@ public sealed class SearchService(
 
     public async IAsyncEnumerable<FileSearchResultDto> SearchFiles(SearchOptionsDto searchOptions)
     {
-        var user = await userService.GetUser();
+        var user = await userService.GetCurrentUser();
 
         var directories = await context.Directories
             .Where(dir => dir.OwnerId == user.Id)

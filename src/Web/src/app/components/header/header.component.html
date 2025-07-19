@@ -30,7 +30,10 @@
           </li>
           <li>
             <!-- If on group page, show main group link -->
-            <a [routerLink]="onGroupPage ? '/groups' : groupLink()" testTag="header.groups-link">
+            <a
+              [routerLink]="onGroupPage ? '/groups' : groupLink()"
+              testTag="header.groups-link"
+            >
               <i class="bi bi-people"></i>
               {{ "header.routes.groups" | translate }}
             </a>
@@ -47,11 +50,26 @@
               {{ "header.routes.settings" | translate }}
             </a>
           </li>
-          <li class="mt-2">
-            <button class="btn btn-xs btn-primary btn-soft" (click)="onOpenMobileSearch()">Search</button>
+          <li>
+            <a routerLink="account-info">
+              <i class="bi bi-person"></i>
+              {{ "header.routes.account-info" | translate }}
+            </a>
           </li>
           <li class="mt-2">
-            <button class="btn btn-xs btn-secondary btn-outline btn-soft" (click)="logout()" translate>
+            <button
+              class="btn btn-xs btn-primary btn-soft"
+              (click)="onOpenMobileSearch()"
+            >
+              Search
+            </button>
+          </li>
+          <li class="mt-2">
+            <button
+              class="btn btn-xs btn-secondary btn-outline btn-soft"
+              (click)="logout()"
+              translate
+            >
               header.logout
             </button>
           </li>
@@ -71,7 +89,10 @@
           </li>
           <li>
             <!-- If on group page, show main group link -->
-            <a [routerLink]="onGroupPage ? '/groups' : groupLink()" testTag="header.groups-link">
+            <a
+              [routerLink]="onGroupPage ? '/groups' : groupLink()"
+              testTag="header.groups-link"
+            >
               <i class="bi bi-people"></i>
               {{ "header.routes.groups" | translate }}
             </a>
@@ -86,6 +107,12 @@
             <a routerLink="settings">
               <i class="bi bi-gear"></i>
               {{ "header.routes.settings" | translate }}
+            </a>
+          </li>
+          <li>
+            <a routerLink="account-info">
+              <i class="bi bi-person"></i>
+              {{ "header.routes.account-info" | translate }}
             </a>
           </li>
         </ul>
