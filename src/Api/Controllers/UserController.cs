@@ -75,6 +75,8 @@ public sealed class UserController : AuthControllerBase
     }
 
     [HttpPost("updatePasswordByToken")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ErrorCodeResponse>(StatusCodes.Status400BadRequest)]
     [AllowAnonymous]
     public async Task<ActionResult> UpdatePasswordByToken([FromBody] UpdatePasswordByTokenRequest request)
     {
@@ -82,16 +84,17 @@ public sealed class UserController : AuthControllerBase
         {
             var user = await _userService.GetByUsername(request.Username);
             if (!user.EmailConfirmed)
-                return BadRequest("Email is not confirmed. Cannot reset password.");
+                return BadRequest(ErrorCodes.EmailNotConfirmed);
             if (!await _passwordResetService.ValidateToken(user.Id, request.Token))
-                return BadRequest("Invalid or expired password reset token.");
-            
+                return BadRequest(ErrorCodes.InvalidOrExpiredToken);
+
             await _userService.UpdatePassword(new UserCredentials(request.Username, request.Password));
             await _passwordResetService.DeleteTokensForUser(user.Id);
             return Ok();
-        } catch (UserNotFoundException)
+        }
+        catch (UserNotFoundException)
         {
-            return BadRequest("User not found.");
+            return BadRequest(ErrorCodes.UserNotFound);
         }
     }
 

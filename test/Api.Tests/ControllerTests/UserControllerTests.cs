@@ -186,8 +186,8 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
 
         var result = await _controller.UpdatePasswordByToken(request);
 
-        Assert.IsType<BadRequestObjectResult>(result);
-
+        var objResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(ErrorCodes.EmailNotConfirmed, objResult.Value);
         await _userService.DidNotReceiveWithAnyArgs().UpdatePassword(Arg.Any<UserCredentials>());
     }
     
@@ -205,7 +205,8 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
 
         var result = await _controller.UpdatePasswordByToken(request);
 
-        Assert.IsType<BadRequestObjectResult>(result);
+        var objResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(ErrorCodes.InvalidOrExpiredToken, objResult.Value);
 
         await _userService.DidNotReceiveWithAnyArgs().UpdatePassword(Arg.Any<UserCredentials>());
     }
