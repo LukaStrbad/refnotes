@@ -117,7 +117,8 @@
     "labelTags": "Oznake:",
     "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
     "buttonShare": "Podijeli",
-    "file-updated": "Datoteka ažurirana od strane drugog korisnika"
+    "file-updated": "Datoteka ažurirana od strane drugog korisnika",
+    "placeholderText": "Počnite tipkati ..."
   },
   "modals": {
     "create": {

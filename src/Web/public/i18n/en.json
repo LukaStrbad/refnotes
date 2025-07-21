@@ -117,7 +117,8 @@
     "labelTags": "Tags:",
     "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'",
     "buttonShare": "Share",
-    "file-updated": "File updated by another user"
+    "file-updated": "File updated by another user",
+    "placeholderText": "Start typing..."
   },
   "modals": {
     "create": {
