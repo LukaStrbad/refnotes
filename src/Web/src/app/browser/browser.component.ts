@@ -363,9 +363,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async openPreview(file: File) {
-    const path = joinPaths(this.currentPath, file.path);
     const navigationRoute = [];
-    navigationRoute.push(this.linkBasePath, 'file', path, 'preview');
+    navigationRoute.push(this.linkBasePath, 'file', file.path, 'preview');
     await this.router.navigate(navigationRoute);
   }
 
