@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';

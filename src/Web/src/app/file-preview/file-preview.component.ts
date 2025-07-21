@@ -143,6 +143,8 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       promises.push(this.loadImage());
     } else if (this.fileType === 'markdown' || this.fileType === 'text') {
       promises.push(this.loadFile());
+    } else {
+      this.loadingState = FileLoadingState.Loaded;
     }
 
     const listTagsPromise = this.fileProvider.listTags().then(tags => {

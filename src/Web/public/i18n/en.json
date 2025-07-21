@@ -214,7 +214,9 @@
     },
     "fileNotFound": "File not found",
     "publicFileNotFound-description": "The file you are looking for is not available. It may have been deleted, the link is invalid, or sharing has been disabled.",
-    "fileNotFound-description": "The file you are looking for could not be found. It may have been moved or deleted."
+    "fileNotFound-description": "The file you are looking for could not be found. It may have been moved or deleted.",
+    "unknownFileType": "Unknown file type",
+    "unknownFileType-description": "This file doesn't have a known file type and cannot be displayed"
   },
   "error": {
     "file-already-exists": "File with same name already exists",

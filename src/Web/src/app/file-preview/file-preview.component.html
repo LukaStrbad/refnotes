@@ -74,11 +74,24 @@
             testTag="preview.image"
           />
         </div>
+      } @else if (fileType === "unknown") {
+        <div
+          class="flex flex-col items-center justify-center h-full text-center p-8"
+        >
+          <i class="bi bi-file-earmark-question text-6xl text-warning mb-4"></i>
+          <h1 class="text-2xl font-bold mb-2" translate>
+            preview.unknownFileType
+          </h1>
+          <p class="mb-4 text-base text-base-content/70" translate>
+            preview.unknownFileType-description
+          </p>
+        </div>
       }
+
       <div
         class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72"
         [ngClass]="{ 'whitespace-pre-wrap': fileType === 'text' }"
-        [ngClass]="{ hidden: fileType === 'image' }"
+        [ngClass]="{ hidden: fileType !== 'text' && fileType !== 'markdown' }"
         [class.no-wrap]="!settings.mdEditor().wrapLines"
       >
         <div
