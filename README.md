@@ -30,8 +30,8 @@ RefNotes is a note-taking application built with .NET and Angular.
 ## Getting Started
 
 1. Clone the repository.
-2. Start the backend server with `dotnet watch` inside the `Server` folder.
-3. Start the frontend server with `pnpm start` inside the `Frontend` folder.
+2. Start the backend server with `dotnet watch` inside the `src/AppHost` folder.
+3. Start the frontend server with `pnpm start` inside the `src/Web` folder.
 
 ## Usage
 
@@ -43,25 +43,46 @@ RefNotes is a note-taking application built with .NET and Angular.
 
 ### Running Tests
 
-- For backend tests, navigate to the `Server` folder and run:
+- For backend tests, run:
   `dotnet test`
-- For frontend tests, navigate to the `Frontend` folder and run:
+- For frontend tests, navigate to the `src/Web` folder and run:
   `pnpm test`
 
 ## Screenshots
 
 ### Home
 
-![home](images/home.png)
+![Home](images/home.png)
+
+#### Search - small
+![Search - small](images/search_small.png)
+
+#### Search - big
+![Search - small](images/search_big.png)
+
+#### More actions menu
+![More actions menu](images/more_actions_menu.png)
 
 ### Login
 
-![login](images/login.png)
+![Login](images/login.png)
+
+### Groups
+![Groups](images/groups.png)
+
+#### Group members
+![Group members](images/group_members.png)
+
+### Favorites
+![Favorites](images/favorites.png)
 
 ### Settings
 
-![settings](images/settings.png)
+![Settings](images/settings.png)
 
 ### Editor
 
-![editor](images/editor.png)
+![Editor](images/editor.png)
+
+### Preview
+![Preview](images/preview.png)
