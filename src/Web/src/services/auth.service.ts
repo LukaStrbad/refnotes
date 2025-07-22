@@ -118,7 +118,7 @@ export class AuthService {
     );
     this.setUserAndToken();
     try {
-      await this.router.navigate([redirectUrl ?? '/browser']);
+      await this.router.navigateByUrl(redirectUrl ?? '/browser');
     } catch (e) {
       console.error('Error navigating to redirect URL:', e);
     }

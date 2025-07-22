@@ -34,7 +34,7 @@ describe('GroupsComponent', () => {
   }
 
   beforeEach(async () => {
-    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode', 'removeUser']);
+    userGroupService = jasmine.createSpyObj('UserGroupService', ['getUserGroupsCached', 'create', 'generateAccessCode', 'addCurrentUserWithCode', 'removeUser', 'leaveGroup']);
     notificationService = jasmine.createSpyObj('NotificationService', ['awaitAndNotifyError', 'success']);
     authService = jasmine.createSpyObj('AuthService', [], { user: signal(user) });
 
@@ -152,7 +152,7 @@ describe('GroupsComponent', () => {
 
     await component.onLeaveGroup(groupToLeave);
 
-    expect(userGroupService.removeUser).toHaveBeenCalledWith(groupToLeave.id, user.id);
+    expect(userGroupService.leaveGroup).toHaveBeenCalledWith(groupToLeave.id);
     expect(notificationService.success).toHaveBeenCalledWith('groups.leave-group-success');
     expect(component.groups).not.toContain(groupToLeave);
   });

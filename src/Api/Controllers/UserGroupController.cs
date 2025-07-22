@@ -103,6 +103,24 @@ public class UserGroupController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
+    [HttpDelete("{groupId:int}/leave")]
+    public async Task<ActionResult> LeaveGroup(int groupId)
+    {
+        var currentUser = await _userService.GetCurrentUser();
+        if (!await _groupPermissionService.HasGroupAccessAsync(currentUser, groupId))
+            return Forbid();
+
+        try
+        {
+            await _userGroupService.RemoveUser(groupId, currentUser.Id);
+            return Ok();
+        }
+        catch (InvalidOperationException e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 
     [HttpPost("{groupId:int}/generateAccessCode")]
     public async Task<ActionResult> GenerateAccessCode(int groupId, [FromBody] DateTime? expiryTime = null)
@@ -130,9 +148,9 @@ public class UserGroupController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-        catch (AccessCodeInvalidException e)
+        catch (AccessCodeInvalidException)
         {
-            return Forbid(e.Message);
+            return Forbid();
         }
     }
 }

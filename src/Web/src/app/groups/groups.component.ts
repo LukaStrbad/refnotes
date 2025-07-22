@@ -141,7 +141,7 @@ export class GroupsComponent implements AfterViewInit {
     }
 
     await this.notificationService.awaitAndNotifyError(
-      this.userGroupService.removeUser(group.id, user.id),
+      this.userGroupService.leaveGroup(group.id),
       {
         default: await getTranslation(this.translateService, 'groups.leave-group-error')
       },

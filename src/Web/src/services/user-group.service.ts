@@ -64,6 +64,10 @@ export class UserGroupService {
     return firstValueFrom(this.http.delete<void>(`${apiUrl}/${groupId}/removeUser`, { params: { userId } }));
   }
 
+  async leaveGroup(groupId: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${apiUrl}/${groupId}/leave`));
+  }
+
   async generateAccessCode(groupId: number, expiryTime?: Date): Promise<string> {
     return firstValueFrom(this.http.post(`${apiUrl}/${groupId}/generateAccessCode`, expiryTime, { responseType: 'text' }));
   }

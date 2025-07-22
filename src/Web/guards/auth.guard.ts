@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, RedirectCommand, Router } from '@angular/router';
 import { AuthService } from '../src/services/auth.service';
 
 export const authGuard: CanActivateFn = async (route, state) => {
@@ -19,5 +19,6 @@ export const authGuard: CanActivateFn = async (route, state) => {
 
   // Redirect to login page with the return URL
   const redirectUrl = state.url;
-  return router.parseUrl(`/login?redirectUrl=${encodeURIComponent(redirectUrl)}`);
+  // return router.parseUrl(`/login?redirectUrl=${encodeURIComponent(redirectUrl)}`);
+  return router.parseUrl(`/login?redirectUrl=${redirectUrl}`);
 };
