@@ -45,7 +45,13 @@ export class LoginComponent {
       this.message = info.message ?? null;
     }
 
-    this.redirectUrl = this.route.snapshot.queryParamMap.get("redirectUrl") ?? undefined;
+    const redirectUrl = this.route.snapshot.queryParamMap.get("redirectUrl");
+    if (redirectUrl) {
+      // Double slashes will be treated as a single slash in angular routing,
+      // so we need to encode them to preserve the original URL structure.
+      console.log("Redirect URL:", redirectUrl);
+      this.redirectUrl = redirectUrl.replaceAll("//", "/%2F");
+    }
   }
 
   async login() {

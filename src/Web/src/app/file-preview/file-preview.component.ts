@@ -143,6 +143,8 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       promises.push(this.loadImage());
     } else if (this.fileType === 'markdown' || this.fileType === 'text') {
       promises.push(this.loadFile());
+    } else {
+      this.loadingState = FileLoadingState.Loaded;
     }
 
     const listTagsPromise = this.fileProvider.listTags().then(tags => {
@@ -164,6 +166,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     if (this.imageSrc) {
       URL.revokeObjectURL(this.imageSrc);
     }
+    this.socket?.close();
   }
 
   async loadFile() {
@@ -183,7 +186,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       } else if (this.fileType === 'text') {
         this.loadingState = FileLoadingState.Loaded;
         this.changeDetector.detectChanges();
-        this.previewContentElement.nativeElement.innerHTML = text;
+        this.previewContentElement.nativeElement.innerHTML = text.replace(/\n/g, '<br>');
       }
     } catch (error) {
       const statusCode = getStatusCode(error);

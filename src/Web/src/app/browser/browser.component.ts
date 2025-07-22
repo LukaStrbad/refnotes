@@ -358,14 +358,13 @@ export class BrowserComponent implements OnInit, OnDestroy {
     return fileUtils.isEditable(file.path);
   }
 
-  getFilePath(file: File): string {
-    return joinPaths(this.currentPath, file.path);
-  }
-
   async openPreview(file: File) {
-    const path = joinPaths(this.currentPath, file.path);
+    const fileType = fileUtils.getFileType(file.path);
+    if (fileType === 'unknown') {
+      return;
+    }
     const navigationRoute = [];
-    navigationRoute.push(this.linkBasePath, 'file', path, 'preview');
+    navigationRoute.push(this.linkBasePath, 'file', file.path, 'preview');
     await this.router.navigate(navigationRoute);
   }
 
@@ -382,7 +381,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.add-file-tag'),
     });
 
-    const file = this.files().find((f) => f.path === fileName);
+    const file = this.files().find((f) => f.name === fileName);
     if (file && !file.tags.includes(tag)) {
       file.tags.push(tag);
     }
@@ -393,7 +392,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
       default: await getTranslation(this.translateService, 'error.remove-file-tag'),
     });
 
-    const file = this.files().find((f) => f.path === fileName);
+    const file = this.files().find((f) => f.name === fileName);
     if (file) {
       const index = file.tags.indexOf(tag);
       if (index !== -1) {
@@ -406,9 +405,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const oldFilePath = joinPaths(this.currentPath, oldFileName);
     const newFilePath = joinPaths(this.currentPath, newFileName);
     await this.fileService.moveFile(oldFilePath, newFilePath, this.groupId);
-    const file = this.files().find((f) => f.path === oldFileName);
+    const file = this.files().find((f) => f.name === oldFileName);
     if (file) {
-      file.path = newFileName;
+      file.name = newFileName;
       file.modified = new Date();
     }
   }
@@ -437,11 +436,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     files.forEach((file) => {
-      const filePath = joinPaths(this.currentPath, file.path);
       if (target.checked) {
-        this.selectFileService.addFile(filePath);
+        this.selectFileService.addFile(file.path);
       } else {
-        this.selectFileService.removeFile(filePath);
+        this.selectFileService.removeFile(file.path);
       }
     });
 
@@ -457,8 +455,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     // If all files are selected, deselect them
     if (this.areAllFilesSelected) {
       this.files().forEach((file) => {
-        const filePath = joinPaths(this.currentPath, file.path);
-        this.selectFileService.removeFile(filePath);
+        this.selectFileService.removeFile(file.path);
       });
       this.areAllFilesSelected = false;
       return;
@@ -466,22 +463,20 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     // If not all files are selected, select them
     this.files().forEach((file) => {
-      const filePath = joinPaths(this.currentPath, file.path);
-      this.selectFileService.addFile(filePath);
+      this.selectFileService.addFile(file.path);
     });
     this.areAllFilesSelected = true;
   }
 
-  isFileSelected(filename: string): boolean {
-    const filePath = joinPaths(this.currentPath, filename);
-    return this.selectedFiles.has(filePath);
+  isFileSelected(file: File): boolean {
+    return this.selectedFiles.has(file.path);
   }
 
   private checkIfAllFilesAreSelected(): boolean {
     if (this.currentFolder === null) {
       return false;
     }
-    const allFiles = this.files().map(f => joinPaths(this.currentPath, f.path));
+    const allFiles = this.files().map(f => f.path);
     return allFiles.every(file => this.selectedFiles.has(file));
   }
 
@@ -490,7 +485,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async moveFiles() {
-    const filesFromCurrentFolder = new Set(this.files().map(f => joinPaths(this.currentPath, f.path)));
+    const filesFromCurrentFolder = new Set(this.files().map(f => f.path));
 
     // Find only the files that are not in the current folder
     const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
@@ -514,8 +509,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   downloadFile(file: File) {
-    const filePath = joinPaths(this.currentPath, file.path);
-    this.fileService.downloadFile(filePath, this.groupId);
+    this.fileService.downloadFile(file.path, this.groupId);
   }
 
   async openShareModal(file: File) {

@@ -117,7 +117,8 @@
     "labelTags": "Oznake:",
     "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
     "buttonShare": "Podijeli",
-    "file-updated": "Datoteka ažurirana od strane drugog korisnika"
+    "file-updated": "Datoteka ažurirana od strane drugog korisnika",
+    "placeholderText": "Počnite tipkati ..."
   },
   "modals": {
     "create": {
@@ -213,7 +214,9 @@
     },
     "fileNotFound": "Datoteka nije pronađena",
     "fileNotFound-description": "Datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana.",
-    "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno."
+    "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno.",
+    "unknownFileType": "Nepoznata vrsta datoteke",
+    "unknownFileType-description": "Ova datoteka nema poznatu vrstu datoteke i ne može se prikazati"
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",

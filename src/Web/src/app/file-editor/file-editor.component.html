@@ -60,10 +60,26 @@
   @if (loading) {
     <div class="skeleton h-72 w-full"></div>
   } @else {
-    <app-md-editor
-      [(value)]="content"
-      class="flex flex-col flex-1 min-h-0"
-    ></app-md-editor>
+    @switch (fileType) {
+      @case ("markdown") {
+        <app-md-editor
+          [(value)]="content"
+          class="flex flex-col flex-1 min-h-0"
+        ></app-md-editor>
+      }
+
+      @case ("text") {
+        <div class="bg-base-300 p-2 rounded-xl md-preview mb-4 min-h-72">
+          <textarea
+            #textarea
+            [(ngModel)]="content"
+            (ngModelChange)="adjustTextareaHeight(textarea)"
+            class="editor-textarea w-full bg-base-200 p-2 rounded-lg outline-hidden resize-none border-none min-h-full placeholder:text-gray-500"
+            placeholder="{{ 'editor.placeholderText' | translate }}"
+          ></textarea>
+        </div>
+      }
+    }
   }
 </div>
 

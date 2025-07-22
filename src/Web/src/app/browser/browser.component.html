@@ -202,7 +202,7 @@
             <td class="w-20">
               <input
                 type="checkbox"
-                [checked]="isFileSelected(file.path)"
+                [checked]="isFileSelected(file)"
                 class="checkbox checkbox-sm checkbox-accent hidden peer group-hover:block checked:block"
                 (click)="toggleFileSelect(file, $event)"
                 testTag="browser.file-to-move-checkbox"
@@ -268,7 +268,7 @@
                   [routerLink]="[
                     linkBasePath,
                     'file',
-                    getFilePath(file),
+                    file.path,
                     'edit',
                   ]"
                   testTag="browser.edit-file"

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,8 @@ import { ShareModalComponent } from "../components/modals/share/share.component"
 import { ShareService } from '../../services/components/modals/share.service';
 import { ClientIdMessage, FileSyncMessage, FileSyncMessageType, FileUpdatedMessage } from '../../model/file-sync-message';
 import { LoggerService } from '../../services/logger.service';
+import { getFileType } from '../../utils/file-utils';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-file-editor',
@@ -25,12 +27,13 @@ import { LoggerService } from '../../services/logger.service';
     TestTagDirective,
     EditTagsModalComponent,
     RenameFileModalComponent,
-    ShareModalComponent
+    ShareModalComponent,
+    FormsModule,
   ],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
 })
-export class FileEditorComponent implements OnInit, OnDestroy {
+export class FileEditorComponent implements AfterViewInit, OnDestroy {
   readonly directoryPath: string;
   readonly groupId?: number;
   readonly linkBasePath: string = '';
@@ -45,9 +48,13 @@ export class FileEditorComponent implements OnInit, OnDestroy {
   content = '';
   loading = true;
   tags: string[] = [];
+  readonly fileType;
 
   @ViewChild('shareModal')
   shareModal!: ShareModalComponent;
+
+  @ViewChild('textarea')
+  textarea!: ElementRef<HTMLTextAreaElement>;
 
   constructor(
     route: ActivatedRoute,
@@ -63,6 +70,7 @@ export class FileEditorComponent implements OnInit, OnDestroy {
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
     [this.directoryPath, this.fileName] = splitDirAndName(path);
+    this.fileType = getFileType(this.fileName);
     const groupId = route.snapshot.paramMap.get('groupId');
     if (groupId) {
       this.groupId = Number(groupId);
@@ -79,7 +87,7 @@ export class FileEditorComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     const filePath = joinPaths(this.directoryPath, this.fileName);
     const socket = this.fileService.createFileSyncSocket(filePath, this.groupId);
     this.socket = socket;
@@ -122,8 +130,18 @@ export class FileEditorComponent implements OnInit, OnDestroy {
       const content = await this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
       this.content = new TextDecoder().decode(content);
       this.loading = false;
-    } catch {
+
+      if (this.fileType === 'text') {
+        // Adjust the height of the textarea to fit the content
+        setTimeout(() => {
+          if (this.textarea && this.textarea.nativeElement) {
+            this.adjustTextareaHeight(this.textarea.nativeElement);
+          }
+        }, 0);
+      }
+    } catch (e) {
       this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
+      this.log.error('Error loading file:', e);
     }
   }
 
@@ -172,6 +190,13 @@ export class FileEditorComponent implements OnInit, OnDestroy {
     const oldName = this.fileName;
     this.fileName = newFileName;
     this.notificationService.info(await getTranslation(this.translate, 'editor.file-renamed-to', { oldName, newName: newFileName }));
+  }
+
+  adjustTextareaHeight(textarea: HTMLTextAreaElement) {
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    // Set height to scrollHeight to accommodate all content
+    textarea.style.height = textarea.scrollHeight + 'px';
   }
 
   async openShareModal() {

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -7,7 +8,7 @@ export class CookieService {
 
   setCookie(name: string, value: string, expires: Date) {
     const expiresString = `expires=${expires.toUTCString()}`;
-    document.cookie = `${name}=${value}; path=/; ${expiresString}`;
+    document.cookie = `${name}=${value}; path=/; ${expiresString}; Domain=${environment.domain};`;
   }
 
   getCookie(name: string): string | null {

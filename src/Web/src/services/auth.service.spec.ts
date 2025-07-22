@@ -21,8 +21,9 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     http = jasmine.createSpyObj('HttpClient', ['get', 'post']);
-    router = jasmine.createSpyObj('Router', ['navigate']);
+    router = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
     router.navigate.and.resolveTo(true);
+    router.navigateByUrl.and.resolveTo(true);
 
     const cookies: Record<string, string> = {};
     cookieService = jasmine.createSpyObj('CookieService', ['getCookie', 'setCookie']);
@@ -97,7 +98,7 @@ describe('AuthService', () => {
 
     expect(service.accessToken).toBe(accessToken);
     expect(service.isUserLoggedIn()).toBeTrue();
-    expect(router.navigate).toHaveBeenCalledWith(['/browser']);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/browser');
   });
 
   it('should not login user if credentials are incorrect', async () => {

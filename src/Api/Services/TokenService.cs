@@ -47,7 +47,7 @@ public sealed class TokenService
                 $"Expiry time should be at most {MaxGroupAccessCodeExpiryTimeDays} days");
         }
 
-        var accessCode = GenerateRandomString(64);
+        var accessCode = Guid.CreateVersion7().ToString();
         var groupAccessCode = new GroupAccessCode
         {
             Group = group,
