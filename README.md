@@ -6,32 +6,43 @@ RefNotes is a note-taking application built with .NET and Angular.
 
 ## Features
 
+- User accounts
+    - With email confirmation, ability to edit account details and send password reset links
 - Create, edit, and delete notes.
-- File upload
+    - Side by side markdown editor for markdown files
+    - Preview Markdown, text and image files
+    - Markdown files can also display images
 - Organize files into folders and subfolders.
-- Markdown preview.
 - Tag files.
 - Multilingual support.
+    - English and Croatian
 - Switch between light and dark themes, along with other settings.
-- Preview for image files
-- File operations (rename, move)
-- Alerts for errors and other actions
-- File downloads
+- File operations
+    - Rename, move, download
+    - Upload for any type of file
 - File and folder search
+    - Search by name, tag, file content and by modification date
 - User groups
+    - Shared spaces where anyone can edit files belonging to the group
 - Public notes (accessed through a public URL)
-- File favorites
+- Favorites
+    - Any file or folder can be set as a favorite
+    - Favorites are displayed on the Favorites page
+- Live file sync
+    - When a file is saved, the changes will be synced across tabs/browsers
+    - This works even for public notes
 
 ## Planned Features
 
 - File sharing
 - Autocomplete for image paths
+- A WYSIWYG editor for markdown to simplify editing
 
 ## Getting Started
 
 1. Clone the repository.
-2. Start the backend server with `dotnet watch` inside the `src/AppHost` folder.
-3. Start the frontend server with `pnpm start` inside the `src/Web` folder.
+2. Start the backend server with `dotnet watch` inside the `Server` folder.
+3. Start the frontend server with `pnpm start` inside the `Frontend` folder.
 
 ## Usage
 
@@ -43,9 +54,9 @@ RefNotes is a note-taking application built with .NET and Angular.
 
 ### Running Tests
 
-- For backend tests, run:
+- For backend tests, navigate to the `Server` folder and run:
   `dotnet test`
-- For frontend tests, navigate to the `src/Web` folder and run:
+- For frontend tests, navigate to the `Frontend` folder and run:
   `pnpm test`
 
 ## Screenshots
