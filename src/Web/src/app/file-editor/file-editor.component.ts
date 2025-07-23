@@ -19,8 +19,9 @@ import { getFileType } from '../../utils/file-utils';
 import { FormsModule } from '@angular/forms';
 import { Crepe } from '@milkdown/crepe';
 import "@milkdown/crepe/theme/common/style.css";
-import { defaultValueCtx } from '@milkdown/kit/core';
+import { replaceAll } from '@milkdown/utils'
 import { resolveImageUrl } from '../../utils/image-utils';
+import { SettingsService } from '../../services/settings.service';
 
 
 @Component({
@@ -78,6 +79,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
     private log: LoggerService,
 
     public share: ShareService,
+    public settings: SettingsService,
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
     [this.directoryPath, this.fileName] = splitDirAndName(path);
@@ -155,9 +157,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
         setTimeout(() => {
           this.createCrepeInstance();
           // Set content manually
-          this.crepe?.editor.config(ctx => {
-            ctx.set(defaultValueCtx, this.content);
-          });
+          this.crepe?.editor.action(replaceAll(this.content));
         });
       }
     } catch (e) {
@@ -268,5 +268,27 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
     crepe.create();
 
     this.crepe = crepe;
+  }
+
+  toggleWysiwyg() {
+    const currentSettings = this.settings.mdEditor();
+    this.settings.setMdEditorSettings({ ...currentSettings, useWysiwyg: !currentSettings.useWysiwyg });
+
+    // If switching to/from WYSIWYG and we have a crepe instance, destroy it
+    if (this.crepe) {
+      this.crepe.destroy();
+      this.crepe = undefined;
+    }
+
+    // Recreate the editor with the new mode
+    if (this.fileType === 'markdown') {
+      setTimeout(() => {
+        if (this.settings.mdEditor().useWysiwyg) {
+          this.createCrepeInstance();
+          // Set content manually
+          this.crepe?.editor.action(replaceAll(this.content));
+        }
+      });
+    }
   }
 }

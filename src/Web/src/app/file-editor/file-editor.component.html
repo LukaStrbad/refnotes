@@ -24,6 +24,20 @@
     </div>
 
     <div class="flex gap-2 self-end">
+      <!-- WYSIWYG Toggle - only show for markdown files -->
+      @if (fileType === 'markdown') {
+        <!-- Visual editor is only supported on desktop for now -->
+        <label class="items-center gap-2 cursor-pointer hidden sm:flex">
+          <input
+            type="checkbox"
+            class="toggle toggle-md"
+            [checked]="settings.mdEditor().useWysiwyg"
+            (change)="toggleWysiwyg()"
+          />
+          <span class="text-sm" translate>editor.wysiwyg</span>
+        </label>
+      }
+
       <!-- Share button -->
       <button
         class="btn btn-accent"
@@ -62,7 +76,7 @@
   } @else {
     @switch (fileType) {
       @case ("markdown") {
-        @if (true) {
+        @if (settings.mdEditor().useWysiwyg) {
           <div #editorRef></div>
         } @else {
           <app-md-editor

@@ -41,6 +41,9 @@ importers:
       '@milkdown/theme-nord':
         specifier: ^7.15.1
         version: 7.15.1
+      '@milkdown/utils':
+        specifier: ^7.15.1
+        version: 7.15.1
       '@ngx-translate/core':
         specifier: ^16.0.4
         version: 16.0.4(@angular/common@20.1.1(@angular/core@20.1.1(@angular/compiler@20.1.1)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.1.1(@angular/compiler@20.1.1)(rxjs@7.8.2)(zone.js@0.15.1))

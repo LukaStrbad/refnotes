@@ -1,4 +1,5 @@
-:host {
+/* :host doesn't work with ViewEncapsulation.None */
+app-file-editor {
   height: 100%;
   display: flex;
   flex-direction: column;
