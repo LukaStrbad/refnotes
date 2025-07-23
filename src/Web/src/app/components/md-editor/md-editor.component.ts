@@ -25,6 +25,8 @@ import { LoggerService } from '../../../services/logger.service';
 import { NgClass } from '@angular/common';
 import { FileService } from '../../../services/file.service';
 import { MarkdownHighlighter } from '../../../utils/markdown-highlighter';
+import { ImageBlobResolverService } from '../../../services/image-blob-resolver.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-md-editor',
@@ -67,13 +69,16 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     public settings: SettingsService,
     private log: LoggerService,
     private fileService: FileService,
+    private imageBlobResolver: ImageBlobResolverService,
+    route: ActivatedRoute,
   ) {
+    const groupId = route.snapshot.paramMap.get('groupId');
+    const groupIdNumber = groupId ? parseInt(groupId, 10) : undefined;
+
     this.markdownHighlighter = new MarkdownHighlighter(
       this.settings.mdEditor().showLineNumbers,
       this.currentPath(),
-      (dirPath: string, fileName: string) => this.fileService.getImage(
-        dirPath,
-        fileName)
+      (src: string) => this.imageBlobResolver.loadImage(src, groupIdNumber),
     );
 
     this.editorMode = computed(() => settings.mdEditor().editorMode);
@@ -96,11 +101,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.markdownHighlighter.imageUrls.forEach((imageUrl) => {
-      if (imageUrl.blob) {
-        URL.revokeObjectURL(imageUrl.blob);
-      }
-    });
+    this.imageBlobResolver.revokeImageBlobs();
   }
 
   ngOnInit() {

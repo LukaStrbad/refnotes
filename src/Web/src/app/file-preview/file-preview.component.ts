@@ -21,6 +21,7 @@ import { getStatusCode } from '../../utils/errorHandler';
 import { HomeButtonComponent } from "../components/home-button/home-button.component";
 import { FileLoadingState } from '../../model/loading-state';
 import { FileSyncMessage, FileSyncMessageType } from '../../model/file-sync-message';
+import { ImageBlobResolverService } from '../../services/image-blob-resolver.service';
 
 @Component({
   selector: 'app-file-preview',
@@ -59,6 +60,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     private changeDetector: ChangeDetectorRef,
     private translate: TranslateService,
     private notificationService: NotificationService,
+    private imageBlobResolver: ImageBlobResolverService,
   ) {
     const publicFileHash = route.snapshot.paramMap.get('publicHash');
     if (publicFileHash) {
@@ -134,7 +136,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
 
     this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
       this.settings.mdEditor().showLineNumbers,
-      (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
+      (src: string) => this.imageBlobResolver.loadImage(src, this.groupId),
     );
 
     const promises: Promise<void>[] = [];
@@ -167,6 +169,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       URL.revokeObjectURL(this.imageSrc);
     }
     this.socket?.close();
+    this.imageBlobResolver.revokeImageBlobs();
   }
 
   async loadFile() {

@@ -1,22 +1,22 @@
 import { File } from "../../model/file";
 import { FileService } from "../../services/file.service";
+import { ImageBlob } from "../../services/image-blob-resolver.service";
 import { TagService } from "../../services/tag.service";
 import { MarkdownHighlighter } from "../../utils/markdown-highlighter";
 import { splitDirAndName } from "../../utils/path-utils";
 
 export class FileProvider {
   private constructor(
-    public filePath: Promise<string>,
-    public getImage: (path: string) => Promise<ArrayBuffer | null>,
-    public listTags: () => Promise<string[]>,
-    public getFileInfo: () => Promise<File>,
-    public getFile: () => Promise<ArrayBuffer>,
-    public createSyncSocket: () => WebSocket,
+    public readonly filePath: Promise<string>,
+    public readonly listTags: () => Promise<string[]>,
+    public readonly getFileInfo: () => Promise<File>,
+    public readonly getFile: () => Promise<ArrayBuffer>,
+    public readonly createSyncSocket: () => WebSocket,
   ) { }
 
   async createMarkdownHighlighter(
     showLineNumbers: boolean,
-    loadImage: (dirPath: string, fileName: string) => Promise<ArrayBuffer | null>,
+    loadImage: (src: string) => ImageBlob,
   ): Promise<MarkdownHighlighter> {
     const directoryPath = await this.filePath;
     const [dirPath,] = splitDirAndName(directoryPath);
@@ -47,7 +47,6 @@ export class FileProvider {
 
     return new FileProvider(
       Promise.resolve(filePath),
-      getImage,
       listTags,
       getFileInfo,
       getFile,
@@ -70,7 +69,6 @@ export class FileProvider {
 
     return new FileProvider(
       filePath,
-      getImage,
       listTags,
       getFileInfo,
       getFile,

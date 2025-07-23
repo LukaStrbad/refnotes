@@ -62,10 +62,14 @@
   } @else {
     @switch (fileType) {
       @case ("markdown") {
-        <app-md-editor
-          [(value)]="content"
-          class="flex flex-col flex-1 min-h-0"
-        ></app-md-editor>
+        @if (true) {
+          <div #editorRef></div>
+        } @else {
+          <app-md-editor
+            [(value)]="content"
+            class="flex flex-col flex-1 min-h-0"
+          ></app-md-editor>
+        }
       }
 
       @case ("text") {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MdEditorComponent } from '../components/md-editor/md-editor.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,11 @@ import { ClientIdMessage, FileSyncMessage, FileSyncMessageType, FileUpdatedMessa
 import { LoggerService } from '../../services/logger.service';
 import { getFileType } from '../../utils/file-utils';
 import { FormsModule } from '@angular/forms';
+import { Crepe } from '@milkdown/crepe';
+import "@milkdown/crepe/theme/common/style.css";
+import { defaultValueCtx } from '@milkdown/kit/core';
+import { resolveImageUrl } from '../../utils/image-utils';
+
 
 @Component({
   selector: 'app-file-editor',
@@ -32,6 +37,7 @@ import { FormsModule } from '@angular/forms';
   ],
   templateUrl: './file-editor.component.html',
   styleUrl: './file-editor.component.css',
+  encapsulation: ViewEncapsulation.None,
 })
 export class FileEditorComponent implements AfterViewInit, OnDestroy {
   readonly directoryPath: string;
@@ -50,11 +56,16 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   tags: string[] = [];
   readonly fileType;
 
+  crepe?: Crepe;
+
   @ViewChild('shareModal')
   shareModal!: ShareModalComponent;
 
   @ViewChild('textarea')
   textarea!: ElementRef<HTMLTextAreaElement>;
+
+  @ViewChild('editorRef')
+  editorRef!: ElementRef<HTMLDivElement>;
 
   constructor(
     route: ActivatedRoute,
@@ -123,6 +134,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.socket?.close();
+    this.crepe?.destroy();
   }
 
   async loadFile() {
@@ -131,6 +143,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
       this.content = new TextDecoder().decode(content);
       this.loading = false;
 
+
       if (this.fileType === 'text') {
         // Adjust the height of the textarea to fit the content
         setTimeout(() => {
@@ -138,6 +151,14 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
             this.adjustTextareaHeight(this.textarea.nativeElement);
           }
         }, 0);
+      } else if (this.fileType === 'markdown') {
+        setTimeout(() => {
+          this.createCrepeInstance();
+          // Set content manually
+          this.crepe?.editor.config(ctx => {
+            ctx.set(defaultValueCtx, this.content);
+          });
+        });
       }
     } catch (e) {
       this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
@@ -146,6 +167,10 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   async saveContent() {
+    if (this.crepe) {
+      this.content = this.crepe.getMarkdown();
+    }
+
     await this.notificationService.awaitAndNotifyError(this.fileService.saveTextFile(
       this.directoryPath,
       this.fileName,
@@ -213,5 +238,35 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
 
     // Fallback for environments where crypto.randomUUID is not available
     return 'client-' + Math.random().toString(36).substring(2, 15) + '-' + Date.now();
+  }
+
+  private createCrepeInstance() {
+    if (this.crepe || !this.editorRef?.nativeElement) {
+      return;
+    }
+
+    const crepe = new Crepe({
+      root: this.editorRef.nativeElement,
+      defaultValue: this.content,
+      featureConfigs: {
+        [Crepe.Feature.ImageBlock]: {
+          proxyDomURL: (url: string) => {
+            const resolvedImageUrl = resolveImageUrl(this.directoryPath, url);
+
+            if (resolvedImageUrl.isHttp) {
+              return resolvedImageUrl.url;
+            }
+
+            const [dirPath, fileName] = splitDirAndName(resolvedImageUrl.url);
+            const imageUrl = this.fileService.getImageUrl(dirPath, fileName, this.groupId);
+            return imageUrl;
+          },
+        }
+      }
+    });
+
+    crepe.create();
+
+    this.crepe = crepe;
   }
 }
