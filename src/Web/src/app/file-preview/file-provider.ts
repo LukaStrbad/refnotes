@@ -36,10 +36,6 @@ export class FileProvider {
   ): FileProvider {
     const [directoryPath, fileName] = splitDirAndName(filePath);
 
-    const getImage = (path: string) => {
-      const [dirPath, fileName] = splitDirAndName(path);
-      return fileService.getImage(dirPath, fileName, groupId);
-    };
     const listTags = () => tagService.listFileTags(directoryPath, fileName, groupId);
     const getFileInfo = () => fileService.getFileInfo(filePath, groupId);
     const getFile = () => fileService.getFile(directoryPath, fileName, groupId);
@@ -61,7 +57,6 @@ export class FileProvider {
     const fileInfoPromise = fileService.getPublicFileInfo(fileHash);
 
     const filePath = fileInfoPromise.then(info => info.path);
-    const getImage = (path: string) => fileService.getPublicImage(fileHash, path);
     const listTags = () => Promise.resolve([]);
     const getFileInfo = () => fileInfoPromise;
     const getFile = () => fileService.getPublicFile(fileHash);

@@ -12,7 +12,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { FileWithTime } from '../../model/file';
-import { joinPaths, splitDirAndName } from '../../utils/path-utils';
+import { splitDirAndName } from '../../utils/path-utils';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
 import { FileProvider } from './file-provider';

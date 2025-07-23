@@ -2,10 +2,9 @@ import { LRUCache } from "lru-cache";
 import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js';
 import { Marked, Tokens } from "marked";
-import { splitDirAndName } from "./path-utils";
-import { getImageBlobUrl, resolveImageUrl } from "./image-utils";
+import { resolveImageUrl } from "./image-utils";
 import { ElementRef } from "@angular/core";
-import { BlobStatus, ImageBlob, ImageBlobResolverService } from "../services/image-blob-resolver.service";
+import { BlobStatus, ImageBlob } from "../services/image-blob-resolver.service";
 
 function escapeHtml(unsafe: string) {
   return unsafe

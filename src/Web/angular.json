@@ -36,7 +36,12 @@
               "src/styles.css",
               "bootstrap-icons/font/bootstrap-icons.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "loader": {
+              ".ttf": "binary",
+              ".woff": "binary",
+              ".woff2": "binary"
+            }
           },
           "configurations": {
             "production": {
@@ -44,7 +49,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -119,7 +124,12 @@
                 "replace": "src/environments/environment.ts",
                 "with": "src/environments/environment.development.ts"
               }
-            ]
+            ],
+            "loader": {
+              ".ttf": "binary",
+              ".woff": "binary",
+              ".woff2": "binary"
+            }
           }
         },
         "lint": {
