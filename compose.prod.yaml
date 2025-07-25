@@ -1,15 +1,17 @@
 services:
   caddy:
     volumes:
-      - ${CADDYFILE_PATH:-./docker/caddy/Caddyfile}:/etc/caddy/Caddyfile
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
     restart: always
     networks:
       - internal
 
-  backend:
+  backend: &backend-config
     volumes:
       - ${REFNOTES_CONFIG}:/root/.config/refnotes
       - ${REFNOTES_DATA_DIR}:/data
+        
+  backend-replica: *backend-config
 
   mysql-db:
     ports: !override [ ]

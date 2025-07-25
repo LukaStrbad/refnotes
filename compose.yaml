@@ -14,7 +14,7 @@ services:
     networks:
       - internal
 
-  web:
+  web: &web-config
     build:
       context: .
       dockerfile: ./docker/web/Dockerfile
@@ -25,7 +25,9 @@ services:
     networks:
       - internal
 
-  backend:
+  web-replica: *web-config
+
+  backend: &backend-config
     build:
       context: .
       dockerfile: ./docker/api/Dockerfile
@@ -47,6 +49,8 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - internal
+
+  backend-replica: *backend-config
 
   migrations:
     build:
