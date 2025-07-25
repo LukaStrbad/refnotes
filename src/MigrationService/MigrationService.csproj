@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
+        <Platform>x64</Platform>
+        <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>dotnet-MigrationService-1b0d4f55-5024-4c4b-9e64-cea1d6f5a479</UserSecretsId>
