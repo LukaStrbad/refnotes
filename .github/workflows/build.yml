@@ -15,6 +15,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: Production
 
     steps:
       - name: Checkout
@@ -59,3 +60,6 @@ jobs:
           tags: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web:latest,ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+        env:
+          WEB_DOMAIN: ${{ secrets.WEB_DOMAIN }}
+          WEB_URL: ${{ secrets.WEB_URL }}

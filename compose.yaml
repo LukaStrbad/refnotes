@@ -18,6 +18,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/web/Dockerfile
+      args:
+        WEB_DOMAIN: ${WEB_DOMAIN}
+        WEB_URL: ${WEB_URL}
     image: angular-app
     expose:
       - "80"
