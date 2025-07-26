@@ -16,8 +16,8 @@ RUN pnpm install
 COPY ./src/Web /app/
 
 # Exchange environment variables from environment.prod.ts
-RUN sed -i "s/{{WEB_DOMAIN}}/${WEB_DOMAIN}/g" /app/src/environments/environment.prod.ts
-RUN sed -i "s/{{WEB_URL}}/${WEB_URL}/g" /app/src/environments/environment.prod.ts
+RUN sed -i "s|{{WEB_DOMAIN}}|${WEB_DOMAIN}|g" /app/src/environments/environment.prod.ts
+RUN sed -i "s|{{WEB_URL}}|${WEB_URL}|g" /app/src/environments/environment.prod.ts
 
 RUN pnpm run build
 

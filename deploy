@@ -39,6 +39,9 @@ switch_to_web_primary() {
   reload_caddy /tmp/Caddyfile
 }
 
+echo "Pulling images"
+compose pull
+
 echo "Building the compose file"
 compose build
 
