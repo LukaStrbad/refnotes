@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+name: Build and Deploy
 permissions:
   contents: read
   packages: write
@@ -6,8 +6,6 @@ permissions:
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
     branches: [ "main" ]
   workflow_dispatch:
     
@@ -67,3 +65,40 @@ jobs:
           build-args: |
             WEB_DOMAIN=${{ vars.WEB_DOMAIN }}
             WEB_URL=${{ vars.WEB_URL }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: build
+    env:
+      DEPLOY_DIR: ~/refnotes/releases/${{ github.sha }}
+    
+    steps:
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          debug: true
+          script: |
+            set -e
+            mkdir -p ${{ env.DEPLOY_DIR }}
+            git clone -b ${{ github.head_ref || github.ref_name || 'main' }} https://github.com/${{ github.repository }}.git ${{ env.DEPLOY_DIR }}
+            cd ${{ env.DEPLOY_DIR }}
+            
+            # Copy base configuration files
+            cp ~/appsettings.Production.json .
+            cp ~/.env .
+            
+            # Update images in .env file
+            sed -i 's|BACKEND_IMAGE=.*|BACKEND_IMAGE=${{ env.API_IMAGE }}:${{ github.sha }}|g' .env
+            sed -i 's|MIGRATIONS_IMAGE=.*|MIGRATIONS_IMAGE=${{ env.MIGRATIONS_IMAGE }}:${{ github.sha }}|g' .env
+            sed -i 's|WEB_IMAGE=.*|WEB_IMAGE=${{ env.WEB_IMAGE }}:${{ github.sha }}|g' .env
+            
+            # Run deployment script
+            ./deploy-prod
+            
+            # Symlink the latest release
+            ln -sfn ${{ env.DEPLOY_DIR }} ~/refnotes/active_release
