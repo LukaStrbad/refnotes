@@ -382,6 +382,8 @@
         "resolved": "7.0.0",
         "contentHash": "qmeeYNROMsONF6ndEZcIQ+VxR4Q/TX/7uIVLJqtwIWL7dDWeh0l1UIqgo4wYyjG//5lUNhwkLDSFl+pAWO6oiA=="
       }
-    }
+    },
+    "net9.0/linux-x64": {},
+    "net9.0/win-x64": {}
   }
 }

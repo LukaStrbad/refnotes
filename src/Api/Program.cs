@@ -1,5 +1,4 @@
 using Api;
-using ServiceDefaults;
 
 var appConfig = Configuration.LoadAppConfig();
 

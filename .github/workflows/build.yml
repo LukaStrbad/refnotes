@@ -1,0 +1,104 @@
+name: Build and Deploy
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    
+env:
+  API_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-api
+  MIGRATIONS_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-migrations
+  WEB_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Api Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/api/Dockerfile
+          push: true
+          tags: ${{ env.API_IMAGE }}:latest,${{ env.API_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.API_IMAGE }}:latest
+          cache-to: type=inline
+
+      - name: Build and Push Migrations Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/migrationservice/Dockerfile
+          push: true
+          tags: ${{ env.MIGRATIONS_IMAGE }}:latest,${{ env.MIGRATIONS_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.MIGRATIONS_IMAGE }}:latest
+          cache-to: type=inline
+
+      - name: Build and Push Web Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/web/Dockerfile
+          push: true
+          tags: ${{ env.WEB_IMAGE }}:latest,${{ env.WEB_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.WEB_IMAGE }}:latest
+          cache-to: type=inline
+          build-args: |
+            WEB_DOMAIN=${{ vars.WEB_DOMAIN }}
+            WEB_URL=${{ vars.WEB_URL }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: build
+    env:
+      DEPLOY_DIR: ~/refnotes/releases/${{ github.sha }}
+    
+    steps:
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          debug: true
+          script: |
+            set -e
+            mkdir -p ${{ env.DEPLOY_DIR }}
+            git clone -b ${{ github.head_ref || github.ref_name || 'main' }} https://github.com/${{ github.repository }}.git ${{ env.DEPLOY_DIR }}
+            cd ${{ env.DEPLOY_DIR }}
+            
+            # Copy base configuration files
+            cp ~/appsettings.Production.json .
+            cp ~/.env .
+            
+            # Update images in .env file
+            sed -i 's|BACKEND_IMAGE=.*|BACKEND_IMAGE=${{ env.API_IMAGE }}:${{ github.sha }}|g' .env
+            sed -i 's|MIGRATIONS_IMAGE=.*|MIGRATIONS_IMAGE=${{ env.MIGRATIONS_IMAGE }}:${{ github.sha }}|g' .env
+            sed -i 's|WEB_IMAGE=.*|WEB_IMAGE=${{ env.WEB_IMAGE }}:${{ github.sha }}|g' .env
+            
+            # Run deployment script
+            ./deploy-prod
+            
+            # Symlink the latest release
+            ln -sfn ${{ env.DEPLOY_DIR }} ~/refnotes/active_release

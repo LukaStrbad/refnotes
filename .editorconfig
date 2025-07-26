@@ -10,3 +10,6 @@ indent_size = 4
 indent_style = space
 
 dotnet_style_readonly_field = true
+
+[Caddyfile]
+indent_style = tab
