@@ -8,9 +8,6 @@ services:
       - caddy-data:/data
       - caddy-config:/config
     restart: always
-    depends_on:
-      - web
-      - backend
   
   web: &web-config
     image: ${WEB_IMAGE}
