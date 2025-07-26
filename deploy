@@ -60,11 +60,13 @@ compose up -d caddy
 
 echo "Deploying the backend primary"
 switch_to_backend_replica
+compose stop backend
 compose up -d backend
 
 echo "Deploying the backend replica"
 sleep 5
 switch_to_backend_primary
+compose stop backend-replica
 compose up -d backend-replica
 
 echo "Running all backend services"

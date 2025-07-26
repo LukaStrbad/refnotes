@@ -1,3 +1,76 @@
 #!/bin/bash
 
-COMPOSE_CMD="docker compose -f compose.prod.yaml" ./deploy
+set -e
+
+# Create a compose function to avoid duplicating it
+compose() {
+     ${COMPOSE_CMD:-docker compose -f compose.prod.yaml} "$@"
+}
+
+reload_caddy() {
+  compose exec caddy caddy reload --config "$@"
+}
+
+switch_to_backend_replica() {
+  echo "Taking backend primary down"
+  # Comment out the primary backend
+  compose exec caddy sh -c "sed 's/to backend:5000/#to backend:5000/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
+  reload_caddy /tmp/Caddyfile
+}
+
+switch_to_backend_primary() {
+  echo "Taking backend replica down"
+  # Comment out the replica backend
+  compose exec caddy sh -c "sed 's/to backend-replica:5000/#to backend-replica:5000/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
+  reload_caddy /tmp/Caddyfile
+}
+
+switch_to_web_replica() {
+  echo "Taking backend primary down"
+  # Comment out the primary web
+  compose exec caddy sh -c "sed 's/to web:80/#to web:80/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
+  reload_caddy /tmp/Caddyfile
+}
+
+switch_to_web_primary() {
+  echo "Taking backend primary down"
+  # Comment out the replica web
+  compose exec caddy sh -c "sed 's/to web-replica:80/#to web-replica:80/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
+  reload_caddy /tmp/Caddyfile
+}
+
+echo "Pulling images"
+compose pull
+
+echo "Running migrations"
+compose up migrations
+
+echo "Starting caddy"
+compose up -d caddy
+
+echo "Deploying the backend primary"
+switch_to_backend_replica
+# Stop to force the appsettings to be reloaded as the file watcher doesn't seem to work inside the container
+compose stop backend
+compose up -d backend
+
+echo "Deploying the backend replica"
+sleep 5
+switch_to_backend_primary
+compose stop backend-replica
+compose up -d backend-replica
+
+echo "Running all backend services"
+reload_caddy /etc/caddy/Caddyfile
+
+echo "Deploying the web primary"
+switch_to_web_replica
+compose up -d web
+
+echo "Deploying the web replica"
+sleep 5
+switch_to_web_primary
+compose up -d web-replica
+
+echo "Running all services"
+reload_caddy /etc/caddy/Caddyfile

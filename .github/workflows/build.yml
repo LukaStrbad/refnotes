@@ -6,10 +6,15 @@ permissions:
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
+    
+env:
+  API_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-api
+  MIGRATIONS_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-migrations
+  WEB_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web
 
 jobs:
   build:
@@ -36,9 +41,9 @@ jobs:
           context: .
           file: ./docker/api/Dockerfile
           push: true
-          tags: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-api:latest,ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-api:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.API_IMAGE }}:latest,${{ env.API_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.API_IMAGE }}:latest
+          cache-to: type=inline
 
       - name: Build and Push Migrations Image
         uses: docker/build-push-action@v5
@@ -46,9 +51,9 @@ jobs:
           context: .
           file: ./docker/migrationservice/Dockerfile
           push: true
-          tags: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-migrations:latest,ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-migrations:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.MIGRATIONS_IMAGE }}:latest,${{ env.MIGRATIONS_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.MIGRATIONS_IMAGE }}:latest
+          cache-to: type=inline
 
       - name: Build and Push Web Image
         uses: docker/build-push-action@v5
@@ -56,9 +61,9 @@ jobs:
           context: .
           file: ./docker/web/Dockerfile
           push: true
-          tags: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web:latest,ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-web:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        env:
-          WEB_DOMAIN: ${{ secrets.WEB_DOMAIN }}
-          WEB_URL: ${{ secrets.WEB_URL }}
+          tags: ${{ env.WEB_IMAGE }}:latest,${{ env.WEB_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.WEB_IMAGE }}:latest
+          cache-to: type=inline
+          build-args: |
+            WEB_DOMAIN=${{ vars.WEB_DOMAIN }}
+            WEB_URL=${{ vars.WEB_URL }}
