@@ -96,21 +96,27 @@ export class FileService {
     );
   }
 
-  async getImage(
-    directoryPath: string,
-    name: string,
-    groupId?: number,
-  ): Promise<ArrayBuffer | null> {
+  getImageUrl(directoryPath: string, name: string, groupId?: number): string {
     const params = generateHttpParams({
       directoryPath: directoryPath,
       name: name,
       groupId: groupId,
     });
 
+    return `${apiUrl}/getImage?${params.toString()}`;
+  }
+
+  async getImage(
+    directoryPath: string,
+    name: string,
+    groupId?: number,
+  ): Promise<ArrayBuffer | null> {
+    const url = this.getImageUrl(directoryPath, name, groupId);
+
     const result = await firstValueFrom(
       this.http.get(
-        `${apiUrl}/getImage`,
-        { params, responseType: 'arraybuffer' },
+        url,
+        { responseType: 'arraybuffer' },
       ),
     );
 

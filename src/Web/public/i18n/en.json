@@ -118,7 +118,8 @@
     "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'",
     "buttonShare": "Share",
     "file-updated": "File updated by another user",
-    "placeholderText": "Start typing..."
+    "placeholderText": "Start typing...",
+    "wysiwyg": "Use visual editor"
   },
   "modals": {
     "create": {

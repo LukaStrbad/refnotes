@@ -33,7 +33,6 @@ services:
       dockerfile: ./docker/api/Dockerfile
     expose:
       - "5000"
-    env_file: .env
     depends_on:
       mysql-db:
         condition: service_healthy
@@ -42,6 +41,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
+      - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
       - ${REFNOTES_CONFIG:-./}:/root/.config/refnotes
       - refnotes-data:/data
     restart: on-failure:3
@@ -54,7 +54,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/migrationservice/Dockerfile
-    env_file: .env
+    volumes:
+      - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
     depends_on:
       mysql-db:
         condition: service_healthy

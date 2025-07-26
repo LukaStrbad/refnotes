@@ -62,6 +62,7 @@ describe('FilePreviewComponent', () => {
     // Ensure that the editor is visible
     const settings = TestBed.inject(SettingsService);
     settings.setMdEditorSettings({
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,
@@ -174,6 +175,7 @@ describe('FilePreviewComponent with groupId', () => {
     // Ensure that the editor is visible
     const settings = TestBed.inject(SettingsService);
     settings.setMdEditorSettings({
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,

@@ -2,9 +2,9 @@ import { LRUCache } from "lru-cache";
 import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js';
 import { Marked, Tokens } from "marked";
-import { splitDirAndName } from "./path-utils";
-import { getImageBlobUrl, resolveImageUrl } from "./image-utils";
+import { resolveImageUrl } from "./image-utils";
 import { ElementRef } from "@angular/core";
+import { BlobStatus, ImageBlob } from "../services/image-blob-resolver.service";
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -25,7 +25,7 @@ function strHash(s: string) {
 export class MarkdownHighlighter {
   private readonly highlightCache = new LRUCache<number, string>({ max: 1000 });
   private readonly marked: Marked;
-  imageUrls: { elementAttr: string; src: string; blob: string | null }[] = [];
+  // imageUrls: { elementAttr: string; src: string; blob: string | null }[] = [];
 
   get showLineNumbers() {
     return this._showLineNumbers;
@@ -38,7 +38,7 @@ export class MarkdownHighlighter {
   constructor(
     private _showLineNumbers: boolean,
     private currentPath: string,
-    private loadImage: (dirPath: string, fileName: string) => Promise<ArrayBuffer | null>,
+    private loadImage: (src: string) => ImageBlob
   ) {
     this.marked = new Marked(this.highlightExtension(), {
       renderer: this.imageExtension()
@@ -57,33 +57,27 @@ export class MarkdownHighlighter {
    * Updates the image elements with the correct image source
    */
   updateImages(previewContentElement: ElementRef<HTMLElement>) {
-    this.imageUrls.forEach((imageUrl) => {
-      const elements =
-        previewContentElement.nativeElement.querySelectorAll(
-          `img[data-image-id="${imageUrl.elementAttr}"]`,
-        );
+    const imagesWithDataId = previewContentElement.nativeElement.querySelectorAll('img[data-image-id]');
 
-      // If the image is already loaded, set the src attribute
-      if (imageUrl.blob !== null) {
-        elements.forEach((element) =>
-          element.setAttribute('src', imageUrl.blob!),
-        );
+    imagesWithDataId.forEach((imageElement) => {
+      const imageId = imageElement.getAttribute('data-image-id');
+      if (!imageId) {
         return;
       }
+      let imgSrc = imageId.split('image-')[1];
+      if (!imgSrc) {
+        return;
+      }
+      imgSrc = atob(imgSrc);
 
-      const [dir, name] = splitDirAndName(imageUrl.src);
-      // Load the image from the server
-      this.loadImage(dir, name).then((data) => {
-        if (!data) {
-          console.error(`Failed to fetch image: ${imageUrl.src}`);
+      const imageUrl = this.loadImage(imgSrc);
+
+      imageUrl.blobPromise.then((blobUrl) => {
+        if (!blobUrl) {
           return;
         }
-        const objectURL = getImageBlobUrl(name, data);
-        // Save the blob URL to the image URL
-        imageUrl.blob = objectURL;
-        elements.forEach((element) => element.setAttribute('src', objectURL));
-      }).catch((error) => {
-        console.error(`Error fetching image from server: ${error.message}`);
+
+        imageElement.setAttribute('src', blobUrl);
       });
     });
   }
@@ -142,19 +136,17 @@ export class MarkdownHighlighter {
         }
 
         src = resolvedImageUrl.url;
-        let imageUrl = this.imageUrls.find((i) => i.src === src);
-        if (!imageUrl) {
-          const elementAttr = `image-${this.imageUrls.length}`;
-          imageUrl = { elementAttr, src, blob: null };
-          this.imageUrls.push(imageUrl);
-        }
+
+        const imageBlob = this.loadImage(src);
 
         // Check if the image is already loaded
-        if (imageUrl.blob) {
-          return `<img src="${imageUrl.blob}" alt="${alt}" title="${title}" />`;
+        if (imageBlob.blobStatus === BlobStatus.Resolved) {
+          return `<img src="${imageBlob.blob}" alt="${alt}" title="${title}" />`;
         }
 
-        return `<img alt="${alt}" title="${title}" data-image-id="${imageUrl.elementAttr}" />`;
+        const imageId = `image-${btoa(src)}`
+
+        return `<img alt="${alt}" title="${title}" data-image-id="${imageId}" />`;
       },
     };
   }

@@ -68,6 +68,7 @@ export class SettingsService {
       const s = JSON.parse(settings) as MdEditorSettings;
       // Check if the settings are valid
       return {
+        useWysiwyg: s.useWysiwyg ?? false,
         editorMode: s.editorMode ?? 'SideBySide',
         showLineNumbers: s.showLineNumbers ?? true,
         wrapLines: s.wrapLines ?? false,
@@ -75,6 +76,7 @@ export class SettingsService {
       };
     }
     return {
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,

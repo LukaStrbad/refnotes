@@ -85,8 +85,17 @@ jobs:
           script: |
             set -e
             mkdir -p ${{ env.DEPLOY_DIR }}
-            git clone -b ${{ github.head_ref || github.ref_name || 'main' }} https://github.com/${{ github.repository }}.git ${{ env.DEPLOY_DIR }}
-            cd ${{ env.DEPLOY_DIR }}
+            # Check if the deployment directory exists
+            if [ -d "${DEPLOY_DIR}" ]; then
+              echo "Deployment directory ${DEPLOY_DIR} already exists. Skipping clone step."
+            else
+              git clone -b ${{ github.head_ref || github.ref_name || 'main' }} https://github.com/${{ github.repository }}.git ${{ env.DEPLOY_DIR }}
+            fi
+            
+            # Symlink the latest release
+            ln -sfn ${{ env.DEPLOY_DIR }} ~/refnotes/active_release
+            
+            cd ~/refnotes/active_release
             
             # Copy base configuration files
             cp ~/appsettings.Production.json .
@@ -99,6 +108,3 @@ jobs:
             
             # Run deployment script
             ./deploy-prod
-            
-            # Symlink the latest release
-            ln -sfn ${{ env.DEPLOY_DIR }} ~/refnotes/active_release

@@ -9,6 +9,8 @@ import { AskModalService } from '../services/ask-modal.service';
 import { TestTagDirective } from '../directives/test-tag.directive';
 import { SearchComponent } from "./components/search/search.component";
 import { filter, Subscription } from 'rxjs';
+import translationsEn from "../../public/i18n/en.json";
+import translationsHr from "../../public/i18n/hr.json";
 
 @Component({
   selector: 'app-root',
@@ -28,6 +30,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router
   ) {
     translate.addLangs(['en', 'hr']);
+    translate.setTranslation('en', translationsEn);
+    translate.setTranslation('hr', translationsHr);
     translate.setDefaultLang('en');
     const lang = this.settings.language();
     translate.use(lang);

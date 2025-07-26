@@ -8,11 +8,20 @@ import {
 } from '@ngx-translate/core';
 import { SettingsService } from '../../../services/settings.service';
 import { FileService } from '../../../services/file.service';
+import { ActivatedRoute } from '@angular/router';
 
 describe('MdEditorComponent', () => {
   let component: MdEditorComponent;
   let fixture: ComponentFixture<MdEditorComponent>;
   let fileService: jasmine.SpyObj<FileService>;
+
+  const activatedRoute = {
+    snapshot: {
+      paramMap: {
+        get: () => null,
+      }
+    }
+  }
 
   beforeEach(async () => {
     fileService = jasmine.createSpyObj('FileService', ['getImage']);
@@ -30,6 +39,7 @@ describe('MdEditorComponent', () => {
       providers: [
         TranslateService,
         { provide: FileService, useValue: fileService },
+        { provide: ActivatedRoute, useValue: activatedRoute },
       ],
     }).compileComponents();
 
@@ -40,6 +50,7 @@ describe('MdEditorComponent', () => {
     // Ensure that the editor is visible
     const settings = TestBed.inject(SettingsService);
     settings.setMdEditorSettings({
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,

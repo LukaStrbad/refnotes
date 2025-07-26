@@ -38,6 +38,7 @@ describe('SettingsComponent', () => {
 
   it('should initialize with default mdEditor settings and selected language', () => {
     expect(component.mdEditor).toEqual({
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,
