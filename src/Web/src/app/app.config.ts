@@ -5,13 +5,11 @@ import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { authInterceptor } from '../interceptors/auth.interceptor';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { HttpClient } from '@angular/common/http';
-import { provideTranslateService, TranslateLoader } from "@ngx-translate/core";
+import { provideTranslateService } from "@ngx-translate/core";
 import { CustomRouteReuseStrategy } from './route-reuse-strategy';
 
-const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (http: HttpClient) =>
-  new TranslateHttpLoader(http, './i18n/', '.json');
+// const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (http: HttpClient) =>
+//   new TranslateHttpLoader(http, './i18n/', '.json');
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,11 +20,11 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimationsAsync(),
     provideTranslateService({
-      loader: {
-        provide: TranslateLoader,
-        useFactory: httpLoaderFactory,
-        deps: [HttpClient]
-      }
+      // loader: {
+      //   provide: TranslateLoader,
+      //   useFactory: httpLoaderFactory,
+      //   deps: [HttpClient]
+      // }
     }),
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
     { provide: 'Window', useValue: window },
