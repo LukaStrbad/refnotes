@@ -276,6 +276,10 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
 
     // If switching to/from WYSIWYG and we have a crepe instance, destroy it
     if (this.crepe) {
+      // Save the current content before destroying
+      this.content = this.crepe.getMarkdown();
+
+      // Destroy the crepe instance
       this.crepe.destroy();
       this.crepe = undefined;
     }
