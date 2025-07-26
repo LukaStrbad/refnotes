@@ -26,14 +26,14 @@ switch_to_backend_primary() {
 }
 
 switch_to_web_replica() {
-  echo "Taking backend primary down"
+  echo "Taking web primary down"
   # Comment out the primary web
   compose exec caddy sh -c "sed 's/to web:80/#to web:80/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
   reload_caddy /tmp/Caddyfile
 }
 
 switch_to_web_primary() {
-  echo "Taking backend primary down"
+  echo "Taking web replica down"
   # Comment out the replica web
   compose exec caddy sh -c "sed 's/to web-replica:80/#to web-replica:80/' /etc/caddy/Caddyfile > /tmp/Caddyfile"
   reload_caddy /tmp/Caddyfile
