@@ -1,41 +1,46 @@
 services:
   caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_PORT:-0}:80"
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
     restart: always
-    networks:
-      - internal
-
+    depends_on:
+      - web
+      - backend
+  
   web: &web-config
     image: ${WEB_IMAGE}
-    build: !override [ ]
-
+    expose:
+      - "80"
+    restart: always
+  
   web-replica: *web-config
-
+  
   backend: &backend-config
     image: ${BACKEND_IMAGE}
-    build: !override [ ]
+    expose:
+      - "5000"
     volumes:
+      - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
       - ${REFNOTES_CONFIG}:/root/.config/refnotes
       - ${REFNOTES_DATA_DIR}:/data
+    restart: on-failure:3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   backend-replica: *backend-config
   
   migrations:
     image: ${MIGRATIONS_IMAGE}
-    build: !override [ ]
-
-  mysql-db:
-    ports: !override [ ]
-    expose:
-      - "3306"
-    volumes:
-      - ${MYSQL_DATA_DIR}:/var/lib/mysql
+    volumes: 
+      - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes: !override
   caddy-data:
   caddy-config:
-  scheduler-mysql-data:
-
-networks:
-  internal:
