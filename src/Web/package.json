@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "run-script-os",
+    "start:win32": "ng serve --port %PORT:4200% --allowed-hosts=true",
+    "start:default": "ng serve --port ${PORT:-4200} --allowed-hosts=true",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -58,6 +60,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
+    "run-script-os": "^1.1.6",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.8.3",
     "typescript-eslint": "8.27.0"
