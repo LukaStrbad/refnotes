@@ -66,6 +66,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     if (publicFileHash) {
       this.fileProvider = FileProvider.createPublicFileProvider(
         fileService,
+        imageBlobResolver,
         publicFileHash,
       );
       this.isPublicFile = true;
@@ -79,6 +80,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       this.fileProvider = FileProvider.createRegularFileProvider(
         fileService,
         tagService,
+        imageBlobResolver,
         path,
         this.groupId,
       );
@@ -134,10 +136,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     this.fileName = fileName;
     this.fileType = fileUtils.getFileType(this.fileName);
 
-    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
-      this.settings.mdEditor().showLineNumbers,
-      (src: string) => this.imageBlobResolver.loadImage(src, this.groupId),
-    );
+    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(this.settings.mdEditor().showLineNumbers);
 
     const promises: Promise<void>[] = [];
 

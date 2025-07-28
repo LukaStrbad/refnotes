@@ -1,9 +1,9 @@
 import { File } from "../../model/file";
 import { FileService } from "../../services/file.service";
-import { ImageBlob } from "../../services/image-blob-resolver.service";
+import { ImageBlob, ImageBlobResolverService } from "../../services/image-blob-resolver.service";
 import { TagService } from "../../services/tag.service";
 import { MarkdownHighlighter } from "../../utils/markdown-highlighter";
-import { splitDirAndName } from "../../utils/path-utils";
+import { resolveRelativeFolderPath, splitDirAndName } from "../../utils/path-utils";
 
 export class FileProvider {
   private constructor(
@@ -12,11 +12,11 @@ export class FileProvider {
     public readonly getFileInfo: () => Promise<File>,
     public readonly getFile: () => Promise<ArrayBuffer>,
     public readonly createSyncSocket: () => WebSocket,
+    public readonly loadImage: (src: string) => ImageBlob,
   ) { }
 
   async createMarkdownHighlighter(
     showLineNumbers: boolean,
-    loadImage: (src: string) => ImageBlob,
   ): Promise<MarkdownHighlighter> {
     const directoryPath = await this.filePath;
     const [dirPath,] = splitDirAndName(directoryPath);
@@ -24,13 +24,14 @@ export class FileProvider {
     return new MarkdownHighlighter(
       showLineNumbers,
       dirPath,
-      loadImage,
+      this.loadImage,
     );
   }
 
   static createRegularFileProvider(
     fileService: FileService,
     tagService: TagService,
+    imageBlobResolver: ImageBlobResolverService,
     filePath: string,
     groupId?: number,
   ): FileProvider {
@@ -40,6 +41,10 @@ export class FileProvider {
     const getFileInfo = () => fileService.getFileInfo(filePath, groupId);
     const getFile = () => fileService.getFile(directoryPath, fileName, groupId);
     const createSyncSocket = () => fileService.createFileSyncSocket(filePath, groupId);
+    const loadImage = (src: string) => {
+      const imagePath = resolveRelativeFolderPath(directoryPath, src);
+      return imageBlobResolver.loadImage(imagePath, groupId);
+    }
 
     return new FileProvider(
       Promise.resolve(filePath),
@@ -47,11 +52,13 @@ export class FileProvider {
       getFileInfo,
       getFile,
       createSyncSocket,
+      loadImage,
     );
   }
 
   static createPublicFileProvider(
     fileService: FileService,
+    imageBlobResolver: ImageBlobResolverService,
     fileHash: string,
   ): FileProvider {
     const fileInfoPromise = fileService.getPublicFileInfo(fileHash);
@@ -61,6 +68,7 @@ export class FileProvider {
     const getFileInfo = () => fileInfoPromise;
     const getFile = () => fileService.getPublicFile(fileHash);
     const createSyncSocket = () => fileService.createPublicFileSyncSocket(fileHash);
+    const loadImage = (src: string) => imageBlobResolver.loadPublicImage(src, fileHash);
 
     return new FileProvider(
       filePath,
@@ -68,6 +76,7 @@ export class FileProvider {
       getFileInfo,
       getFile,
       createSyncSocket,
+      loadImage,
     );
   }
 }

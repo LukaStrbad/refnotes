@@ -9,12 +9,13 @@ import { getImageBlobUrl } from '../utils/image-utils';
 export class ImageBlobResolverService {
   private readonly fileService = inject(FileService);
 
-  private readonly imageBlobs: ImageBlob[] = [];
+  private readonly privateImageBlobs: PrivateImageBlob[] = [];
+  private readonly publicImageBlobs: PublicImageBlob[] = [];
 
   loadImage(src: string, groupId: number | undefined): ImageBlob {
     // Return existing blob if it exists.
     // By this point, the getImage method may or may not have finished which will be determined by the blobStatus.
-    const existingBlob = this.imageBlobs.find(blob => blob.src === src && blob.groupId === groupId);
+    const existingBlob = this.privateImageBlobs.find(blob => blob.src === src && blob.groupId === groupId);
     if (existingBlob) {
       return existingBlob;
     }
@@ -26,14 +27,41 @@ export class ImageBlobResolverService {
       .then(data => data ? getImageBlobUrl(name, data) : null)
       .catch(() => null);
 
-    const imageBlob: ImageBlob = {
+    const imageBlob: PrivateImageBlob = {
       src,
       groupId,
       blobStatus: BlobStatus.Pending,
       blob: null,
       blobPromise: blobPromise,
     }
-    this.imageBlobs.push(imageBlob);
+
+    this.privateImageBlobs.push(imageBlob);
+    blobPromise.then(promiseResult => {
+      imageBlob.blobStatus = BlobStatus.Resolved;
+      imageBlob.blob = promiseResult;
+    });
+    return imageBlob;
+  }
+
+  loadPublicImage(src: string, publicFileHash: string): ImageBlob {
+    const existingBlob = this.publicImageBlobs.find(blob => blob.src === src && blob.publicFileHash === publicFileHash);
+    if (existingBlob) {
+      return existingBlob;
+    }
+
+    const blobPromise = this.fileService.getPublicImage(publicFileHash, src)
+      .then(data => data ? getImageBlobUrl(src, data) : null)
+      .catch(() => null);
+
+    const imageBlob: PublicImageBlob = {
+      src,
+      publicFileHash,
+      blobStatus: BlobStatus.Pending,
+      blob: null,
+      blobPromise: blobPromise,
+    }
+
+    this.publicImageBlobs.push(imageBlob);
     blobPromise.then(promiseResult => {
       imageBlob.blobStatus = BlobStatus.Resolved;
       imageBlob.blob = promiseResult;
@@ -42,24 +70,33 @@ export class ImageBlobResolverService {
   }
 
   revokeImageBlobs() {
-    this.imageBlobs.forEach(async imageBlob => {
-      const blob = await imageBlob.blobPromise;
-      if (blob) {
-        URL.revokeObjectURL(blob);
-      }
-    });
+    [this.privateImageBlobs, this.publicImageBlobs].forEach(imageBlobsArray => {
+      imageBlobsArray.forEach(async imageBlob => {
+        const blob = await imageBlob.blobPromise;
+        if (blob) {
+          URL.revokeObjectURL(blob);
+        }
+      });
 
-    // Clear the array
-    this.imageBlobs.length = 0;
+      // Clear the array
+      imageBlobsArray.length = 0;
+    });
   }
 }
 
 export interface ImageBlob {
   src: string;
-  groupId?: number;
   blobStatus: BlobStatus;
   blob: string | null;
   blobPromise: Promise<string | null>;
+}
+
+interface PrivateImageBlob extends ImageBlob {
+  groupId?: number;
+}
+
+interface PublicImageBlob extends ImageBlob {
+  publicFileHash: string;
 }
 
 export enum BlobStatus {

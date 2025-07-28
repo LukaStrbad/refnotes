@@ -8,7 +8,7 @@ describe('ImageBlobResolverService', () => {
   let fileService: jasmine.SpyObj<FileService>;
 
   beforeEach(() => {
-    fileService = jasmine.createSpyObj<FileService>('FileService', ['getImage']);
+    fileService = jasmine.createSpyObj<FileService>('FileService', ['getImage', 'getPublicImage']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -31,7 +31,6 @@ describe('ImageBlobResolverService', () => {
     const imageBlob = service.loadImage(src, groupId);
 
     expect(imageBlob.src).toBe(src);
-    expect(imageBlob.groupId).toBe(groupId);
     expect(imageBlob.blobStatus).toBe(BlobStatus.Pending);
     expect(imageBlob.blobPromise).toBeDefined();
 
@@ -41,21 +40,43 @@ describe('ImageBlobResolverService', () => {
     expect(imageBlob.blob).toContain('blob:http')
   });
 
+  it('should load a public image blob', async () => {
+    const src = 'path/to/public-image.jpg';
+    const publicFileHash = 'publicFileHash123';
+
+    fileService.getPublicImage.and.resolveTo(new ArrayBuffer(8));
+
+    const publicImageBlob = service.loadPublicImage(src, publicFileHash);
+
+    expect(publicImageBlob.src).toBe(src);
+    expect(publicImageBlob.blobStatus).toBe(BlobStatus.Pending);
+    expect(publicImageBlob.blobPromise).toBeDefined();
+
+    await publicImageBlob.blobPromise;
+
+    expect(publicImageBlob.blobStatus).toBe(BlobStatus.Resolved);
+    expect(publicImageBlob.blob).toContain('blob:http');
+  });
+
   it('should revoke image blobs', fakeAsync(async () => {
     const src = 'path/to/image.jpg';
     const groupId = 1;
 
     fileService.getImage.and.resolveTo(new ArrayBuffer(8));
+    fileService.getPublicImage.and.resolveTo(new ArrayBuffer(8));
 
-    const imageBlob = service.loadImage(src, groupId);
-    await imageBlob.blobPromise;
+    const privateImageBlob = service.loadImage(src, groupId);
+    const publicImageBlobs = service.loadPublicImage(src, 'publicFileHash');
+    await privateImageBlob.blobPromise;
+    await publicImageBlobs.blobPromise;
 
     spyOn(URL, 'revokeObjectURL');
 
     service.revokeImageBlobs();
     tick();
 
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith(imageBlob.blob as string);
-    expect(service['imageBlobs'].length).toBe(0);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(privateImageBlob.blob as string);
+    expect(service['privateImageBlobs'].length).toBe(0);
+    expect(service['publicImageBlobs'].length).toBe(0);
   }));
 });
