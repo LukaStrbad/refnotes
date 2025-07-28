@@ -64,13 +64,10 @@ public class AuthService : IAuthService
     private readonly AppSettings _appSettings;
     private readonly ILogger<AuthService> _logger;
 
-    public AuthService(
-        RefNotesContext context,
-        AppConfiguration appConfig,
-        ILogger<AuthService> logger, AppSettings appSettings)
+    public AuthService(RefNotesContext context, ILogger<AuthService> logger, AppSettings appSettings)
     {
         _context = context;
-        _privateKey = appConfig.JwtPrivateKeyBytes;
+        _privateKey = appSettings.JwtPrivateKeyBytes;
 
         _logger = logger;
         _appSettings = appSettings;

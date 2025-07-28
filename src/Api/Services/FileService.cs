@@ -5,7 +5,6 @@ using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Api.Extensions;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Api.Services;
 
@@ -120,7 +119,6 @@ public class FileService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
-    AppConfiguration appConfiguration,
     IFileServiceUtils utils,
     IUserGroupService userGroupService) : IFileService
 {
@@ -176,18 +174,13 @@ public class FileService(
         await context.SaveChangesAsync();
     }
 
-    private string GenerateFilesystemName()
+    private static string GenerateFilesystemName()
     {
-        for (var i = 0; i < 100; i++)
-        {
-            var randomName = Path.GetRandomFileName();
-            var baseDir = appConfiguration.DataDir;
-            var path = Path.Join(baseDir, randomName);
-            if (File.Exists(path)) continue;
-            return randomName;
-        }
-
-        throw new Exception("Failed to generate unique filesystem name.");
+        // Generate a new version 7 GUID for the file name
+        // This has a very low probability of collision
+        var name = Guid.CreateVersion7();
+        // Append bin to the end as this file is encrypted and cannot be read as text or anything else
+        return $"{name}.bin";
     }
 
     public async Task<string?> GetFilesystemFilePath(string directoryPath, string name, int? groupId)

@@ -21,6 +21,12 @@ services:
     image: ${BACKEND_IMAGE}
     expose:
       - "5000"
+    environment:
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      AES_KEY: ${AES_KEY}
+      AES_IV: ${AES_IV}
+      # This is the path to the volume mounted to /data in the container
+      DataDir: /data
     volumes:
       - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
       - ${REFNOTES_CONFIG}:/root/.config/refnotes

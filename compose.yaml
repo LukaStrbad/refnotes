@@ -40,9 +40,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    environment:
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      AES_KEY: ${AES_KEY}
+      AES_IV: ${AES_IV}
+      # This is the path to the volume mounted to /data in the container
+      DataDir: /data
     volumes:
       - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
-      - ${REFNOTES_CONFIG:-./}:/root/.config/refnotes
       - refnotes-data:/data
     restart: on-failure:3
     extra_hosts:

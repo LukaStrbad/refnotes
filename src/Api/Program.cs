@@ -1,10 +1,8 @@
 using Api;
 
-var appConfig = Configuration.LoadAppConfig();
-
 var builder = WebApplication.CreateBuilder(args);
 
-builder.RegisterServices(appConfig);
+builder.RegisterServices();
 
 var app = builder.Build();
 

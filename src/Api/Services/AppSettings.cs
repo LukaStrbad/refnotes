@@ -1,3 +1,4 @@
+using System.Text;
 using Api.Exceptions;
 using Api.Utils;
 
@@ -8,6 +9,8 @@ public sealed class AppSettings
     private readonly IConfiguration _configuration;
     private readonly ILogger<AppSettings> _logger;
 
+    public byte[] JwtPrivateKeyBytes { get; private set; } = [];
+    public string DataDir { get; private set; } = "./data";
     public bool CookieSecure { get; private set; }
     public TimeSpan AccessTokenExpiry { get; private set; }
     public string[] CorsOrigins { get; private set; } = [];
@@ -26,6 +29,22 @@ public sealed class AppSettings
     {
         lock (this)
         {
+            // Uppercase as it's meant to be stored as an environment variable or in .env file
+            var jwtPrivateKey = _configuration.GetValue<string>("JWT_PRIVATE_KEY");
+            if (string.IsNullOrEmpty(jwtPrivateKey))
+            {
+                _logger.LogError("JWT_PRIVATE_KEY is not set in configuration");
+                throw new InvalidConfigurationException("JWT_PRIVATE_KEY is not set in configuration");
+            }
+
+            JwtPrivateKeyBytes = Encoding.UTF8.GetBytes(jwtPrivateKey);
+            
+            var dataDir = _configuration.GetValue<string>("DataDir");
+            if (!string.IsNullOrWhiteSpace(dataDir))
+            {
+                DataDir = dataDir;
+            }
+                
             CookieSecure = _configuration.GetValue("CookieSecure", false);
 
             var expirySetting = _configuration.GetValue<string>("AccessTokenExpiry");
