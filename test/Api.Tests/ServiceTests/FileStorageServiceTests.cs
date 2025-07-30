@@ -12,13 +12,13 @@ public class FileStorageServiceTests : BaseTests
     private readonly string _fileName = $"{RandomString(32)}.txt";
 
     [Theory, AutoData]
-    public async Task SaveFile_CreatesEncryptedFile(Sut<FileStorageService> sut, AppConfiguration appConfig)
+    public async Task SaveFile_CreatesEncryptedFile(Sut<FileStorageService> sut, AppSettings appSettings)
     {
         await using var inputStream = new MemoryStream("test content"u8.ToArray());
 
         await sut.Value.SaveFileAsync(_fileName, inputStream);
 
-        var filePath = Path.Combine(appConfig.DataDir, _fileName);
+        var filePath = Path.Combine(appSettings.DataDir, _fileName);
         Assert.True(File.Exists(filePath));
         var encryptedContent = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
         // We are not testing the encryption algorithm here, so we don't need to decrypt the content

@@ -10,6 +10,7 @@ public class AppDomainServiceTests
     private static AppSettings CreateAppSettings(List<KeyValuePair<string, string?>> config)
     {
         // Add default values to the configuration
+        config.Add(new KeyValuePair<string, string?>("JWT_PRIVATE_KEY", "1234567890"));
         config.Add(new KeyValuePair<string, string?>("CorsOrigin", "http://localhost"));
         config.Add(new KeyValuePair<string, string?>("AccessTokenExpiry", "5m"));
 

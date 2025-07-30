@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var connectionString = builder.AddConnectionString("main");
@@ -14,11 +16,18 @@ var migrationsProject = builder.AddProject<Projects.MigrationService>("migration
     .WaitFor(connectionString)
     .WaitFor(schedulerConnectionString);
 
-builder.AddProject<Projects.Api>("apiService")
+var api = builder.AddProject<Projects.Api>("api")
     .WithReference(connectionString)
     .WithReference(schedulerConnectionString)
     .WaitFor(migrationsProject)
     .WithReference(cache)
     .WaitFor(cache);
+
+var webPort = builder.Configuration.GetValue<int?>("Ports:Web");
+builder.AddPnpmApp("web", "../Web")
+    .WithHttpEndpoint(env: "PORT", port: webPort)
+    .WithExternalHttpEndpoints()
+    .WithReference(api)
+    .WaitFor(api);
 
 builder.Build().Run();

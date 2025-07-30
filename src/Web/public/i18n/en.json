@@ -47,7 +47,8 @@
     "login": "Login",
     "errors": {
       "usernameNotFound": "Username not found",
-      "invalidPassword": "Invalid password"
+      "invalidPassword": "Invalid password",
+      "generic": "An error occurred trying to log in"
     },
     "signUp": "Sign up instead?",
     "forgot-password": "Forgot password?",
@@ -118,7 +119,8 @@
     "file-renamed-to": "File '{{oldName}}' renamed to '{{newName}}'",
     "buttonShare": "Share",
     "file-updated": "File updated by another user",
-    "placeholderText": "Start typing..."
+    "placeholderText": "Start typing...",
+    "wysiwyg": "Use visual editor"
   },
   "modals": {
     "create": {

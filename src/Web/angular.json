@@ -30,13 +30,24 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*.css",
+                "input": "node_modules/@milkdown/crepe/src/theme/common",
+                "output": "/assets/milkdown/"
               }
             ],
             "styles": [
               "src/styles.css",
-              "bootstrap-icons/font/bootstrap-icons.css"
+              "bootstrap-icons/font/bootstrap-icons.css",
+              "@milkdown/crepe/theme/common/style.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "loader": {
+              ".ttf": "binary",
+              ".woff": "binary",
+              ".woff2": "binary"
+            }
           },
           "configurations": {
             "production": {
@@ -44,7 +55,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -86,7 +97,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "proxyConfig": "src/proxy.conf.json"
+            "proxyConfig": "src/proxy.conf.js"
           }
         },
         "extract-i18n": {
@@ -119,7 +130,12 @@
                 "replace": "src/environments/environment.ts",
                 "with": "src/environments/environment.development.ts"
               }
-            ]
+            ],
+            "loader": {
+              ".ttf": "binary",
+              ".woff": "binary",
+              ".woff2": "binary"
+            }
           }
         },
         "lint": {

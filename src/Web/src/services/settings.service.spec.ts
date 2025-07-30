@@ -93,6 +93,7 @@ describe('SettingsService', () => {
 
   it('should return default mdEditor settings if no settings are stored', () => {
     expect(service.mdEditor()).toEqual({
+      useWysiwyg: false,
       editorMode: 'SideBySide',
       showLineNumbers: true,
       wrapLines: false,
@@ -102,6 +103,7 @@ describe('SettingsService', () => {
 
   it('should return stored mdEditor settings if settings are stored', () => {
     const settings = JSON.stringify(({
+      useWysiwyg: true,
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
@@ -111,6 +113,7 @@ describe('SettingsService', () => {
     service = new SettingsService(translate);
 
     expect(service.mdEditor()).toEqual({
+      useWysiwyg: true,
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,
@@ -120,6 +123,7 @@ describe('SettingsService', () => {
 
   it('should set and store mdEditor settings', () => {
     const settings: MdEditorSettings = {
+      useWysiwyg: true,
       editorMode: 'PreviewOnly',
       showLineNumbers: false,
       wrapLines: true,

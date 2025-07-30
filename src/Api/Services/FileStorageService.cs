@@ -10,7 +10,7 @@ public interface IFileStorageService
     Task<long> GetFileSize(string fileName);
 }
 
-public class FileStorageService(IEncryptionService encryptionService, AppConfiguration appConfig) : IFileStorageService
+public class FileStorageService(IEncryptionService encryptionService, AppSettings appSettings) : IFileStorageService
 {
     private static readonly Dictionary<string, SemaphoreSlim> FileLocks = new();
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
@@ -41,7 +41,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
 
         try
         {
-            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            var filePath = Path.Combine(appSettings.DataDir, fileName);
             await using var stream = new FileStream(filePath, FileMode.Create);
             await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
         }
@@ -62,7 +62,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
 
         try
         {
-            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            var filePath = Path.Combine(appSettings.DataDir, fileName);
             var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             var decryptedStream = encryptionService.DecryptAesToStream(stream);
 
@@ -90,7 +90,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
 
         try
         {
-            var filePath = Path.Combine(appConfig.DataDir, fileName);
+            var filePath = Path.Combine(appSettings.DataDir, fileName);
             File.Delete(filePath);
         }
         finally
@@ -101,7 +101,7 @@ public class FileStorageService(IEncryptionService encryptionService, AppConfigu
 
     public async Task<long> GetFileSize(string fileName)
     {
-        var filePath = Path.Combine(appConfig.DataDir, fileName);
+        var filePath = Path.Combine(appSettings.DataDir, fileName);
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"File '{fileName}' not found.");

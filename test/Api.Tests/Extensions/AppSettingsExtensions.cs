@@ -20,7 +20,8 @@ public static class AppSettingsExtensions
     [
         new("AppDomain", "localhost"),
         new("CorsOrigin", "http://localhost:4200"),
-        new("AccessTokenExpiry", "5m")
+        new("AccessTokenExpiry", "5m"),
+        new("JWT_PRIVATE_KEY", "1234567890")
     ];
 
     public static AppSettings WithEmailSettings(EmailSettings emailSettings, 

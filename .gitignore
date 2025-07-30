@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # Appsettings
 appsettings.*.json
+
+# Local development data
+/data

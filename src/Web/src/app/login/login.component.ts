@@ -63,6 +63,7 @@ export class LoginComponent {
       this.error = getErrorMessage(e, {
         401: "login.errors.invalidPassword",
         404: "login.errors.usernameNotFound",
+        default: "login.errors.generic"
       });
     }
   }

@@ -12,7 +12,7 @@ import { TestTagDirective } from '../../directives/test-tag.directive';
 import { NotificationService } from '../../services/notification.service';
 import { getTranslation } from '../../utils/translation-utils';
 import { FileWithTime } from '../../model/file';
-import { joinPaths, splitDirAndName } from '../../utils/path-utils';
+import { splitDirAndName } from '../../utils/path-utils';
 import { ByteSizePipe } from '../../pipes/byte-size.pipe';
 import { updateFileTime } from '../../utils/date-utils';
 import { FileProvider } from './file-provider';
@@ -21,6 +21,7 @@ import { getStatusCode } from '../../utils/errorHandler';
 import { HomeButtonComponent } from "../components/home-button/home-button.component";
 import { FileLoadingState } from '../../model/loading-state';
 import { FileSyncMessage, FileSyncMessageType } from '../../model/file-sync-message';
+import { ImageBlobResolverService } from '../../services/image-blob-resolver.service';
 
 @Component({
   selector: 'app-file-preview',
@@ -59,11 +60,13 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     private changeDetector: ChangeDetectorRef,
     private translate: TranslateService,
     private notificationService: NotificationService,
+    private imageBlobResolver: ImageBlobResolverService,
   ) {
     const publicFileHash = route.snapshot.paramMap.get('publicHash');
     if (publicFileHash) {
       this.fileProvider = FileProvider.createPublicFileProvider(
         fileService,
+        imageBlobResolver,
         publicFileHash,
       );
       this.isPublicFile = true;
@@ -77,6 +80,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       this.fileProvider = FileProvider.createRegularFileProvider(
         fileService,
         tagService,
+        imageBlobResolver,
         path,
         this.groupId,
       );
@@ -132,10 +136,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     this.fileName = fileName;
     this.fileType = fileUtils.getFileType(this.fileName);
 
-    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(
-      this.settings.mdEditor().showLineNumbers,
-      (dirPath: string, fileName: string) => this.fileProvider.getImage(joinPaths(dirPath, fileName)),
-    );
+    this.markdownHighlighter = await this.fileProvider.createMarkdownHighlighter(this.settings.mdEditor().showLineNumbers);
 
     const promises: Promise<void>[] = [];
 
@@ -167,6 +168,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
       URL.revokeObjectURL(this.imageSrc);
     }
     this.socket?.close();
+    this.imageBlobResolver.revokeImageBlobs();
   }
 
   async loadFile() {

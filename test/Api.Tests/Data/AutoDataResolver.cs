@@ -239,15 +239,12 @@ public sealed class AutoDataResolver : IAsyncDisposable
     {
         services.AddSingleton(_context);
         services.AddSingleton<IEncryptionKeyProvider>(new MockEncryptionKeyProvider());
-        services.AddSingleton(new AppConfiguration
-        {
-            DataDir = _testFolder,
-            JwtPrivateKey = "test_jwt_private_key_123456789234234247"
-        });
         var config = new ConfigurationBuilder().AddInMemoryCollection([
             new KeyValuePair<string, string?>("AppDomain", "localhost"),
             new KeyValuePair<string, string?>("CorsOrigin", "http://localhost:4200"),
-            new KeyValuePair<string, string?>("AccessTokenExpiry", "5m")
+            new KeyValuePair<string, string?>("AccessTokenExpiry", "5m"),
+            new KeyValuePair<string, string?>("DataDir", _testFolder),
+            new KeyValuePair<string, string?>("JWT_PRIVATE_KEY", "test_jwt_private_key_123456789234234247")
         ]).Build();
         services.AddSingleton<IConfiguration>(config);
         services.AddSingleton(AppSettings.Initialize);
