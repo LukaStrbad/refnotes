@@ -23,12 +23,16 @@ export class ShareModalComponent {
   @ViewChild('modal')
   modal!: ElementRef<HTMLDialogElement>;
 
+  readonly canCopyToClipboard;
+
   constructor(
     private log: LoggerService,
     private notificationService: NotificationService,
     private translate: TranslateService,
     private clipboard: ClipboardService,
-  ) { }
+  ) {
+    this.canCopyToClipboard = navigator.clipboard && window.isSecureContext;
+  }
 
   show() {
     this.modal.nativeElement.showModal();

@@ -47,7 +47,8 @@
     "login": "Prijava",
     "errors": {
       "usernameNotFound": "Korisničko ime nije pronađeno",
-      "invalidPassword": "Neispravna lozinka"
+      "invalidPassword": "Neispravna lozinka",
+      "generic": "Došlo je do greške kod prijave"
     },
     "signUp": "Registracija?",
     "forgot-password": "Zaboravljena lozinka?",
@@ -118,7 +119,8 @@
     "file-renamed-to": "Datoteka '{{oldName}}' preimenovana u '{{newName}}'",
     "buttonShare": "Podijeli",
     "file-updated": "Datoteka ažurirana od strane drugog korisnika",
-    "placeholderText": "Počnite tipkati ..."
+    "placeholderText": "Počnite tipkati ...",
+    "wysiwyg": "Vizualni editor"
   },
   "modals": {
     "create": {

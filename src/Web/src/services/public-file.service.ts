@@ -59,6 +59,7 @@ export class PublicFileService {
   }
 
   private createUrlFromHash(urlHash: string): string {
-    return `${environment.frontendUrl}/file/public/${urlHash}`;
+    const origin = window.location.origin;
+    return `${origin}/file/public/${urlHash}`;
   }
 }

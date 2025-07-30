@@ -33,7 +33,7 @@ describe('PublicFileService', () => {
     const filePath = '/path/to/file.txt';
     const groupId = 1;
     const urlHash = 'url-hash';
-    const expectedUrl = `${environment.frontendUrl}/file/public/${urlHash}`;
+    const expectedUrl = `${window.location.origin}/file/public/${urlHash}`;
 
     const promise = service.getUrl(filePath, groupId);
 
@@ -50,7 +50,7 @@ describe('PublicFileService', () => {
     const filePath = '/path/to/file.txt';
     const groupId = 1;
     const urlHash = 'url-hash';
-    const expectedUrl = `${environment.frontendUrl}/file/public/${urlHash}`;
+    const expectedUrl = `${window.location.origin}/file/public/${urlHash}`;
 
     const promise = service.createPublicFile(filePath, groupId);
 

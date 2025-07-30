@@ -36,15 +36,18 @@
             readonly
             testTag="share.input.public-link"
           />
-          <button
-            class="btn btn-primary join-item"
-            (click)="copyToClipboard()"
-            testTag="share.button.copy"
-            translate
-          >
-            <i class="bi bi-clipboard"></i>
-            modals.share.copy
-          </button>
+
+          @if (canCopyToClipboard) {
+            <button
+              class="btn btn-primary join-item"
+              (click)="copyToClipboard()"
+              testTag="share.button.copy"
+              translate
+            >
+              <i class="bi bi-clipboard"></i>
+              modals.share.copy
+            </button>
+          }
         </div>
       </div>
     }

@@ -47,7 +47,8 @@
     "login": "Login",
     "errors": {
       "usernameNotFound": "Username not found",
-      "invalidPassword": "Invalid password"
+      "invalidPassword": "Invalid password",
+      "generic": "An error occurred trying to log in"
     },
     "signUp": "Sign up instead?",
     "forgot-password": "Forgot password?",

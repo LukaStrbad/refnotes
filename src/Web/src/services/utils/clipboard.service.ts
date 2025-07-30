@@ -13,6 +13,11 @@ export class ClipboardService {
       throw new Error('Clipboard API not supported');
     }
 
+    if (!window.isSecureContext) {
+      this.log.warn('Clipboard API requires a secure context (HTTPS)');
+      throw new Error('Clipboard API requires a secure context (HTTPS)');
+    }
+
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
