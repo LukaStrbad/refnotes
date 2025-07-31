@@ -5,7 +5,7 @@ using Data.Model;
 
 namespace Api.Services;
 
-public sealed class TokenService
+public static class TokenService
 {
     private const int RefreshTokenExpirationDays = 7;
     private const int MaxGroupAccessCodeExpiryTimeDays = 7;

@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using Api.Exceptions;
 using Api.Model;
 using Api.Utils;
@@ -59,7 +58,6 @@ public interface IAuthService
 
 public class AuthService : IAuthService
 {
-    private readonly byte[] _privateKey;
     private readonly RefNotesContext _context;
     private readonly AppSettings _appSettings;
     private readonly ILogger<AuthService> _logger;
@@ -67,7 +65,6 @@ public class AuthService : IAuthService
     public AuthService(RefNotesContext context, ILogger<AuthService> logger, AppSettings appSettings)
     {
         _context = context;
-        _privateKey = appSettings.JwtPrivateKeyBytes;
 
         _logger = logger;
         _appSettings = appSettings;
@@ -98,7 +95,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User {Username} logged in", StringSanitizer.SanitizeLog(credentials.Username));
 
-        var tokens = await AddUserRefreshToken(user);
+        var tokens = await CreateAccessAndRefreshTokens(user);
         return tokens;
     }
 
@@ -122,7 +119,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User {Username} registered", StringSanitizer.SanitizeLog(newUser.Username));
 
-        return await AddUserRefreshToken(newUser);
+        return await CreateAccessAndRefreshTokens(newUser);
     }
 
     public async Task<Tokens> RefreshAccessToken(string accessToken, string refreshToken)
@@ -148,7 +145,7 @@ public class AuthService : IAuthService
         _context.UserRefreshTokens.Remove(savedRefreshToken);
         await _context.SaveChangesAsync();
 
-        var newTokens = await AddUserRefreshToken(user);
+        var newTokens = await CreateAccessAndRefreshTokens(user);
         return newTokens;
     }
 
@@ -159,7 +156,7 @@ public class AuthService : IAuthService
             throw new UserNotFoundException("User not found");
 
         _logger.LogInformation("Forcing login for user {User}", StringSanitizer.SanitizeLog(user.Username));
-        var tokens = await AddUserRefreshToken(user);
+        var tokens = await CreateAccessAndRefreshTokens(user);
         return tokens;
     }
 
@@ -174,30 +171,6 @@ public class AuthService : IAuthService
         var result = passwordHasher.VerifyHashedPassword(credentials, dbPassword, credentials.Password);
 
         return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
-    }
-
-    private Tokens CreateTokens(User user)
-    {
-        var handler = new JwtSecurityTokenHandler();
-
-        var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(_privateKey),
-            SecurityAlgorithms.HmacSha256);
-
-        _logger.LogInformation("Creating access token for user {User} with expiry of {Seconds} seconds",
-            StringSanitizer.SanitizeLog(user.Username), _appSettings.AccessTokenExpiry.TotalSeconds);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            SigningCredentials = credentials,
-            Expires = DateTime.UtcNow.Add(_appSettings.AccessTokenExpiry),
-            Subject = GenerateClaims(user)
-        };
-
-        var token = handler.CreateToken(tokenDescriptor);
-        var accessToken = handler.WriteToken(token);
-        var refreshToken = TokenService.GenerateRefreshToken();
-        return new Tokens(accessToken, refreshToken);
     }
 
     private static ClaimsIdentity GenerateClaims(User user)
@@ -224,7 +197,7 @@ public class AuthService : IAuthService
             ValidateAudience = false,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(_privateKey),
+            IssuerSigningKey = new SymmetricSecurityKey(_appSettings.JwtPrivateKeyBytes),
             ClockSkew = TimeSpan.Zero
         };
 
@@ -240,9 +213,26 @@ public class AuthService : IAuthService
         return principal;
     }
 
-    private async Task<Tokens> AddUserRefreshToken(User user)
+    private async Task<Tokens> CreateAccessAndRefreshTokens(User user)
     {
-        var tokens = CreateTokens(user);
+        var handler = new JwtSecurityTokenHandler();
+
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(_appSettings.JwtPrivateKeyBytes),
+            SecurityAlgorithms.HmacSha256);
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            SigningCredentials = credentials,
+            Expires = DateTime.UtcNow.Add(_appSettings.AccessTokenExpiry),
+            Subject = GenerateClaims(user)
+        };
+
+        var token = handler.CreateToken(tokenDescriptor);
+        var accessToken = handler.WriteToken(token);
+        var refreshToken = TokenService.GenerateRefreshToken();
+        var tokens = new Tokens(accessToken, refreshToken);
+
         await _context.AddAsync(new UserRefreshToken
         {
             Username = user.Username,

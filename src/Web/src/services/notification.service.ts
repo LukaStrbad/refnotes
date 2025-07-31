@@ -75,10 +75,13 @@ export class NotificationService {
     }
 
     if (error instanceof HttpErrorResponse) {
+      const httpError = error as HttpErrorResponse;
+      const innerError = httpError.error as string | { errorCode?: string } | unknown;
       try {
-        console.log(error.error);
-        const errorObj = JSON.parse(error.error);
-        if (typeof errorObj === 'object' && 'errorCode' in errorObj) {
+        // Check if the error is already an object
+        const errorObj = typeof innerError === 'object' ? innerError : JSON.parse(innerError as string) as { errorCode?: string };
+
+        if (errorObj && typeof errorObj === 'object' && 'errorCode' in errorObj) {
           const messageLabel = `error.response.${errorObj.errorCode}`;
           const titleLabel = `error.response.title.${errorObj.errorCode}`;
           const [message, title] = await getTranslations(translate, [messageLabel, titleLabel]);
@@ -87,7 +90,7 @@ export class NotificationService {
             logger?.warn(`No translation found for ${messageLabel}, using default error message`);
           }
           this.error(message ?? messageLabel, title ?? undefined);
-          logger?.error(`Error occurred: ${message ?? messageLabel}`, error);
+          logger?.error(`Error occurred: ${message ?? messageLabel}`, httpError);
           return;
         }
       } catch (e) {

@@ -10,10 +10,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
 import { TestTagDirective } from "../../directives/test-tag.directive";
 import { getRevealAnimations } from '../../utils/animations';
+import { NotificationService } from '../../services/notification.service';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-register',
@@ -113,7 +115,10 @@ export class RegisterComponent {
 
   constructor(
     private auth: AuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private notificationService: NotificationService,
+    private translate: TranslateService,
+    private log: LoggerService,
   ) {
     this.redirectUrl = this.route.snapshot.queryParamMap.get("redirectUrl") ?? undefined;
   }
@@ -125,6 +130,10 @@ export class RegisterComponent {
       return;
     }
 
-    await this.auth.register(username, name, email, password, this.redirectUrl);
+    try {
+      await this.auth.register(username, name, email, password, this.redirectUrl);
+    } catch (error) {
+      await this.notificationService.notifyError(error, this.translate, this.log);
+    }
   }
 }

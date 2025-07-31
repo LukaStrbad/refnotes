@@ -243,7 +243,8 @@
       "generic": "Došlo je do pogreške prilikom obrade vašeg zahtjeva",
       "EMAIL_NOT_CONFIRMED": "E-pošta nije potvrđena",
       "INVALID_OR_EXPIRED_TOKEN": "Nevažeći ili istekli token",
-      "USER_NOT_FOUND": "Korisnik nije pronađen"
+      "USER_NOT_FOUND": "Korisnik nije pronađen",
+      "USER_ALREADY_EXISTS": "Korisnik s istim korisničkim imenom već postoji"
     }
   },
   "time": {
