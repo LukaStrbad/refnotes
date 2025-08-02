@@ -146,7 +146,7 @@ public class EncryptionServiceTests : BaseTests
 
         var decryptedBytes = sut.Value.DecryptAes(encryptedBytes);
 
-        Assert.Empty(decryptedBytes);
+        Assert.Empty(decryptedBytes.ToArray());
     }
 
     [Theory, AutoData]

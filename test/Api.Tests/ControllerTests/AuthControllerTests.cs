@@ -123,15 +123,15 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     }
 
     [Fact]
-    public async Task Register_ReturnsBadRequest_WhenUserExists()
+    public async Task Register_ReturnsConflict_WhenUserExists()
     {
         var newUser = new RegisterUserRequest("test", "test", "test@test.com", "password");
         _authService.Register(newUser).ThrowsAsync(new UserExistsException("User already exists"));
 
         var result = await _controller.Register(newUser, "en");
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
 
-        Assert.Equal("User already exists", badRequestResult.Value);
+        Assert.Equal(ErrorCodes.UserAlreadyExists, conflictResult.Value);
         await _emailScheduler.DidNotReceiveWithAnyArgs()
             .ScheduleVerificationEmail(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }

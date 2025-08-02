@@ -40,7 +40,7 @@ public interface IEncryptionService
     /// </summary>
     /// <param name="encryptedBytes">The encrypted byte array to decrypt.</param>
     /// <returns>The decrypted byte array.</returns>
-    IEnumerable<byte> DecryptAes(byte[] encryptedBytes);
+    byte[] DecryptAes(byte[] encryptedBytes);
 
     /// <summary>
     /// Decrypts the given stream using AES decryption and writes the result to the output stream.

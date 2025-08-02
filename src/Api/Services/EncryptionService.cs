@@ -1,14 +1,12 @@
-﻿using System.Buffers;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using Api.Model;
 
 namespace Api.Services;
 
 public class EncryptionService : IEncryptionService
 {
-    public byte[] AesKey { get; }
-    public byte[] AesIv { get; }
+    private byte[] AesKey { get; }
+    private byte[] AesIv { get; }
 
     public EncryptionService(byte[] aesKey, byte[] aesIv)
     {
@@ -32,7 +30,7 @@ public class EncryptionService : IEncryptionService
         var encryptor = aesAlg.CreateEncryptor();
 
         // Create the streams used for encryption.
-        using var msEncrypt = new MemoryStream();
+        using var msEncrypt = new MemoryStream(bytes.Length + aesAlg.BlockSize / 8);
         using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
         {
             // Write all data to the stream.
@@ -64,42 +62,12 @@ public class EncryptionService : IEncryptionService
     public string EncryptAesStringBase64(string text) =>
         Convert.ToBase64String(EncryptAes(text));
 
-    public IEnumerable<byte> DecryptAes(byte[] encryptedBytes)
+    public byte[] DecryptAes(byte[] encryptedBytes)
     {
-        using var aesAlg = Aes.Create();
-        aesAlg.Key = AesKey;
-        aesAlg.IV = AesIv;
-
-        // Create a decryptor to perform the stream transform.
-        using var decryptor = aesAlg.CreateDecryptor();
-
-        // Create the streams used for decryption.
-        using var msDecrypt = new MemoryStream(encryptedBytes);
-        using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-        // Read the decrypted bytes from the decrypting stream
-        // and place them in a string.
-        var buffer = ArrayPool<byte>.Shared.Rent(1024);
-        try
-        {
-            while (csDecrypt.CanRead)
-            {
-                var bytesRead = csDecrypt.Read(buffer);
-
-                if (bytesRead == 0)
-                {
-                    yield break;
-                }
-
-                for (var i = 0; i < bytesRead; i++)
-                {
-                    yield return buffer[i];
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
+        using var outputStream = new MemoryStream(encryptedBytes.Length);
+        var decryptedStream = DecryptAesToStream(new MemoryStream(encryptedBytes));
+        decryptedStream.CopyTo(outputStream);
+        return outputStream.ToArray();
     }
 
     public Stream DecryptAesToStream(Stream encryptedInputStream)
@@ -116,7 +84,7 @@ public class EncryptionService : IEncryptionService
     }
 
     public string DecryptAesString(byte[] encryptedBytes) =>
-        Encoding.UTF8.GetString(DecryptAes(encryptedBytes).ToArray());
+        Encoding.UTF8.GetString(DecryptAes(encryptedBytes));
 
     public string DecryptAesStringBase64(string encryptedText)
     {
