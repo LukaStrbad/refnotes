@@ -91,7 +91,7 @@ public class FileServiceUtils(
 
         if (directory is null)
         {
-            throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
+            throw new DirectoryNotFoundException($"Directory at path {directoryPath} not found.");
         }
 
         var nameHash = encryptionService.HashString(name);
@@ -99,7 +99,7 @@ public class FileServiceUtils(
 
         if (file is null)
         {
-            throw new FileNotFoundException($"File with name ${name} not found in directory ${directoryPath}.");
+            throw new FileNotFoundException($"File with name {name} not found in directory {directoryPath}.");
         }
 
         return (directory, file);

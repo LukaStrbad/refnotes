@@ -131,7 +131,7 @@ public class FileService(
             throw new DirectoryNotFoundException($"Directory at path '{directoryPath}' not found");
         }
         
-        var nameHash = encryptionService.EncryptAesStringBase64(name);
+        var nameHash = encryptionService.HashString(name);
         if (directory.Files.Any(x => x.NameHash == nameHash))
         {
             throw new FileAlreadyExistsException(

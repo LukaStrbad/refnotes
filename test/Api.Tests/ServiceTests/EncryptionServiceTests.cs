@@ -41,6 +41,7 @@ public class EncryptionServiceTests : BaseTests
         var encryptedBytes = outputStream.ToArray();
         Assert.NotNull(encryptedBytes);
         Assert.NotEqual(bytes, encryptedBytes);
+        Assert.Equal(32, encryptedBytes.Length); // IV (16 bytes) + data (padded to 16 bytes)
     }
 
     [Fact]
