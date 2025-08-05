@@ -26,14 +26,7 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
         modelBuilder.Entity<EncryptedFile>()
             .HasMany(left => left.Tags)
             .WithMany(right => right.Files)
-            .UsingEntity(join => join.ToTable("encrypted_files_file_tags"))
-            .Property(x => x.NameHash).IsFixedLength();
-        
-        modelBuilder.Entity<EncryptedDirectory>()
-            .Property(x => x.PathHash).IsFixedLength();
-        
-        modelBuilder.Entity<FileTag>()
-            .Property(x => x.NameHash).IsFixedLength();
+            .UsingEntity(join => join.ToTable("encrypted_files_file_tags"));
 
         new UserGroupRoleConfiguration().Configure(modelBuilder.Entity<UserGroupRole>());
 

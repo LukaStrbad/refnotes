@@ -19,15 +19,15 @@ public class BrowserServiceTests : BaseTests
     private static async Task<EncryptedDirectory?> GetDirectory(Sut<BrowserService> sut, string path,
         UserGroup? group)
     {
-        var encryptedPath = sut.ServiceProvider.GetRequiredService<IEncryptionService>().EncryptAesStringBase64(path);
+        var pathHash = sut.ServiceProvider.GetRequiredService<IEncryptionService>().HashString(path);
         if (group is null)
         {
             return await sut.Context.Directories.FirstOrDefaultAsync(
-                d => d.Path == encryptedPath && d.OwnerId == sut.DefaultUser.Id,
+                d => d.PathHash == pathHash && d.OwnerId == sut.DefaultUser.Id,
                 TestContext.Current.CancellationToken);
         }
 
-        return await sut.Context.Directories.FirstOrDefaultAsync(d => d.Path == encryptedPath && d.GroupId == group.Id,
+        return await sut.Context.Directories.FirstOrDefaultAsync(d => d.PathHash == pathHash && d.GroupId == group.Id,
             TestContext.Current.CancellationToken);
     }
 

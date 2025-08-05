@@ -4,16 +4,19 @@ using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace MigrationService.Migrations
+namespace Data.Migrations
 {
     [DbContext(typeof(RefNotesContext))]
-    partial class RefNotesContextModelSnapshot : ModelSnapshot
+    [Migration("20250805125424_IncreaseLengthOfHashFields")]
+    partial class IncreaseLengthOfHashFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

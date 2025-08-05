@@ -13,7 +13,7 @@ public class EncryptedFile(string filesystemName, string name, string nameHash)
     public string FilesystemName { get; init; } = filesystemName;
     [MaxLength(255)]
     public string Name { get; set; } = name;
-    [MaxLength(64)]
+    [MaxLength(256)]
     public string NameHash { get; set; } = nameHash;
     public List<FileTag> Tags { get; init; } = [];
 

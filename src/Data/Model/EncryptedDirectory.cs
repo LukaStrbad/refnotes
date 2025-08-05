@@ -41,7 +41,7 @@ public class EncryptedDirectory
 
     public int Id { get; init; }
     [StringLength(1024)] public string Path { get; init; }
-    [StringLength(64)] public string PathHash { get; init; }
+    [StringLength(256)] public string PathHash { get; init; }
     public List<EncryptedFile> Files { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
     public User? Owner { get; init; }

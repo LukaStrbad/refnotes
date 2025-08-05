@@ -423,11 +423,9 @@ public sealed class AutoDataResolver : IAsyncDisposable
             encryptionService,
             _serviceProvider.GetRequiredService<IUserService>()
         );
-        await userGroupService.Create(owner, groupName);
+        var createdGroup = await userGroupService.Create(owner, groupName);
 
-        var dbGroup = await _context.UserGroups
-            .Where(group => group.Name == encryptionService.EncryptAesStringBase64(groupName))
-            .FirstOrDefaultAsync();
+        var dbGroup = await _context.UserGroups.FindAsync(createdGroup.Id);
 
         Assert.NotNull(dbGroup);
         return dbGroup;
