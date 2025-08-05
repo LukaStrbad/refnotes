@@ -64,4 +64,11 @@ public interface IEncryptionService
     /// <param name="encryptedText">The encrypted text (Base64 encoded) to decrypt.</param>
     /// <returns>The decrypted text as a string.</returns>
     string DecryptAesStringBase64(string encryptedText);
+
+    /// <summary>
+    /// Hashes the given text using SHA256 HMAC and returns the result as a Base64 string.
+    /// </summary>
+    /// <param name="text">The input text</param>
+    /// <returns>Hashed text in a base64 string</returns>
+    public string HashString(string text);
 }

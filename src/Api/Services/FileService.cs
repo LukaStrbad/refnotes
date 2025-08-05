@@ -130,15 +130,16 @@ public class FileService(
         {
             throw new DirectoryNotFoundException($"Directory at path '{directoryPath}' not found");
         }
-
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
-        if (directory.Files.Any(x => x.Name == encryptedName))
+        
+        var nameHash = encryptionService.EncryptAesStringBase64(name);
+        if (directory.Files.Any(x => x.NameHash == nameHash))
         {
             throw new FileAlreadyExistsException(
                 $"File with name '{name}' already exists in directory '{directoryPath}'");
         }
-
-        var encryptedFile = new EncryptedFile(GenerateFilesystemName(), encryptedName);
+        
+        var encryptedName = encryptionService.EncryptAesStringBase64(name);
+        var encryptedFile = new EncryptedFile(GenerateFilesystemName(), encryptedName, nameHash);
         directory.Files.Add(encryptedFile);
         await context.SaveChangesAsync();
         return encryptedFile.FilesystemName;
@@ -160,16 +161,18 @@ public class FileService(
             throw new DirectoryNotFoundException($"Directory at path '{newDirName}' not found");
         }
 
-        var encryptedName = encryptionService.EncryptAesStringBase64(newFilename);
-        if (newDir.Files.Any(f => f.Name == encryptedName))
+        var nameHash = encryptionService.HashString(newFilename);
+        if (newDir.Files.Any(f => f.NameHash == nameHash))
         {
             throw new FileAlreadyExistsException(
                 $"File with name {newFilename} already exists in directory {newDirName}");
         }
 
+        var encryptedName = encryptionService.EncryptAesStringBase64(newFilename);
         dir.Files.Remove(file);
         newDir.Files.Add(file);
         file.Name = encryptedName;
+        file.NameHash = nameHash;
         file.Modified = DateTime.UtcNow;
         await context.SaveChangesAsync();
     }
@@ -315,18 +318,18 @@ public class FileService(
     public async Task<EncryptedFile?> GetEncryptedFileForUserAsync(string filePath, User user)
     {
         var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
-        var encryptedDirectoryPath = encryptionService.EncryptAesStringBase64(directoryPath);
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
+        var directoryPathHash = encryptionService.HashString(directoryPath);
+        var nameHash = encryptionService.HashString(name);
 
         var dir = await context.Directories
             .Where(x => x.Owner == user)
-            .FirstOrDefaultAsync(x => x.Path == encryptedDirectoryPath);
+            .FirstOrDefaultAsync(x => x.PathHash == directoryPathHash);
         if (dir is null)
             return null;
 
         var file = await context.Files
             .Where(x => x.EncryptedDirectory == dir)
-            .FirstOrDefaultAsync(x => x.Name == encryptedName);
+            .FirstOrDefaultAsync(x => x.NameHash == nameHash);
 
         return file;
     }
@@ -334,18 +337,18 @@ public class FileService(
     public async Task<EncryptedFile?> GetEncryptedFileForGroupAsync(string filePath, UserGroup group)
     {
         var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
-        var encryptedDirectoryPath = encryptionService.EncryptAesStringBase64(directoryPath);
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
+        var directoryPathHash = encryptionService.HashString(directoryPath);
+        var nameHash = encryptionService.HashString(name);
 
         var dir = await context.Directories
             .Where(x => x.Group == group)
-            .FirstOrDefaultAsync(x => x.Path == encryptedDirectoryPath);
+            .FirstOrDefaultAsync(x => x.PathHash == directoryPathHash);
         if (dir is null)
             return null;
 
         var file = await context.Files
             .Where(x => x.EncryptedDirectory == dir)
-            .FirstOrDefaultAsync(x => x.Name == encryptedName);
+            .FirstOrDefaultAsync(x => x.NameHash == nameHash);
 
         return file;
     }

@@ -4,7 +4,8 @@ namespace Api.Services;
 
 public sealed class EncryptionKeyProvider : IEncryptionKeyProvider
 {
-    public byte[] Key { get; }
+    public byte[] AesKey { get; }
+    public byte[] Sha256Key { get; }
     public byte[] Iv { get; }
 
     public EncryptionKeyProvider(IConfiguration configuration)
@@ -32,8 +33,12 @@ public sealed class EncryptionKeyProvider : IEncryptionKeyProvider
         {
             throw new Exception($"Invalid AES IV size. Expected {aes.BlockSize / 8} bytes, but got {ivBytes.Length} bytes.");
         }
+        
+        var sha256Key = configuration.GetValue<string>("SHA256_KEY") ?? throw new Exception("SHA256_KEY configuration is missing.");
+        var sha256KeyBytes = Convert.FromBase64String(sha256Key);
 
-        Key = keyBytes;
+        AesKey = keyBytes;
         Iv = ivBytes;
+        Sha256Key = sha256KeyBytes;
     }
 }

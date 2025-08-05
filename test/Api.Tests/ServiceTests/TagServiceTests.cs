@@ -50,6 +50,7 @@ public class TagServiceTests : BaseTests
             file?.Tags.AddRange(tags.Select(t => new FileTag
             {
                 Name = t,
+                NameHash = "name-hash",
                 Owner = sut.DefaultUser
             }));
         }
@@ -58,6 +59,7 @@ public class TagServiceTests : BaseTests
             file?.Tags.AddRange(tags.Select(t => new FileTag
             {
                 Name = t,
+                NameHash = "name-hash",
                 GroupOwner = group
             }));
         }

@@ -46,4 +46,9 @@ public class FakeEncryptionService : IEncryptionService
     {
         return encryptedText;
     }
+
+    public string HashString(string text)
+    {
+        return text;
+    }
 }

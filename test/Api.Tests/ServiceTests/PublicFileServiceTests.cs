@@ -14,11 +14,11 @@ public class PublicFileServiceTests : BaseTests
     private static async Task<EncryptedFile> CreateFile(Sut<PublicFileService> sut)
     {
         var rndPath = $"/test_dir_{RandomString(32)}";
-        var directory = new EncryptedDirectory(rndPath, sut.DefaultUser);
+        var directory = new EncryptedDirectory(rndPath, "path-hash", sut.DefaultUser);
         await sut.Context.Directories.AddAsync(directory);
 
         var fileName = $"{RandomString(32)}.txt";
-        var newFile = new EncryptedFile("test123", fileName)
+        var newFile = new EncryptedFile("test123", fileName, "name-hash")
         {
             EncryptedDirectory = directory
         };

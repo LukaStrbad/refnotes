@@ -69,18 +69,19 @@ public class BrowserService(
 
         path = FileUtils.NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
+        var hashedPath = encryptionService.HashString(path);
 
         var existingDir = await utils.GetDirectory(path, false, groupId);
 
         EncryptedDirectory newDirectory;
         if (groupId is null)
         {
-            newDirectory = new EncryptedDirectory(encryptedPath, user);
+            newDirectory = new EncryptedDirectory(encryptedPath, hashedPath, user);
         }
         else
         {
             var group = await userGroupService.GetGroupAsync((int)groupId);
-            newDirectory = new EncryptedDirectory(encryptedPath, group);
+            newDirectory = new EncryptedDirectory(encryptedPath, hashedPath, group);
         }
 
 
@@ -125,8 +126,7 @@ public class BrowserService(
         {
             throw new ArgumentException("Cannot delete root directory");
         }
-
-        var encryptedPath = encryptionService.EncryptAesStringBase64(path);
+        
         var directoryQuery = context.Directories
             .Include(dir => dir.Parent)
             .Include(dir => dir.Files)
@@ -145,8 +145,9 @@ public class BrowserService(
                              select dir;
         }
 
+        var pathHash = encryptionService.HashString(path);
         var directory = await directoryQuery
-            .FirstOrDefaultAsync(x => x.Path == encryptedPath);
+            .FirstOrDefaultAsync(x => x.PathHash == pathHash);
 
         if (directory is null)
         {

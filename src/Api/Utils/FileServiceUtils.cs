@@ -36,7 +36,7 @@ public class FileServiceUtils(
     public async Task<EncryptedDirectory?> GetDirectory(string path, bool includeFilesAndDirs, int? groupId)
     {
         var user = await userService.GetCurrentUser();
-        var encryptedPath = encryptionService.EncryptAesStringBase64(path);
+        var pathHash = encryptionService.HashString(path);
 
         var directoryQueryable = context.Directories.Where(x => x.Owner == user);
 
@@ -55,18 +55,18 @@ public class FileServiceUtils(
                 .Include(dir => dir.Files)
                 .ThenInclude(file => file.Tags)
                 .Include(dir => dir.Directories)
-                .FirstOrDefaultAsync(x => x.Path == encryptedPath);
+                .FirstOrDefaultAsync(x => x.PathHash == pathHash);
         }
 
         return await directoryQueryable
-            .FirstOrDefaultAsync(x => x.Path == encryptedPath);
+            .FirstOrDefaultAsync(x => x.PathHash == pathHash);
     }
 
     public async Task<(EncryptedDirectory, EncryptedFile)> GetDirAndFile(string directoryPath, string name,
         int? groupId, bool includeTags = false)
     {
         var user = await userService.GetCurrentUser();
-        var encryptedPath = encryptionService.EncryptAesStringBase64(directoryPath);
+        var pathHash = encryptionService.HashString(directoryPath);
 
         var query = context.Directories
             .Where(x => x.Owner == user);
@@ -87,15 +87,15 @@ public class FileServiceUtils(
                 .ThenInclude(file => file.Tags);
         }
 
-        var directory = query.FirstOrDefault(x => x.Path == encryptedPath);
+        var directory = query.FirstOrDefault(x => x.PathHash == pathHash);
 
         if (directory is null)
         {
             throw new DirectoryNotFoundException($"Directory at path ${directoryPath} not found.");
         }
 
-        var encryptedName = encryptionService.EncryptAesStringBase64(name);
-        var file = directory.Files.FirstOrDefault(file => file.Name == encryptedName);
+        var nameHash = encryptionService.HashString(name);
+        var file = directory.Files.FirstOrDefault(file => file.NameHash == nameHash);
 
         if (file is null)
         {

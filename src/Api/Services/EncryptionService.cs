@@ -6,17 +6,20 @@ namespace Api.Services;
 public class EncryptionService : IEncryptionService
 {
     private byte[] AesKey { get; }
+    private byte[] Sha256Key { get; }
     private byte[] AesIv { get; }
 
-    public EncryptionService(byte[] aesKey, byte[] aesIv)
+    public EncryptionService(byte[] aesKey, byte[] sha256Key, byte[] aesIv)
     {
         AesKey = aesKey;
+        Sha256Key = sha256Key;
         AesIv = aesIv;
     }
 
     public EncryptionService(IEncryptionKeyProvider keyProvider)
     {
-        AesKey = keyProvider.Key;
+        AesKey = keyProvider.AesKey;
+        Sha256Key = keyProvider.Sha256Key;
         AesIv = keyProvider.Iv;
     }
 
@@ -90,5 +93,12 @@ public class EncryptionService : IEncryptionService
     {
         var bytes = Convert.FromBase64String(encryptedText);
         return DecryptAesString(bytes);
+    }
+
+    public string HashString(string text)
+    {
+        using var sha256 = new HMACSHA256(Sha256Key);
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(text));
+        return Convert.ToBase64String(hashBytes);
     }
 }

@@ -2,6 +2,7 @@
 
 public interface IEncryptionKeyProvider
 {
-    public byte[] Key { get; }
+    public byte[] AesKey { get; }
+    public byte[] Sha256Key { get; }
     public byte[] Iv { get; }
 }

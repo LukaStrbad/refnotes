@@ -6,13 +6,15 @@ namespace Data.Model;
 
 [Table("encrypted_files")]
 [Index(nameof(EncryptedDirectoryId))]
-public class EncryptedFile(string filesystemName, string name)
+public class EncryptedFile(string filesystemName, string name, string nameHash)
 {
     public int Id { get; set; }
     [MaxLength(255)]
     public string FilesystemName { get; init; } = filesystemName;
     [MaxLength(255)]
     public string Name { get; set; } = name;
+    [MaxLength(64)]
+    public string NameHash { get; set; } = nameHash;
     public List<FileTag> Tags { get; init; } = [];
 
     public DateTime Created { get; init; } = DateTime.UtcNow;

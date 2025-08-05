@@ -16,6 +16,7 @@ public sealed class EncryptedDirectoryFakerImplementation : FakerImplementationB
         return BaseFaker.StrictMode(true)
             .RuleFor(g => g.Id, f => 0)
             .RuleFor(g => g.Path, f => f.System.DirectoryPath())
+            .RuleFor(g => g.PathHash, (_, dir) => dir.Path)
             .RuleFor(g => g.Files, _ => [])
             .RuleFor(g => g.Directories, _ => [])
             .RuleFor(g => g.Parent, _ => null)
