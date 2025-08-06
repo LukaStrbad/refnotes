@@ -218,6 +218,20 @@
           "System.Diagnostics.EventLog": "6.0.0"
         }
       },
+      "DistributedLock.Core": {
+        "type": "Transitive",
+        "resolved": "1.0.6",
+        "contentHash": "WFAz6x82K+4uiByDk1Qz2lmcm2FrOyCzZjNauzbLeHPou6Ur2C9Ig7d6vxP7/kKvzSrrQoW6k3pUOOcikb9Jgw=="
+      },
+      "DistributedLock.Redis": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "2Rzw2IYwG8/58hwhHC6oTlbrZ7JfjEmgZof9/mPH9Vn1mDQUhWbO1VFRFInu87RYJW/6iUg3/VadDhMN7ykyWQ==",
+        "dependencies": {
+          "DistributedLock.Core": "[1.0.6, 1.1.0)",
+          "StackExchange.Redis": "2.7.27"
+        }
+      },
       "Docker.DotNet.Enhanced": {
         "type": "Transitive",
         "resolved": "3.126.1",
@@ -1262,6 +1276,7 @@
           "Aspire.Pomelo.EntityFrameworkCore.MySql": "[9.3.1, )",
           "Aspire.StackExchange.Redis.DistributedCaching": "[9.3.1, )",
           "Data": "[1.0.0, )",
+          "DistributedLock.Redis": "[1.0.3, )",
           "MailKit": "[4.13.0, )",
           "Microsoft.AspNetCore.OpenApi": "[9.0.6, )",
           "Microsoft.EntityFrameworkCore.Relational": "[9.0.6, )",

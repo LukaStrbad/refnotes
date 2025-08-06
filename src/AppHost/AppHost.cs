@@ -5,10 +5,11 @@ var builder = DistributedApplication.CreateBuilder(args);
 var connectionString = builder.AddConnectionString("main");
 var schedulerConnectionString = builder.AddConnectionString("scheduler");
 
+var insightPort = builder.Configuration.GetValue<int?>("Ports:RedisInsight");
 var cache = builder.AddRedis("cache")
-    .WithRedisInsight()
+    .WithRedisInsight(insightBuilder => insightBuilder.WithHostPort(insightPort))
     .WithDataVolume()
-    .WithPersistence(interval: TimeSpan.FromMinutes(5));
+    .WithPersistence(interval: TimeSpan.FromMinutes(1));
 
 var migrationsProject = builder.AddProject<Projects.MigrationService>("migrations")
     .WithReference(connectionString)

@@ -64,6 +64,16 @@
           "StackExchange.Redis": "2.8.37"
         }
       },
+      "DistributedLock.Redis": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "2Rzw2IYwG8/58hwhHC6oTlbrZ7JfjEmgZof9/mPH9Vn1mDQUhWbO1VFRFInu87RYJW/6iUg3/VadDhMN7ykyWQ==",
+        "dependencies": {
+          "DistributedLock.Core": "[1.0.6, 1.1.0)",
+          "StackExchange.Redis": "2.7.27"
+        }
+      },
       "MailKit": {
         "type": "Direct",
         "requested": "[4.13.0, )",
@@ -238,6 +248,11 @@
         "type": "Transitive",
         "resolved": "2.5.1",
         "contentHash": "zy8TMeTP+1FH2NrLaNZtdRbBdq7u5MI+NFZQOBSM69u5RFkciinwzV2eveY6Kjf5MzgsYvvl6kTStsj3JrXqkg=="
+      },
+      "DistributedLock.Core": {
+        "type": "Transitive",
+        "resolved": "1.0.6",
+        "contentHash": "WFAz6x82K+4uiByDk1Qz2lmcm2FrOyCzZjNauzbLeHPou6Ur2C9Ig7d6vxP7/kKvzSrrQoW6k3pUOOcikb9Jgw=="
       },
       "Google.Protobuf": {
         "type": "Transitive",

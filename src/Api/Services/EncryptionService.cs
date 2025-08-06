@@ -73,7 +73,7 @@ public class EncryptionService : IEncryptionService
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
         // Read the IV from the beginning of the stream.
-        byte[] iv = new byte[aesAlg.BlockSize / 8];
+        var iv = new byte[aesAlg.BlockSize / 8];
         if (encryptedInputStream.Read(iv, 0, iv.Length) != iv.Length)
         {
             throw new InvalidOperationException("Invalid encrypted data: IV not found.");

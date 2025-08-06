@@ -1,11 +1,11 @@
-﻿namespace Api.Streams;
+﻿using Medallion.Threading.Redis;
+
+namespace Api.Streams;
 
 /// <summary>
 /// A stream wrapper that ensures a given lock is released when the stream is disposed.
 /// </summary>
-/// <seealso cref="Stream"/>
-/// <seealso cref="SemaphoreSlim"/>
-public sealed class LockReleasingStream(Stream inner, SemaphoreSlim streamLock) : Stream
+public sealed class RedisLockReleasingStream(Stream inner, RedisDistributedReaderWriterLockHandle lockHandle) : Stream
 {
     private bool _disposed;
 
@@ -16,8 +16,9 @@ public sealed class LockReleasingStream(Stream inner, SemaphoreSlim streamLock) 
         if (disposing)
         {
             inner.Dispose();
-            streamLock.Release();
+            lockHandle.Dispose();
         }
+
         _disposed = true;
         base.Dispose(disposing);
     }
@@ -32,7 +33,13 @@ public sealed class LockReleasingStream(Stream inner, SemaphoreSlim streamLock) 
     public override bool CanSeek => inner.CanSeek;
     public override bool CanWrite => inner.CanWrite;
     public override long Length => inner.Length;
-    public override long Position { get => inner.Position; set => inner.Position = value; }
+
+    public override long Position
+    {
+        get => inner.Position;
+        set => inner.Position = value;
+    }
+
     public override void Flush() => inner.Flush();
     public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
     public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
