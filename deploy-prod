@@ -53,10 +53,6 @@ switch_to_backend_replica
 # Stop to force the appsettings to be reloaded as the file watcher doesn't seem to work inside the container
 compose stop backend
 compose up -d backend
-# Temporary command to generate file hashes
-# TODO: Remove this after deploy
-compose exec backend dotnet Api.dll update-encrypted-fields
-compose exec backend dotnet Api.dll generate-hashes
 
 echo "Deploying the backend replica"
 sleep 5

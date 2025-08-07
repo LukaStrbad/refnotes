@@ -12,6 +12,4 @@ app.RegisterMiddlewares();
 app.RegisterAppServices();
 app.RegisterAppSettingsReloadWatcher();
 
-await CommandLine.ParseAndExecute(args, app);
-
 app.Run();
