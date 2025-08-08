@@ -11,7 +11,7 @@ using NSubstitute.ReturnsExtensions;
 
 namespace Api.Tests.ControllerTests;
 
-public sealed class FavoriteControllerTests : BaseTests, IClassFixture<ControllerFixture<FavoriteController>>
+public sealed class FavoriteControllerTests : BaseTests, IClassFixture<ServiceFixture<FavoriteController>>
 {
     private readonly FavoriteController _controller;
     private readonly IFileService _fileService;
@@ -20,7 +20,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     private readonly IGroupPermissionService _groupPermissionService;
     private readonly User _testUser = new("test", "test", "test@test.com", "password");
 
-    public FavoriteControllerTests(ControllerFixture<FavoriteController> fixture)
+    public FavoriteControllerTests(ServiceFixture<FavoriteController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<FavoriteController>();

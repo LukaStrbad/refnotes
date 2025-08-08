@@ -13,7 +13,7 @@ using NSubstitute;
 
 namespace Api.Tests.ControllerTests;
 
-public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<FileController>>
+public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileController>>
 {
     private readonly FileController _controller;
     private readonly IFileService _fileService;
@@ -27,7 +27,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
     private readonly CancellationTokenSource _cts = new();
 
-    public FileControllerTests(ControllerFixture<FileController> fixture)
+    public FileControllerTests(ServiceFixture<FileController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
 

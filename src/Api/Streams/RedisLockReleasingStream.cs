@@ -1,11 +1,12 @@
-﻿using Medallion.Threading.Redis;
+﻿using Medallion.Threading;
+using Medallion.Threading.Redis;
 
 namespace Api.Streams;
 
 /// <summary>
 /// A stream wrapper that ensures a given lock is released when the stream is disposed.
 /// </summary>
-public sealed class RedisLockReleasingStream(Stream inner, RedisDistributedReaderWriterLockHandle lockHandle) : Stream
+public sealed class RedisLockReleasingStream(Stream inner, IDistributedSynchronizationHandle lockHandle) : Stream
 {
     private bool _disposed;
 

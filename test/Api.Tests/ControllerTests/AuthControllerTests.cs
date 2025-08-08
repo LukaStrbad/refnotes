@@ -16,7 +16,7 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Api.Tests.ControllerTests;
 
-public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<AuthController>>
+public class AuthControllerTests : BaseTests, IClassFixture<ServiceFixture<AuthController>>
 {
     private readonly IAuthService _authService;
     private readonly AuthController _controller;
@@ -26,7 +26,7 @@ public class AuthControllerTests : BaseTests, IClassFixture<ControllerFixture<Au
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
 
-    public AuthControllerTests(ControllerFixture<AuthController> fixture)
+    public AuthControllerTests(ServiceFixture<AuthController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _authService = serviceProvider.GetRequiredService<IAuthService>();

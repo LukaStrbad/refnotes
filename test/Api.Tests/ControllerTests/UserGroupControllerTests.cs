@@ -12,13 +12,13 @@ using NSubstitute.ExceptionExtensions;
 namespace Api.Tests.ControllerTests;
 
 [Trait("Category", "Group")]
-public class UserGroupControllerTests : IClassFixture<ControllerFixture<UserGroupController>>
+public class UserGroupControllerTests : IClassFixture<ServiceFixture<UserGroupController>>
 {
     private readonly IUserGroupService _userGroupService;
     private readonly IGroupPermissionService _groupPermissionService;
     private readonly UserGroupController _controller;
 
-    public UserGroupControllerTests(ControllerFixture<UserGroupController> fixture)
+    public UserGroupControllerTests(ServiceFixture<UserGroupController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _userGroupService = serviceProvider.GetRequiredService<IUserGroupService>();

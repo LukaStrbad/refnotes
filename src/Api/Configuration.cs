@@ -9,10 +9,14 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using Api.Services.Redis;
 using Api.Services.Schedulers;
 using MailKit.Net.Smtp;
+using Medallion.Threading;
+using Medallion.Threading.Redis;
 using Microsoft.Extensions.Primitives;
 using ServiceDefaults;
+using StackExchange.Redis;
 
 namespace Api;
 
@@ -24,7 +28,7 @@ public static class Configuration
         builder.AddServiceDefaults();
         builder.RegisterScheduler();
         builder.Services.AddControllersWithViews();
-        
+
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
         builder.Services.AddSingleton(AppSettings.Initialize);
@@ -51,6 +55,7 @@ public static class Configuration
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         builder.Services.AddScoped<IEmailConfirmService, EmailConfirmService>();
         builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        builder.Services.AddScoped<IRedisLockProvider, RedisLockProvider>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();
@@ -149,5 +154,5 @@ public static class Configuration
             () => config.GetReloadToken(),
             () => appSettings.ReloadConfig()
         );
-    } 
+    }
 }

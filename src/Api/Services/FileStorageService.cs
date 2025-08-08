@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
+using Api.Services.Redis;
 using Api.Streams;
-using Medallion.Threading.Redis;
 using StackExchange.Redis;
 
 namespace Api.Services;
@@ -16,18 +16,13 @@ public interface IFileStorageService
 public class FileStorageService(
     IEncryptionService encryptionService,
     IConnectionMultiplexer muxer,
-    AppSettings appSettings) : IFileStorageService
+    AppSettings appSettings,
+    IRedisLockProvider lockProvider) : IFileStorageService
 {
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
 
-    private RedisDistributedReaderWriterLock GetFileLock(string fileName, IDatabase? redis = null)
-    {
-        var keyName = $"FileLock:{fileName}";
-        redis ??= muxer.GetDatabase();
-        return new RedisDistributedReaderWriterLock(keyName, redis);
-    }
-
-    private static string GetFileSizeKey(string fileName) => $"FileSize:{fileName}";
+    private static string GetFileLockKey(string fileName) => $"FileLock:{fileName}";
+    private static RedisKey GetFileSizeKey(string fileName) => new($"FileSize:{fileName}");
 
     public async Task SaveFileAsync(string fileName, Stream inputStream)
     {
@@ -36,10 +31,7 @@ public class FileStorageService(
             throw new ArgumentException("File name cannot be empty.");
         }
 
-        var redis = muxer.GetDatabase();
-        var fileLock = GetFileLock(fileName, redis);
-
-        await using (var handle = await fileLock.TryAcquireWriteLockAsync(LockTimeout))
+        await using (var handle = await lockProvider.TryAcquireWriteLockAsync(GetFileLockKey(fileName), LockTimeout))
         {
             if (handle is null)
                 throw new TimeoutException("File lock timeout.");
@@ -49,6 +41,7 @@ public class FileStorageService(
             await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
         }
 
+        var redis = muxer.GetDatabase();
         var sizeKey = GetFileSizeKey(fileName);
         try
         {
@@ -64,11 +57,9 @@ public class FileStorageService(
 
     public Stream GetFile(string fileName)
     {
-        var fileLock = GetFileLock(fileName);
-
         RedisLockReleasingStream? lockReleasingStream = null;
         // No "using" as the lock should be released manually or by the lock releasing stream
-        var handle = fileLock.TryAcquireReadLock(LockTimeout);
+        var handle = lockProvider.TryAcquireReadLock(GetFileLockKey(fileName), LockTimeout);
         if (handle is null)
             throw new TimeoutException("File lock timeout.");
 
@@ -96,9 +87,8 @@ public class FileStorageService(
     public async Task DeleteFile(string fileName)
     {
         var redis = muxer.GetDatabase();
-        var fileLock = GetFileLock(fileName, redis);
 
-        await using (var handle = await fileLock.TryAcquireWriteLockAsync(LockTimeout))
+        await using (var handle = await lockProvider.TryAcquireWriteLockAsync(GetFileLockKey(fileName), LockTimeout))
         {
             if (handle is null)
                 throw new TimeoutException("File lock timeout.");
@@ -130,17 +120,16 @@ public class FileStorageService(
             return sizeLong;
         }
 
-        var fileLock = GetFileLock(fileName, redis);
-        await using var handle = await fileLock.TryAcquireReadLockAsync(LockTimeout);
+        await using var handle = await lockProvider.TryAcquireReadLockAsync(GetFileLockKey(fileName), LockTimeout);
 
         if (handle is null)
             throw new TimeoutException("File lock timeout.");
-        
+
 
         // No "using" as the file stream will be disposed by the stream returned by DecryptAesToStream
         var fileStream = File.OpenRead(filePath);
         sizeLong = 0;
-        
+
         var buffer = ArrayPool<byte>.Shared.Rent(4096);
         // Read the file size by decrypting the stream
         await using (var decryptedStream = encryptionService.DecryptAesToStream(fileStream))

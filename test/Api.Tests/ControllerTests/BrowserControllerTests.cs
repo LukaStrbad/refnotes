@@ -9,13 +9,13 @@ using NSubstitute;
 
 namespace Api.Tests.ControllerTests;
 
-public class BrowserControllerTests : BaseTests, IClassFixture<ControllerFixture<BrowserController>>
+public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<BrowserController>>
 {
     private readonly BrowserController _controller;
     private readonly IBrowserService _browserService;
     private readonly IGroupPermissionService _groupPermissionService;
 
-    public BrowserControllerTests(ControllerFixture<BrowserController> fixture)
+    public BrowserControllerTests(ServiceFixture<BrowserController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<BrowserController>();

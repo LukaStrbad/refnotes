@@ -14,7 +14,7 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Api.Tests.ControllerTests;
 
-public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserController>>
+public sealed class UserControllerTests : IClassFixture<ServiceFixture<UserController>>
 {
     private readonly IUserService _userService;
     private readonly IEmailConfirmService _emailConfirmService;
@@ -25,7 +25,7 @@ public sealed class UserControllerTests : IClassFixture<ControllerFixture<UserCo
     private readonly RequestCookieCollection _requestCookies;
     private readonly ResponseCookies _responseCookies;
 
-    public UserControllerTests(ControllerFixture<UserController> fixture)
+    public UserControllerTests(ServiceFixture<UserController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _userService = serviceProvider.GetRequiredService<IUserService>();
