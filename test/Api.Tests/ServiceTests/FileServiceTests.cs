@@ -1,530 +1,421 @@
 ﻿using Api.Exceptions;
+using Api.Model;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
 using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
 using Api.Tests.Fixtures;
-using Api.Tests.Mocks;
 using Api.Utils;
 using Data.Model;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Api.Tests.ServiceTests;
 
-using FixtureType = ServiceFixture<FileService>;
-
-[ConcreteType<IEncryptionService, FakeEncryptionService>]
-[ConcreteType<IFileServiceUtils, FileServiceUtils>]
-[ConcreteType<IUserGroupService, UserGroupService>]
-[ConcreteType<IBrowserService, BrowserService>]
-public class FileServiceTests : BaseTests, IClassFixture<FixtureType>
+public class FileServiceTests : BaseTests
 {
-    private readonly string _directoryPath;
-    private readonly string _newDirectoryPath;
-
     private readonly FakerResolver _fakerResolver;
     private readonly FileService _service;
     private readonly IFileServiceUtils _fileServiceUtils;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly IUserGroupService _userGroupService;
 
     private readonly User _defaultUser;
     private readonly UserGroup _defaultGroup;
 
-    public FileServiceTests(FixtureType fixture, TestDatabaseFixture dbFixture)
+    public FileServiceTests(TestDatabaseFixture dbFixture)
     {
-        var rndString = RandomString(32);
-        _directoryPath = $"/file_service_test_{rndString}";
-        _newDirectoryPath = $"/file_service_test_new_{rndString}";
-
-        var serviceProvider = fixture.WithDb(dbFixture).WithFakers().WithFakeEncryption().CreateServiceProvider();
+        var serviceProvider = new ServiceFixture<FileService>().WithDb(dbFixture).WithFakers().WithFakeEncryption()
+            .CreateServiceProvider();
         _service = serviceProvider.GetRequiredService<FileService>();
         _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
         _fileServiceUtils = serviceProvider.GetRequiredService<IFileServiceUtils>();
-        
+        _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
+        _userGroupService = serviceProvider.GetRequiredService<IUserGroupService>();
+
         _defaultUser = _fakerResolver.Get<User>().Generate();
         _defaultGroup = _fakerResolver.Get<UserGroup>().Generate();
-    }
-
-    private static async Task<EncryptedDirectory?> GetDirectory(Sut<FileService> sut, string path,
-        UserGroup? group)
-    {
-        var encryptedPath = sut.ServiceProvider.GetRequiredService<IEncryptionService>().EncryptAesStringBase64(path);
-        if (group is null)
-        {
-            return await sut.Context.Directories
-                .Include(d => d.Files)
-                .FirstOrDefaultAsync(
-                    d => d.Path == encryptedPath && d.OwnerId == sut.DefaultUser.Id,
-                    TestContext.Current.CancellationToken);
-        }
-
-        return await sut.Context.Directories
-            .Include(d => d.Files)
-            .FirstOrDefaultAsync(d => d.Path == encryptedPath && d.GroupId == group.Id,
-                TestContext.Current.CancellationToken);
-    }
-
-    private async Task CreateDirectories(Sut<FileService> sut, UserGroup? group)
-    {
-        var browserService = sut.ServiceProvider.GetRequiredService<IBrowserService>();
-        await browserService.AddDirectory(_directoryPath, group?.Id);
-        await browserService.AddDirectory(_newDirectoryPath, group?.Id);
     }
 
     [Theory]
     [InlineData(false), InlineData(true)]
     public async Task AddFile_AddsFile(bool withGroup)
     {
-        var group = withGroup ? _defaultGroup : null; 
+        // Arrange
         const string fileName = "testfile.txt";
+        var group = withGroup ? _defaultGroup : null;
         var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
         _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
 
+        // Act
         await _service.AddFile(dir.Path, fileName, group?.Id);
 
+        // Assert
         Assert.Single(dir.Files);
         Assert.Equal(fileName, dir.Files[0].Name);
     }
 
-    [Theory, AutoData]
-    public async Task AddFile_ThrowsIfFileAlreadyExists(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddFile_ThrowsIfFileAlreadyExists(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
 
-        const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
-
+        // Act/Assert
         await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
-            sut.Value.AddFile(_directoryPath, fileName, group?.Id));
+            _service.AddFile(dir.Path, file.Name, group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task AddFile_ThrowsIfDirectoryDoesNotExist
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddFile_ThrowsIfDirectoryDoesNotExist(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
+        // Arrange
         const string fileName = "testfile.txt";
+        var group = withGroup ? _defaultGroup : null;
 
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            sut.Value.AddFile("/nonexistent", fileName, group?.Id));
+            _service.AddFile("/nonexistent", fileName, group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task MoveFile_MovesFile
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task MoveFile_MovesFile(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
+        // Arrange
         const string fileName = "testfile.txt";
         const string newFileName = "testfile2.txt";
+        var group = withGroup ? _defaultGroup : null;
+        var dirs = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate(2);
+        var (dir1, dir2) = (dirs[0], dirs[1]);
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir1).WithName(fileName).Generate();
+        var originalTimestamp = file.Modified;
+        _fileServiceUtils.GetDirAndFile(dir1.Path, fileName, group?.Id).Returns((dir1, file));
+        _fileServiceUtils.GetDirectory(dir2.Path, true, group?.Id).Returns(dir2);
 
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        // Act
+        await _service.MoveFile($"{dir1.Path}/{fileName}", $"{dir2.Path}/{newFileName}", group?.Id);
 
-        var oldDirectory = await GetDirectory(sut, _directoryPath, group);
-        Assert.NotNull(oldDirectory);
-        var file = oldDirectory.Files.FirstOrDefault(x => x.Name == fileName);
-        Assert.NotNull(file);
-        var timestamp = file.Modified;
-
-        await sut.Value.MoveFile($"{_directoryPath}/{fileName}", $"{_newDirectoryPath}/{newFileName}", group?.Id);
-
-        // Re-fetch the old directory and file to ensure we have the latest data
-        await sut.Context.Entry(oldDirectory).ReloadAsync(TestContext.Current.CancellationToken);
-        await sut.Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
-
-        var newDirectory = await GetDirectory(sut, _newDirectoryPath, group);
-
-        Assert.NotEqual(timestamp, file.Modified);
-        Assert.Empty(oldDirectory.Files);
-        Assert.NotNull(newDirectory);
-        Assert.NotEmpty(newDirectory.Files);
-        Assert.Equal(newFileName, newDirectory.Files[0].Name);
+        // Assert
+        Assert.NotEqual(originalTimestamp, file.Modified);
+        Assert.Empty(dir1.Files);
+        Assert.NotEmpty(dir2.Files);
+        Assert.Equal(newFileName, dir2.Files[0].Name);
     }
 
-    [Theory, AutoData]
-    public async Task MoveFile_RenamesFile
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task MoveFile_RenamesFile(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
+        // Arrange
         const string fileName = "testfile.txt";
         const string newFileName = "testfile2.txt";
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).WithName(fileName).Generate();
+        _fileServiceUtils.GetDirAndFile(dir.Path, fileName, group?.Id).Returns((dir, file));
 
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
-        await sut.Value.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", group?.Id);
+        // Act
+        await _service.MoveFile($"{dir.Path}/{fileName}", $"{dir.Path}/{newFileName}", group?.Id);
 
-        var directory = await GetDirectory(sut, _directoryPath, group);
-
-        Assert.NotNull(directory);
-        Assert.Single(directory.Files);
-        Assert.Equal(newFileName, directory.Files[0].Name);
+        // Assert
+        Assert.Single(dir.Files);
+        Assert.Equal(newFileName, dir.Files[0].Name);
     }
 
-    [Theory, AutoData]
-    public async Task MoveFile_ThrowsExceptionIfNewDirectoryDoesntExist
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task MoveFile_ThrowsExceptionIfNewDirectoryDoesntExist(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
+        // Arrange
         const string fileName = "testfile.txt";
         const string newFileName = "testfile2.txt";
         const string nonExistentDirectory = "/file_service_test_new_nonexistent";
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(dir).WithName(fileName).Generate();
 
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        // Act/Assert
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            sut.Value.MoveFile($"{_directoryPath}/{fileName}", $"{nonExistentDirectory}/{newFileName}", group?.Id));
+            _service.MoveFile($"{dir.Path}/{fileName}", $"{nonExistentDirectory}/{newFileName}", group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task MoveFile_ThrowsExceptionIfFileAlreadyExists
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task MoveFile_ThrowsExceptionIfFileAlreadyExists(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var files = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate(2);
+        var (file1, file2) = (files[0], files[1]);
+        _fileServiceUtils.GetDirAndFile(dir.Path, file1.Name, group?.Id).Returns((dir, file1));
 
-        const string fileName = "testfile.txt";
-        const string newFileName = "testfile.txt";
-
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        // Act/Assert
         await Assert.ThrowsAsync<FileAlreadyExistsException>(() =>
-            sut.Value.MoveFile($"{_directoryPath}/{fileName}", $"{_directoryPath}/{newFileName}", group?.Id));
+            _service.MoveFile($"{dir.Path}/{file1.Name}", $"{dir.Path}/{file2.Name}", group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task DeleteFile_RemovesFile
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task DeleteFile_RemovesFile(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _fileServiceUtils.GetDirAndFile(dir.Path, file.Name, group?.Id, false).Returns((dir, file));
 
-        const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        // Act
+        await _service.DeleteFile(dir.Path, file.Name, group?.Id);
 
-        await sut.Value.DeleteFile(_directoryPath, fileName, group?.Id);
-
-        var directory = await GetDirectory(sut, _directoryPath, group);
-
-        Assert.NotNull(directory);
-        Assert.Empty(directory.Files);
+        // Assert
+        Assert.Empty(dir.Files);
     }
 
-    [Theory, AutoData]
-    public async Task DeleteFile_ThrowsIfFileDoesNotExist
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task GetFilesystemFilePath_ReturnsFilePath(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _fileServiceUtils.GetDirAndFile(dir.Path, file.Name, group?.Id).Returns((dir, file));
 
-        const string fileName = "testfile.txt";
+        // Act
+        var filePath = await _service.GetFilesystemFilePath(dir.Path, file.Name, group?.Id);
 
-        await Assert.ThrowsAsync<FileNotFoundException>(() =>
-            sut.Value.DeleteFile(_directoryPath, fileName, group?.Id));
-    }
-
-    [Theory, AutoData]
-    public async Task GetFilesystemFilePath_ReturnsFilePath
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
-    {
-        await CreateDirectories(sut, group);
-
-        const string fileName = "testfile.txt";
-        var addedFilePath = await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
-
-        var filePath = await sut.Value.GetFilesystemFilePath(_directoryPath, fileName, group?.Id);
-
+        // Assert
         Assert.NotNull(filePath);
-        Assert.Equal(addedFilePath, filePath);
+        Assert.Equal(file.FilesystemName, filePath);
     }
 
-    [Theory, AutoData]
-    public async Task GetFilesystemFilePath_ReturnsNull_WhenFileDoesNotExist
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task GetFilesystemFilePath_ReturnsNull_WhenFileDoesNotExist(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        _fileServiceUtils.GetDirAndFile(dir.Path, "nonexistent.txt", group?.Id)
+            .ThrowsAsync(new FileNotFoundException());
 
-        var filePath = await sut.Value.GetFilesystemFilePath(_directoryPath, "nonexistent.txt", group?.Id);
+        // Act
+        var filePath = await _service.GetFilesystemFilePath(dir.Path, "nonexistent.txt", group?.Id);
 
+        // Assert
         Assert.Null(filePath);
     }
 
-    [Theory, AutoData]
-    public async Task GetFilesystemPath_ThrowsIfDirectoryDoesNotExist
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task UpdateTimestamp_UpdatesTimestamp(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
-        const string nonExistentPath = "/nonexistent";
-        await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            sut.Value.GetFilesystemFilePath(nonExistentPath, "testfile.txt", group?.Id));
-    }
-
-    [Theory, AutoData]
-    public async Task BrowserService_List_ReturnsFile(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IBrowserService browserService)
-    {
-        await CreateDirectories(sut, group);
-
-        const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
-
-        var responseDirectory = await browserService.List(group?.Id, _directoryPath);
-
-        Assert.NotNull(responseDirectory);
-        // Remove the leading slash
-        Assert.Equal(_directoryPath[1..], responseDirectory.Name);
-        Assert.Single(responseDirectory.Files);
-        Assert.Empty(responseDirectory.Directories);
-        Assert.Equal(fileName, responseDirectory.Files.FirstOrDefault()?.Name);
-    }
-
-    [Theory, AutoData]
-    public async Task UpdateTimestamp_UpdatesTimestamp
-    (Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
-    {
-        await CreateDirectories(sut, group);
-
-        const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
-
-        var dir = await GetDirectory(sut, _directoryPath, group);
-        Assert.NotNull(dir);
-        Assert.NotEmpty(dir.Files);
-
-        var file = dir.Files.FirstOrDefault(f => f.Name == fileName);
-        Assert.NotNull(file);
-
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
         var oldTimestamp = file.Modified;
+        _fileServiceUtils.GetDirAndFile(dir.Path, file.Name, group?.Id).Returns((dir, file));
 
-        // Ensure a sufficient delay to guarantee timestamp change
-        // await Task.Delay(100, TestContext.Current.CancellationToken);
-        await sut.Value.UpdateTimestamp(_directoryPath, fileName, group?.Id);
+        // Act
+        await _service.UpdateTimestamp(dir.Path, file.Name, group?.Id);
 
-        // Re-fetch the file to ensure we have the latest data
-        await sut.Context.Entry(file).ReloadAsync(TestContext.Current.CancellationToken);
-
-        Assert.NotNull(file);
+        // Assert
         Assert.NotEqual(oldTimestamp, file.Modified);
         Assert.True(file.Modified > oldTimestamp);
     }
 
-    [Theory, AutoData]
-    public async Task GetFileInfo_ReturnsFileInfo(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task GetFileInfo_ReturnsFileInfo(bool withGroup)
     {
-        await CreateDirectories(sut, group);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _fileStorageService.GetFileSize(file.FilesystemName).Returns(1024L);
+        _fileServiceUtils.GetDirAndFile(dir.Path, file.Name, group?.Id, true).Returns((dir, file));
 
-        const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        // Act
+        var fileInfo = await _service.GetFileInfo($"{dir.Path}/{file.Name}", group?.Id);
 
-        sut.ServiceProvider.GetRequiredService<IFileStorageService>()
-            .GetFileSize(Arg.Any<string>())
-            .Returns(1024L);
-        // fileStorageService.GetFileSize(Arg.Any<string>())
-        //     .Returns(Task.FromResult(1024L));
-
-        var fileInfo = await sut.Value.GetFileInfo($"{_directoryPath}/{fileName}", group?.Id);
-
+        // Assert
         Assert.NotNull(fileInfo);
-        Assert.Equal($"{_directoryPath}/{fileName}", fileInfo.Path);
+        Assert.Equal($"{dir.Path}/{fileInfo.Name}", fileInfo.Path);
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
     }
 
-    [Theory, AutoData]
-    public async Task GetFileInfoAsync_ReturnsFileInfo(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IBrowserService browserService,
-        IFileStorageService fileStorageService)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task GetFileInfoAsync_ReturnsFileInfo(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-        var subdirectoryPath = $"{_directoryPath}/subdir";
-        const string fileName = "testfile.txt";
-        var filePath = $"{subdirectoryPath}/{fileName}";
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _fileStorageService.GetFileSize(file.FilesystemName).Returns(1024L);
 
-        // Create subdirectory
-        await browserService.AddDirectory(subdirectoryPath, group?.Id);
+        // Act
+        var fileInfo = await _service.GetFileInfoAsync(file.Id);
 
-        await sut.Value.AddFile(subdirectoryPath, fileName, group?.Id);
-        fileStorageService.GetFileSize(Arg.Any<string>())
-            .Returns(1024L);
-
-        var encryptedFile = await sut.Value.GetEncryptedFileAsync(filePath, group?.Id);
-        Assert.NotNull(encryptedFile);
-
-        var fileInfo = await sut.Value.GetFileInfoAsync(encryptedFile.Id);
-
+        // Assert
         Assert.NotNull(fileInfo);
-        Assert.Equal(filePath, fileInfo.Path);
+        Assert.Equal($"{dir.Path}/{file.Name}", fileInfo.Path);
         Assert.Equal(1024L, fileInfo.Size);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Created.Date);
         Assert.Equal(DateTime.UtcNow.Date, fileInfo.Modified.Date);
     }
 
-    [Theory, AutoData]
-    public async Task GetEncryptedFileByRelativePathAsync_ReturnsRelativeFile(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task GetEncryptedFileByRelativePathAsync_ReturnsRelativeFile(bool withGroup)
     {
-        var dir1 = dirFaker.CreateFaker()
-            .WithPath("/dir/subdir").ForUserOrGroup(sut.DefaultUser, group).Generate();
-        var dir2 = dirFaker.CreateFaker()
-            .WithPath("/dir/subdir2").ForUserOrGroup(sut.DefaultUser, group).Generate();
-
-        var file1 = fileFaker.CreateFaker().ForDir(dir1).Generate();
-        var file2 = fileFaker.CreateFaker().ForDir(dir2).Generate();
-
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dirFaker = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group);
+        var dir1 = dirFaker.WithPath("/dir/subdir").Generate();
+        var file1 = _fakerResolver.Get<EncryptedFile>().ForDir(dir1).Generate();
+        var dir2 = dirFaker.WithPath("/dir/subdir2").Generate();
+        var file2 = _fakerResolver.Get<EncryptedFile>().ForDir(dir2).Generate();
         var relativePath = $"../subdir2/{file2.Name}";
 
-        var relativeFile = await sut.Value.GetEncryptedFileByRelativePathAsync(file1, relativePath);
+        // Act
+        var relativeFile = await _service.GetEncryptedFileByRelativePathAsync(file1, relativePath);
 
+        // Assert
         Assert.NotNull(relativeFile);
         Assert.Equal(file2.Id, relativeFile.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetGroupDetailsFromFileIdAsync_ReturnsNull_ForUserFile(
-        Sut<FileService> sut,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetGroupDetailsFromFileIdAsync_ReturnsNull_ForUserFile()
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
 
-        var group = await sut.Value.GetGroupDetailsFromFileIdAsync(file.Id);
+        // Act
+        var group = await _service.GetGroupDetailsFromFileIdAsync(file.Id);
 
+        // Assert
         Assert.Null(group);
     }
 
-    [Theory, AutoData]
-    public async Task GetGroupDetailsFromFileIdAsync_ReturnsGroupDetails_ForGroupFile(
-        Sut<FileService> sut,
-        [FixtureGroup] UserGroup group,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetGroupDetailsFromFileIdAsync_ReturnsGroupDetails_ForGroupFile()
     {
-        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForGroup(_defaultGroup).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        _userGroupService.GetGroupDetailsAsync(_defaultGroup.Id)
+            .Returns(new GroupDetails(_defaultGroup.Id, _defaultGroup.Name!));
 
-        var result = await sut.Value.GetGroupDetailsFromFileIdAsync(file.Id);
+        // Act
+        var result = await _service.GetGroupDetailsFromFileIdAsync(file.Id);
 
+        // Assert
         Assert.NotNull(result);
-        Assert.Equal(group.Id, result.Id);
-        Assert.Equal(group.Name, result.Name);
+        Assert.Equal(_defaultGroup.Id, result.Id);
+        Assert.Equal(_defaultGroup.Name, result.Name);
     }
 
-    [Theory, AutoData]
-    public async Task GetUserFromFile_ReturnsUser(
-        Sut<FileService> sut,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetUserFromFile_ReturnsUser()
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
 
-        var user = await sut.Value.GetUserFromFile(file);
+        // Act
+        var user = await _service.GetUserFromFile(file);
 
+        // Assert
         Assert.NotNull(user);
-        Assert.Equal(sut.DefaultUser.Id, user.Id);
+        Assert.Equal(_defaultUser.Id, user.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetUserGroupFromFile_ReturnsGroup(
-        Sut<FileService> sut,
-        [FixtureGroup] UserGroup group,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetUserGroupFromFile_ReturnsGroup()
     {
-        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForGroup(_defaultGroup).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
 
-        var groupResult = await sut.Value.GetUserGroupFromFile(file);
+        // Act
+        var groupResult = await _service.GetUserGroupFromFile(file);
 
+        // Assert
         Assert.NotNull(groupResult);
-        Assert.Equal(group.Id, groupResult.Id);
+        Assert.Equal(_defaultGroup.Id, groupResult.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetDirOwnerAsync_ReturnsUser_ForUserOwner(
-        Sut<FileService> sut,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetDirOwnerAsync_ReturnsUser_ForUserOwner()
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
 
-        var owner = await sut.Value.GetDirOwnerAsync(file);
+        // Act
+        var owner = await _service.GetDirOwnerAsync(file);
 
+        // Assert
         Assert.Null(owner.Group);
         Assert.NotNull(owner.User);
-        Assert.Equal(sut.DefaultUser.Id, owner.User.Id);
+        Assert.Equal(_defaultUser.Id, owner.User.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetDirOwnerAsync_ReturnsGroup_ForGroupOwner(
-        Sut<FileService> sut,
-        [FixtureGroup] UserGroup group,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetDirOwnerAsync_ReturnsGroup_ForGroupOwner()
     {
-        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForGroup(_defaultGroup).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
 
-        var owner = await sut.Value.GetDirOwnerAsync(file);
+        // Act
+        var owner = await _service.GetDirOwnerAsync(file);
 
+        // Assert
         Assert.Null(owner.User);
         Assert.NotNull(owner.Group);
-        Assert.Equal(group.Id, owner.Group.Id);
+        Assert.Equal(_defaultGroup.Id, owner.Group.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetEncryptedFileForUserAsync_ReturnsFile(
-        Sut<FileService> sut,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetEncryptedFileForUserAsync_ReturnsFile()
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
         var filePath = $"{dir.Path}/{file.Name}";
 
-        var fileResult = await sut.Value.GetEncryptedFileForUserAsync(filePath, sut.DefaultUser);
+        // Act
+        var fileResult = await _service.GetEncryptedFileForUserAsync(filePath, _defaultUser);
 
+        // Assert
         Assert.NotNull(fileResult);
         Assert.Equal(file.Id, fileResult.Id);
     }
 
-    [Theory, AutoData]
-    public async Task GetEncryptedFileForGroupAsync_ReturnsFile(
-        Sut<FileService> sut,
-        [FixtureGroup] UserGroup group,
-        EncryptedFileFakerImplementation fileFaker,
-        EncryptedDirectoryFakerImplementation dirFaker)
+    [Fact]
+    public async Task GetEncryptedFileForGroupAsync_ReturnsFile()
     {
-        var dir = dirFaker.CreateFaker().ForGroup(group).Generate();
-        var file = fileFaker.CreateFaker().ForDir(dir).Generate();
+        // Arrange
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForGroup(_defaultGroup).Generate();
+        var file = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
         var filePath = $"{dir.Path}/{file.Name}";
 
-        var fileResult = await sut.Value.GetEncryptedFileForGroupAsync(filePath, group);
+        // Act
+        var fileResult = await _service.GetEncryptedFileForGroupAsync(filePath, _defaultGroup);
 
+        // Asserts
         Assert.NotNull(fileResult);
         Assert.Equal(file.Id, fileResult.Id);
     }

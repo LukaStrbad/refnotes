@@ -14,6 +14,7 @@ public static class FakerCollection
 
         services.AddTransient<Faker<User>>(_ => GetUserFaker(context));
         services.AddTransient<Faker<EncryptedDirectory>>(sp => GetDirectoryFaker(context, sp));
+        services.AddTransient<Faker<EncryptedFile>>(sp => GetFileFaker(context, sp));
         services.AddTransient<Faker<UserGroup>>(_ => GetUserGroupFaker(context));
 
         return services;
@@ -43,7 +44,7 @@ public static class FakerCollection
         return CreateBaseFaker<EncryptedDirectory>(context)
             .StrictMode(true)
             .RuleFor(g => g.Id, f => 0)
-            .RuleFor(g => g.Path, f => f.System.DirectoryPath())
+            .RuleFor(g => g.Path, f => f.System.DirectoryPath() + Guid.CreateVersion7()) // Ensure unique directory path
             .RuleFor(g => g.PathHash, (_, dir) => dir.Path)
             .RuleFor(g => g.Files, _ => [])
             .RuleFor(g => g.Directories, _ => [])
@@ -52,6 +53,23 @@ public static class FakerCollection
             .RuleFor(g => g.OwnerId, (_, dir) => dir.Owner?.Id)
             .RuleFor(g => g.Group, _ => null)
             .RuleFor(d => d.GroupId, (_, dir) => dir.Group?.Id);
+    }
+
+    private static Faker<EncryptedFile> GetFileFaker(RefNotesContext? context, IServiceProvider sp)
+    {
+        var dirFaker = sp.GetRequiredService<Faker<EncryptedDirectory>>();
+        return CreateBaseFaker<EncryptedFile>(context)
+            .CustomInstantiator(_ => new EncryptedFile("", "", ""))
+            .StrictMode(true)
+            .RuleFor(f => f.Id, f => 0)
+            .RuleFor(f => f.FilesystemName, f => f.System.FileName())
+            .RuleFor(f => f.Name, _ => Guid.CreateVersion7().ToString()) // Ensure unique file name
+            .RuleFor(f => f.NameHash, (_, file) => file.Name)
+            .RuleFor(f => f.Tags, _ => [])
+            .RuleFor(f => f.EncryptedDirectory, _ => dirFaker.Generate())
+            .RuleFor(f => f.EncryptedDirectoryId, (_, file) => file.EncryptedDirectory?.Id ?? 0)
+            .RuleFor(f => f.Created, _ => DateTime.UtcNow)
+            .RuleFor(f => f.Modified, _ => DateTime.UtcNow);
     }
 
     private static Faker<UserGroup> GetUserGroupFaker(RefNotesContext? context) =>

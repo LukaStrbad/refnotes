@@ -14,9 +14,9 @@ public class TestDatabaseFixture : IAsyncLifetime
     private MySqlContainer? _mysqlContainer;
 
     private string? _connectionString;
+    private DbContextOptions<RefNotesContext>? _dbOptions;
 
-    private bool _isDatabaseCreated;
-    private readonly Lock _isDatabaseCreatedLock = new();
+    private readonly Lock _dbOptionsLock = new();
 
     private static TestDatabaseFixture? _instance;
     private bool _reuseTestContainer;
@@ -41,18 +41,18 @@ public class TestDatabaseFixture : IAsyncLifetime
             throw new Exception("Connection string is not set");
         }
 
-        lock (_isDatabaseCreatedLock)
+        lock (_dbOptionsLock)
         {
+            if (_dbOptions is not null)
+                return new RefNotesContext(_dbOptions);
+            
             var serverVersion = ServerVersion.AutoDetect(_connectionString);
-            var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
+            _dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
                 .UseMySql(_connectionString, serverVersion).Options;
-            var context = new RefNotesContext(dbOptions);
-
-            if (_isDatabaseCreated) return context;
+            var context = new RefNotesContext(_dbOptions);
 
             context.Database.EnsureDeleted();
             context.Database.Migrate();
-            _isDatabaseCreated = true;
 
             return context;
         }
