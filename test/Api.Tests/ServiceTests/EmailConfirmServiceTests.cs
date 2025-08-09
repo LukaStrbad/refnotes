@@ -1,20 +1,40 @@
 using Api.Services;
-using Api.Tests.Data;
 using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
+using Data;
+using Data.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.Tests.ServiceTests;
 
 public sealed class EmailConfirmServiceTests
 {
-    [Theory, AutoData]
-    public async Task GenerateToken_GenerateConfirmToken(Sut<EmailConfirmService> sut)
-    {
-        var generatedToken = await sut.Value.GenerateToken(sut.DefaultUser.Id);
+    private readonly EmailConfirmService _service;
+    private readonly RefNotesContext _context;
+    private readonly FakerResolver _fakerResolver;
 
-        var tokenEntity = await sut.Context.EmailConfirmTokens
-            .FirstOrDefaultAsync(x => x.UserId == sut.DefaultUser.Id,
+    private readonly User _defaultUser;
+
+    public EmailConfirmServiceTests(TestDatabaseFixture dbFixture)
+    {
+        var serviceProvider = new ServiceFixture<EmailConfirmService>().WithDb(dbFixture).WithFakers()
+            .CreateServiceProvider();
+
+        _service = serviceProvider.GetRequiredService<EmailConfirmService>();
+        _context = serviceProvider.GetRequiredService<RefNotesContext>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        
+        _defaultUser = _fakerResolver.Get<User>().Generate();
+    }
+
+    [Fact]
+    public async Task GenerateToken_GenerateConfirmToken()
+    {
+        var generatedToken = await _service.GenerateToken(_defaultUser.Id);
+
+        var tokenEntity = await _context.EmailConfirmTokens
+            .FirstOrDefaultAsync(x => x.UserId == _defaultUser.Id,
                 cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(tokenEntity);
@@ -23,52 +43,44 @@ public sealed class EmailConfirmServiceTests
         Assert.InRange(tokenEntity.ExpiresAt, DateTime.UtcNow.AddMinutes(59), DateTime.UtcNow.AddMinutes(61));
     }
 
-    [Theory, AutoData]
-    public async Task GenerateToken_DeletesExistingTokens(
-        Sut<EmailConfirmService> sut,
-        EmailConfirmTokenFakerImplementation tokenFaker)
+    [Fact]
+    public async Task GenerateToken_DeletesExistingTokens()
     {
-        tokenFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
+        _fakerResolver.Get<EmailConfirmToken>().ForUser(_defaultUser).Generate();
 
-        var generatedToken = await sut.Value.GenerateToken(sut.DefaultUser.Id);
+        var generatedToken = await _service.GenerateToken(_defaultUser.Id);
 
-        var tokenEntities = await sut.Context.EmailConfirmTokens
-            .Where(x => x.UserId == sut.DefaultUser.Id)
+        var tokenEntities = await _context.EmailConfirmTokens
+            .Where(x => x.UserId == _defaultUser.Id)
             .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Single(tokenEntities);
         Assert.Equal(generatedToken, tokenEntities[0].Value);
     }
 
-    [Theory, AutoData]
-    public async Task ConfirmEmail_ReturnsTrue_WhenEmailConfirmed(
-        Sut<EmailConfirmService> sut,
-        UserFakerImplementation userFaker,
-        EmailConfirmTokenFakerImplementation tokenFaker)
+    [Fact]
+    public async Task ConfirmEmail_ReturnsTrue_WhenEmailConfirmed()
     {
-        var user = userFaker.CreateFaker().WithUnconfirmedEmail().Generate();
-        var token = tokenFaker.CreateFaker().ForUser(user).Generate();
+        var user = _fakerResolver.Get<User>().WithUnconfirmedEmail().Generate();
+        var token = _fakerResolver.Get<EmailConfirmToken>().ForUser(user).Generate();
 
-        var (returnedUser, success) = await sut.Value.ConfirmEmail(token.Value);
+        var (returnedUser, success) = await _service.ConfirmEmail(token.Value);
 
-        await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
+        await _context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
         Assert.True(success);
         Assert.True(user.EmailConfirmed);
         Assert.Equal(user.Id, returnedUser?.Id);
     }
 
-    [Theory, AutoData]
-    public async Task ConfirmEmail_ReturnsFalse_WhenTokenIsExpired(
-        Sut<EmailConfirmService> sut,
-        UserFakerImplementation userFaker,
-        EmailConfirmTokenFakerImplementation tokenFaker)
+    [Fact]
+    public async Task ConfirmEmail_ReturnsFalse_WhenTokenIsExpired()
     {
-        var user = userFaker.CreateFaker().WithUnconfirmedEmail().Generate();
-        var token = tokenFaker.CreateFaker().ForUser(user).WithExpiredToken().Generate();
+        var user = _fakerResolver.Get<User>().WithUnconfirmedEmail().Generate();
+        var token = _fakerResolver.Get<EmailConfirmToken>().ForUser(user).WithExpiredToken().Generate();
 
-        var (returnedUser, success) = await sut.Value.ConfirmEmail(token.Value);
+        var (returnedUser, success) = await _service.ConfirmEmail(token.Value);
 
-        await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
+        await _context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
         Assert.False(success);
         Assert.False(user.EmailConfirmed);
         Assert.Null(returnedUser);

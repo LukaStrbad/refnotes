@@ -1,217 +1,185 @@
 ﻿using Api.Model;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
-using Api.Tests.Mocks;
-using Api.Utils;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Api.Tests.Data.Faker;
+using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
+using Data.Model;
 using Microsoft.Extensions.DependencyInjection;
-using Api_Tests_Mocks_MemoryCache = Api.Tests.Mocks.MemoryCache;
-using MemoryCache = Api.Tests.Mocks.MemoryCache;
-using Mocks_MemoryCache = Api.Tests.Mocks.MemoryCache;
-using Tests_Mocks_MemoryCache = Api.Tests.Mocks.MemoryCache;
+using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
-[ConcreteType<IEncryptionService, FakeEncryptionService>]
-[ConcreteType<IFileServiceUtils, FileServiceUtils>]
-[ConcreteType<IFileService, FileService>]
-[ConcreteType<IBrowserService, BrowserService>]
-[ConcreteType<ITagService, TagService>]
-[ConcreteType<IMemoryCache, Api_Tests_Mocks_MemoryCache>]
 public class SearchServiceTests : BaseTests
 {
-    private readonly string _directoryPath = $"/search_service_test_{RandomString(32)}";
+    private readonly SearchService _service;
+    private readonly FakerResolver _fakerResolver;
 
-    private async Task CreateBaseDirectory(Sut<SearchService> sut)
+    private readonly EncryptedDirectory _defaultDir;
+
+    public SearchServiceTests(TestDatabaseFixture dbFixture)
     {
-        await sut.ServiceProvider.GetRequiredService<IBrowserService>()
-            .AddDirectory(_directoryPath, null);
+        var serviceProvider = new ServiceFixture<SearchService>().WithDb(dbFixture).WithFakeEncryption().WithFakers()
+            .WithRedis().CreateServiceProvider();
+
+        _service = serviceProvider.GetRequiredService<SearchService>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        
+        var defaultUser = _fakerResolver.Get<User>().Generate();
+        _defaultDir = _fakerResolver.Get<EncryptedDirectory>().ForUser(defaultUser).Generate();
+        serviceProvider.GetRequiredService<IUserService>().GetCurrentUser().Returns(defaultUser);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_SearchesFilesByName(
-        Sut<SearchService> sut,
-        IFileService fileService)
+    [Fact]
+    public async Task SearchFiles_SearchesFilesByName()
     {
-        await CreateBaseDirectory(sut);
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).Generate(3);
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("test.txt").Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("test2.txt").Generate();
+        var options = new SearchOptionsDto("test", 0, 100);
 
-        await fileService.AddFile(_directoryPath, "foo.txt", null);
-        await fileService.AddFile(_directoryPath, "bar.txt", null);
-        await fileService.AddFile(_directoryPath, "baz.txt", null);
-        await fileService.AddFile(_directoryPath, "foo2.txt", null);
-
-        var options = new SearchOptionsDto("foo", 0, 100);
-
-        var files = await sut.Value.SearchFiles(options)
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
         var filePaths = files.Select(file => file.Path).ToList();
         Assert.Equal(2, filePaths.Count);
-        Assert.Contains($"{_directoryPath}/foo.txt", filePaths);
-        Assert.Contains($"{_directoryPath}/foo2.txt", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/test.txt", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/test2.txt", filePaths);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_FiltersFilesByTags(
-        Sut<SearchService> sut,
-        IFileService fileService,
-        ITagService tagService)
+    [Fact]
+    public async Task SearchFiles_FiltersFilesByTags()
     {
-        await CreateBaseDirectory(sut);
-
-        await fileService.AddFile(_directoryPath, "foo.txt", null);
-        await fileService.AddFile(_directoryPath, "bar.txt", null);
-        await fileService.AddFile(_directoryPath, "baz.txt", null);
-
-        await tagService.AddFileTag(_directoryPath, "foo.txt", "tag1", null);
-        await tagService.AddFileTag(_directoryPath, "bar.txt", "tag2", null);
-        await tagService.AddFileTag(_directoryPath, "baz.txt", "tag2", null);
-        await tagService.AddFileTag(_directoryPath, "baz.txt", "tag3", null);
-
+        // Arrange
+        var existingFiles = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).Generate(3);
+        var (file1, file2, file3) = (existingFiles[0], existingFiles[1], existingFiles[2]);
+        _fakerResolver.Get<FileTag>().WithName("tag1").ForFiles(file1).Generate();
+        _fakerResolver.Get<FileTag>().WithName("tag2").ForFiles(file2, file3).Generate();
+        _fakerResolver.Get<FileTag>().WithName("tag3").ForFiles(file3).Generate();
         var options = new SearchOptionsDto("", 0, 100, Tags: ["tag2"]);
 
-        var files = await sut.Value.SearchFiles(options)
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
         var filePaths = files.Select(file => file.Path).ToList();
         Assert.Equal(2, filePaths.Count);
-        Assert.Contains($"{_directoryPath}/bar.txt", filePaths);
-        Assert.Contains($"{_directoryPath}/baz.txt", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/{file2.Name}", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/{file3.Name}", filePaths);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_NoSearchTermOrFilters_ReturnsAllFiles(
-        Sut<SearchService> sut,
-        IFileService fileService)
+    [Fact]
+    public async Task SearchFiles_NoSearchTermOrFilters_ReturnsAllFiles()
     {
-        await CreateBaseDirectory(sut);
-
-        await fileService.AddFile(_directoryPath, "foo.txt", null);
-        await fileService.AddFile(_directoryPath, "bar.md", null);
-        await fileService.AddFile(_directoryPath, "baz.pdf", null);
-
+        // Arrange
+        var generatedFiles = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).Generate(10);
+        var generatedFilePaths = generatedFiles.Select(f => $"{_defaultDir.Path}/{f.Name}").ToList();
         var options = new SearchOptionsDto("", 0, 100);
-        var files = await sut.Value.SearchFiles(options)
+
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
+        var filePaths = files.Select(f => f.Path).ToList();
+        Assert.Equal(generatedFiles.Count, filePaths.Count);
+        Assert.Equal(generatedFilePaths, filePaths);
+    }
+
+    [Fact]
+    public async Task SearchFiles_FiltersFilesByType()
+    {
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("one.md").Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("two.txt").Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("three.pdf").Generate();
+        var options = new SearchOptionsDto("", 0, 100, FileTypes: ["txt", ".pdf"]);
+
+        // Act
+        var files = await _service.SearchFiles(options)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        var filePaths = files.Select(f => f.Path).ToList();
+        Assert.Equal(2, filePaths.Count);
+        Assert.Contains($"{_defaultDir.Path}/two.txt", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/three.pdf", filePaths);
+    }
+
+    [Fact]
+    public async Task SearchFiles_FiltersFilesByModifiedDateRange()
+    {
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 1, 1)).Generate(2);
+        var februaryFiles = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 2, 1))
+            .Generate(3);
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 3, 1)).Generate(5);
+
+        var options = new SearchOptionsDto("", 0, 100,
+            ModifiedFrom: new DateTime(2025, 1, 15), ModifiedTo: new DateTime(2025, 2, 15));
+
+        // Act
+        var files = await _service.SearchFiles(options)
+            .ToListAsync(TestContext.Current.CancellationToken);
+
+        // Assert
         var filePaths = files.Select(f => f.Path).ToList();
         Assert.Equal(3, filePaths.Count);
-        Assert.Contains($"{_directoryPath}/foo.txt", filePaths);
-        Assert.Contains($"{_directoryPath}/bar.md", filePaths);
-        Assert.Contains($"{_directoryPath}/baz.pdf", filePaths);
+        Assert.Equal(februaryFiles.Select(f => $"{_defaultDir.Path}/{f.Name}").ToList(), filePaths);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_FiltersFilesByType(
-        Sut<SearchService> sut,
-        IFileService fileService)
+    [Fact]
+    public async Task SearchFiles_FiltersFilesMyModifiedFrom()
     {
-        await CreateBaseDirectory(sut);
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 1, 1)).Generate(2);
+        var februaryFiles = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 2, 1))
+            .Generate(3);
+        var marchFiles = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithModifiedDate(new DateTime(2025, 3, 1))
+            .Generate(5);
+        List<EncryptedFile> combinedFiles = [..februaryFiles, ..marchFiles];
 
-        await fileService.AddFile(_directoryPath, "one.md", null);
-        await fileService.AddFile(_directoryPath, "two.txt", null);
-        await fileService.AddFile(_directoryPath, "three.pdf", null);
-
-        var options = new SearchOptionsDto("", 0, 100, FileTypes: ["txt", ".pdf"]);
-        var files = await sut.Value.SearchFiles(options)
-            .ToListAsync(TestContext.Current.CancellationToken);
-
-        var filePaths = files.Select(f => f.Path).ToList();
-        Assert.Contains($"{_directoryPath}/two.txt", filePaths);
-        Assert.Contains($"{_directoryPath}/three.pdf", filePaths);
-        Assert.Equal(2, filePaths.Count);
-    }
-
-    [Theory, AutoData]
-    public async Task SearchFiles_FiltersFilesByModifiedDateRange(
-        Sut<SearchService> sut,
-        IFileService fileService)
-    {
-        await CreateBaseDirectory(sut);
-
-        await fileService.AddFile(_directoryPath, "date1.txt", null);
-        await fileService.AddFile(_directoryPath, "date2.txt", null);
-        await fileService.AddFile(_directoryPath, "date3.txt", null);
-
-        // Set file modified dates using direct DbContext modification (simulate file modified dates)
-        var dbDirectory = await sut.Context.Directories
-            .Where(dir => dir.Path == _directoryPath)
-            .Include(dir => dir.Files)
-            .FirstOrDefaultAsync(cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.NotNull(dbDirectory);
-
-        var dbFiles = dbDirectory.Files.ToList();
-
-        var file1Modified = DateTime.Parse("2025-01-01");
-        var file2Modified = DateTime.Parse("2025-02-01");
-        var file3Modified = DateTime.Parse("2025-03-01");
-
-        dbFiles.Find(f => f.Name == "date1.txt")!.Modified = file1Modified;
-        dbFiles.Find(f => f.Name == "date2.txt")!.Modified = file2Modified;
-        dbFiles.Find(f => f.Name == "date3.txt")!.Modified = file3Modified;
-        await sut.Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
-        // This should return all files between "2025-01-15" and "2025-02-15"
         var options = new SearchOptionsDto("", 0, 100,
-            ModifiedFrom: DateTime.Parse("2025-01-15"), ModifiedTo: DateTime.Parse("2025-02-15"));
+            ModifiedFrom: new DateTime(2025, 1, 15), ModifiedTo: null);
 
-        var files = await sut.Value.SearchFiles(options)
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         var filePaths = files.Select(f => f.Path).ToList();
-        Assert.Single(filePaths);
-        Assert.Contains($"{_directoryPath}/date2.txt", filePaths);
-
-
-        // This should return all files after ModifiedFrom date
-        options = options with { ModifiedTo = null };
-
-        files = await sut.Value.SearchFiles(options)
-            .ToListAsync(TestContext.Current.CancellationToken);
-
-        filePaths = files.Select(f => f.Path).ToList();
-        Assert.Equal(2, filePaths.Count);
-        Assert.Contains($"{_directoryPath}/date2.txt", filePaths);
-        Assert.Contains($"{_directoryPath}/date3.txt", filePaths);
+        Assert.Equal(8, filePaths.Count);
+        Assert.Equal(combinedFiles.Select(f => $"{_defaultDir.Path}/{f.Name}").ToList(), filePaths);
     }
 
 
-    [Theory, AutoData]
-    public async Task SearchFiles_UnmatchedCriteria_ReturnsEmpty(
-        Sut<SearchService> sut,
-        IFileService fileService)
+    [Fact]
+    public async Task SearchFiles_UnmatchedCriteria_ReturnsEmpty()
     {
-        await CreateBaseDirectory(sut);
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).Generate(5);
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("test.txt").Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("test2.md").Generate();
 
-        await fileService.AddFile(_directoryPath, "abc.txt", null);
-        await fileService.AddFile(_directoryPath, "def.md", null);
-
+        // Act
         var options = new SearchOptionsDto("xyz", 0, 100, FileTypes: ["pdf"], Tags: ["notag"]);
-        var files = await sut.Value.SearchFiles(options)
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
         Assert.Empty(files);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_ComplexFiltering_OnlyCorrectFileReturned(
-        Sut<SearchService> sut,
-        IFileService fileService,
-        ITagService tagService)
+    [Fact]
+    public async Task SearchFiles_ComplexFiltering_OnlyCorrectFileReturned()
     {
-        await CreateBaseDirectory(sut);
-
-        await fileService.AddFile(_directoryPath, "special1.md", null);
-        await fileService.AddFile(_directoryPath, "special2.md", null);
-        await tagService.AddFileTag(_directoryPath, "special1.md", "projectA", null);
-
-        var dbFile = sut.Context.Files.First(f => f.Name == "special1.md");
-        dbFile.Modified = DateTime.UtcNow.AddDays(-5);
-        await sut.Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-
+        // Arrange
+        var file1 = _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("special1.md")
+            .WithModifiedDate(DateTime.UtcNow.AddDays(-5)).Generate();
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("special2.md").Generate();
+        _fakerResolver.Get<FileTag>().WithName("projectA").ForFiles(file1).Generate();
         var options = new SearchOptionsDto(
             SearchTerm: "special1",
             Page: 0,
@@ -221,27 +189,29 @@ public class SearchServiceTests : BaseTests
             ModifiedFrom: DateTime.UtcNow.AddDays(-10),
             ModifiedTo: DateTime.UtcNow.AddDays(-1)
         );
-        var files = await sut.Value.SearchFiles(options)
+
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
         var filePaths = files.Select(f => f.Path).ToList();
         Assert.Single(filePaths);
-        Assert.Contains($"{_directoryPath}/special1.md", filePaths);
+        Assert.Contains($"{_defaultDir.Path}/special1.md", filePaths);
     }
 
-    [Theory, AutoData]
-    public async Task SearchFiles_FileName_MatchingIsCaseInsensitive(
-        Sut<SearchService> sut,
-        IFileService fileService)
+    [Fact]
+    public async Task SearchFiles_FileName_MatchingIsCaseInsensitive()
     {
-        await CreateBaseDirectory(sut);
-
-        await fileService.AddFile(_directoryPath, "FOO.TXT", null);
+        // Arrange
+        _fakerResolver.Get<EncryptedFile>().ForDir(_defaultDir).WithName("FOO.TXT").Generate();
         var options = new SearchOptionsDto("foo", 0, 100);
 
-        var files = await sut.Value.SearchFiles(options)
+        // Act
+        var files = await _service.SearchFiles(options)
             .ToListAsync(TestContext.Current.CancellationToken);
 
+        // Assert
         Assert.Single(files);
         Assert.EndsWith("FOO.TXT", files[0].Path);
     }

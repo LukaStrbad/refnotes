@@ -2,6 +2,8 @@
 using Api.Model;
 using Api.Services;
 using Api.Tests.Data;
+using Api.Tests.Fixtures;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using StackExchange.Redis;
 
@@ -10,9 +12,19 @@ namespace Api.Tests.ServiceTests;
 public sealed class FileSyncServiceTests
 {
     private readonly CancellationTokenSource _cts = new();
+    private readonly FileSyncService _service;
+    private readonly ISubscriber _subscriber;
 
-    [Theory, AutoData]
-    public async Task SendSyncSignalAsync_SendsSignal(Sut<FileSyncService> sut, ISubscriber subscriber)
+    public FileSyncServiceTests()
+    {
+        var serviceProvider = new ServiceFixture<FileSyncService>().WithRedis().CreateServiceProvider();
+
+        _service = serviceProvider.GetRequiredService<FileSyncService>();
+        _subscriber = serviceProvider.GetRequiredService<ISubscriber>();
+    }
+
+    [Fact]
+    public async Task SendSyncSignalAsync_SendsSignal()
     {
         const int fileId = 123;
         var lastModified = DateTime.Now;
@@ -20,16 +32,16 @@ public sealed class FileSyncServiceTests
         var channelMessage = new FileSyncChannelMessage(lastModified, clientId);
         var channelMessageJson = JsonSerializer.Serialize(channelMessage);
 
-        await sut.Value.SendSyncSignalAsync(fileId, channelMessage, _cts.Token);
+        await _service.SendSyncSignalAsync(fileId, channelMessage, _cts.Token);
 
-        await subscriber.Received(1).PublishAsync(
+        await _subscriber.Received(1).PublishAsync(
             Arg.Is<RedisChannel>(c => c.ToString().EndsWith(fileId.ToString())),
             Arg.Is<RedisValue>(channelMessageJson),
             CommandFlags.FireAndForget);
     }
 
-    [Theory, AutoData]
-    public async Task SubscribeToSyncSignalAsync_GetsValues(Sut<FileSyncService> sut, ISubscriber subscriber)
+    [Fact]
+    public async Task SubscribeToSyncSignalAsync_GetsValues()
     {
         // Arrange
         const int fileId = 456;
@@ -43,7 +55,7 @@ public sealed class FileSyncServiceTests
 
         Action<RedisChannel, RedisValue>? capturedHandler = null;
 
-        subscriber.SubscribeAsync(
+        _subscriber.SubscribeAsync(
             Arg.Do<RedisChannel>(ch => Assert.Equal(redisChannel, ch)),
             Arg.Do<Action<RedisChannel, RedisValue>>(cb => capturedHandler = cb),
             CommandFlags.FireAndForget
@@ -53,7 +65,7 @@ public sealed class FileSyncServiceTests
         var tcs = new TaskCompletionSource();
 
         // Act
-        await sut.Value.SubscribeToSyncSignalAsync(fileId, message =>
+        await _service.SubscribeToSyncSignalAsync(fileId, message =>
         {
             receivedMessage = message;
             tcs.SetResult();

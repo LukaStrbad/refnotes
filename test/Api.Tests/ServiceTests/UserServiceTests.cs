@@ -1,86 +1,92 @@
 using Api.Exceptions;
 using Api.Model;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
+using Data.Model;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.Tests.ServiceTests;
 
 public sealed class UserServiceTests
 {
-    [Theory, AutoData]
-    public async Task FindByUsername_ReturnsUser(Sut<UserService> sut, UserFakerImplementation userFaker)
-    {
-        var user = userFaker.CreateFaker().Generate();
+    private readonly UserService _service;
+    private readonly FakerResolver _fakerResolver;
 
-        var foundUser = await sut.Value.GetByUsername(user.Username);
+    private readonly User _defaultUser;
+
+    public UserServiceTests(TestDatabaseFixture dbFixture)
+    {
+        var serviceProvider = new ServiceFixture<UserService>().WithDb(dbFixture).WithFakers().CreateServiceProvider();
+        
+        _service = serviceProvider.GetRequiredService<UserService>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        
+        _defaultUser = _fakerResolver.Get<User>().Generate();
+    }
+
+    [Fact]
+    public async Task FindByUsername_ReturnsUser()
+    {
+        var foundUser = await _service.GetByUsername(_defaultUser.Username);
 
         Assert.NotNull(foundUser);
-        Assert.Equal(user.Id, foundUser.Id);
+        Assert.Equal(_defaultUser.Id, foundUser.Id);
     }
 
-    [Theory, AutoData]
-    public async Task EditUser_UpdatesUser(Sut<UserService> sut, UserFakerImplementation userFaker)
+    [Fact]
+    public async Task EditUser_UpdatesUser()
     {
-        var user = userFaker.CreateFaker().Generate();
         var request = new EditUserRequest("New Name", "new_username", "new_username@example.com");
 
-        var updatedUser = await sut.Value.EditUser(user.Id, request);
+        var updatedUser = await _service.EditUser(_defaultUser.Id, request);
 
-        Assert.Equal(user.Id, updatedUser.Id);
+        Assert.Equal(_defaultUser.Id, updatedUser.Id);
         Assert.Equal(request.NewName, updatedUser.Name);
         Assert.Equal(request.NewUsername, updatedUser.Username);
         Assert.Equal(request.NewEmail, updatedUser.Email);
     }
 
-    [Theory, AutoData]
-    public async Task EditUser_UpdatesUser_WithSameUsername(Sut<UserService> sut, UserFakerImplementation userFaker)
+    [Fact]
+    public async Task EditUser_UpdatesUser_WithSameUsername()
     {
-        var user = userFaker.CreateFaker().Generate();
-        var request = new EditUserRequest("New Name", user.Username, "new_username@example.com");
-        
-        var updatedUser = await sut.Value.EditUser(user.Id, request);
-        
-        Assert.Equal(user.Id, updatedUser.Id);
+        var request = new EditUserRequest("New Name", _defaultUser.Username, "new_username@example.com");
+
+        var updatedUser = await _service.EditUser(_defaultUser.Id, request);
+
+        Assert.Equal(_defaultUser.Id, updatedUser.Id);
         Assert.Equal(request.NewName, updatedUser.Name);
         Assert.Equal(request.NewUsername, updatedUser.Username);
         Assert.Equal(request.NewEmail, updatedUser.Email);
     }
 
-    [Theory, AutoData]
-    public async Task EditUser_ThrowException_IfUsernameIsTaken(Sut<UserService> sut, UserFakerImplementation userFaker)
+    [Fact]
+    public async Task EditUser_ThrowException_IfUsernameIsTaken()
     {
-        var user1 = userFaker.CreateFaker().Generate();
-        var user2 = userFaker.CreateFaker().Generate();
+        var user1 = _fakerResolver.Get<User>().Generate();
+        var user2 = _fakerResolver.Get<User>().Generate();
         var request = new EditUserRequest("New Name", user1.Username, "new_user@example.com");
 
         await Assert.ThrowsAsync<UserExistsException>(() =>
-            sut.Value.EditUser(user2.Id, request));
+            _service.EditUser(user2.Id, request));
     }
 
-    [Theory, AutoData]
-    public async Task UnconfirmEmail_UnconfirmsEmail(Sut<UserService> sut, UserFakerImplementation userFaker)
+    [Fact]
+    public async Task UnconfirmEmail_UnconfirmsEmail()
     {
-        var user = userFaker.CreateFaker().WithConfirmedEmail().Generate();
-        
-        await sut.Value.UnconfirmEmail(user.Id);
+        await _service.UnconfirmEmail(_defaultUser.Id);
 
-        await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
-        Assert.False(user.EmailConfirmed);
+        Assert.False(_defaultUser.EmailConfirmed);
     }
 
-    [Theory, AutoData]
-    public async Task UpdatePassword_UpdatesUserPassword(Sut<UserService> sut, UserFakerImplementation userFaker)
+    [Fact]
+    public async Task UpdatePassword_UpdatesUserPassword()
     {
-        var user = userFaker.CreateFaker().Generate();
-        var oldPassword = user.Password;
+        var oldPassword = _defaultUser.Password;
         const string newPassword = "new_secure_password";
-        var newCredentials = new UserCredentials(user.Username, newPassword);
+        var newCredentials = new UserCredentials(_defaultUser.Username, newPassword);
 
-        await sut.Value.UpdatePassword(newCredentials);
-        
-        await sut.Context.Entry(user).ReloadAsync(TestContext.Current.CancellationToken);
-        Assert.NotEqual(oldPassword, user.Password);
+        await _service.UpdatePassword(newCredentials);
+
+        Assert.NotEqual(oldPassword, _defaultUser.Password);
     }
 }

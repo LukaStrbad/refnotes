@@ -18,4 +18,7 @@ public static class EncryptedFileFakerExtensions
 
     public static Faker<EncryptedFile> ForDir(this Faker<EncryptedFile> faker, EncryptedDirectory dir)
         => faker.RuleFor(f => f.EncryptedDirectory, _ => dir);
+    
+    public static Faker<EncryptedFile> WithModifiedDate(this Faker<EncryptedFile> faker, DateTime modifiedDate)
+        => faker.RuleFor(f => f.Modified, _ => modifiedDate);
 }

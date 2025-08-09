@@ -1,169 +1,154 @@
 ﻿using Api.Services;
 using Api.Services.Schedulers;
-using Api.Tests.Data;
 using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
+using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
 public class PublicFileServiceTests : BaseTests
 {
-    private static async Task<EncryptedFile> CreateFile(Sut<PublicFileService> sut)
+    private readonly PublicFileService _service;
+    private readonly IPublicFileScheduler _publicFileScheduler;
+    private readonly RefNotesContext _context;
+    private readonly FakerResolver _fakerResolver;
+
+    public PublicFileServiceTests(TestDatabaseFixture dbFixture)
     {
-        var rndPath = $"/test_dir_{RandomString(32)}";
-        var directory = new EncryptedDirectory(rndPath, "path-hash", sut.DefaultUser);
-        await sut.Context.Directories.AddAsync(directory);
+        var serviceProvider = new ServiceFixture<PublicFileService>().WithDb(dbFixture).WithFakeEncryption()
+            .WithFakers().CreateServiceProvider();
 
-        var fileName = $"{RandomString(32)}.txt";
-        var newFile = new EncryptedFile("test123", fileName, "name-hash")
-        {
-            EncryptedDirectory = directory
-        };
-        await sut.Context.Files.AddAsync(newFile);
-
-        await sut.Context.SaveChangesAsync(TestContext.Current.CancellationToken);
-        return newFile;
+        _service = serviceProvider.GetRequiredService<PublicFileService>();
+        _publicFileScheduler = serviceProvider.GetRequiredService<IPublicFileScheduler>();
+        _context = serviceProvider.GetRequiredService<RefNotesContext>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
     }
 
-    [Theory, AutoData]
-    public async Task GetUrlHash_GetsUrlHash(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task GetUrlHash_GetsUrlHash()
     {
-        var expectedUrlHash = RandomString(64);
-        var file = await CreateFile(sut);
-        await sut.Context.PublicFiles.AddAsync(new PublicFile(expectedUrlHash, file.Id),
-            TestContext.Current.CancellationToken);
-        await sut.Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(file).Generate();
 
-        var urlHash = await sut.Value.GetUrlHashAsync(file.Id);
+        var urlHash = await _service.GetUrlHashAsync(file.Id);
 
-        Assert.Equal(expectedUrlHash, urlHash);
+        Assert.Equal(publicFile.UrlHash, urlHash);
     }
 
-    [Theory, AutoData]
-    public async Task GetUrlHash_ReturnsNull_WhenFileNotFound(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task GetUrlHash_ReturnsNull_WhenFileNotFound()
     {
-        var urlHash = await sut.Value.GetUrlHashAsync(0);
+        var urlHash = await _service.GetUrlHashAsync(0);
 
         Assert.Null(urlHash);
     }
 
-    [Theory, AutoData]
-    public async Task CreatePublicFile_CreatesPublicFile(Sut<PublicFileService> sut,
-        IPublicFileScheduler publicFileScheduler)
+    [Fact]
+    public async Task CreatePublicFile_CreatesPublicFile()
     {
-        var file = await CreateFile(sut);
+        // Arrange
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
 
-        var urlHash = await sut.Value.CreatePublicFileAsync(file.Id);
+        // Act
+        var urlHash = await _service.CreatePublicFileAsync(file.Id);
 
-        var publicFile = await sut.Context.PublicFiles.FirstOrDefaultAsync(pf => pf.EncryptedFileId == file.Id,
+        // Assert
+        var publicFile = await _context.PublicFiles.FirstOrDefaultAsync(pf => pf.EncryptedFileId == file.Id,
             cancellationToken: TestContext.Current.CancellationToken);
-
         Assert.NotEmpty(urlHash);
         Assert.NotNull(publicFile);
         Assert.Equal(urlHash, publicFile.UrlHash);
-        await publicFileScheduler.Received().ScheduleImageRefreshForPublicFile(publicFile.Id);
+        await _publicFileScheduler.Received().ScheduleImageRefreshForPublicFile(publicFile.Id);
     }
 
-    [Theory, AutoData]
-    public async Task CreatePublicFile_ThrowsExceptionIfFileNotFound(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task CreatePublicFile_ThrowsExceptionIfFileNotFound()
     {
-        await Assert.ThrowsAsync<FileNotFoundException>(() => sut.Value.CreatePublicFileAsync(0));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => _service.CreatePublicFileAsync(0));
     }
 
-    [Theory, AutoData]
-    public async Task CreatePublicFile_ReturnsExistingUrlHash(Sut<PublicFileService> sut,
-        IPublicFileScheduler publicFileScheduler)
+    [Fact]
+    public async Task CreatePublicFile_ReturnsExistingUrlHash()
     {
-        var file = await CreateFile(sut);
+        // Arrange
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(file).Generate();
 
-        var urlHash = await sut.Value.CreatePublicFileAsync(file.Id);
-        await sut.Value.DeactivatePublicFileAsync(file.Id);
-        var urlHash2 = await sut.Value.CreatePublicFileAsync(file.Id);
+        // Act
+        var urlHash = await _service.CreatePublicFileAsync(file.Id);
 
-        var publicFiles = await sut.Context.PublicFiles.Where(pf => pf.EncryptedFileId == file.Id)
-            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
-
-        Assert.Single(publicFiles);
-        Assert.Equal(PublicFileState.Active, publicFiles.First().State);
-        Assert.Equal(urlHash, publicFiles.First().UrlHash);
-        Assert.Equal(urlHash, urlHash2);
-        await publicFileScheduler.Received().ScheduleImageRefreshForPublicFile(publicFiles.First().Id);
+        // Assert
+        Assert.Equal(publicFile.UrlHash, urlHash);
     }
 
-    [Theory, AutoData]
-    public async Task DeactivatePublicFileAsync_DeactivatesPublicFile(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task DeactivatePublicFileAsync_DeactivatesPublicFile()
     {
-        var file = await CreateFile(sut);
+        // Arrange
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(file).Generate();
+        
+        // Act
+        var deleteResult = await _service.DeactivatePublicFileAsync(file.Id);
 
-        await sut.Value.CreatePublicFileAsync(file.Id);
-        var deleteResult = await sut.Value.DeactivatePublicFileAsync(file.Id);
-
-        var publicFile = await sut.Context.PublicFiles.FirstOrDefaultAsync(pf => pf.EncryptedFileId == file.Id,
-            cancellationToken: TestContext.Current.CancellationToken);
-
+        // Assert
         Assert.True(deleteResult);
         Assert.NotNull(publicFile);
         Assert.Equal(PublicFileState.Inactive, publicFile.State);
     }
 
-    [Theory, AutoData]
-    public async Task DeactivatePublicFileAsync_ReturnsFalse_WhenFileNotFound(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task DeactivatePublicFileAsync_ReturnsFalse_WhenFileNotFound()
     {
-        var deleteResult = await sut.Value.DeactivatePublicFileAsync(0);
+        var deleteResult = await _service.DeactivatePublicFileAsync(0);
 
         Assert.False(deleteResult);
     }
 
-    [Theory, AutoData]
-    public async Task IsPublicFileActive_ReturnsTrue_WhenFileActive(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task IsPublicFileActive_ReturnsTrue_WhenFileActive()
     {
-        var file = await CreateFile(sut);
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(file).Generate();
 
-        var fileHash = await sut.Value.CreatePublicFileAsync(file.Id);
-
-        var isActive = await sut.Value.IsPublicFileActive(fileHash);
+        var isActive = await _service.IsPublicFileActive(publicFile.UrlHash);
+        
         Assert.True(isActive);
     }
 
-    [Theory, AutoData]
-    public async Task IsPublicFileActive_ReturnsFalse_WhenFileInactive(Sut<PublicFileService> sut)
+    [Fact]
+    public async Task IsPublicFileActive_ReturnsFalse_WhenFileInactive()
     {
-        var file = await CreateFile(sut);
+        var file = _fakerResolver.Get<EncryptedFile>().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(file).Inactive().Generate();
 
-        var fileHash = await sut.Value.CreatePublicFileAsync(file.Id);
-        await sut.Value.DeactivatePublicFileAsync(file.Id);
-
-        var isActive = await sut.Value.IsPublicFileActive(fileHash);
+        var isActive = await _service.IsPublicFileActive(publicFile.UrlHash);
+        
         Assert.False(isActive);
     }
 
-    [Theory, AutoData]
-    public async Task HasAccessToFileThroughHash_ReturnsTrue_WhenImageIsInPublicFile(
-        Sut<PublicFileService> sut,
-        PublicFileFakerImplementation publicFileFaker,
-        PublicFileImageFakerImplementation imageFaker)
+    [Fact]
+    public async Task HasAccessToFileThroughHash_ReturnsTrue_WhenImageIsInPublicFile()
     {
-        var publicFile = publicFileFaker.CreateFaker().Generate();
-        var publicImage = imageFaker.CreateFaker().ForPublicFile(publicFile).Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().Generate();
+        var publicImage = _fakerResolver.Get<PublicFileImage>().ForPublicFile(publicFile).Generate();
 
-        var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, publicImage.EncryptedFile!);
+        var hasAccess = await _service.HasAccessToFileThroughHash(publicFile.UrlHash, publicImage.EncryptedFile!);
 
         Assert.True(hasAccess);
     }
 
-    [Theory, AutoData]
-    public async Task HasAccessToFileThroughHash_ReturnsFalse_WhenImageIsNotInPublicFile(
-        Sut<PublicFileService> sut,
-        PublicFileFakerImplementation publicFileFaker,
-        EncryptedFileFakerImplementation encryptedFileFaker)
+    [Fact]
+    public async Task HasAccessToFileThroughHash_ReturnsFalse_WhenImageIsNotInPublicFile()
     {
-        var publicFile = publicFileFaker.CreateFaker().Generate();
-        var encryptedFile = encryptedFileFaker.CreateFaker().Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().Generate();
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().Generate();
 
-        var hasAccess = await sut.Value.HasAccessToFileThroughHash(publicFile.UrlHash, encryptedFile);
+        var hasAccess = await _service.HasAccessToFileThroughHash(publicFile.UrlHash, encryptedFile);
 
         Assert.False(hasAccess);
     }

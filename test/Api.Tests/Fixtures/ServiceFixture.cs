@@ -14,6 +14,7 @@ using Bogus;
 using Data.Model;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.Security.Cryptography;
+using Quartz;
 
 namespace Api.Tests.Fixtures;
 
@@ -64,6 +65,10 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
         services.AddScopedSubstitute<IEmailScheduler>();
         services.AddScopedSubstitute<IEmailConfirmService>();
         services.AddScopedSubstitute<IPasswordResetService>();
+        services.AddScopedSubstitute<IPublicFileImageService>();
+        services.AddScopedSubstitute<IHttpContextAccessor>();
+        services.AddScopedSubstitute<IWebSocketMessageHandler>();
+        services.AddScopedSubstitute<ISchedulerFactory>();
         services.AddScopedSubstitute<HttpContext>();
         services.AddSingleton<IEncryptionKeyProvider>(new MockEncryptionKeyProvider());
         services.AddLogging();
@@ -101,6 +106,13 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
             var redis = Substitute.For<IDatabase>();
             muxer.GetDatabase().Returns(redis);
             return redis;
+        });
+        _baseServiceCollection.AddScoped<ISubscriber>(implementationFactory: serviceProvider =>
+        {
+            var muxer = serviceProvider.GetRequiredService<IConnectionMultiplexer>();
+            var subscriber = Substitute.For<ISubscriber>();
+            muxer.GetSubscriber().Returns(subscriber);
+            return subscriber;
         });
         return this;
     }

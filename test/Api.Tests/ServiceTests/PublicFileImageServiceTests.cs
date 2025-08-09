@@ -4,8 +4,11 @@ using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
+using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Quartz;
 
@@ -15,75 +18,89 @@ namespace Api.Tests.ServiceTests;
     "xUnit1051:Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken")]
 public sealed class PublicFileImageServiceTests : BaseTests
 {
+    private readonly PublicFileImageService _service;
+    private readonly IFileService _fileService;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly FakerResolver _fakerResolver;
+    private readonly RefNotesContext _context;
+
+    private readonly User _defaultUser;
+    private readonly UserGroup _defaultGroup;
+
+    public PublicFileImageServiceTests(TestDatabaseFixture dbFixture)
+    {
+        var serviceProvider = new ServiceFixture<PublicFileImageService>().WithDb(dbFixture).WithFakeEncryption()
+            .WithFakers().CreateServiceProvider();
+
+        _service = serviceProvider.GetRequiredService<PublicFileImageService>();
+        _fileService = serviceProvider.GetRequiredService<IFileService>();
+        _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        _context = serviceProvider.GetRequiredService<RefNotesContext>();
+
+        _defaultUser = _fakerResolver.Get<User>().Generate();
+        _defaultGroup = _fakerResolver.Get<UserGroup>().Generate();
+    }
+
     private DirOwner GetDirOwner(User user, UserGroup? group)
     {
         return group is not null ? new DirOwner(group) : new DirOwner(user);
     }
 
-    [Theory, AutoData]
-    public async Task UpdateImagesForPublicFile_UpdatesImages(
-        Sut<PublicFileImageService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IFileService fileService,
-        IFileStorageService fileStorageService,
-        EncryptedDirectoryFakerImplementation dirFaker,
-        EncryptedFileFakerImplementation fileFaker,
-        PublicFileFakerImplementation publicFileFaker)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task UpdateImagesForPublicFile_UpdatesImages(bool withGroup)
     {
         const string imageName = "image.png";
-        var dir = dirFaker.CreateFaker().ForUserOrGroup(sut.DefaultUser, group).Generate();
-        var encryptedFile = fileFaker.CreateFaker().ForDir(dir).Generate();
-        var publicFile = publicFileFaker.CreateFaker().ForFile(encryptedFile).Generate();
-        var image = fileFaker.CreateFaker().WithName(imageName).Generate();
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(encryptedFile).Generate();
+        var image = _fakerResolver.Get<EncryptedFile>().WithName(imageName).Generate();
 
-        var dirOwner = GetDirOwner(sut.DefaultUser, group);
-        fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
-        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(StreamFromString($"![alt]({imageName})"));
-        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
-        fileService.GetEncryptedFileForOwnerAsync($"/{imageName}", dirOwner).Returns(image);
+        var dirOwner = GetDirOwner(_defaultUser, group);
+        _fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
+        _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(StreamFromString($"![alt]({imageName})"));
+        _fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
+        _fileService.GetEncryptedFileForOwnerAsync($"/{imageName}", dirOwner).Returns(image);
 
-        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
+        await _service.UpdateImagesForPublicFile(publicFile.Id);
 
         Assert.NotNull(publicFile);
-        var publicFileImages = await sut.Context.PublicFileImages
+        var publicFileImages = await _context.PublicFileImages
             .Where(pfi => pfi.PublicFileId == publicFile.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(publicFileImages);
         Assert.Equal(image.Id, publicFileImages[0].EncryptedFileId);
     }
 
-    [Theory, AutoData]
-    public async Task UpdateImagesForPublicFile_AddsNewImages_WhenContentUpdates(
-        Sut<PublicFileImageService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IFileService fileService,
-        IFileStorageService fileStorageService,
-        EncryptedDirectoryFakerImplementation dirFaker,
-        EncryptedFileFakerImplementation fileFaker,
-        PublicFileFakerImplementation publicFileFaker)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task UpdateImagesForPublicFile_AddsNewImages_WhenContentUpdates(bool withGroup)
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var encryptedFile = fileFaker.CreateFaker().ForDir(dir).Generate();
-        var image1 = fileFaker.CreateFaker().WithName("image1.png").Generate();
-        var image2 = fileFaker.CreateFaker().WithName("image2.png").Generate();
-        var publicFile = publicFileFaker.CreateFaker().ForFile(encryptedFile).Generate();
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        var image1 = _fakerResolver.Get<EncryptedFile>().WithName("image1.png").Generate();
+        var image2 = _fakerResolver.Get<EncryptedFile>().WithName("image2.png").Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(encryptedFile).Generate();
 
-        var dirOwner = GetDirOwner(sut.DefaultUser, group);
-        fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
-        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
+        var dirOwner = GetDirOwner(_defaultUser, group);
+        _fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
+        _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
             StreamFromString($"![alt]({image1.Name})"),
             StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})")
         );
-        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
-        fileService.GetEncryptedFileForOwnerAsync($"/{image1.Name}", dirOwner).Returns(image1);
-        fileService.GetEncryptedFileForOwnerAsync($"/{image2.Name}", dirOwner).Returns(image2);
+        _fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
+        _fileService.GetEncryptedFileForOwnerAsync($"/{image1.Name}", dirOwner).Returns(image1);
+        _fileService.GetEncryptedFileForOwnerAsync($"/{image2.Name}", dirOwner).Returns(image2);
 
         // Update with initial content and then update with new content
-        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
-        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
+        await _service.UpdateImagesForPublicFile(publicFile.Id);
+        await _service.UpdateImagesForPublicFile(publicFile.Id);
 
         Assert.NotNull(publicFile);
-        var publicFileImages = await sut.Context.PublicFileImages
+        var publicFileImages = await _context.PublicFileImages
             .Where(pfi => pfi.PublicFileId == publicFile.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, publicFileImages.Count);
@@ -92,35 +109,30 @@ public sealed class PublicFileImageServiceTests : BaseTests
     }
 
 
-    [Theory, AutoData]
-    public async Task UpdateImagesForPublicFile_UpdatesImages_WithDuplicates(
-        Sut<PublicFileImageService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group,
-        IFileService fileService,
-        IFileStorageService fileStorageService,
-        EncryptedDirectoryFakerImplementation dirFaker,
-        EncryptedFileFakerImplementation fileFaker,
-        DatabaseFaker<PublicFile> publicFileFaker)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task UpdateImagesForPublicFile_UpdatesImages_WithDuplicates(bool withGroup)
     {
-        var dir = dirFaker.CreateFaker().ForUser(sut.DefaultUser).Generate();
-        var encryptedFile = fileFaker.CreateFaker().ForDir(dir).Generate();
-        var image1 = fileFaker.CreateFaker().WithName("image1.png").Generate();
-        var image2 = fileFaker.CreateFaker().WithName("image2.png").Generate();
-        var publicFile = publicFileFaker.ForFile(encryptedFile).Generate();
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).Generate();
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().ForDir(dir).Generate();
+        var image1 = _fakerResolver.Get<EncryptedFile>().WithName("image1.png").Generate();
+        var image2 = _fakerResolver.Get<EncryptedFile>().WithName("image2.png").Generate();
+        var publicFile = _fakerResolver.Get<PublicFile>().ForFile(encryptedFile).Generate();
 
-        var dirOwner = GetDirOwner(sut.DefaultUser, group);
-        fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
-        fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
+        var dirOwner = GetDirOwner(_defaultUser, group);
+        _fileService.GetDirOwnerAsync(encryptedFile).Returns(dirOwner);
+        _fileStorageService.GetFile(encryptedFile.FilesystemName).Returns(
             StreamFromString($"![alt]({image1.Name})\n![alt2]({image2.Name})\n![alt3]({image2.Name})")
         );
-        fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
-        fileService.GetEncryptedFileForOwnerAsync(Arg.Any<string>(), dirOwner).Returns(image1, image2);
+        _fileService.GetFilePathAsync(encryptedFile).Returns($"/{encryptedFile.Name}");
+        _fileService.GetEncryptedFileForOwnerAsync(Arg.Any<string>(), dirOwner).Returns(image1, image2);
 
         // Update with initial content and then update with new content
-        await sut.Value.UpdateImagesForPublicFile(publicFile.Id);
+        await _service.UpdateImagesForPublicFile(publicFile.Id);
 
         Assert.NotNull(publicFile);
-        var publicFileImages = await sut.Context.PublicFileImages
+        var publicFileImages = await _context.PublicFileImages
             .Where(pfi => pfi.PublicFileId == publicFile.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -129,19 +141,16 @@ public sealed class PublicFileImageServiceTests : BaseTests
         Assert.Equal(image2.Id, publicFileImages[1].EncryptedFileId);
     }
 
-    [Theory, AutoData]
-    public async Task RemoveImagesForPublicFile_RemovesImages(
-        Sut<PublicFileImageService> sut,
-        DatabaseFaker<PublicFile> publicFileFaker,
-        DatabaseFaker<PublicFileImage> publicFileImageFaker)
+    [Fact]
+    public async Task RemoveImagesForPublicFile_RemovesImages()
     {
-        var publicFile = publicFileFaker.Generate();
-        publicFileImageFaker.RuleFor(i => i.PublicFileId, _ => publicFile.Id).Generate(3);
+        var publicFile = _fakerResolver.Get<PublicFile>().Generate();
+        _fakerResolver.Get<PublicFileImage>().RuleFor(i => i.PublicFileId, _ => publicFile.Id).Generate(3);
 
-        await sut.Value.RemoveImagesForPublicFile(publicFile.Id);
+        await _service.RemoveImagesForPublicFile(publicFile.Id);
 
         var publicFileImagesList =
-            await sut.Context.PublicFileImages.Where(pfi => pfi.PublicFileId == publicFile.Id).ToListAsync();
+            await _context.PublicFileImages.Where(pfi => pfi.PublicFileId == publicFile.Id).ToListAsync();
         Assert.Empty(publicFileImagesList);
     }
 }
