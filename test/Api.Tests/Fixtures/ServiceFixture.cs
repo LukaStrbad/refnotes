@@ -13,6 +13,7 @@ using StackExchange.Redis;
 using Bogus;
 using Data.Model;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using System.Security.Cryptography;
 
 namespace Api.Tests.Fixtures;
 
@@ -28,11 +29,12 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
     {
         var services = new ServiceCollection();
 
+        var jwtKeyBytes = RandomNumberGenerator.GetBytes(128);
         var configuration = new ConfigurationBuilder().AddInMemoryCollection([
             new KeyValuePair<string, string?>("AppDomain", "localhost"),
             new KeyValuePair<string, string?>("CorsOrigin", "http://localhost:4200"),
             new KeyValuePair<string, string?>("AccessTokenExpiry", "5m"),
-            new KeyValuePair<string, string?>("JWT_PRIVATE_KEY", "1234567890")
+            new KeyValuePair<string, string?>("JWT_PRIVATE_KEY", Convert.ToBase64String(jwtKeyBytes))
         ]).Build();
         services.AddScoped<IConfiguration>(implementationFactory: _ => configuration);
         services.AddScoped(provider =>
@@ -63,6 +65,7 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
         services.AddScopedSubstitute<IEmailConfirmService>();
         services.AddScopedSubstitute<IPasswordResetService>();
         services.AddScopedSubstitute<HttpContext>();
+        services.AddSingleton<IEncryptionKeyProvider>(new MockEncryptionKeyProvider());
         services.AddLogging();
 
         // Check if the service base type is already registered

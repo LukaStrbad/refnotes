@@ -1,5 +1,7 @@
-﻿using Data.Model;
+﻿using Api.Utils;
+using Data.Model;
 using Bogus;
+using ICSharpCode.SharpZipLib.Core;
 
 namespace Api.Tests.Data.Faker;
 
@@ -14,6 +16,10 @@ public static class EncryptedDirectoryFakerExtensions
     public static Faker<EncryptedDirectory> ForGroup(this Faker<EncryptedDirectory> faker, UserGroup group)
         => faker.RuleFor(d => d.Group, _ => group)
             .RuleFor(d => d.Owner, _ => null);
+
+    public static Faker<EncryptedDirectory> WithParent(this Faker<EncryptedDirectory> faker, EncryptedDirectory parent)
+        => faker.RuleFor(d => d.Parent, _ => parent)
+            .RuleFor(d => d.Path, (_, d) => FileUtils.NormalizePath($"{d.Parent?.Path}/{Guid.CreateVersion7()}"));
 
     /// <summary>
     /// Assigns User as the owner if the group is null, otherwise assigns the group.

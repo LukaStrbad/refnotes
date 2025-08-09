@@ -1,162 +1,231 @@
 ﻿using Api.Exceptions;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
+using Api.Tests.Data.Faker;
+using Api.Tests.Fixtures;
 using Api.Utils;
+using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
-[ConcreteType<IFileServiceUtils, FileServiceUtils>]
-[ConcreteType<IUserGroupService, UserGroupService>]
-[ConcreteType<IEncryptionService, EncryptionService>]
 public class BrowserServiceTests : BaseTests
 {
+    private readonly BrowserService _browserService;
+    private readonly RefNotesContext _context;
+    private readonly IEncryptionService _encryptionService;
     private readonly string _newDirectoryPath = $"/new_{RandomString(32)}";
+    private readonly User _defaultUser;
+    private readonly UserGroup _defaultGroup;
+    private readonly FakerResolver _fakerResolver;
+    private readonly IFileServiceUtils _fileServiceUtils;
 
-    private static async Task<EncryptedDirectory?> GetDirectory(Sut<BrowserService> sut, string path,
-        UserGroup? group)
+    public BrowserServiceTests(TestDatabaseFixture dbFixture)
     {
-        var pathHash = sut.ServiceProvider.GetRequiredService<IEncryptionService>().HashString(path);
+        var serviceProvider = new ServiceFixture<BrowserService>()
+            .WithDb(dbFixture)
+            .WithFakers()
+            .WithFakeEncryption()
+            .CreateServiceProvider();
+
+        _browserService = serviceProvider.GetRequiredService<BrowserService>();
+        _context = serviceProvider.GetRequiredService<RefNotesContext>();
+        _encryptionService = serviceProvider.GetRequiredService<IEncryptionService>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        var userService = serviceProvider.GetRequiredService<IUserService>();
+        _fileServiceUtils = serviceProvider.GetRequiredService<IFileServiceUtils>();
+        var userGroupService = serviceProvider.GetRequiredService<IUserGroupService>();
+
+        // Setup default user and group
+        _defaultUser = _fakerResolver.Get<User>().Generate();
+        _defaultGroup = _fakerResolver.Get<UserGroup>().Generate();
+        _fakerResolver.Get<UserGroupRole>().ForUser(_defaultUser).ForGroup(_defaultGroup).Generate();
+        userService.GetCurrentUser().Returns(_defaultUser);
+        userGroupService.GetGroupAsync(_defaultGroup.Id).Returns(_defaultGroup);
+    }
+
+    private async Task<EncryptedDirectory?> GetDirectory(string path, UserGroup? group)
+    {
+        var pathHash = _encryptionService.HashString(path);
         if (group is null)
         {
-            return await sut.Context.Directories.FirstOrDefaultAsync(
-                d => d.PathHash == pathHash && d.OwnerId == sut.DefaultUser.Id,
+            return await _context.Directories.FirstOrDefaultAsync(
+                d => d.PathHash == pathHash && d.OwnerId == _defaultUser.Id,
                 TestContext.Current.CancellationToken);
         }
 
-        return await sut.Context.Directories.FirstOrDefaultAsync(d => d.PathHash == pathHash && d.GroupId == group.Id,
+        return await _context.Directories.FirstOrDefaultAsync(d => d.PathHash == pathHash && d.GroupId == group.Id,
             TestContext.Current.CancellationToken);
     }
 
-    [Theory, AutoData]
-    public async Task AddRootDirectory_AddsDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddRootDirectory_AddsDirectory(bool withGroup)
     {
-        await sut.Value.AddDirectory("/", group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
 
-        var directory = await GetDirectory(sut, "/", group);
+        // Act
+        await _browserService.AddDirectory("/", group?.Id);
+
+        // Assert
+        var directory = await GetDirectory("/", group);
         Assert.NotNull(directory);
     }
 
-    [Theory, AutoData]
-    public async Task AddDirectoryToRoot_AddsDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddDirectoryToRoot_AddsDirectory(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
+        _fileServiceUtils.GetDirectory("/", false, group?.Id).Returns(rootDir);
 
-        var directory = await GetDirectory(sut, _newDirectoryPath, group);
+        // Act
+        await _browserService.AddDirectory(_newDirectoryPath, group?.Id);
+
+        // Assert
+        var directory = await GetDirectory(_newDirectoryPath, group);
         Assert.NotNull(directory);
     }
 
-    [Theory, AutoData]
-    public async Task AddDirectoryToSubdirectory_AddsDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddDirectoryToSubdirectory_AddsDirectory(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var existingDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        _fileServiceUtils.GetDirectory(existingDir.Path, false, group?.Id).Returns(existingDir);
 
-        var subPath = $"{_newDirectoryPath}/sub";
-        await sut.Value.AddDirectory(subPath, group?.Id);
+        // Act
+        var subPath = $"{existingDir.Path}/sub";
+        await _browserService.AddDirectory(subPath, group?.Id);
 
-        var directory = await GetDirectory(sut, subPath, group);
+        // Assert
+        var directory = await GetDirectory(subPath, group);
         Assert.NotNull(directory);
     }
 
-    [Theory, AutoData]
-    public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddDirectory_ThrowsIfDirectoryAlreadyExists(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var existingDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        _fileServiceUtils.GetDirectory(existingDir.Path, false, group?.Id).Returns(existingDir);
 
+        // Act/Assert
         await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() =>
-            sut.Value.AddDirectory(_newDirectoryPath, group?.Id));
+            _browserService.AddDirectory(existingDir.Path, group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task DeleteDirectory_RemovesDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task DeleteDirectory_RemovesDirectory(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var parentDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
+        var existingDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithParent(parentDir).Generate();
+        _fileServiceUtils.GetDirectory(existingDir.Path, false, group?.Id).Returns(existingDir);
 
-        await sut.Value.DeleteDirectory(_newDirectoryPath, group?.Id);
+        // Act
+        await _browserService.DeleteDirectory(existingDir.Path, group?.Id);
 
-        var directory = await GetDirectory(sut, _newDirectoryPath, group);
-
+        // Assert
+        var directory = await GetDirectory(existingDir.Path, group);
         Assert.Null(directory);
     }
 
-    [Theory, AutoData]
-    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task DeleteDirectory_ThrowsIfDirectoryDoesNotExist(bool withGroup)
     {
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+
+        // Act/Assert
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            sut.Value.DeleteDirectory(_newDirectoryPath, group?.Id));
+            _browserService.DeleteDirectory(_newDirectoryPath, group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task DeleteDirectory_ThrowsIfDirectoryNotEmpty(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath(_newDirectoryPath).Generate();
+        _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithParent(dir).Generate(); // Subdir
 
-        var subPath = $"{_newDirectoryPath}/sub";
-        await sut.Value.AddDirectory(subPath, null);
-
+        // Act/Assert
         await Assert.ThrowsAsync<DirectoryNotEmptyException>(() =>
-            sut.Value.DeleteDirectory(_newDirectoryPath, null));
+            _browserService.DeleteDirectory(_newDirectoryPath, group?.Id));
     }
 
-    [Theory, AutoData]
-    public async Task List_ReturnsRootDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task List_ReturnsRootDirectory(bool withGroup)
     {
-        var responseDirectory = await sut.Value.List(group?.Id);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
+        _fileServiceUtils.GetDirectory("/", true, group?.Id).Returns(rootDir);
 
+        // Act
+        var responseDirectory = await _browserService.List(group?.Id);
+
+        // Assert
         Assert.NotNull(responseDirectory);
         Assert.Equal("/", responseDirectory.Name);
         Assert.Empty(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
     }
 
-    [Theory, AutoData]
-    public async Task List_ReturnsDirectory(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task List_ReturnsDirectory(bool withGroup)
     {
-        await sut.Value.AddDirectory(_newDirectoryPath, group?.Id);
-        var expectedDirName = _newDirectoryPath.TrimStart('/');
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithParent(rootDir).Generate();
+        var expectedDirName = Path.GetFileName(dir.Path);
+        _fileServiceUtils.GetDirectory("/", true, group?.Id).Returns(rootDir);
+        _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
 
-        var rootDirectory = await sut.Value.List(group?.Id);
+        // Act
+        var rootDirectory = await _browserService.List(group?.Id);
+        var responseDirectory = await _browserService.List(group?.Id, dir.Path);
+
+        // Assert - Root directory
         Assert.NotNull(rootDirectory);
         Assert.Single(rootDirectory.Directories);
         Assert.Empty(rootDirectory.Files);
         Assert.Equal(expectedDirName, rootDirectory.Directories.FirstOrDefault());
-
-        var responseDirectory = await sut.Value.List(group?.Id, _newDirectoryPath);
-
+        // Assert - New directory
         Assert.NotNull(responseDirectory);
         Assert.Equal(expectedDirName, responseDirectory.Name);
         Assert.Empty(responseDirectory.Files);
         Assert.Empty(responseDirectory.Directories);
     }
 
-    [Theory, AutoData]
-    public async Task List_ReturnsNull_WhenDirectoryDoesNotExist(
-        Sut<BrowserService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task List_ReturnsNull_WhenDirectoryDoesNotExist(bool withGroup)
     {
-        var responseDirectory = await sut.Value.List(group?.Id, _newDirectoryPath);
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
 
+        // Act
+        var responseDirectory = await _browserService.List(group?.Id, _newDirectoryPath);
+
+        // Assert
         Assert.Null(responseDirectory);
     }
 }

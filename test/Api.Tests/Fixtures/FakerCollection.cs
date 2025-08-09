@@ -13,9 +13,10 @@ public static class FakerCollection
         var services = new ServiceCollection();
 
         services.AddTransient<Faker<User>>(_ => GetUserFaker(context));
-        services.AddTransient<Faker<EncryptedDirectory>>(sp => GetDirectoryFaker(context, sp));
-        services.AddTransient<Faker<EncryptedFile>>(sp => GetFileFaker(context, sp));
+        services.AddTransient<Faker<EncryptedDirectory>>(_ => GetDirectoryFaker(context));
+        services.AddTransient<Faker<EncryptedFile>>(_ => GetFileFaker(context));
         services.AddTransient<Faker<UserGroup>>(_ => GetUserGroupFaker(context));
+        services.AddTransient<Faker<UserGroupRole>>(_ => GetUserGroupRoleFaker(context));
 
         return services;
     }
@@ -37,9 +38,9 @@ public static class FakerCollection
             .RuleFor(u => u.Roles, _ => [])
             .RuleFor(u => u.EmailConfirmed, _ => true);
 
-    private static Faker<EncryptedDirectory> GetDirectoryFaker(RefNotesContext? context, IServiceProvider sp)
+    private static Faker<EncryptedDirectory> GetDirectoryFaker(RefNotesContext? context)
     {
-        var userFaker = sp.GetRequiredService<Faker<User>>();
+        var userFaker = GetUserFaker(context);
 
         return CreateBaseFaker<EncryptedDirectory>(context)
             .StrictMode(true)
@@ -55,9 +56,10 @@ public static class FakerCollection
             .RuleFor(d => d.GroupId, (_, dir) => dir.Group?.Id);
     }
 
-    private static Faker<EncryptedFile> GetFileFaker(RefNotesContext? context, IServiceProvider sp)
+    private static Faker<EncryptedFile> GetFileFaker(RefNotesContext? context)
     {
-        var dirFaker = sp.GetRequiredService<Faker<EncryptedDirectory>>();
+        var dirFaker = GetDirectoryFaker(context);
+
         return CreateBaseFaker<EncryptedFile>(context)
             .CustomInstantiator(_ => new EncryptedFile("", "", ""))
             .StrictMode(true)
@@ -77,4 +79,19 @@ public static class FakerCollection
             .StrictMode(true)
             .RuleFor(g => g.Id, f => 0)
             .RuleFor(g => g.Name, f => f.Lorem.Sentence(5));
+
+    private static Faker<UserGroupRole> GetUserGroupRoleFaker(RefNotesContext? context)
+    {
+        var userFaker = GetUserFaker(context);
+        var groupFaker = GetUserGroupFaker(context);
+
+        return CreateBaseFaker<UserGroupRole>(context)
+            .StrictMode(true)
+            .RuleFor(g => g.Id, f => 0)
+            .RuleFor(g => g.User, _ => userFaker.Generate())
+            .RuleFor(g => g.UserId, (_, role) => role.User?.Id ?? 0)
+            .RuleFor(g => g.UserGroup, _ => groupFaker.Generate())
+            .RuleFor(g => g.UserGroupId, (_, role) => role.UserGroup?.Id ?? 0)
+            .RuleFor(g => g.Role, f => f.PickRandom<UserGroupRoleType>());
+    }
 }
