@@ -1,7 +1,7 @@
 ﻿using Bogus;
 using Data;
 
-namespace Api.Tests.Data.Faker;
+namespace Api.Tests.Fixtures;
 
 public class DatabaseFaker<T> : Faker<T> where T : class
 {

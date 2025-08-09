@@ -1,7 +1,5 @@
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
 using Data;
 using Data.Model;

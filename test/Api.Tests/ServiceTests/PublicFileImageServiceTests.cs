@@ -1,16 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
-using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Quartz;
 
 namespace Api.Tests.ServiceTests;
 

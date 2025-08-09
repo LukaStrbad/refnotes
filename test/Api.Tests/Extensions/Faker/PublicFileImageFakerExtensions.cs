@@ -1,7 +1,7 @@
-﻿using Data.Model;
-using Bogus;
+﻿using Bogus;
+using Data.Model;
 
-namespace Api.Tests.Data.Faker;
+namespace Api.Tests.Extensions.Faker;
 
 public static class PublicFileImageFakerExtensions
 {

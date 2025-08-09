@@ -1,11 +1,7 @@
 ﻿using Api.Model;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
-using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
-using Api.Tests.Mocks;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;

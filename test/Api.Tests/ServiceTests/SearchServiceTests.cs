@@ -1,7 +1,6 @@
 ﻿using Api.Model;
 using Api.Services;
-using Api.Tests.Data.Faker;
-using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
 using Data.Model;
 using Microsoft.Extensions.DependencyInjection;

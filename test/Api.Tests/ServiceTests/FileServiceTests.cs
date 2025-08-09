@@ -1,7 +1,7 @@
 ﻿using Api.Exceptions;
 using Api.Model;
 using Api.Services;
-using Api.Tests.Data.Faker;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
 using Api.Utils;
 using Data.Model;

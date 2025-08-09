@@ -1,5 +1,4 @@
 ﻿using Api.Services;
-using Api.Tests.Data;
 using Api.Tests.Fixtures;
 using Data.Model;
 using Microsoft.Extensions.DependencyInjection;

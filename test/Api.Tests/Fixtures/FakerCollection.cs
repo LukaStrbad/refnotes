@@ -1,4 +1,4 @@
-using Api.Tests.Data.Faker;
+using Api.Tests.Extensions.Faker;
 using Data.Model;
 using Bogus;
 using Data;

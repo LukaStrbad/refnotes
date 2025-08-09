@@ -1,9 +1,8 @@
 ﻿using Api.Utils;
-using Data.Model;
 using Bogus;
-using ICSharpCode.SharpZipLib.Core;
+using Data.Model;
 
-namespace Api.Tests.Data.Faker;
+namespace Api.Tests.Extensions.Faker;
 
 public static class EncryptedDirectoryFakerExtensions
 {

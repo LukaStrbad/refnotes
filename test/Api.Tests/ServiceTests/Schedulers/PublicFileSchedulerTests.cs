@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Api.Services;
 using Api.Services.Schedulers;
-using Api.Tests.Data;
 using Api.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;

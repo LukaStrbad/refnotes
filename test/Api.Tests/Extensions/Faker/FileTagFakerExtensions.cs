@@ -1,7 +1,7 @@
 using Bogus;
 using Data.Model;
 
-namespace Api.Tests.Data.Faker.Definition;
+namespace Api.Tests.Extensions.Faker;
 
 public static class FileTagFakerExtensions
 {

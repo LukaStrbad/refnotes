@@ -10,15 +10,11 @@ using Api.Utils;
 using Data;
 using NSubstitute;
 using StackExchange.Redis;
-using Bogus;
-using Data.Model;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.Security.Cryptography;
 using Quartz;
 
 namespace Api.Tests.Fixtures;
 
-// ReSharper disable once ClassNeverInstantiated.Global
 public sealed class ServiceFixture<T> : IDisposable where T : class
 {
     private readonly List<IDisposable> _disposables = [];

@@ -1,9 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Api.Services;
 using Api.Services.Redis;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
-using Api.Tests.Mocks;
 using Api.Tests.Fixtures;
 using Medallion.Threading;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,7 +123,7 @@ public class FileStorageServiceTests : BaseTests, IClassFixture<FixtureType>
         var fileSize = new RedisValue("12345");
         _redis.StringGetAsync(sizeKey).Returns(fileSize);
         // Create the file to ensure the method doesn't throw
-        File.Create(Path.Combine(_appSettings.DataDir, _fileName));
+        await using var _ = File.Create(Path.Combine(_appSettings.DataDir, _fileName));
         
         var fileSizeLong = await _service.GetFileSize(_fileName);
         
