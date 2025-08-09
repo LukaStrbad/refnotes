@@ -198,7 +198,7 @@ public static class FakerCollection
         return CreateBaseFaker<FileTag>(context)
             .StrictMode(true)
             .RuleFor(t => t.Id, 0)
-            .RuleFor(t => t.Name, f => f.Lorem.Word())
+            .RuleFor(t => t.Name, f => f.Lorem.Word() + Guid.CreateVersion7())
             .RuleFor(t => t.NameHash, (_, tag) => tag.Name)
             .RuleFor(t => t.Files, _ => [])
             .RuleFor(t => t.Owner, _ => userFaker.Generate())
