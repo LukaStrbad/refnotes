@@ -2,16 +2,17 @@
 using Api.Services.Redis;
 using Api.Services.Schedulers;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Api.Tests.Extensions;
 using Api.Tests.Mocks;
 using Api.Utils;
 using Data;
-using Medallion.Threading;
 using NSubstitute;
 using StackExchange.Redis;
+using Bogus;
+using Data.Model;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 
 namespace Api.Tests.Fixtures;
 
@@ -21,6 +22,7 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
     private readonly List<IDisposable> _disposables = [];
     private readonly ServiceCollection _baseServiceCollection;
     private ServiceProvider? _rootServiceProvider;
+    private IServiceProvider? _fakerServiceProvider;
 
     public ServiceFixture()
     {
@@ -113,6 +115,16 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
 
     public ServiceFixture<T> WithFakeEncryption() => ReplaceType<IEncryptionService, FakeEncryptionService>();
 
+    public ServiceFixture<T> WithFakers()
+    {
+        _baseServiceCollection.AddScoped<FakerResolver>(implementationFactory: sp =>
+        {
+            var context = sp.GetService<RefNotesContext>();
+            var fakerServiceProvider = GetFakerServiceProvider(context);
+            return new FakerResolver(fakerServiceProvider);
+        });
+        return this;
+    }
     public void Dispose()
     {
         _rootServiceProvider?.Dispose();
@@ -129,5 +141,17 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
         _disposables.Add(serviceProvider as IDisposable ?? throw new InvalidOperationException());
         _disposables.Add(serviceScope);
         return serviceProvider;
+    }
+
+    private IServiceProvider GetFakerServiceProvider(RefNotesContext? context)
+    {
+        if (_fakerServiceProvider is not null)
+            return _fakerServiceProvider;
+
+        var serviceCollection = FakerCollection.GetFakerCollection(context);
+        _fakerServiceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
+        if (_fakerServiceProvider is IDisposable disposable)
+            _disposables.Add(disposable);
+        return _fakerServiceProvider;
     }
 }

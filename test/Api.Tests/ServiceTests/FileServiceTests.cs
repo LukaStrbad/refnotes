@@ -4,6 +4,7 @@ using Api.Tests.Data;
 using Api.Tests.Data.Attributes;
 using Api.Tests.Data.Faker;
 using Api.Tests.Data.Faker.Definition;
+using Api.Tests.Fixtures;
 using Api.Tests.Mocks;
 using Api.Utils;
 using Data.Model;
@@ -13,20 +14,37 @@ using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
+using FixtureType = ServiceFixture<FileService>;
+
 [ConcreteType<IEncryptionService, FakeEncryptionService>]
 [ConcreteType<IFileServiceUtils, FileServiceUtils>]
 [ConcreteType<IUserGroupService, UserGroupService>]
 [ConcreteType<IBrowserService, BrowserService>]
-public class FileServiceTests : BaseTests
+public class FileServiceTests : BaseTests, IClassFixture<FixtureType>
 {
     private readonly string _directoryPath;
     private readonly string _newDirectoryPath;
 
-    public FileServiceTests()
+    private readonly FakerResolver _fakerResolver;
+    private readonly FileService _service;
+    private readonly IFileServiceUtils _fileServiceUtils;
+
+    private readonly User _defaultUser;
+    private readonly UserGroup _defaultGroup;
+
+    public FileServiceTests(FixtureType fixture, TestDatabaseFixture dbFixture)
     {
         var rndString = RandomString(32);
         _directoryPath = $"/file_service_test_{rndString}";
         _newDirectoryPath = $"/file_service_test_new_{rndString}";
+
+        var serviceProvider = fixture.WithDb(dbFixture).WithFakers().WithFakeEncryption().CreateServiceProvider();
+        _service = serviceProvider.GetRequiredService<FileService>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+        _fileServiceUtils = serviceProvider.GetRequiredService<IFileServiceUtils>();
+        
+        _defaultUser = _fakerResolver.Get<User>().Generate();
+        _defaultGroup = _fakerResolver.Get<UserGroup>().Generate();
     }
 
     private static async Task<EncryptedDirectory?> GetDirectory(Sut<FileService> sut, string path,
@@ -55,21 +73,19 @@ public class FileServiceTests : BaseTests
         await browserService.AddDirectory(_newDirectoryPath, group?.Id);
     }
 
-    [Theory, AutoData]
-    public async Task AddFile_AddsFile(
-        Sut<FileService> sut,
-        [FixtureGroup(AddNull = true)] UserGroup? group)
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddFile_AddsFile(bool withGroup)
     {
-        await CreateDirectories(sut, group);
-
+        var group = withGroup ? _defaultGroup : null; 
         const string fileName = "testfile.txt";
-        await sut.Value.AddFile(_directoryPath, fileName, group?.Id);
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).Generate();
+        _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
 
-        var directory = await GetDirectory(sut, _directoryPath, group);
+        await _service.AddFile(dir.Path, fileName, group?.Id);
 
-        Assert.NotNull(directory);
-        Assert.Single(directory.Files);
-        Assert.Equal(fileName, directory.Files[0].Name);
+        Assert.Single(dir.Files);
+        Assert.Equal(fileName, dir.Files[0].Name);
     }
 
     [Theory, AutoData]
