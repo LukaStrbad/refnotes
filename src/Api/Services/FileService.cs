@@ -130,14 +130,14 @@ public class FileService(
         {
             throw new DirectoryNotFoundException($"Directory at path '{directoryPath}' not found");
         }
-        
+
         var nameHash = encryptionService.HashString(name);
         if (directory.Files.Any(x => x.NameHash == nameHash))
         {
             throw new FileAlreadyExistsException(
                 $"File with name '{name}' already exists in directory '{directoryPath}'");
         }
-        
+
         var encryptedName = encryptionService.EncryptAesStringBase64(name);
         var encryptedFile = new EncryptedFile(GenerateFilesystemName(), encryptedName, nameHash);
         directory.Files.Add(encryptedFile);
@@ -418,7 +418,7 @@ public class FileService(
         var groupId = await query.FirstOrDefaultAsync();
         if (groupId is null)
             return null;
-        
+
         return await userGroupService.GetGroupDetailsAsync(groupId.Value);
     }
 }

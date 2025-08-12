@@ -12,14 +12,14 @@ namespace Api.Tests.ControllerTests;
 public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<BrowserController>>
 {
     private readonly BrowserController _controller;
-    private readonly IBrowserService _browserService;
+    private readonly IDirectoryService _directoryService;
     private readonly IGroupPermissionService _groupPermissionService;
 
     public BrowserControllerTests(ServiceFixture<BrowserController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<BrowserController>();
-        _browserService = serviceProvider.GetRequiredService<IBrowserService>();
+        _directoryService = serviceProvider.GetRequiredService<IDirectoryService>();
         _groupPermissionService = serviceProvider.GetRequiredService<IGroupPermissionService>();
     }
 
@@ -29,7 +29,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
         const string path = "test_path";
         var responseDirectory = new DirectoryDto("test_dir", [], []);
 
-        _browserService.List(null, path).Returns(responseDirectory);
+        _directoryService.List(null, path).Returns(responseDirectory);
 
         var result = await _controller.List(path, null);
 
@@ -41,7 +41,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "test_path";
-        _browserService.List(null, path).Returns((DirectoryDto?)null);
+        _directoryService.List(null, path).Returns((DirectoryDto?)null);
 
         var result = await _controller.List(path, null);
 
@@ -65,7 +65,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task AddDirectory_ReturnsOk_WhenDirectoryAdded()
     {
         const string path = "/test_path";
-        _browserService.AddDirectory(path, null).Returns(Task.CompletedTask);
+        _directoryService.AddDirectory(path, null).Returns(Task.CompletedTask);
 
         var result = await _controller.AddDirectory(path, null);
 
@@ -88,7 +88,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task DeleteDirectory_ReturnsOk_WhenDirectoryDeleted()
     {
         const string path = "/test_path";
-        _browserService.DeleteDirectory(path, null).Returns(Task.CompletedTask);
+        _directoryService.DeleteDirectory(path, null).Returns(Task.CompletedTask);
 
         var result = await _controller.DeleteDirectory(path, null);
 
@@ -99,7 +99,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task DeleteDirectory_ReturnsBadRequest_WhenDeletingRootDirectory()
     {
         const string path = "/";
-        _browserService.DeleteDirectory(path, null)
+        _directoryService.DeleteDirectory(path, null)
             .Returns(Task.FromException(new ArgumentException("Cannot delete root directory.")));
 
         var result = await _controller.DeleteDirectory(path, null);

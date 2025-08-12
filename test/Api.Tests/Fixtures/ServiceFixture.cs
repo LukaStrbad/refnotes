@@ -41,7 +41,7 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
             return appSettings;
         });
 
-        services.AddScopedSubstitute<IBrowserService>();
+        services.AddScopedSubstitute<IDirectoryService>();
         services.AddScopedSubstitute<IGroupPermissionService>();
         services.AddScopedSubstitute<IUserService>();
         services.AddScopedSubstitute<IAdminService>();

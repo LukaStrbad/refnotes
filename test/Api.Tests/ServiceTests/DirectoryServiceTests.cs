@@ -11,9 +11,9 @@ using NSubstitute;
 
 namespace Api.Tests.ServiceTests;
 
-public class BrowserServiceTests : BaseTests
+public class DirectoryServiceTests : BaseTests
 {
-    private readonly BrowserService _browserService;
+    private readonly DirectoryService _directoryService;
     private readonly RefNotesContext _context;
     private readonly IEncryptionService _encryptionService;
     private readonly string _newDirectoryPath = $"/new_{RandomString(32)}";
@@ -22,15 +22,15 @@ public class BrowserServiceTests : BaseTests
     private readonly FakerResolver _fakerResolver;
     private readonly IFileServiceUtils _fileServiceUtils;
 
-    public BrowserServiceTests(TestDatabaseFixture dbFixture)
+    public DirectoryServiceTests(TestDatabaseFixture dbFixture)
     {
-        var serviceProvider = new ServiceFixture<BrowserService>()
+        var serviceProvider = new ServiceFixture<DirectoryService>()
             .WithDb(dbFixture)
             .WithFakers()
             .WithFakeEncryption()
             .CreateServiceProvider();
 
-        _browserService = serviceProvider.GetRequiredService<BrowserService>();
+        _directoryService = serviceProvider.GetRequiredService<DirectoryService>();
         _context = serviceProvider.GetRequiredService<RefNotesContext>();
         _encryptionService = serviceProvider.GetRequiredService<IEncryptionService>();
         _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
@@ -68,11 +68,25 @@ public class BrowserServiceTests : BaseTests
         var group = withGroup ? _defaultGroup : null;
 
         // Act
-        await _browserService.AddDirectory("/", group?.Id);
+        await _directoryService.AddDirectory("/", group?.Id);
 
         // Assert
         var directory = await GetDirectory("/", group);
         Assert.NotNull(directory);
+    }
+    
+    [Theory]
+    [InlineData(false), InlineData(true)]
+    public async Task AddRootDirectory_Throws_IfDirectoryAlreadyExists(bool withGroup)
+    {
+        // Arrange
+        var group = withGroup ? _defaultGroup : null;
+        var existingDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
+        _fileServiceUtils.GetDirectory("/", false, group?.Id).Returns(existingDir);
+
+        // Act/Assert
+        await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() =>
+            _directoryService.AddDirectory("/", group?.Id));
     }
 
     [Theory]
@@ -85,7 +99,7 @@ public class BrowserServiceTests : BaseTests
         _fileServiceUtils.GetDirectory("/", false, group?.Id).Returns(rootDir);
 
         // Act
-        await _browserService.AddDirectory(_newDirectoryPath, group?.Id);
+        await _directoryService.AddDirectory(_newDirectoryPath, group?.Id);
 
         // Assert
         var directory = await GetDirectory(_newDirectoryPath, group);
@@ -103,7 +117,7 @@ public class BrowserServiceTests : BaseTests
 
         // Act
         var subPath = $"{existingDir.Path}/sub";
-        await _browserService.AddDirectory(subPath, group?.Id);
+        await _directoryService.AddDirectory(subPath, group?.Id);
 
         // Assert
         var directory = await GetDirectory(subPath, group);
@@ -121,7 +135,7 @@ public class BrowserServiceTests : BaseTests
 
         // Act/Assert
         await Assert.ThrowsAsync<DirectoryAlreadyExistsException>(() =>
-            _browserService.AddDirectory(existingDir.Path, group?.Id));
+            _directoryService.AddDirectory(existingDir.Path, group?.Id));
     }
 
     [Theory]
@@ -135,7 +149,7 @@ public class BrowserServiceTests : BaseTests
         _fileServiceUtils.GetDirectory(existingDir.Path, false, group?.Id).Returns(existingDir);
 
         // Act
-        await _browserService.DeleteDirectory(existingDir.Path, group?.Id);
+        await _directoryService.DeleteDirectory(existingDir.Path, group?.Id);
 
         // Assert
         var directory = await GetDirectory(existingDir.Path, group);
@@ -151,7 +165,7 @@ public class BrowserServiceTests : BaseTests
 
         // Act/Assert
         await Assert.ThrowsAsync<DirectoryNotFoundException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, group?.Id));
+            _directoryService.DeleteDirectory(_newDirectoryPath, group?.Id));
     }
 
     [Theory]
@@ -165,7 +179,7 @@ public class BrowserServiceTests : BaseTests
 
         // Act/Assert
         await Assert.ThrowsAsync<DirectoryNotEmptyException>(() =>
-            _browserService.DeleteDirectory(_newDirectoryPath, group?.Id));
+            _directoryService.DeleteDirectory(_newDirectoryPath, group?.Id));
     }
 
     [Theory]
@@ -178,7 +192,7 @@ public class BrowserServiceTests : BaseTests
         _fileServiceUtils.GetDirectory("/", true, group?.Id).Returns(rootDir);
 
         // Act
-        var responseDirectory = await _browserService.List(group?.Id);
+        var responseDirectory = await _directoryService.List(group?.Id);
 
         // Assert
         Assert.NotNull(responseDirectory);
@@ -200,8 +214,8 @@ public class BrowserServiceTests : BaseTests
         _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
 
         // Act
-        var rootDirectory = await _browserService.List(group?.Id);
-        var responseDirectory = await _browserService.List(group?.Id, dir.Path);
+        var rootDirectory = await _directoryService.List(group?.Id);
+        var responseDirectory = await _directoryService.List(group?.Id, dir.Path);
 
         // Assert - Root directory
         Assert.NotNull(rootDirectory);
@@ -223,7 +237,7 @@ public class BrowserServiceTests : BaseTests
         var group = withGroup ? _defaultGroup : null;
 
         // Act
-        var responseDirectory = await _browserService.List(group?.Id, _newDirectoryPath);
+        var responseDirectory = await _directoryService.List(group?.Id, _newDirectoryPath);
 
         // Assert
         Assert.Null(responseDirectory);

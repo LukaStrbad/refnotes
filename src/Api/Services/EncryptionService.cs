@@ -33,10 +33,8 @@ public class EncryptionService : IEncryptionService
             csEncrypt.Write(bytes);
         }
 
-        var encrypted = msEncrypt.ToArray();
-
         // Return the encrypted bytes from the memory stream.
-        return encrypted;
+        return msEncrypt.ToArray();
     }
 
     public async Task EncryptAesToStreamAsync(Stream inputStream, Stream outputStream)

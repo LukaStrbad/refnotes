@@ -8,7 +8,7 @@ using Api.Extensions;
 
 namespace Api.Services;
 
-public interface IBrowserService
+public interface IDirectoryService
 {
     /// <summary>
     /// List the contents of a directory.
@@ -33,13 +33,13 @@ public interface IBrowserService
     Task DeleteDirectory(string path, int? groupId);
 }
 
-public class BrowserService(
+public sealed class DirectoryService(
     RefNotesContext context,
     IEncryptionService encryptionService,
     IFileStorageService fileStorageService,
     IFileServiceUtils utils,
     IUserService userService,
-    IUserGroupService userGroupService) : IBrowserService
+    IUserGroupService userGroupService) : IDirectoryService
 {
     public async Task<DirectoryDto?> List(int? groupId, string path = "/")
     {
@@ -65,13 +65,17 @@ public class BrowserService(
 
     public async Task AddDirectory(string path, int? groupId)
     {
+        var existingDir = await utils.GetDirectory(path, false, groupId);
+        if (existingDir is not null)
+        {
+            throw new DirectoryAlreadyExistsException($"Directory at path '{path}' already exists");
+        }
+
         var user = await userService.GetCurrentUser();
 
         path = FileUtils.NormalizePath(path);
         var encryptedPath = encryptionService.EncryptAesStringBase64(path);
         var hashedPath = encryptionService.HashString(path);
-
-        var existingDir = await utils.GetDirectory(path, false, groupId);
 
         EncryptedDirectory newDirectory;
         if (groupId is null)
@@ -90,11 +94,6 @@ public class BrowserService(
             context.Directories.Add(newDirectory);
             await context.SaveChangesAsync();
             return;
-        }
-
-        if (existingDir is not null)
-        {
-            throw new DirectoryAlreadyExistsException($"Directory at path '{path}' already exists");
         }
 
         var (baseDir, _) = FileUtils.SplitDirAndFile(path);
@@ -126,7 +125,7 @@ public class BrowserService(
         {
             throw new ArgumentException("Cannot delete root directory");
         }
-        
+
         var directoryQuery = context.Directories
             .Include(dir => dir.Parent)
             .Include(dir => dir.Files)

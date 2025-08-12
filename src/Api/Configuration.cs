@@ -34,7 +34,7 @@ public static class Configuration
         builder.Services.AddSingleton(AppSettings.Initialize);
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IBrowserService, BrowserService>();
+        builder.Services.AddScoped<IDirectoryService, DirectoryService>();
         builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
