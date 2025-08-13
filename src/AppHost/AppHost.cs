@@ -25,7 +25,7 @@ var api = builder.AddProject<Projects.Api>("api")
     .WaitFor(cache);
 
 var webPort = builder.Configuration.GetValue<int?>("Ports:Web");
-builder.AddPnpmApp("web", "../Web")
+builder.AddPnpmApp("web", "../Web", scriptName: "start:aspire")
     .WithHttpEndpoint(env: "PORT", port: webPort)
     .WithExternalHttpEndpoints()
     .WithReference(api)
