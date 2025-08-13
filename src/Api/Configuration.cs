@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Api.Jobs;
 using Api.Services;
 using Api.Utils;
@@ -12,11 +11,8 @@ using Api.Middlewares;
 using Api.Services.Redis;
 using Api.Services.Schedulers;
 using MailKit.Net.Smtp;
-using Medallion.Threading;
-using Medallion.Threading.Redis;
 using Microsoft.Extensions.Primitives;
 using ServiceDefaults;
-using StackExchange.Redis;
 
 namespace Api;
 
@@ -26,6 +22,7 @@ public static class Configuration
     public static void RegisterServices(this IHostApplicationBuilder builder)
     {
         builder.AddServiceDefaults();
+        builder.AddOpenTelemetry();
         builder.RegisterScheduler();
         builder.Services.AddControllersWithViews();
 
