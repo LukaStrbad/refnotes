@@ -31,15 +31,13 @@ public class FileStorageService(
             throw new ArgumentException("File name cannot be empty.");
         }
 
-        await using (var handle = await lockProvider.TryAcquireWriteLockAsync(GetFileLockKey(fileName), LockTimeout))
-        {
-            if (handle is null)
-                throw new TimeoutException("File lock timeout.");
+        await using var handle = await lockProvider.TryAcquireWriteLockAsync(GetFileLockKey(fileName), LockTimeout);
+        if (handle is null)
+            throw new TimeoutException("File lock timeout.");
 
-            var filePath = Path.Combine(appSettings.DataDir, fileName);
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
-        }
+        var filePath = Path.Combine(appSettings.DataDir, fileName);
+        await using var stream = new FileStream(filePath, FileMode.Create);
+        await encryptionService.EncryptAesToStreamAsync(inputStream, stream);
 
         var redis = muxer.GetDatabase();
         var sizeKey = GetFileSizeKey(fileName);
