@@ -13,9 +13,7 @@ async function authHandler(req: HttpRequest<unknown>, next: HttpHandlerFn): Prom
     withCredentials: true,
   });
 
-  const accessToken = authService.accessToken;
-
-  if (accessToken && authService.isTokenExpired()) {
+  if (authService.isTokenExpired()) {
     await authService.tryToRefreshTokens();
   }
 

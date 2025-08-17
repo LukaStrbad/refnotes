@@ -86,7 +86,6 @@ describe('AuthService', () => {
     await service.tryToRefreshTokens();
 
     expect(service.isUserLoggedIn()).toBeFalse();
-    expect(service.accessToken).toBeNull();
   });
 
   it('should login user if credentials are correct', async () => {
@@ -96,7 +95,6 @@ describe('AuthService', () => {
 
     await service.login('admin', 'admin');
 
-    expect(service.accessToken).toBe(accessToken);
     expect(service.isUserLoggedIn()).toBeTrue();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/browser');
   });
@@ -106,7 +104,6 @@ describe('AuthService', () => {
 
     await expectAsync(service.login('admin', 'admin')).toBeRejected();
 
-    expect(service.accessToken).toBeNull();
     expect(service.isUserLoggedIn()).toBeFalse();
     expect(router.navigate).not.toHaveBeenCalledWith(['/browser']);
   });
@@ -118,7 +115,6 @@ describe('AuthService', () => {
 
     await service.register('admin', 'admin', 'admin@admin.com', 'admin');
 
-    expect(service.accessToken).toBe(accessToken);
     expect(service.isUserLoggedIn()).toBeTrue();
     expect(router.navigate).toHaveBeenCalledWith(['/browser']);
   });
@@ -128,7 +124,6 @@ describe('AuthService', () => {
 
     await expectAsync(service.register('admin', 'admin', 'admin@admin.com', 'admin')).toBeRejected();
 
-    expect(service.accessToken).toBeNull();
     expect(service.isUserLoggedIn()).toBeFalse();
     expect(router.navigate).not.toHaveBeenCalledWith(['/browser']);
   });
@@ -142,7 +137,6 @@ describe('AuthService', () => {
     await service.logout(reason);
 
     expect(service.isUserLoggedIn()).toBeFalse();
-    expect(service.accessToken).toBeNull();
     expect(router.navigate).toHaveBeenCalledWith(
       ['/login'],
       { info: { message: reason } }
