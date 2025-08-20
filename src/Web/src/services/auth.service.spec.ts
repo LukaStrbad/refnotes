@@ -8,7 +8,6 @@ import { CookieService } from './cookie.service';
 import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 describe('AuthService', () => {
-  let service: AuthService;
   let http: jasmine.SpyObj<HttpClient>;
   let router: jasmine.SpyObj<Router>;
   let cookieService: jasmine.SpyObj<CookieService>;
@@ -55,33 +54,39 @@ describe('AuthService', () => {
         { provide: 'Window', useValue: windowMock },
       ]
     });
-    service = TestBed.inject(AuthService);
-    service.overrideHttpClient(http);
   });
 
+  function createService() {
+    const service = TestBed.inject(AuthService);
+    service.overrideHttpClient(http);
+    return service;
+  }
+
   it('should be created', () => {
+    const service = createService();
     expect(service).toBeTruthy();
   });
 
   it('should not set user logged in if there is no token', () => {
+    const service = createService();
     expect(service.isUserLoggedIn()).toBeFalse();
   });
 
   it('should set user logged in if token is present and not expired', () => {
     setAccessTokenCookie(createValidAccessToken());
-    service.init();
+    const service = createService();
     expect(service.isUserLoggedIn()).toBeTrue();
   });
 
   it('should not set user logged in if token is expired', () => {
     setAccessTokenCookie(createExpiredAccessToken());
-    service.init();
+    const service = createService();
     expect(service.isUserLoggedIn()).toBeFalse();
   });
 
   it('should set logout if tokens cannot be refreshed', async () => {
     setAccessTokenCookie(createExpiredAccessToken());
-    service.init();
+    const service = createService();
 
     await service.tryToRefreshTokens();
 
@@ -89,6 +94,7 @@ describe('AuthService', () => {
   });
 
   it('should login user if credentials are correct', async () => {
+    const service = createService();
     const accessToken = createValidAccessToken();
     setAccessTokenCookie(accessToken);
     http.post.and.returnValue(of(undefined));
@@ -100,6 +106,7 @@ describe('AuthService', () => {
   });
 
   it('should not login user if credentials are incorrect', async () => {
+    const service = createService();
     http.post.and.throwError(new HttpErrorResponse({ status: 401 }));
 
     await expectAsync(service.login('admin', 'admin')).toBeRejected();
@@ -109,6 +116,7 @@ describe('AuthService', () => {
   });
 
   it('should register user if request succeeds', async () => {
+    const service = createService();
     const accessToken = createValidAccessToken();
     setAccessTokenCookie(accessToken);
     http.post.and.returnValue(of(undefined));
@@ -120,6 +128,7 @@ describe('AuthService', () => {
   });
 
   it('should not register user if request fails', async () => {
+    const service = createService();
     http.post.and.throwError(new HttpErrorResponse({ status: 400 }));
 
     await expectAsync(service.register('admin', 'admin', 'admin@admin.com', 'admin')).toBeRejected();
@@ -130,7 +139,7 @@ describe('AuthService', () => {
 
   it('should logout user', async () => {
     localStorage.setItem('accessToken', createValidAccessToken());
-    service.init();
+    const service = createService();
 
     const reason = "auth.sessionExpired";
 

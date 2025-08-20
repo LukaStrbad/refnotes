@@ -37,11 +37,6 @@ export class AuthService {
     private cookieService: CookieService,
     private translate: TranslateService,
   ) {
-    this.init().then();
-  }
-
-  // This method is separate for testing purposes
-  async init() {
     // This ignores all interceptors
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
     this.http = new HttpClient(this.httpBackend);
