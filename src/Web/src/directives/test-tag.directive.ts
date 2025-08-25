@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnInit } from '@angular/core';
+import { Directive, ElementRef, inject, input, OnInit } from '@angular/core';
 import { environment } from '../environments/environment';
 
 @Directive({
@@ -6,14 +6,12 @@ import { environment } from '../environments/environment';
   selector: '[testTag]',
 })
 export class TestTagDirective implements OnInit {
-  @Input() testTag = '';
-
-  constructor(private el: ElementRef<HTMLElement>) {
-  }
+  readonly testTag = input.required<string>();
+  private readonly el = inject(ElementRef<HTMLElement>);
 
   ngOnInit(): void {
     if (!environment.production) {
-      this.el.nativeElement.setAttribute('data-test', this.testTag);
+      this.el.nativeElement.setAttribute('data-test', this.testTag());
     }
     // Angular also adds 'testtag' to the element's attributes, so we need to remove it
     this.el.nativeElement.removeAttribute('testtag');

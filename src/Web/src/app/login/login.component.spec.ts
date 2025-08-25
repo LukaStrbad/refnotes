@@ -9,7 +9,7 @@ import { UserService } from '../../services/user.service';
 import { AskModalService } from '../../services/ask-modal.service';
 import { click } from '../../tests/click-utils';
 
-fdescribe('LoginComponent', () => {
+describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let auth: jasmine.SpyObj<AuthService>;
