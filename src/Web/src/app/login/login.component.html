@@ -41,14 +41,14 @@
     @if (message) {
       <div role="alert" class="alert alert-info mt-2">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        <span>{{ message | translate }}</span>
+        <span testTag="login.message">{{ message | translate }}</span>
       </div>
     }
 
     @if (error) {
       <div role="alert" class="alert alert-error mt-2">
-        <i class="bi bi-exclamation-triangle-fill"></i> 
-        <span>{{ error | translate }}</span>
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span testTag="login.error">{{ error | translate }}</span>
       </div>
     }
 
@@ -56,6 +56,7 @@
       <button
         class="btn btn-primary"
         (click)="login()"
+        testTag="login.button.submit"
         [disabled]="
           !usernameInput.valid ||
           usernameInput.pristine ||

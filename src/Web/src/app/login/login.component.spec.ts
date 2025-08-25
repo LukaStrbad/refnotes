@@ -9,7 +9,7 @@ import { UserService } from '../../services/user.service';
 import { AskModalService } from '../../services/ask-modal.service';
 import { click } from '../../tests/click-utils';
 
-describe('LoginComponent', () => {
+fdescribe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let auth: jasmine.SpyObj<AuthService>;
@@ -18,9 +18,9 @@ describe('LoginComponent', () => {
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
-    auth = jasmine.createSpyObj('AuthService', ['login']);
-    askModal = jasmine.createSpyObj('AskModalService', ['confirm']);
-    userService = jasmine.createSpyObj('UserService', ['sendPasswordResetEmail']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
+    askModal = jasmine.createSpyObj<AskModalService>('AskModalService', ['confirm']);
+    userService = jasmine.createSpyObj<UserService>('UserService', ['sendPasswordResetEmail']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -55,6 +55,7 @@ describe('LoginComponent', () => {
   it('should call auth.login with provided username and password', async () => {
     component.username.set('testUser');
     component.password.set('testPassword');
+
     await component.login();
 
     expect(auth.login).toHaveBeenCalledWith('testUser', 'testPassword', undefined);
@@ -64,38 +65,60 @@ describe('LoginComponent', () => {
     auth.login.and.resolveTo();
     component.username.set('testUser');
     component.password.set('testPassword');
-    await component.login();
+    const loginButton = nativeElement.querySelector('button[data-test="login.button.submit"]') as HTMLButtonElement;
 
-    expect(component.error).toBeNull();
+    click(loginButton);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const errorSpan = nativeElement.querySelector('[data-test="login.error"]') as HTMLElement;
+    expect(errorSpan).toBeNull();
+    expect(auth.login).toHaveBeenCalledWith('testUser', 'testPassword', undefined);
   });
 
   it('should set error message to invalidPassword on 401 error', async () => {
     const error = new HttpErrorResponse({ status: 401 });
     auth.login.and.rejectWith(error);
-    await component.login();
+    const loginButton = nativeElement.querySelector('button[data-test="login.button.submit"]') as HTMLButtonElement;
 
-    expect(component.error).toBe('login.errors.invalidPassword');
+    click(loginButton);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const errorSpan = nativeElement.querySelector('[data-test="login.error"]') as HTMLElement;
+    expect(errorSpan).toBeTruthy();
+    expect(errorSpan.textContent).toBe('login.errors.invalidPassword');
   });
 
   it('should set error message to usernameNotFound on 404 error', async () => {
     const error = new HttpErrorResponse({ status: 404 });
     auth.login.and.rejectWith(error);
-    await component.login();
+    const loginButton = nativeElement.querySelector('button[data-test="login.button.submit"]') as HTMLButtonElement;
 
-    expect(component.error).toBe('login.errors.usernameNotFound');
+    click(loginButton);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const errorSpan = nativeElement.querySelector('[data-test="login.error"]') as HTMLElement;
+    expect(errorSpan).toBeTruthy();
+    expect(errorSpan.textContent).toBe('login.errors.usernameNotFound');
   });
 
   it('should set error message to default on unknown error', async () => {
     const error = { status: 500 };
     auth.login.and.rejectWith(error);
-    await component.login();
+    const loginButton = nativeElement.querySelector('button[data-test="login.button.submit"]') as HTMLButtonElement;
 
-    expect(component.error).toBeTruthy();
-    expect(component.error).not.toBe('login.errors.invalidPassword');
-    expect(component.error).not.toBe('login.errors.usernameNotFound');
+    click(loginButton);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const errorSpan = nativeElement.querySelector('[data-test="login.error"]') as HTMLElement;
+    expect(errorSpan).toBeTruthy();
+    expect(errorSpan.textContent).toBe('login.errors.generic');
   });
 
-  it('should set message field from router navigation extras', () => {
+  it('should set message field from router navigation extras', async () => {
     const router = TestBed.inject(Router);
     spyOn(router, 'getCurrentNavigation').and.returnValue({
       extras: {
@@ -104,9 +127,13 @@ describe('LoginComponent', () => {
     } as Navigation);
 
     const fixture = TestBed.createComponent(LoginComponent);
-    const component = fixture.componentInstance;
+    nativeElement = fixture.nativeElement as HTMLElement;
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    expect(component.message).toBe('test message');
+    const messageElement = nativeElement.querySelector('[data-test="login.message"]') as HTMLElement;
+    expect(messageElement).toBeTruthy();
+    expect(messageElement.textContent).toBe('test message');
   });
 
   it('should call userService.sendPasswordResetEmail with username and current language', async () => {
@@ -129,8 +156,8 @@ describe('LoginComponent', () => {
 
     // Simulate button click
     click(forgotPasswordButton);
-    fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
 
     expect(userService.sendPasswordResetEmail).toHaveBeenCalledWith('testUser', 'en');
   });

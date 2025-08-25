@@ -10,6 +10,7 @@ export const ButtonClickEvents = {
 export function click(el: DebugElement | HTMLElement): void {
   if (el instanceof HTMLElement) {
     el.click();
+    el.dispatchEvent(new Event('click'));
   } else {
     el.triggerEventHandler('click', ButtonClickEvents.left);
   }
