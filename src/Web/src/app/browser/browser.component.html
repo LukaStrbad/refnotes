@@ -44,6 +44,13 @@
   </div>
 } @else {
   <div class="m-2 flex gap-2 justify-end">
+    @if (shareHash) {
+      <button class="btn btn-secondary btn-sm" (click)="placeSharedFile()">
+        <i class="bi bi-file-plus"></i>
+        {{ "browser.placeSharedFile" | translate }}
+      </button>
+    }
+
     <button class="btn btn-accent btn-sm" (click)="folderModal.show()">
       <i class="bi bi-folder-plus"></i>
       {{ "browser.newFolder" | translate }}
@@ -72,14 +79,21 @@
   <div class="breadcrumbs text-sm">
     <ul>
       <li>
-        <a [routerLink]="linkBasePath + '/browser'">
+        <a
+          [routerLink]="linkBasePath + '/browser'"
+          [queryParams]="routeQueryParams"
+        >
           <i class="bi bi-house mr-1"></i>
           {{ "browser.home" | translate }}
         </a>
       </li>
       @for (breadcrumb of breadcrumbs; track breadcrumb.path) {
         <li>
-          <a [routerLink]="breadcrumb.path" testTag="breadcrumb-item">
+          <a
+            [routerLink]="breadcrumb.path"
+            [queryParams]="routeQueryParams"
+            testTag="breadcrumb-item"
+          >
             <i class="bi bi-{{ breadcrumb.icon }} mr-1"></i>
             {{ breadcrumb.name }}
           </a>
@@ -265,12 +279,7 @@
               @if (isEditable(file)) {
                 <a
                   class="btn btn-sm btn-accent"
-                  [routerLink]="[
-                    linkBasePath,
-                    'file',
-                    file.path,
-                    'edit',
-                  ]"
+                  [routerLink]="[linkBasePath, 'file', file.path, 'edit']"
                   testTag="browser.edit-file"
                 >
                   <i class="bi bi-pencil"></i>
@@ -374,6 +383,7 @@
   [fileName]="share.fileName()"
   [isPublic]="share.isPublic()"
   [publicLink]="share.publicLink()"
-  [userShareLink]="null"
+  [userShareLink]="share.userShareLink()"
   (changePublicState)="share.setPublicState($event)"
+  (generateUserShareLink)="share.loadUserShareLink()"
 ></app-share-modal>

@@ -103,7 +103,9 @@
     "download": "Download",
     "share": "Share",
     "favorite": "Add to favorites",
-    "unfavorite": "Remove from favorites"
+    "unfavorite": "Remove from favorites",
+    "placeSharedFile": "Place shared file here",
+    "shared-file-placed": "Shared file placed in the current directory"
   },
   "editor": {
     "viewType": {
@@ -179,7 +181,8 @@
       "copy": "Copy",
       "close": "Close",
       "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images.",
-      "generate-url": "Generate share url"
+      "generate-url": "Generate share url",
+      "shareUrl": "Share URL"
     }
   },
   "auth": {
@@ -246,7 +249,8 @@
       "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
       "USER_NOT_FOUND": "User not found",
       "USER_ALREADY_EXISTS": "User with the same username already exists"
-    }
+    },
+    "place-shared-file": "There was an error placing a shared file"
   },
   "time": {
     "just-now": "Just now",
