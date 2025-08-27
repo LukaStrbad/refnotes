@@ -410,6 +410,7 @@ public class FileController : GroupPermissionControllerBase
         return Ok(hash);
     }
 
+    [HttpPost("generateSharedFile")]
     public async Task<ActionResult> GenerateSharedFile(string hash, string directoryPath)
     {
         var directory = await _fileServiceUtils.GetDirectory(directoryPath, false, null);

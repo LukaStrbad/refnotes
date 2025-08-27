@@ -178,7 +178,8 @@
       "publicLink": "Public link",
       "copy": "Copy",
       "close": "Close",
-      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images."
+      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images.",
+      "generate-url": "Generate share url"
     }
   },
   "auth": {
@@ -326,6 +327,10 @@
     "public-link": {
       "copied-to-clipboard": "Link copied to clipboard",
       "copy-failed": "Failed to copy link to clipboard"
+    },
+    "type": {
+      "public": "Share to public",
+      "user": "Share to another user"
     }
   },
   "home-button": {
