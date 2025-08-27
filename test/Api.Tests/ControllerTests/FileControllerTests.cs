@@ -5,7 +5,9 @@ using Api.Model;
 using Api.Services;
 using Api.Services.Files;
 using Api.Services.Schedulers;
+using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;
+using Api.Utils;
 using Data.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,12 +27,16 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
     private readonly IPublicFileScheduler _publicFileScheduler;
     private readonly IWebSocketFileSyncService _webSocketFileSyncService;
     private readonly IFileSyncService _fileSyncService;
+    private readonly IFileShareService _fileShareService;
+    private readonly IFileServiceUtils _fileServiceUtils;
+    private readonly IDirectoryService _directoryService;
+    private readonly FakerResolver _fakerResolver;
 
     private readonly CancellationTokenSource _cts = new();
 
     public FileControllerTests(ServiceFixture<FileController> fixture)
     {
-        var serviceProvider = fixture.CreateServiceProvider();
+        var serviceProvider = fixture.WithFakers().CreateServiceProvider();
 
         _fileService = serviceProvider.GetRequiredService<IFileService>();
         _fileStorageService = serviceProvider.GetRequiredService<IFileStorageService>();
@@ -39,6 +45,9 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         _publicFileScheduler = serviceProvider.GetRequiredService<IPublicFileScheduler>();
         _webSocketFileSyncService = serviceProvider.GetRequiredService<IWebSocketFileSyncService>();
         _fileSyncService = serviceProvider.GetRequiredService<IFileSyncService>();
+        _fileShareService = serviceProvider.GetRequiredService<IFileShareService>();
+        _fileServiceUtils = serviceProvider.GetRequiredService<IFileServiceUtils>();
+        _directoryService = serviceProvider.GetRequiredService<IDirectoryService>();
         _controller = serviceProvider.GetRequiredService<FileController>();
 
         _httpContext = new DefaultHttpContext();
@@ -46,6 +55,8 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         {
             HttpContext = _httpContext
         };
+
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
     }
 
     [Fact]
@@ -415,7 +426,8 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         await _fileStorageService.Received(1).SaveFileAsync(filesystemName, Arg.Any<Stream>());
         await _fileService.Received(1).UpdateTimestamp(directoryPath, name, null);
         await _publicFileScheduler.Received(1).ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
-        await _fileSyncService.Received(1).SendSyncSignalAsync(encryptedFile.Id, Arg.Is<FileSyncChannelMessage>(msg => msg.ClientId == clientId), Arg.Any<CancellationToken>());
+        await _fileSyncService.Received(1).SendSyncSignalAsync(encryptedFile.Id,
+            Arg.Is<FileSyncChannelMessage>(msg => msg.ClientId == clientId), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -611,5 +623,52 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
 
         await _publicFileService.Received(1).IsPublicFileActive(urlHash);
         Assert.Equal(StatusCodes.Status404NotFound, _httpContext.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ShareFile_ReturnsOk_WhenFileShared()
+    {
+        const string filePath = "/test.txt";
+        const string hash = "random-hash";
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().Generate();
+        _fileService.GetEncryptedFileAsync(filePath, null).Returns(encryptedFile);
+        _fileShareService.GenerateShareHash(encryptedFile.Id).Returns(hash);
+
+        var result = await _controller.ShareFile(filePath);
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task GenerateSharedFile_ReturnsOk_WhenFileGenerated()
+    {
+        const string hash = "random-hash";
+        const string directoryPath = "/test";
+        var dirOwner = _fakerResolver.Get<User>().WithId(1).Generate();
+        var hashOwner = _fakerResolver.Get<User>().WithId(2).Generate();
+        var directory = _fakerResolver.Get<EncryptedDirectory>().ForUser(dirOwner).Generate();
+        _fileServiceUtils.GetDirectory(directoryPath, false, null).Returns(directory);
+        _directoryService.GetOwner(directory.Id).Returns(dirOwner);
+        _fileShareService.GetOwnerFromHash(hash).Returns(hashOwner);
+
+        var result = await _controller.GenerateSharedFile(hash, directoryPath);
+
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task GenerateSharedFile_ReturnsBadRequest_WhenOwnerIsSameAsHashOwner()
+    {
+        const string hash = "random-hash";
+        const string directoryPath = "/test";
+        var dirOwner = _fakerResolver.Get<User>().WithId(1).Generate();
+        var directory = _fakerResolver.Get<EncryptedDirectory>().ForUser(dirOwner).Generate();
+        _fileServiceUtils.GetDirectory(directoryPath, false, null).Returns(directory);
+        _directoryService.GetOwner(directory.Id).Returns(dirOwner);
+        _fileShareService.GetOwnerFromHash(hash).Returns(dirOwner);
+
+        var result = await _controller.GenerateSharedFile(hash, directoryPath);
+
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 }
