@@ -226,4 +226,31 @@ export class FileService {
     const socketUrl = `${environment.wsApiUrl}/ws/publicFileSync?${params.toString()}`;
     return new WebSocket(socketUrl);
   }
+
+  async shareFile(filePath: string): Promise<string | null> {
+    const params = generateHttpParams({ filePath: filePath });
+
+    const hash = await firstValueFrom(
+      this.http.post(`${apiUrl}/shareFile`, {}, { params, responseType: 'text' }),
+    );
+
+    if (!hash) {
+      return null;
+    }
+
+    return this.createUrlFromHash(hash);
+  }
+
+  async generateSharedFile(hash: string, directoryPath: string) {
+    const params = generateHttpParams({ hash: hash, directoryPath: directoryPath });
+
+    return await firstValueFrom(
+      this.http.post(`${apiUrl}/generateSharedFile`, {}, { params, responseType: 'text' }),
+    );
+  }
+
+  private createUrlFromHash(hash: string): string {
+    const origin = window.location.origin;
+    return `${origin}/browser?shareHash=${hash}`;
+  }
 }

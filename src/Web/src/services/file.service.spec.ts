@@ -158,4 +158,29 @@ describe('FileService', () => {
     expect(req.request.method).toBe('GET');
     expect(await promise).toEqual(mockInfo);
   });
+
+  it('should share a file', async () => {
+    const mockResponse = 'test-hash';
+    const promise = service.shareFile('/path/to/file.txt');
+    const expectedUrl = `${window.location.origin}/browser?shareHash=${mockResponse}`;
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/shareFile?filePath=/path/to/file.txt`
+    );
+    expect(req.request.method).toBe('POST');
+    req.flush(mockResponse);
+    expect(await promise).toEqual(expectedUrl);
+  });
+
+  it('should generate a shared file', async () => {
+    const mockResponse = 'test-shared-file';
+    const promise = service.generateSharedFile('test-hash', '/path/to/file.txt');
+
+    const req = httpMock.expectOne(
+      `${apiUrl}/generateSharedFile?hash=test-hash&directoryPath=/path/to/file.txt`
+    );
+    expect(req.request.method).toBe('POST');
+    req.flush(mockResponse);
+    expect(await promise).toEqual(mockResponse);
+  });
 });
