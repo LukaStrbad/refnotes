@@ -54,6 +54,7 @@ public static class Configuration
         builder.Services.AddScoped<IEmailConfirmService, EmailConfirmService>();
         builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
         builder.Services.AddScoped<IRedisLockProvider, RedisLockProvider>();
+        builder.Services.AddScoped<IFileShareService, FileShareService>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();

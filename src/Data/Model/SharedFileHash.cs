@@ -13,5 +13,5 @@ public sealed class SharedFileHash
     [MaxLength(256)]
     public required string Hash { get; init; }
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
-    public bool IsDeleted { get; init; }
+    public bool IsDeleted { get; set; }
 }
