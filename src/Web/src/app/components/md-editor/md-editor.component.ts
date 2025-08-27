@@ -44,7 +44,7 @@ import { ActivatedRoute } from '@angular/router';
 export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly markdownHighlighter: MarkdownHighlighter;
   currentPath = input('/');
-  value = model('');
+  readonly value = model('');
 
   editorMode: Signal<EditorMode>;
   showEditor = computed(
@@ -67,8 +67,6 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     public settings: SettingsService,
-    private log: LoggerService,
-    private fileService: FileService,
     private imageBlobResolver: ImageBlobResolverService,
     route: ActivatedRoute,
   ) {
@@ -270,9 +268,7 @@ export class MdEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       const start = target.selectionStart;
       const end = target.selectionEnd;
       const newValue =
-        this.value().substring(0, start) +
-        ' '.repeat(4) +
-        this.value().substring(end);
+        this.value().substring(0, start) + ' '.repeat(4) + this.value().substring(end);
       this.value.set(newValue);
       setTimeout(() => {
         target.selectionStart = target.selectionEnd = start + 4;
