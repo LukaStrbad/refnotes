@@ -3,6 +3,7 @@ using System.Text;
 using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Services.Schedulers;
 using Api.Utils;
 using Microsoft.AspNetCore.Authorization;
