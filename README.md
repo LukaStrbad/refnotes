@@ -31,12 +31,12 @@ RefNotes is a note-taking application built with .NET and Angular.
 - Live file sync
     - When a file is saved, the changes will be synced across tabs/browsers
     - This works even for public notes
+- A WYSIWYG editor for markdown to simplify editing
 
 ## Planned Features
 
 - File sharing
 - Autocomplete for image paths
-- A WYSIWYG editor for markdown to simplify editing
 
 ## Getting Started
 
