@@ -40,6 +40,7 @@ function setupTestBed() {
     fileName: signal(''),
     isPublic: signal(false),
     publicLink: signal<string | null>(null),
+    userShareLink: signal<string | null>(null),
   });
 
   const imports = [

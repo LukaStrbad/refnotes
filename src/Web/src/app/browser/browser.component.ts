@@ -2,7 +2,7 @@ import { Component, computed, OnDestroy, OnInit, signal, ViewChild } from '@angu
 import { BrowserService } from '../../services/browser.service';
 import { FormsModule } from '@angular/forms';
 import { Directory } from '../../model/directory';
-import { JsonPipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
 import { HttpEventType } from '@angular/common/http';
 import { LoggerService } from '../../services/logger.service';

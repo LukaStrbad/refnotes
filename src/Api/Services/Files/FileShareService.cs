@@ -47,14 +47,14 @@ public sealed class FileShareService : IFileShareService
             _logger.LogError("Shared file with hash {hash} not found.", hash);
             throw new SharedFileHashNotFound("Shared file not found.");
         }
-        
+
         var directory = await _context.Directories.FindAsync(attachedDirectoryId);
         if (directory is null)
         {
             _logger.LogError("Directory with ID {directoryId} not found.", attachedDirectoryId);
-            throw new DirectoryNotFoundException();
+            throw new DirectoryNotFoundException("Directory not found");
         }
-        
+
         var sharedFile = new SharedFile
         {
             SharedToDirectory = directory,
@@ -74,7 +74,7 @@ public sealed class FileShareService : IFileShareService
             .FirstOrDefaultAsync(sf => sf.Hash == hash);
         if (sharedFileHash is null)
             return null;
-        
+
         var directory = await _context.Directories
             .Include(d => d.Owner)
             .FirstOrDefaultAsync(d => d.Id == sharedFileHash.EncryptedFile.EncryptedDirectoryId);
