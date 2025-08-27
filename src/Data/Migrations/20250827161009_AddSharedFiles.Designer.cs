@@ -4,16 +4,19 @@ using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace MigrationService.Migrations
+namespace Data.Migrations
 {
     [DbContext(typeof(RefNotesContext))]
-    partial class RefNotesContextModelSnapshot : ModelSnapshot
+    [Migration("20250827161009_AddSharedFiles")]
+    partial class AddSharedFiles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
