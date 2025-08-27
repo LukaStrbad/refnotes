@@ -178,7 +178,8 @@
       "makePublic": "Javno",
       "publicLink": "Javna veza",
       "title": "Podijeliti datoteku {{fileName}}?",
-      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike."
+      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike.",
+      "generate-url": "Generiraj URL za djeljenje"
     }
   },
   "auth": {
@@ -323,6 +324,10 @@
     "public-link": {
       "copied-to-clipboard": "Veza kopirana u međuspremnik",
       "copy-failed": "Greška prilikom kopiranja veze"
+    },
+    "type": {
+      "public": "Dijeli javno",
+      "user": "Dijeli s drugim korisnikom"
     }
   },
   "home-button-go-to-login": "Idite na stranicu za prijavu",
