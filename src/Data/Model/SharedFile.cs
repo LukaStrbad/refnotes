@@ -6,9 +6,12 @@ namespace Data.Model;
 public sealed class SharedFile
 {
     public int Id { get; init; }
-    [ForeignKey("EncryptedFileId")] public EncryptedFile? EncryptedFile { get; init; }
-    [ForeignKey("EncryptedFileId")] public int EncryptedFileId { get; init; }
-    [ForeignKey("SharedToId")] public User? SharedTo { get; init; }
-    [ForeignKey("SharedToId")] public int SharedToId { get; init; }
+    
+    [ForeignKey("SharedEncryptedFileId")] public EncryptedFile? SharedEncryptedFile { get; init; }
+    [ForeignKey("SharedEncryptedFileId")] public int SharedEncryptedFileId { get; init; }
+    
+    [ForeignKey("SharedToDirectoryId")] public EncryptedDirectory? SharedToDirectory { get; init; }
+    [ForeignKey("SharedToDirectoryId")] public int SharedToDirectoryId { get; init; }
+    
     public DateTime Created { get; init; } = DateTime.UtcNow;
 }
