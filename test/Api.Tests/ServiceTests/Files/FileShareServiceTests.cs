@@ -64,4 +64,15 @@ public sealed class FileShareServiceTests
         await Assert.ThrowsAsync<SharedFileHashNotFound>(async ()
             => await _service.GenerateSharedFileFromHash(sharedFileHash.Hash, directory.Id));
     }
+    
+    [Fact]
+    public async Task GetOwnerFromHash_ReturnsOwner_WhenHashIsValid()
+    {
+        var sharedFileHash = _fakerResolver.Get<SharedFileHash>().Generate();
+        var owner = sharedFileHash.EncryptedFile.EncryptedDirectory!.Owner!;
+        
+        var ownerFromHash = await _service.GetOwnerFromHash(sharedFileHash.Hash);
+        
+        Assert.Equal(owner, ownerFromHash);
+    }
 }

@@ -32,6 +32,8 @@ public interface IDirectoryService
     /// <param name="path">Path to the directory</param>
     /// <param name="groupId">ID of the group where the directory belongs to</param>
     Task DeleteDirectory(string path, int? groupId);
+
+    Task<User?> GetOwner(int directoryId);
 }
 
 public sealed class DirectoryService(
@@ -168,5 +170,14 @@ public sealed class DirectoryService(
         parent.Directories.Remove(directory);
         context.Entry(directory).State = EntityState.Deleted;
         await context.SaveChangesAsync();
+    }
+
+    public async Task<User?> GetOwner(int directoryId)
+    {
+        var directory = await context.Directories.
+            Include(dir => dir.Owner).
+            FirstOrDefaultAsync(dir => dir.Id == directoryId);
+        
+        return directory?.Owner;
     }
 }

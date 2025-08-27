@@ -65,4 +65,20 @@ public sealed class FileShareService : IFileShareService
         await _context.SaveChangesAsync();
         return sharedFile;
     }
+
+    public async Task<User?> GetOwnerFromHash(string hash)
+    {
+        var sharedFileHash = await _context.SharedFileHashes
+            .Include(sf => sf.EncryptedFile)
+            .Where(sf => !sf.IsDeleted)
+            .FirstOrDefaultAsync(sf => sf.Hash == hash);
+        if (sharedFileHash is null)
+            return null;
+        
+        var directory = await _context.Directories
+            .Include(d => d.Owner)
+            .FirstOrDefaultAsync(d => d.Id == sharedFileHash.EncryptedFile.EncryptedDirectoryId);
+
+        return directory?.Owner;
+    }
 }
