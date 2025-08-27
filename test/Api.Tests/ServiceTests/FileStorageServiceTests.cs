@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Api.Services;
+using Api.Services.Files;
 using Api.Services.Redis;
 using Api.Tests.Fixtures;
 using Medallion.Threading;

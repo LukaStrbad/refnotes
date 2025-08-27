@@ -11,6 +11,7 @@ using Data;
 using NSubstitute;
 using StackExchange.Redis;
 using System.Security.Cryptography;
+using Api.Services.Files;
 using Quartz;
 
 namespace Api.Tests.Fixtures;

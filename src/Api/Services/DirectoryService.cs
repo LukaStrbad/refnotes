@@ -5,6 +5,7 @@ using Data;
 using Microsoft.EntityFrameworkCore;
 using Data.Model;
 using Api.Extensions;
+using Api.Services.Files;
 
 namespace Api.Services;
 

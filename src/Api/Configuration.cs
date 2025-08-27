@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using Api.Services.Files;
 using Api.Services.Redis;
 using Api.Services.Schedulers;
 using MailKit.Net.Smtp;

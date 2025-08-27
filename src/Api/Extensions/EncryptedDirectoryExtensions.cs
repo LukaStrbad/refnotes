@@ -1,5 +1,6 @@
 ﻿using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Utils;
 using Data.Model;
 
