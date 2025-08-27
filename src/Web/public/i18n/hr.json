@@ -103,7 +103,9 @@
     "download": "Preuzmi",
     "share": "Podijeli",
     "favorite": "Dodaj u favorite",
-    "unfavorite": "Ukloni iz favorita"
+    "unfavorite": "Ukloni iz favorita",
+    "placeSharedFile": "Postavite dijeljenu datoteku ovdje",
+    "shared-file-placed": "Zajednička datoteka smještena u trenutni direktorij"
   },
   "editor": {
     "viewType": {
@@ -179,7 +181,8 @@
       "publicLink": "Javna veza",
       "title": "Podijeliti datoteku {{fileName}}?",
       "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike.",
-      "generate-url": "Generiraj URL za djeljenje"
+      "generate-url": "Generiraj URL za djeljenje",
+      "shareUrl": "Dijelite URL"
     }
   },
   "auth": {
@@ -246,7 +249,8 @@
       "INVALID_OR_EXPIRED_TOKEN": "Nevažeći ili istekli token",
       "USER_NOT_FOUND": "Korisnik nije pronađen",
       "USER_ALREADY_EXISTS": "Korisnik s istim korisničkim imenom već postoji"
-    }
+    },
+    "place-shared-file": "Došlo je do pogreške postavljanja zajedničke datoteke"
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",

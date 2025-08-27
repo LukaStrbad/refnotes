@@ -66,6 +66,26 @@ export class ShareModalComponent {
       this.notificationService.error(await getTranslation(this.translate, 'share.public-link.copy-failed'));
     }
   }
+
+  onGenerateUserShareLink() {
+    this.generateUserShareLink.emit();
+  }
+
+  async copyShareUrlToClipboard() {
+    const link = this.userShareLink();
+    if (!link) {
+      this.log.warn('No user share link available to copy');
+      return;
+    }
+
+    try {
+      await this.clipboard.copyText(link);
+      this.notificationService.info(await getTranslation(this.translate, 'share.user-link.copied-to-clipboard'))
+    } catch (err) {
+      this.log.error('Failed to copy link to clipboard:', err);
+      this.notificationService.error(await getTranslation(this.translate, 'share.user-link.copy-failed'));
+    }
+  }
 }
 
 enum ShareType {
