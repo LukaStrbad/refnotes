@@ -2,18 +2,22 @@ import { TestBed } from '@angular/core/testing';
 
 import { ShareService } from './share.service';
 import { PublicFileService } from '../../public-file.service';
+import { FileService } from '../../file.service';
 
 describe('ShareService', () => {
   let service: ShareService;
   let publicFileService: jasmine.SpyObj<PublicFileService>;
+  let fileService: jasmine.SpyObj<FileService>;
 
   beforeEach(() => {
-    publicFileService = jasmine.createSpyObj('PublicFileService', ['getUrl', 'createPublicFile', 'deletePublicFile']);
+    publicFileService = jasmine.createSpyObj<PublicFileService>('PublicFileService', ['getUrl', 'createPublicFile', 'deletePublicFile']);
+    fileService = jasmine.createSpyObj<FileService>('FileService', ['shareFile']);
 
     TestBed.configureTestingModule({
       providers: [
         ShareService,
-        { provide: PublicFileService, useValue: publicFileService }
+        { provide: PublicFileService, useValue: publicFileService },
+        { provide: FileService, useValue: fileService },
       ]
     });
     service = TestBed.inject(ShareService);
@@ -77,5 +81,18 @@ describe('ShareService', () => {
     expect(service.publicLink()).toBe(exampleLink);
     expect(service.isPublic()).toBeTrue(); // Should be public if link is returned
     expect(publicFileService.getUrl).toHaveBeenCalledWith(filePath);
+  });
+
+  it('should load user share link when loadUserShareLink is called', async () => {
+    const filePath = '/path/to/file.txt';
+    const exampleLink = 'https://example.com/browser?shareHash=test-hash';
+    service.setFilePath(filePath);
+
+    fileService.shareFile.and.resolveTo(exampleLink);
+
+    await service.loadUserShareLink();
+
+    expect(service.userShareLink()).toBe(exampleLink);
+    expect(fileService.shareFile).toHaveBeenCalledWith(filePath);
   });
 });

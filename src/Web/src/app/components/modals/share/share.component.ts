@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, input, output, Output, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, input, output, ViewChild } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoggerService } from '../../../../services/logger.service';
 import { NotificationService } from '../../../../services/notification.service';
