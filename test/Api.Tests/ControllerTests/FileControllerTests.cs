@@ -13,7 +13,7 @@ using NSubstitute;
 
 namespace Api.Tests.ControllerTests;
 
-public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<FileController>>
+public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileController>>
 {
     private readonly FileController _controller;
     private readonly IFileService _fileService;
@@ -27,7 +27,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
 
     private readonly CancellationTokenSource _cts = new();
 
-    public FileControllerTests(ControllerFixture<FileController> fixture)
+    public FileControllerTests(ServiceFixture<FileController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
 
@@ -219,7 +219,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     public async Task GetPublicFile_ReturnsOk_WhenFileExists()
     {
         const string urlHash = "test_url_hash";
-        var encryptedFile = new EncryptedFile("abcd.txt", "test")
+        var encryptedFile = new EncryptedFile("abcd.txt", "test", "name-hash")
         {
             Id = 123
         };
@@ -303,11 +303,11 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     {
         const string urlHash = "test_url_hash";
         const string imagePath = "/test.png";
-        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md")
+        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md", "name-hash")
         {
             Id = 123
         };
-        var image = new EncryptedFile("gergsdf.bin", "test.png")
+        var image = new EncryptedFile("gergsdf.bin", "test.png", "name-hash")
         {
             Id = 124
         };
@@ -331,11 +331,11 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     {
         const string urlHash = "test_url_hash";
         const string imagePath = "/test.png";
-        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md")
+        var encryptedFile = new EncryptedFile("asdf123.bin", "test.md", "name-hash")
         {
             Id = 123
         };
-        var image = new EncryptedFile("gergsdf.bin", "test.png")
+        var image = new EncryptedFile("gergsdf.bin", "test.png", "name-hash")
         {
             Id = 124
         };
@@ -401,7 +401,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         const string content = "test content";
         var clientId = Guid.NewGuid().ToString();
 
-        var encryptedFile = new EncryptedFile(filesystemName, name)
+        var encryptedFile = new EncryptedFile(filesystemName, name, "name-hash")
         {
             Id = 123
         };
@@ -486,7 +486,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     public async Task GetPublicFileInfo_ReturnsFileInfo()
     {
         const string urlHash = "test_url_hash";
-        var encryptedFile = new EncryptedFile("abcd.txt", "test")
+        var encryptedFile = new EncryptedFile("abcd.txt", "test", "name-hash")
         {
             Id = 123
         };
@@ -540,7 +540,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         var webSocket = SetupWebSocketManager(true);
 
         const string filePath = "/test.txt";
-        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt", "name-hash")
         {
             Id = 123
         };
@@ -555,7 +555,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     public async Task FileSync_ReturnsBadRequest_WhenWebSocketIsNotRequested()
     {
         const string filePath = "/test.txt";
-        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt", "name-hash")
         {
             Id = 123
         };
@@ -583,7 +583,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
         var webSocket = SetupWebSocketManager(true);
 
         const string urlHash = "url-hash";
-        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt", "name-hash")
         {
             Id = 123
         };
@@ -599,7 +599,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ControllerFixture<Fi
     public async Task PublicFileSync_ReturnsNotFound_WhenPublicFileIsNotActive()
     {
         const string urlHash = "url-hash";
-        var encryptedFile = new EncryptedFile("test.bin", "test.txt")
+        var encryptedFile = new EncryptedFile("test.bin", "test.txt", "name-hash")
         {
             Id = 123
         };

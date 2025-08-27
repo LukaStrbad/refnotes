@@ -40,7 +40,7 @@ public interface IEncryptionService
     /// </summary>
     /// <param name="encryptedBytes">The encrypted byte array to decrypt.</param>
     /// <returns>The decrypted byte array.</returns>
-    IEnumerable<byte> DecryptAes(byte[] encryptedBytes);
+    byte[] DecryptAes(byte[] encryptedBytes);
 
     /// <summary>
     /// Decrypts the given stream using AES decryption and writes the result to the output stream.
@@ -64,4 +64,11 @@ public interface IEncryptionService
     /// <param name="encryptedText">The encrypted text (Base64 encoded) to decrypt.</param>
     /// <returns>The decrypted text as a string.</returns>
     string DecryptAesStringBase64(string encryptedText);
+
+    /// <summary>
+    /// Hashes the given text using SHA256 HMAC and returns the result as a Base64 string.
+    /// </summary>
+    /// <param name="text">The input text</param>
+    /// <returns>Hashed text in a base64 string</returns>
+    public string HashString(string text);
 }

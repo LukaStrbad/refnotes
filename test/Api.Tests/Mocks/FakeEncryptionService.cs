@@ -26,7 +26,7 @@ public class FakeEncryptionService : IEncryptionService
         return text;
     }
 
-    public IEnumerable<byte> DecryptAes(byte[] encryptedBytes)
+    public byte[] DecryptAes(byte[] encryptedBytes)
     {
         return encryptedBytes;
     }
@@ -45,5 +45,10 @@ public class FakeEncryptionService : IEncryptionService
     public string DecryptAesStringBase64(string encryptedText)
     {
         return encryptedText;
+    }
+
+    public string HashString(string text)
+    {
+        return text;
     }
 }

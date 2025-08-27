@@ -11,7 +11,7 @@ using NSubstitute.ReturnsExtensions;
 
 namespace Api.Tests.ControllerTests;
 
-public sealed class FavoriteControllerTests : BaseTests, IClassFixture<ControllerFixture<FavoriteController>>
+public sealed class FavoriteControllerTests : BaseTests, IClassFixture<ServiceFixture<FavoriteController>>
 {
     private readonly FavoriteController _controller;
     private readonly IFileService _fileService;
@@ -20,7 +20,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     private readonly IGroupPermissionService _groupPermissionService;
     private readonly User _testUser = new("test", "test", "test@test.com", "password");
 
-    public FavoriteControllerTests(ControllerFixture<FavoriteController> fixture)
+    public FavoriteControllerTests(ServiceFixture<FavoriteController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<FavoriteController>();
@@ -37,7 +37,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     public async Task FavoriteFile_ReturnsOk_WhenFileFavorited()
     {
         const string filePath = "/file.md";
-        var file = new EncryptedFile("test.bin", "file.md");
+        var file = new EncryptedFile("test.bin", "file.md", "file-hash");
         _fileService.GetEncryptedFileAsync(filePath, null).Returns(file);
 
         var result = await _controller.FavoriteFile(filePath, null);
@@ -72,7 +72,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     public async Task UnfavoriteFile_ReturnsOk_WhenFileUnfavorited()
     {
         const string filePath = "/file.md";
-        var file = new EncryptedFile("test.bin", "file.md");
+        var file = new EncryptedFile("test.bin", "file.md", "name-hash");
         _fileService.GetEncryptedFileAsync(filePath, null).Returns(file);
 
         var result = await _controller.UnfavoriteFile(filePath, null);
@@ -127,7 +127,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     public async Task FavoriteDirectory_ReturnsOk_WhenDirectoryFavorited()
     {
         const string directoryPath = "/directory";
-        var dir = new EncryptedDirectory(directoryPath, _testUser);
+        var dir = new EncryptedDirectory(directoryPath, "path-hash", _testUser);
 
         _fileServiceUtils.GetDirectory(directoryPath, false, null).Returns(dir);
 
@@ -163,7 +163,7 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<Controlle
     public async Task UnfavoriteDirectory_ReturnsOk_WhenDirectoryUnfavorited()
     {
         const string directoryPath = "/directory";
-        var dir = new EncryptedDirectory(directoryPath, _testUser);
+        var dir = new EncryptedDirectory(directoryPath, "path-hash", _testUser);
 
         _fileServiceUtils.GetDirectory(directoryPath, false, null).Returns(dir);
 

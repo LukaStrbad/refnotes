@@ -1,61 +1,55 @@
-﻿using System.Buffers;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using Api.Model;
 
 namespace Api.Services;
 
 public class EncryptionService : IEncryptionService
 {
-    public byte[] AesKey { get; }
-    public byte[] AesIv { get; }
-
-    public EncryptionService(byte[] aesKey, byte[] aesIv)
-    {
-        AesKey = aesKey;
-        AesIv = aesIv;
-    }
+    private byte[] AesKey { get; }
+    private byte[] Sha256Key { get; }
 
     public EncryptionService(IEncryptionKeyProvider keyProvider)
     {
-        AesKey = keyProvider.Key;
-        AesIv = keyProvider.Iv;
+        AesKey = keyProvider.AesKey;
+        Sha256Key = keyProvider.Sha256Key;
     }
 
     public byte[] EncryptAes(byte[] bytes)
     {
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
-        aesAlg.IV = AesIv;
+        var iv = aesAlg.IV;
 
         // Create an encryptor to perform the stream transform.
         var encryptor = aesAlg.CreateEncryptor();
 
         // Create the streams used for encryption.
-        using var msEncrypt = new MemoryStream();
+        using var msEncrypt = new MemoryStream(bytes.Length + aesAlg.BlockSize / 8);
+        // Prepend the IV to the encrypted data.
+        msEncrypt.Write(iv);
         using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
         {
             // Write all data to the stream.
             csEncrypt.Write(bytes);
         }
 
-        var encrypted = msEncrypt.ToArray();
-
         // Return the encrypted bytes from the memory stream.
-        return encrypted;
+        return msEncrypt.ToArray();
     }
 
     public async Task EncryptAesToStreamAsync(Stream inputStream, Stream outputStream)
     {
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
-        aesAlg.IV = AesIv;
+        var iv = aesAlg.IV;
 
         // Create an encryptor to perform the stream transform.
         var encryptor = aesAlg.CreateEncryptor();
 
         // Create the streams used for encryption.
         await using var csEncrypt = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
+        // Prepend the IV to the output stream.
+        outputStream.Write(iv);
         await inputStream.CopyToAsync(csEncrypt);
     }
 
@@ -64,49 +58,25 @@ public class EncryptionService : IEncryptionService
     public string EncryptAesStringBase64(string text) =>
         Convert.ToBase64String(EncryptAes(text));
 
-    public IEnumerable<byte> DecryptAes(byte[] encryptedBytes)
+    public byte[] DecryptAes(byte[] encryptedBytes)
     {
-        using var aesAlg = Aes.Create();
-        aesAlg.Key = AesKey;
-        aesAlg.IV = AesIv;
-
-        // Create a decryptor to perform the stream transform.
-        using var decryptor = aesAlg.CreateDecryptor();
-
-        // Create the streams used for decryption.
-        using var msDecrypt = new MemoryStream(encryptedBytes);
-        using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-        // Read the decrypted bytes from the decrypting stream
-        // and place them in a string.
-        var buffer = ArrayPool<byte>.Shared.Rent(1024);
-        try
-        {
-            while (csDecrypt.CanRead)
-            {
-                var bytesRead = csDecrypt.Read(buffer);
-
-                if (bytesRead == 0)
-                {
-                    yield break;
-                }
-
-                for (var i = 0; i < bytesRead; i++)
-                {
-                    yield return buffer[i];
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
-        }
+        using var outputStream = new MemoryStream(encryptedBytes.Length);
+        var decryptedStream = DecryptAesToStream(new MemoryStream(encryptedBytes));
+        decryptedStream.CopyTo(outputStream);
+        return outputStream.ToArray();
     }
 
     public Stream DecryptAesToStream(Stream encryptedInputStream)
     {
         using var aesAlg = Aes.Create();
         aesAlg.Key = AesKey;
-        aesAlg.IV = AesIv;
+        // Read the IV from the beginning of the stream.
+        var iv = new byte[aesAlg.BlockSize / 8];
+        if (encryptedInputStream.Read(iv, 0, iv.Length) != iv.Length)
+        {
+            throw new InvalidOperationException("Invalid encrypted data: IV not found.");
+        }
+        aesAlg.IV = iv;
 
         // Create a decryptor to perform the stream transform.
         var decryptor = aesAlg.CreateDecryptor();
@@ -116,11 +86,18 @@ public class EncryptionService : IEncryptionService
     }
 
     public string DecryptAesString(byte[] encryptedBytes) =>
-        Encoding.UTF8.GetString(DecryptAes(encryptedBytes).ToArray());
+        Encoding.UTF8.GetString(DecryptAes(encryptedBytes));
 
     public string DecryptAesStringBase64(string encryptedText)
     {
         var bytes = Convert.FromBase64String(encryptedText);
         return DecryptAesString(bytes);
+    }
+
+    public string HashString(string text)
+    {
+        using var sha256 = new HMACSHA256(Sha256Key);
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(text));
+        return Convert.ToBase64String(hashBytes);
     }
 }

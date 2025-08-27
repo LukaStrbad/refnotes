@@ -14,25 +14,11 @@ public class TestDatabaseFixture : IAsyncLifetime
     private MySqlContainer? _mysqlContainer;
 
     private string? _connectionString;
+    private DbContextOptions<RefNotesContext>? _dbOptions;
 
-    private bool _isDatabaseCreated;
-    private readonly Lock _isDatabaseCreatedLock = new();
+    private readonly Lock _dbOptionsLock = new();
 
-    private static TestDatabaseFixture? _instance;
     private bool _reuseTestContainer;
-
-    public static TestDatabaseFixture Instance
-    {
-        get
-        {
-            if (_instance is null)
-            {
-                throw new Exception("TestDatabaseFixture is not initialized");
-            }
-
-            return _instance;
-        }
-    }
 
     public RefNotesContext CreateContext()
     {
@@ -41,18 +27,18 @@ public class TestDatabaseFixture : IAsyncLifetime
             throw new Exception("Connection string is not set");
         }
 
-        lock (_isDatabaseCreatedLock)
+        lock (_dbOptionsLock)
         {
-            var serverVersion = ServerVersion.AutoDetect(_connectionString);
-            var dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
-                .UseMySql(_connectionString, serverVersion).Options;
-            var context = new RefNotesContext(dbOptions);
+            if (_dbOptions is not null)
+                return new RefNotesContext(_dbOptions);
 
-            if (_isDatabaseCreated) return context;
+            var serverVersion = ServerVersion.AutoDetect(_connectionString);
+            _dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
+                .UseMySql(_connectionString, serverVersion).Options;
+            var context = new RefNotesContext(_dbOptions);
 
             context.Database.EnsureDeleted();
             context.Database.Migrate();
-            _isDatabaseCreated = true;
 
             return context;
         }
@@ -60,31 +46,20 @@ public class TestDatabaseFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        _instance = this;
-
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.Test.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = config["Db:ConnectionString"];
-        _reuseTestContainer = config.GetValue<bool>("TestContainers:Reuse");
+        _reuseTestContainer = config.GetValue<bool>("Testcontainers:Reuse");
+        _mysqlContainer = new MySqlBuilder()
+            .WithImage("mysql:8.4")
+            .WithTmpfsMount("/var/lib/mysql")
+            .WithReuse(_reuseTestContainer)
+            .Build();
 
-        // Start a test container if no connection string is provided
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            _mysqlContainer = new MySqlBuilder()
-                .WithImage("mysql:8.4")
-                .WithTmpfsMount("/var/lib/mysql")
-                .WithReuse(_reuseTestContainer)
-                .Build();
-
-            await _mysqlContainer.StartAsync();
-            _connectionString = _mysqlContainer.GetConnectionString();
-            return;
-        }
-
-        _connectionString = connectionString;
+        await _mysqlContainer.StartAsync();
+        _connectionString = _mysqlContainer.GetConnectionString();
     }
 
     public async ValueTask DisposeAsync()
@@ -94,7 +69,5 @@ public class TestDatabaseFixture : IAsyncLifetime
         {
             await _mysqlContainer.StopAsync();
         }
-
-        _instance = null;
     }
 }

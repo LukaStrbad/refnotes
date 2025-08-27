@@ -191,7 +191,7 @@ public class FileController : GroupPermissionControllerBase
         {
             return NotFound("File not found.");
         }
-
+        
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
         var modified = await _fileService.UpdateTimestamp(directoryPath, name, groupId);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);

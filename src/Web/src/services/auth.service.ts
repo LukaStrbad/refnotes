@@ -1,4 +1,4 @@
-import { Inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -31,22 +31,12 @@ export class AuthService {
 
   private http!: HttpClient;
 
-  get accessToken(): string | null {
-    return this.cookieService.getCookie('accessToken');
-  }
-
   constructor(
     private httpBackend: HttpBackend,
     private router: Router,
     private cookieService: CookieService,
     private translate: TranslateService,
-    @Inject('Window') private window: Window,
   ) {
-    this.init().then();
-  }
-
-  // This method is separate for testing purposes
-  async init() {
     // This ignores all interceptors
     // This is needed to avoid an infinite loop when refreshing the token in the auth interceptor
     this.http = new HttpClient(this.httpBackend);
@@ -114,7 +104,7 @@ export class AuthService {
 
   async login(username: string, password: string, redirectUrl?: string) {
     await firstValueFrom(
-      this.http.post(`${apiUrl}/login`, { username, password }, { withCredentials: true })
+      this.http.post(`${apiUrl}/login`, { username, password })
     );
     this.setUserAndToken();
     try {
@@ -134,7 +124,7 @@ export class AuthService {
   }
 
   setUserAndToken() {
-    const accessToken = this.accessToken;
+    const accessToken = this.cookieService.getCookie('accessToken');
     if (!accessToken) {
       this.unsetUserAndToken();
       return false;
@@ -186,7 +176,7 @@ export class AuthService {
 
   async refreshTokens() {
     await firstValueFrom(
-      this.http.post(`${apiUrl}/refreshAccessToken`, this.accessToken, { withCredentials: true })
+      this.http.post(`${apiUrl}/refreshAccessToken`, this.cookieService.getCookie('accessToken'), { withCredentials: true })
     );
   }
 

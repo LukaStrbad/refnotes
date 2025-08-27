@@ -11,12 +11,12 @@ using NSubstitute.ExceptionExtensions;
 
 namespace Api.Tests.ControllerTests;
 
-public class AdminControllerTests : BaseTests, IClassFixture<ControllerFixture<AdminController>>
+public class AdminControllerTests : BaseTests, IClassFixture<ServiceFixture<AdminController>>
 {
     private readonly AdminController _controller;
     private readonly IAdminService _adminService;
 
-    public AdminControllerTests(ControllerFixture<AdminController> fixture)
+    public AdminControllerTests(ServiceFixture<AdminController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _controller = serviceProvider.GetRequiredService<AdminController>();

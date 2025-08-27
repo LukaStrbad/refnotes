@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "run-script-os",
-    "start:win32": "ng serve --port %PORT:4200% --allowed-hosts=true",
-    "start:default": "ng serve --port ${PORT:-4200} --allowed-hosts=true",
+    "start": "ng serve --allowed-hosts=true",
+    "start:aspire": "run-script-os",
+    "start:aspire:win32": "ng serve --port %PORT% --allowed-hosts=true",
+    "start:aspire:default": "ng serve --port ${PORT} --allowed-hosts=true",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

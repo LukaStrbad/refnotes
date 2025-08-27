@@ -8,12 +8,12 @@ using NSubstitute;
 
 namespace Api.Tests.ControllerTests;
 
-public class SearchControllerTests : IClassFixture<ControllerFixture<SearchController>>
+public class SearchControllerTests : IClassFixture<ServiceFixture<SearchController>>
 {
     private readonly SearchController _controller;
     private readonly ISearchService _searchService;
 
-    public SearchControllerTests(ControllerFixture<SearchController> fixture)
+    public SearchControllerTests(ServiceFixture<SearchController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _searchService = serviceProvider.GetRequiredService<ISearchService>();

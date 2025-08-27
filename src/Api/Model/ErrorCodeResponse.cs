@@ -8,6 +8,7 @@ public static class ErrorCodes
     public static readonly ErrorCodeResponse EmailNotConfirmed = new("EMAIL_NOT_CONFIRMED");
     public static readonly ErrorCodeResponse InvalidOrExpiredToken = new("INVALID_OR_EXPIRED_TOKEN");
     public static readonly ErrorCodeResponse UserNotFound = new("USER_NOT_FOUND");
+    public static readonly ErrorCodeResponse UserAlreadyExists = new("USER_ALREADY_EXISTS");
 }
 
 /// <summary>

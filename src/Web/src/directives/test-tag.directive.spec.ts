@@ -1,33 +1,51 @@
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestTagDirective } from './test-tag.directive';
-import { ElementRef } from '@angular/core';
 import { environment } from '../environments/environment';
 
 describe('TestTagDirective', () => {
-  it('should set data-test tag in development', () => {
-    const element = document.createElement('div');
-    const elementRef = new ElementRef(element);
-    const directive = new TestTagDirective(elementRef);
-    directive.testTag = 'test';
-    directive.ngOnInit();
+  @Component({
+    template: `<div id="target" testTag="test.tag"></div>`,
+    imports: [TestTagDirective]
+  })
+  class HostComponent { }
 
-    expect(element.getAttribute('data-test')).toBe('test');
-    expect(element.getAttribute('testtag')).toBeNull();
+  let fixture: ComponentFixture<HostComponent>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HostComponent],
+    });
+  });
+
+  it('should set data-test tag in development', () => {
+    const original = environment.production;
+    environment.production = false;
+    try {
+      fixture = TestBed.createComponent(HostComponent);
+      fixture.detectChanges();
+
+      const el: HTMLElement = fixture.nativeElement.querySelector('#target');
+      expect(el.getAttribute('data-test')).toBe('test.tag');
+      // Delete the testtag attribute that Angular adds
+      expect(el.getAttribute('testtag')).toBeNull();
+    } finally {
+      environment.production = original;
+    }
   });
 
   it('should not set data-test tag in production', () => {
-    const originalProduction = environment.production;
+    const original = environment.production;
     environment.production = true;
     try {
-      const element = document.createElement('div');
-      const elementRef = new ElementRef(element);
-      const directive = new TestTagDirective(elementRef);
-      directive.testTag = 'test';
-      directive.ngOnInit();
+      fixture = TestBed.createComponent(HostComponent);
+      fixture.detectChanges();
 
-      expect(element.getAttribute('data-test')).toBeNull();
-      expect(element.getAttribute('testtag')).toBeNull();
+      const el: HTMLElement = fixture.nativeElement.querySelector('#target');
+      expect(el.getAttribute('data-test')).toBeNull();
+      expect(el.getAttribute('testtag')).toBeNull();
     } finally {
-      environment.production = originalProduction;
+      environment.production = original;
     }
   });
 });

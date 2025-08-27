@@ -55,11 +55,12 @@ describe('LoggerService', () => {
     expect(consoleSpy.calls.mostRecent().args[0]).toContain('[WARN] test warning');
   });
 
-  it('should not log warning when in production', () => {
+  it('should also log warning when in production', () => {
     environment.production = true;
     const consoleSpy = spyOn(console, 'warn');
     service.warn('test warning');
-    expect(consoleSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.calls.mostRecent().args[0]).toContain('[WARN] test warning');
   });
 
   it('should log error when not in production', () => {
@@ -69,10 +70,11 @@ describe('LoggerService', () => {
     expect(consoleSpy.calls.mostRecent().args[0]).toContain('[ERROR] test error');
   });
 
-  it('should not log error when in production', () => {
+  it('should also log error when in production', () => {
     environment.production = true;
     const consoleSpy = spyOn(console, 'error');
     service.error('test error');
-    expect(consoleSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(consoleSpy.calls.mostRecent().args[0]).toContain('[ERROR] test error');
   });
 });

@@ -1,11 +1,11 @@
 ﻿using Api.Exceptions;
 using Api.Model;
 using Api.Services;
-using Api.Tests.Data;
-using Api.Tests.Data.Attributes;
+using Api.Tests.Fixtures;
+using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Tests.ServiceTests;
@@ -13,106 +13,129 @@ namespace Api.Tests.ServiceTests;
 public class AuthServiceTests : BaseTests
 {
     private readonly RegisterUserRequest _newUser;
+    private readonly AuthService _service;
+    private readonly RefNotesContext _context;
+    private readonly FakerResolver _fakerResolver;
 
     private const string DefaultPassword = "password";
 
-    public AuthServiceTests()
+    public AuthServiceTests(TestDatabaseFixture dbFixture)
     {
+        var serviceProvider = new ServiceFixture<AuthService>().WithDb(dbFixture).WithFakers().CreateServiceProvider();
+        _service = serviceProvider.GetRequiredService<AuthService>();
+        _context = serviceProvider.GetRequiredService<RefNotesContext>();
+        _fakerResolver = serviceProvider.GetRequiredService<FakerResolver>();
+
         var rndString = RandomString(32);
-        _newUser = new RegisterUserRequest($"newUser_{rndString}", "newUser", $"new.{rndString}@new.com",
-            DefaultPassword);
+        _newUser = new RegisterUserRequest($"newUser_{rndString}", "newUser", $"new.{rndString}@new.com", DefaultPassword);
     }
 
-    [Theory, AutoData]
-    public async Task Register_ReturnsUser(Sut<AuthService> sut)
+    [Fact]
+    public async Task Register_ReturnsUser()
     {
-        var tokens = await sut.Value.Register(_newUser);
-        var user = await sut.Context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username,
-            TestContext.Current.CancellationToken);
+        // Act
+        var tokens = await _service.Register(_newUser);
 
-        Assert.NotNull(user);
+        // Assert
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username, TestContext.Current.CancellationToken);
         Assert.NotEmpty(tokens.AccessToken);
         Assert.NotEmpty(tokens.RefreshToken.Token);
     }
 
-    [Theory, AutoData]
-    public async Task Register_ThrowsExceptionIfUserExists(Sut<AuthService> sut, [FixtureUser] User existingUser)
+    [Fact]
+    public async Task Register_ThrowsExceptionIfUserExists()
     {
-        var newUser =
-            new RegisterUserRequest(existingUser.Username, existingUser.Name, existingUser.Email, "Password123");
-        await Assert.ThrowsAsync<UserExistsException>(() => sut.Value.Register(newUser));
+        // Arrange
+        var existingUser = _fakerResolver.Get<User>().Generate();
+        var newUser = new RegisterUserRequest(existingUser.Username, existingUser.Name, existingUser.Email, "Password123");
+
+        // Act/Assert
+        await Assert.ThrowsAsync<UserExistsException>(() => _service.Register(newUser));
     }
 
-    [Theory, AutoData]
-    public async Task Login_ReturnsTokens(Sut<AuthService> sut)
+    [Fact]
+    public async Task Login_ReturnsTokens()
     {
-        await sut.Value.Register(_newUser);
-        var tokens = await sut.Value.Login(new UserCredentials(_newUser.Username, DefaultPassword));
+        // Arrange
+        await _service.Register(_newUser);
 
+        // Act
+        var tokens = await _service.Login(new UserCredentials(_newUser.Username, DefaultPassword));
+
+        // Assert
         Assert.NotEmpty(tokens.AccessToken);
         Assert.NotEmpty(tokens.RefreshToken.Token);
     }
 
-    [Theory, AutoData]
-    public async Task Login_ThrowsExceptionIfUserNotFound(Sut<AuthService> sut)
+    [Fact]
+    public async Task Login_ThrowsExceptionIfUserNotFound()
     {
         await Assert.ThrowsAsync<UserNotFoundException>(() =>
-            sut.Value.Login(new UserCredentials("nonexistent", DefaultPassword)));
+            _service.Login(new UserCredentials("nonexistent", DefaultPassword)));
     }
 
-    [Theory, AutoData]
-    public async Task Login_ThrowsExceptionIfPasswordIncorrect(Sut<AuthService> sut, [FixtureUser] User user)
+    [Fact]
+    public async Task Login_ThrowsExceptionIfPasswordIncorrect()
     {
+        // Arrange
+        var tokens = await _service.Register(_newUser);
+
+        // Act/Assert
         await Assert.ThrowsAsync<UnauthorizedException>(() =>
-            sut.Value.Login(new UserCredentials(user.Username, "incorrect")));
+            _service.Login(new UserCredentials(_newUser.Username,"incorrect")));
     }
 
-    [Theory, AutoData]
-    public async Task RefreshAccessToken_ReturnsToken(Sut<AuthService> sut)
+    [Fact]
+    public async Task RefreshAccessToken_ReturnsToken()
     {
-        var tokens = await sut.Value.Register(_newUser);
-        // Prevents the new token being generated at the same time (tokens would be equal)
-        Thread.Sleep(1000);
-        var newTokens = await sut.Value.RefreshAccessToken(tokens.AccessToken, tokens.RefreshToken.Token);
+        // Arrange
+        var tokens = await _service.Register(_newUser);
 
+        // Act
+        await Task.Delay(1000, TestContext.Current.CancellationToken); // Wait for 1 second to ensure that the refresh token is different
+        var newTokens = await _service.RefreshAccessToken(tokens.AccessToken, tokens.RefreshToken.Token);
+
+        // Assert
         Assert.NotEmpty(newTokens.AccessToken);
         Assert.NotEmpty(newTokens.RefreshToken.Token);
         Assert.NotEqual(tokens.AccessToken, newTokens.AccessToken);
-        // In the current implementation, refresh tokens are also regenerated
         Assert.NotEqual(tokens.RefreshToken.Token, newTokens.RefreshToken.Token);
     }
 
-    [Theory, AutoData]
-    public async Task RefreshAccessToken_ThrowsExceptionIfUserNotFound(Sut<AuthService> sut)
+    [Fact]
+    public async Task RefreshAccessToken_ThrowsExceptionIfUserNotFound()
     {
-        var tokens = await sut.Value.Register(_newUser);
-
-        // Remove user from database
-        var user = await sut.Context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username,
-            TestContext.Current.CancellationToken);
+        // Arrange
+        var tokens = await _service.Register(_newUser);
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == _newUser.Username, TestContext.Current.CancellationToken);
         Assert.NotNull(user);
-        sut.Context.Users.Remove(user);
-        await sut.Context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
+        // Act/Assert
         await Assert.ThrowsAsync<UserNotFoundException>(() =>
-            sut.Value.RefreshAccessToken(tokens.AccessToken, tokens.RefreshToken.Token));
+            _service.RefreshAccessToken(tokens.AccessToken, tokens.RefreshToken.Token));
     }
 
-    [Theory, AutoData]
-    public async Task RefreshAccessToken_ThrowsExceptionIfRefreshTokenInvalid(Sut<AuthService> sut)
+    [Fact]
+    public async Task RefreshAccessToken_ThrowsExceptionIfRefreshTokenInvalid()
     {
-        var tokens = await sut.Value.Register(_newUser);
+        // Arrange
+        var tokens = await _service.Register(_newUser);
 
+        // Act/Assert
         await Assert.ThrowsAsync<RefreshTokenInvalid>(() =>
-            sut.Value.RefreshAccessToken(tokens.AccessToken, "invalidRefreshToken"));
+            _service.RefreshAccessToken(tokens.AccessToken, "invalidRefreshToken"));
     }
 
-    [Theory, AutoData]
-    public async Task RefreshAccessToken_ThrowsAccessTokenInvalid(Sut<AuthService> sut)
+    [Fact]
+    public async Task RefreshAccessToken_ThrowsAccessTokenInvalid()
     {
-        var tokens = await sut.Value.Register(_newUser);
+        // Arrange
+        var tokens = await _service.Register(_newUser);
 
+        // Act/Assert
         await Assert.ThrowsAsync<SecurityTokenMalformedException>(() =>
-            sut.Value.RefreshAccessToken("invalidAccessToken", tokens.RefreshToken.Token));
+            _service.RefreshAccessToken("invalidAccessToken", tokens.RefreshToken.Token));
     }
 }

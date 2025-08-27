@@ -63,7 +63,6 @@ describe('authInterceptor', () => {
 
     expect(authService.tryToRefreshTokens).toHaveBeenCalled();
     expect(fakeRequest.clone).toHaveBeenCalled();
-    expect(authService.accessToken).toBe('new-token');
     expect(mockNext).toHaveBeenCalled();
   });
 });

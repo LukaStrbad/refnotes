@@ -8,6 +8,7 @@ public class FileTag
 {
     public int Id { get; set; }
     [MaxLength(128)] public required string Name { get; set; }
+    [MaxLength(256)] public required string NameHash { get; set; }
     public List<EncryptedFile> Files { get; set; } = [];
     public User? Owner { get; set; }
     public int? OwnerId { get; set; }

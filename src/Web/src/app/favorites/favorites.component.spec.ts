@@ -14,7 +14,7 @@ describe('FavoritesComponent', () => {
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
-    favoriteService = jasmine.createSpyObj('FavoriteService', ['getFavoriteFiles', 'getFavoriteDirectories', 'unfavoriteFile', 'unfavoriteDirectory']);
+    favoriteService = jasmine.createSpyObj<FavoriteService>('FavoriteService', ['getFavoriteFiles', 'getFavoriteDirectories', 'unfavoriteFile', 'unfavoriteDirectory']);
     favoriteService.getFavoriteFiles.and.resolveTo([]);
     favoriteService.getFavoriteDirectories.and.resolveTo([]);
 
@@ -32,8 +32,7 @@ describe('FavoritesComponent', () => {
         { provide: FavoriteService, useValue: favoriteService },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: {} } } },
       ]
-    })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(FavoritesComponent);
     component = fixture.componentInstance;

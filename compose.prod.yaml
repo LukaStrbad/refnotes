@@ -25,6 +25,7 @@ services:
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       AES_KEY: ${AES_KEY}
       AES_IV: ${AES_IV}
+      SHA256_KEY: ${SHA256_KEY}
       # This is the path to the volume mounted to /data in the container
       DataDir: /data
     volumes:

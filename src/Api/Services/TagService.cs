@@ -79,9 +79,9 @@ public class TagService(
     {
         var user = await userService.GetCurrentUser();
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
-
-        var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
-        if (file.Tags.Any(x => x.Name == encryptedTag))
+        
+        var nameHash = encryptionService.HashString(tag);
+        if (file.Tags.Any(x => x.NameHash == nameHash))
         {
             // Do nothing if tag already exists
             return;
@@ -93,18 +93,20 @@ public class TagService(
         {
             existingTag = await context.FileTags
                 .Where(t => t.OwnerId == user.Id)
-                .FirstOrDefaultAsync(t => t.Name == encryptedTag);
+                .FirstOrDefaultAsync(t => t.NameHash == nameHash);
         }
         else
         {
             existingTag = await context.FileTags
                 .Where(t => t.GroupOwnerId == groupId)
-                .FirstOrDefaultAsync(t => t.Name == encryptedTag);
+                .FirstOrDefaultAsync(t => t.NameHash == nameHash);
         }
 
+        var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
         var tagToAdd = existingTag ?? new FileTag
         {
             Name = encryptedTag,
+            NameHash = nameHash,
             Owner = user
         };
 
@@ -116,8 +118,8 @@ public class TagService(
     {
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
 
-        var encryptedTag = encryptionService.EncryptAesStringBase64(tag);
-        var tagToRemove = file.Tags.FirstOrDefault(x => x.Name == encryptedTag);
+        var nameHash = encryptionService.HashString(tag);
+        var tagToRemove = file.Tags.FirstOrDefault(x => x.NameHash == nameHash);
         if (tagToRemove is null)
         {
             // Do nothing if tag does not exist

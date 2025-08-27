@@ -11,14 +11,14 @@ namespace Api.Controllers;
 [Authorize]
 public class BrowserController : GroupPermissionControllerBase
 {
-    private readonly IBrowserService _browserService;
+    private readonly IDirectoryService _directoryService;
 
     public BrowserController(
-        IBrowserService browserService,
+        IDirectoryService directoryService,
         IGroupPermissionService groupPermissionService,
         IUserService userService) : base(groupPermissionService, userService)
     {
-        _browserService = browserService;
+        _directoryService = directoryService;
     }
 
     [HttpGet("list")]
@@ -30,7 +30,7 @@ public class BrowserController : GroupPermissionControllerBase
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
-        var directory = await _browserService.List(groupId, path);
+        var directory = await _directoryService.List(groupId, path);
         if (directory is null)
         {
             return NotFound("Directory not found.");
@@ -47,7 +47,7 @@ public class BrowserController : GroupPermissionControllerBase
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
             return Forbid();
 
-        await _browserService.AddDirectory(path, groupId);
+        await _directoryService.AddDirectory(path, groupId);
         return Ok();
     }
 
@@ -62,7 +62,7 @@ public class BrowserController : GroupPermissionControllerBase
 
         try
         {
-            await _browserService.DeleteDirectory(path, groupId);
+            await _directoryService.DeleteDirectory(path, groupId);
             return Ok();
         }
         catch (ArgumentException e)

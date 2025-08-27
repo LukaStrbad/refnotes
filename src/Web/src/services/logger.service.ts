@@ -21,12 +21,10 @@ export class LoggerService {
   }
 
   warn(message: string, ...args: ArgType[]) {
-    if (LoggerService.isProduction()) return;
     console.warn(`[${this.currentTimestamp()}] [WARN] ${message}`, ...args);
   }
 
   error(message: string, ...args: ArgType[]) {
-    if (LoggerService.isProduction()) return;
     console.error(`[${this.currentTimestamp()}] [ERROR] ${message}`, ...args);
   }
 }

@@ -243,7 +243,8 @@
       "generic": "An error occurred while processing your request",
       "EMAIL_NOT_CONFIRMED": "Your email is not confirmed",
       "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
-      "USER_NOT_FOUND": "User not found"
+      "USER_NOT_FOUND": "User not found",
+      "USER_ALREADY_EXISTS": "User with the same username already exists"
     }
   },
   "time": {

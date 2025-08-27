@@ -8,13 +8,13 @@ using NSubstitute;
 
 namespace Api.Tests.ControllerTests;
 
-public class TagControllerTests : BaseTests, IClassFixture<ControllerFixture<TagController>>
+public class TagControllerTests : BaseTests, IClassFixture<ServiceFixture<TagController>>
 {
     private readonly TagController _controller;
     private readonly ITagService _tagService;
     private readonly IGroupPermissionService _groupPermissionService;
 
-    public TagControllerTests(ControllerFixture<TagController> fixture)
+    public TagControllerTests(ServiceFixture<TagController> fixture)
     {
         var serviceProvider = fixture.CreateServiceProvider();
         _tagService = serviceProvider.GetRequiredService<ITagService>();

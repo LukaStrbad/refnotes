@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Api.Jobs;
 using Api.Services;
 using Api.Utils;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using Api.Services.Redis;
 using Api.Services.Schedulers;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Primitives;
@@ -22,15 +22,16 @@ public static class Configuration
     public static void RegisterServices(this IHostApplicationBuilder builder)
     {
         builder.AddServiceDefaults();
+        builder.AddOpenTelemetry();
         builder.RegisterScheduler();
         builder.Services.AddControllersWithViews();
-        
+
         builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddSingleton<IEncryptionKeyProvider, EncryptionKeyProvider>();
         builder.Services.AddSingleton(AppSettings.Initialize);
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IBrowserService, BrowserService>();
+        builder.Services.AddScoped<IDirectoryService, DirectoryService>();
         builder.Services.AddScoped<IFileService, FileService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
@@ -51,6 +52,7 @@ public static class Configuration
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         builder.Services.AddScoped<IEmailConfirmService, EmailConfirmService>();
         builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        builder.Services.AddScoped<IRedisLockProvider, RedisLockProvider>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();
@@ -149,5 +151,5 @@ public static class Configuration
             () => config.GetReloadToken(),
             () => appSettings.ReloadConfig()
         );
-    } 
+    }
 }

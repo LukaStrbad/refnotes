@@ -5,6 +5,7 @@ using Api.Services;
 using Api.Services.Schedulers;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Controllers;
@@ -52,9 +53,13 @@ public class AuthController : AuthControllerBase
 
     [HttpPost("register")]
     [ProducesResponseType<Ok>(StatusCodes.Status200OK)]
-    [ProducesResponseType<BadRequest>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ErrorCodeResponse>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ModelStateDictionary>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<string>> Register([FromBody] RegisterUserRequest newUser, [FromQuery] string? lang)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         try
         {
             var tokens = await _authService.Register(newUser);
@@ -64,9 +69,9 @@ public class AuthController : AuthControllerBase
             await _emailScheduler.ScheduleVerificationEmail(newUser.Email, newUser.Name, token, lang ?? "en");
             return Ok();
         }
-        catch (UserExistsException e)
+        catch (UserExistsException)
         {
-            return BadRequest(e.Message);
+            return Conflict(ErrorCodes.UserAlreadyExists);
         }
     }
 
