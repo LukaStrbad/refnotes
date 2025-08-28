@@ -15,7 +15,7 @@ import { By } from '@angular/platform-browser';
 import { click } from "../../../tests/click-utils";
 import { SearchService } from '../../../services/search.service';
 import { TagService } from '../../../services/tag.service';
-import { GroupSettings } from '../../../model/settings';
+import { GroupSettings, SearchSettings, Theme } from '../../../model/settings';
 
 @Component({ selector: 'app-search', template: '' }) class SearchStubComponent { }
 
@@ -29,11 +29,15 @@ describe('HeaderComponent', () => {
   beforeEach(async () => {
     auth = jasmine.createSpyObj('AuthService', ['logout', 'isUserLoggedIn']);
 
-    groupSettingsSignal = signal({ rememberGroupPath: true } as GroupSettings);
-    settings = jasmine.createSpyObj('SettingsService', ['setTheme'], {
-      theme: signal('auto'),
-      search: signal({}),
+    groupSettingsSignal = signal<GroupSettings>({ rememberGroupPath: true });
+    settings = jasmine.createSpyObj<SettingsService>('SettingsService', ['setTheme'], {
+      theme: signal<Theme>('auto'),
+      search: signal<SearchSettings>({
+        fullTextSearch: false,
+        onlySearchCurrentDir: false
+      }),
       group: groupSettingsSignal,
+      languageList: ['en'],
     });
     const searchService = jasmine.createSpyObj<SearchService>('SearchService', ['searchFiles']);
     searchService.searchFiles.and.resolveTo([]);
@@ -131,6 +135,7 @@ describe('HeaderComponent', () => {
   });
 
   it('should link to remembered group path when not on groups page', () => {
+    auth.isUserLoggedIn.and.returnValue(true);
     groupSettingsSignal.set({ rememberGroupPath: true, groupPath: '/groups/1/browser' });
     component.onGroupPage = false;
     fixture.detectChanges();
@@ -141,6 +146,7 @@ describe('HeaderComponent', () => {
   });
 
   it('should link to /groups when on groups page', () => {
+    auth.isUserLoggedIn.and.returnValue(true);
     groupSettingsSignal.set({ rememberGroupPath: true, groupPath: '/groups/1/browser' });
     component.onGroupPage = true;
     fixture.detectChanges();
