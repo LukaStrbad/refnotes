@@ -27,6 +27,11 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   @ViewChild('header', { static: true })
   private headerRef!: ElementRef<HTMLElement>;
 
+  readonly languageFlag = computed(() => {
+    const language = this.settings.language();
+    return (language === 'en' ? 'gb' : language);
+  });
+
   constructor(
     public auth: AuthService,
     public settings: SettingsService,
@@ -78,5 +83,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       document.activeElement.blur();
     }
     this.openMobileSearch.emit()
+  }
+
+  setLanguage(lang: string) {
+    this.settings.setLanguage(lang);
   }
 }

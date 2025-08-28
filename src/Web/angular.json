@@ -40,7 +40,8 @@
             "styles": [
               "src/styles.css",
               "bootstrap-icons/font/bootstrap-icons.css",
-              "@milkdown/crepe/theme/common/style.css"
+              "@milkdown/crepe/theme/common/style.css",
+              "flag-icons/css/flag-icons.min.css"
             ],
             "scripts": [],
             "loader": {
@@ -75,6 +76,7 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "outputHashing": "media",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

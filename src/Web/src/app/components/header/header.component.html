@@ -197,6 +197,46 @@
           </li>
         </ul>
       </div>
+
+      <!-- Language Switcher -->
+      @if (settings.languageList.length > 1) {
+        <div class="dropdown dropdown-end z-10 ml-2">
+          <div
+            tabindex="0"
+            role="button"
+            class="btn btn-circle"
+            testTag="header.language-dropdown"
+          >
+            <span
+              class="fi"
+              [ngClass]="'fi-' + languageFlag()"
+              aria-hidden="true"
+            ></span>
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content bg-base-300/70 rounded-box z-1 w-44 p-2 shadow-2xl backdrop-blur-lg border-2 border-base-100"
+          >
+            @for (lang of settings.languageList; track lang) {
+              <li>
+                <button
+                  class="btn btn-sm btn-ghost w-full justify-start gap-2"
+                  (click)="setLanguage(lang)"
+                  [ngClass]="{ selected: settings.language() === lang }"
+                  testTag="header.language-{{ lang }}"
+                >
+                  <span
+                    class="fi"
+                    [ngClass]="'fi-' + (lang === 'en' ? 'gb' : lang)"
+                    aria-hidden="true"
+                  ></span>
+                  <span translate>settings.language.{{ lang }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </div>
   </div>
 </header>
