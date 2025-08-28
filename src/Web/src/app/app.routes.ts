@@ -12,6 +12,7 @@ import { FavoritesComponent } from './favorites/favorites.component';
 import { ConfirmEmailComponent } from './confirm-email/confirm-email.component';
 import { AccountComponent } from './account/account.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { SharedFilesComponent } from './shared-files/shared-files.component';
 
 export const routes: Routes = [
   {
@@ -98,6 +99,11 @@ export const routes: Routes = [
   {
     path: "favorites",
     component: FavoritesComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: "shared-files",
+    component: SharedFilesComponent,
     canActivate: [authGuard],
   },
   {

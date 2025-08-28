@@ -3,6 +3,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { FileInfo } from '../model/file';
+import { SharedFile } from '../model/shared-file';
 import { mapFileDates } from '../utils/date-utils';
 import { generateHttpParams } from '../utils/http-utils';
 
@@ -247,6 +248,23 @@ export class FileService {
     return await firstValueFrom(
       this.http.post(`${apiUrl}/generateSharedFile`, {}, { params, responseType: 'text' }),
     );
+  }
+
+  async getSharedFiles(): Promise<SharedFile[]> {
+    const sharedFiles = await firstValueFrom(
+      this.http.get<SharedFile[]>(`${apiUrl}/sharedFiles`)
+    );
+    
+    // Convert date strings to Date objects
+    return sharedFiles.map(file => ({
+      ...file,
+      created: new Date(file.created),
+      sharedEncryptedFile: {
+        ...file.sharedEncryptedFile,
+        created: new Date(file.sharedEncryptedFile.created),
+        modified: new Date(file.sharedEncryptedFile.modified)
+      }
+    }));
   }
 
   private createUrlFromHash(hash: string): string {

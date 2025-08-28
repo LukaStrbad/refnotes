@@ -81,4 +81,23 @@ public sealed class FileShareService : IFileShareService
 
         return directory?.Owner;
     }
+
+    public async Task<List<SharedFile>> GetSharedFilesForUser(int userId)
+    {
+        // Get all directories owned by the user
+        var userDirectories = await _context.Directories
+            .Where(d => d.Owner!.Id == userId)
+            .Select(d => d.Id)
+            .ToListAsync();
+
+        // Get all shared files in those directories
+        var sharedFiles = await _context.SharedFiles
+            .Include(sf => sf.SharedEncryptedFile)
+            .Include(sf => sf.SharedToDirectory)
+            .Where(sf => userDirectories.Contains(sf.SharedToDirectoryId))
+            .OrderByDescending(sf => sf.Created)
+            .ToListAsync();
+
+        return sharedFiles;
+    }
 }

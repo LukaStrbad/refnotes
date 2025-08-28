@@ -6,6 +6,7 @@ using Api.Services;
 using Api.Services.Files;
 using Api.Services.Schedulers;
 using Api.Utils;
+using Data.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
@@ -429,5 +430,14 @@ public class FileController : GroupPermissionControllerBase
 
         await _fileShareService.GenerateSharedFileFromHash(hash, directory.Id);
         return Ok();
+    }
+
+    [HttpGet("sharedFiles")]
+    [ProducesResponseType<List<SharedFile>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<SharedFile>>> GetSharedFiles()
+    {
+        var userId = GetUserId();
+        var sharedFiles = await _fileShareService.GetSharedFilesForUser(userId);
+        return Ok(sharedFiles);
     }
 }
