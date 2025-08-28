@@ -262,6 +262,9 @@
       "only-search-current-directory": "Search this directory only",
       "modified-from": "Modified after",
       "modified-to": "Modified before"
+    },
+    "input": {
+      "placeholder": "Search"
     }
   },
   "groups": {
