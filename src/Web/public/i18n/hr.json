@@ -38,6 +38,7 @@
       "settings": "Postavke",
       "groups": "Grupe",
       "favorites": "Favoriti",
+      "shared-files": "Dijeljene datoteke",
       "account-info": "Račun"
     }
   },
@@ -352,6 +353,26 @@
     },
     "success": {
       "removed": "Uspješno uklonjen favorit"
+    }
+  },
+  "shared-files": {
+    "error": {
+      "loading": "Greška prilikom učitavanja dijeljenih datoteka"
+    },
+    "label": {
+      "loading": "Učitavanje dijeljenih datoteka...",
+      "empty": "Nijedna datoteka još nije podijeljena s vama",
+      "title": "Dijeljene datoteke"
+    },
+    "table": {
+      "file": "Datoteka",
+      "shared-to": "Dijeljeno u",
+      "size": "Veličina",
+      "shared-date": "Datum dijeljenja",
+      "actions": "Akcije"
+    },
+    "action": {
+      "open": "Otvori"
     }
   },
   "favorite-file": {

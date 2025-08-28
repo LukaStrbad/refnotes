@@ -38,6 +38,7 @@
       "settings": "Settings",
       "groups": "Groups",
       "favorites": "Favorites",
+      "shared-files": "Shared Files",
       "account-info": "Account"
     }
   },
@@ -352,6 +353,26 @@
     },
     "success": {
       "removed": "Successfully removed a favorite"
+    }
+  },
+  "shared-files": {
+    "error": {
+      "loading": "Error loading shared files"
+    },
+    "label": {
+      "loading": "Loading shared files...",
+      "empty": "No files have been shared with you yet",
+      "title": "Shared Files"
+    },
+    "table": {
+      "file": "File",
+      "shared-to": "Shared to",
+      "size": "Size",
+      "shared-date": "Shared Date",
+      "actions": "Actions"
+    },
+    "action": {
+      "open": "Open"
     }
   },
   "favorite-file": {
