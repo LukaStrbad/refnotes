@@ -1,25 +1,29 @@
 import { Injectable, signal } from '@angular/core';
 import { PublicFileService } from '../../public-file.service';
 import { splitDirAndName } from '../../../utils/path-utils';
+import { FileService } from '../../file.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShareService {
-  private _directoryPath = signal('');
-  private _fileName = signal('');
-  private _filePath = signal('');
-  private _isPublic = signal(false);
-  private _publicLink = signal<string | null>(null);
+  private readonly _directoryPath = signal('');
+  private readonly _fileName = signal('');
+  private readonly _filePath = signal('');
+  private readonly _isPublic = signal(false);
+  private readonly _publicLink = signal<string | null>(null);
+  private readonly _userShareLink = signal<string | null>(null);
 
-  directoryPath = this._directoryPath.asReadonly();
-  fileName = this._fileName.asReadonly();
-  filePath = this._filePath.asReadonly();
-  isPublic = this._isPublic.asReadonly();
-  publicLink = this._publicLink.asReadonly();
+  readonly directoryPath = this._directoryPath.asReadonly();
+  readonly fileName = this._fileName.asReadonly();
+  readonly filePath = this._filePath.asReadonly();
+  readonly isPublic = this._isPublic.asReadonly();
+  readonly publicLink = this._publicLink.asReadonly();
+  readonly userShareLink = this._userShareLink.asReadonly();
 
   constructor(
     private publicFileService: PublicFileService,
+    private fileService: FileService,
   ) { }
 
   async setPublicState(isPublic: boolean) {
@@ -44,5 +48,10 @@ export class ShareService {
     const publicUrl = await this.publicFileService.getUrl(this.filePath());
     this._publicLink.set(publicUrl);
     this._isPublic.set(publicUrl !== null); // If publicUrl is null, not public
+  }
+
+  async loadUserShareLink() {
+    const userShareUrl = await this.fileService.shareFile(this.filePath());
+    this._userShareLink.set(userShareUrl);
   }
 }

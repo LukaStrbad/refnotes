@@ -1,4 +1,5 @@
 ﻿using Api.Services;
+using Api.Services.Files;
 using Api.Services.Schedulers;
 using Api.Tests.Extensions.Faker;
 using Api.Tests.Fixtures;

@@ -87,7 +87,8 @@ function setupTestBed(groupId?: string) {
     const mockActivatedRoute = {
       snapshot: {
         params: { groupId },
-        paramMap: { get: (key: string) => key === 'groupId' ? groupId : null }
+        paramMap: { get: (key: string) => key === 'groupId' ? groupId : null },
+        queryParams: { get: () => null },
       }
     };
     providers.push({ provide: ActivatedRoute, useValue: mockActivatedRoute });
@@ -357,11 +358,11 @@ describe('BrowserComponent with groupId', () => {
 
   it('should navigate to folder with group path when groupId is set', async () => {
     const router = TestBed.inject(Router);
-    spyOn(router, 'navigateByUrl');
+    const navigateSpy = spyOn(router, 'navigate');
 
     await component.navigateToFolder('/test-folder');
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/groups/1/browser/test-folder');
+    expect(navigateSpy).toHaveBeenCalledWith(['/groups/1/browser/test-folder'], { queryParams: {} });
   });
 
   it('should call browserService.listCached with groupId when refreshing route', async () => {

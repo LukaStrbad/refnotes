@@ -1,6 +1,7 @@
 ﻿using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Utils;
 using Microsoft.AspNetCore.Mvc;
 

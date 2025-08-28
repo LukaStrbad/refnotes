@@ -1,12 +1,12 @@
 ﻿using Api.Exceptions;
+using Api.Extensions;
 using Api.Model;
 using Api.Utils;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
-using Api.Extensions;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IFileService
 {

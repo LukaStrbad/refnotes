@@ -1,9 +1,8 @@
 ﻿using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
 using Api.Model;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public sealed class WebSocketFileSyncService : IWebSocketFileSyncService
 {

@@ -3,7 +3,7 @@ using Api.Services.Redis;
 using Api.Streams;
 using StackExchange.Redis;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IFileStorageService
 {

@@ -2,7 +2,7 @@
 using Api.Model;
 using StackExchange.Redis;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public sealed class FileSyncService : IFileSyncService
 {

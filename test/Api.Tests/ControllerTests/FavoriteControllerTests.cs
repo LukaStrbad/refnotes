@@ -1,6 +1,7 @@
 ﻿using Api.Controllers;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Tests.Fixtures;
 using Api.Utils;
 using Data.Model;

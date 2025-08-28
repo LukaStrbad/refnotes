@@ -24,6 +24,7 @@ public static class FakerCollection
         services.AddTransient<Faker<PublicFile>>(_ => GetPublicFileFaker(context));
         services.AddTransient<Faker<PublicFileImage>>(_ => GetPublicFileImageFaker(context));
         services.AddTransient<Faker<FileTag>>(_ => GetFileTagFaker(context));
+        services.AddTransient<Faker<SharedFileHash>>(_ => GetSharedFileHashFaker(context));
 
         return services;
     }
@@ -205,5 +206,18 @@ public static class FakerCollection
             .RuleFor(t => t.OwnerId, (_, tag) => tag.Owner?.Id)
             .RuleFor(t => t.GroupOwner, _ => groupFaker.Generate())
             .RuleFor(t => t.GroupOwnerId, (_, tag) => tag.GroupOwner?.Id);
+    }
+
+    public static Faker<SharedFileHash> GetSharedFileHashFaker(RefNotesContext? context)
+    {
+        var fileFaker = GetFileFaker(context);
+        
+        return CreateBaseFaker<SharedFileHash>(context)
+            .StrictMode(true)
+            .RuleFor(sf => sf.Id, 0)
+            .RuleFor(sf => sf.Hash, _ => Guid.CreateVersion7().ToString())
+            .RuleFor(sf => sf.EncryptedFile, _ => fileFaker.Generate())
+            .RuleFor(sf => sf.CreatedAt, _ => DateTime.UtcNow)
+            .RuleFor(sf => sf.IsDeleted, _ => false);
     }
 }
