@@ -6,7 +6,7 @@
       "title": "Postavke editora",
       "viewTypeTitle": "Vrsta prikaza",
       "experimentalFastRender": "Omogući brži prikaz markdown pregleda",
-      "experimentalFastRenderExplanation": "Trenutno je ovo brže samo na Firefoxu. Ova postavka usporava markdown prikaz u preglednicima baziranim na Chromiumu-u."
+      "experimentalFastRenderExplanation": "Trenutno je ovo brže samo na Firefoxu. Ova postavka usporava markdown prikaz u preglednicima baziranim na Chromium-u."
     },
     "language": {
       "en": "English",
@@ -262,6 +262,9 @@
       "modified-from": "Izmijenjeno nakon",
       "modified-to": "Izmijenjeno prije",
       "only-search-current-directory": "Pretraži samo ovaj direktorij"
+    },
+    "input": {
+      "placeholder": "Pretraga"
     }
   },
   "group": {

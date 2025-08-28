@@ -99,7 +99,7 @@
       <input
         type="search"
         class="grow"
-        placeholder="Search"
+        placeholder="{{ 'search.input.placeholder' | translate }}"
         [(ngModel)]="searchOptions.searchTerm"
         (input)="onSearch()"
       />
