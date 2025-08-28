@@ -1,80 +1,83 @@
 <header class="bg-base-100 shadow-md" #header>
   <div class="navbar bg-base-100 container mx-auto">
     <div class="navbar-start w-auto">
-      <div class="dropdown">
-        <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      @if (auth.isUserLoggedIn()) {
+        <div class="dropdown">
+          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h8m-8 6h16"
+              />
+            </svg>
+          </div>
+          <ul
+            tabindex="0"
+            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow-sm"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h8m-8 6h16"
-            />
-          </svg>
+            <li>
+              <a routerLink="browser">
+                <i class="bi bi-house"></i>
+                {{ "header.routes.home" | translate }}
+              </a>
+            </li>
+            <li>
+              <!-- If on group page, show main group link -->
+              <a
+                [routerLink]="onGroupPage ? '/groups' : groupLink()"
+                testTag="header.groups-link"
+              >
+                <i class="bi bi-people"></i>
+                {{ "header.routes.groups" | translate }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="favorites">
+                <i class="bi bi-star"></i>
+                {{ "header.routes.favorites" | translate }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="settings">
+                <i class="bi bi-gear"></i>
+                {{ "header.routes.settings" | translate }}
+              </a>
+            </li>
+            <li>
+              <a routerLink="account-info">
+                <i class="bi bi-person"></i>
+                {{ "header.routes.account-info" | translate }}
+              </a>
+            </li>
+            <li class="mt-2">
+              <button
+                class="btn btn-xs btn-primary btn-soft"
+                (click)="onOpenMobileSearch()"
+              >
+                Search
+              </button>
+            </li>
+
+            <li class="mt-2">
+              <button
+                class="btn btn-xs btn-secondary btn-outline btn-soft"
+                (click)="logout()"
+                translate
+              >
+                header.logout
+              </button>
+            </li>
+          </ul>
         </div>
-        <ul
-          tabindex="0"
-          class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow-sm"
-        >
-          <li>
-            <a routerLink="browser">
-              <i class="bi bi-house"></i>
-              {{ "header.routes.home" | translate }}
-            </a>
-          </li>
-          <li>
-            <!-- If on group page, show main group link -->
-            <a
-              [routerLink]="onGroupPage ? '/groups' : groupLink()"
-              testTag="header.groups-link"
-            >
-              <i class="bi bi-people"></i>
-              {{ "header.routes.groups" | translate }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="favorites">
-              <i class="bi bi-star"></i>
-              {{ "header.routes.favorites" | translate }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="settings">
-              <i class="bi bi-gear"></i>
-              {{ "header.routes.settings" | translate }}
-            </a>
-          </li>
-          <li>
-            <a routerLink="account-info">
-              <i class="bi bi-person"></i>
-              {{ "header.routes.account-info" | translate }}
-            </a>
-          </li>
-          <li class="mt-2">
-            <button
-              class="btn btn-xs btn-primary btn-soft"
-              (click)="onOpenMobileSearch()"
-            >
-              Search
-            </button>
-          </li>
-          <li class="mt-2">
-            <button
-              class="btn btn-xs btn-secondary btn-outline btn-soft"
-              (click)="logout()"
-              translate
-            >
-              header.logout
-            </button>
-          </li>
-        </ul>
-      </div>
+      }
       <a class="btn btn-ghost text-xl" routerLink="" translate>app.title</a>
     </div>
 
