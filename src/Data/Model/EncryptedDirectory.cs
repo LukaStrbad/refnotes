@@ -15,6 +15,7 @@ public class EncryptedDirectory
         Path = path;
         PathHash = pathHash;
         Files = [];
+        SharedFiles = [];
         Directories = [];
         Owner = owner;
         OwnerId = owner.Id;
@@ -26,6 +27,7 @@ public class EncryptedDirectory
         Path = path;
         PathHash = pathHash;
         Files = [];
+        SharedFiles = [];
         Directories = [];
         Group = group;
     }
@@ -36,6 +38,7 @@ public class EncryptedDirectory
         Path = "";
         PathHash = "";
         Files = [];
+        SharedFiles = [];
         Directories = [];
     }
 
@@ -43,6 +46,7 @@ public class EncryptedDirectory
     [StringLength(1024)] public string Path { get; init; }
     [StringLength(256)] public string PathHash { get; init; }
     public List<EncryptedFile> Files { get; init; }
+    public List<SharedFile> SharedFiles { get; init; }
     public List<EncryptedDirectory> Directories { get; init; }
     public User? Owner { get; init; }
     public int? OwnerId { get; init; }
