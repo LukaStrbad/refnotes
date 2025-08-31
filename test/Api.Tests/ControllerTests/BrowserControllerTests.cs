@@ -27,7 +27,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task List_ReturnsOk_WhenDirectoryExists()
     {
         const string path = "test_path";
-        var responseDirectory = new DirectoryDto("test_dir", [], []);
+        var responseDirectory = new DirectoryResponse("test_dir", [], []);
 
         _directoryService.List(null, path).Returns(responseDirectory);
 
@@ -41,7 +41,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task List_ReturnsNotFound_WhenDirectoryDoesNotExist()
     {
         const string path = "test_path";
-        _directoryService.List(null, path).Returns((DirectoryDto?)null);
+        _directoryService.List(null, path).Returns((DirectoryResponse?)null);
 
         var result = await _controller.List(path, null);
 

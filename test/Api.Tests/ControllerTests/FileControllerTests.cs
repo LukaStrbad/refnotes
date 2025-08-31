@@ -235,7 +235,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         {
             Id = 123
         };
-        var fileDto = new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        var fileDto = new FileResponse("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
         var stream = Substitute.For<Stream>();
 
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
@@ -323,7 +323,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         {
             Id = 124
         };
-        var imageInfo = new FileDto("test.png", imagePath, [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        var imageInfo = new FileResponse("test.png", imagePath, [], 1024, DateTime.UtcNow, DateTime.UtcNow);
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
         _publicFileService.IsPublicFileActive(urlHash).Returns(true);
         _fileService.GetEncryptedFileByRelativePathAsync(encryptedFile, imagePath).Returns(image);
@@ -470,13 +470,13 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         const string filePath = "/file.txt";
 
         _fileService.GetFileInfo(filePath, null).Returns(Task.FromResult(
-            new FileDto("file.txt", filePath, ["tag1", "tag2"], 1024, DateTime.UtcNow, DateTime.UtcNow))
+            new FileResponse("file.txt", filePath, ["tag1", "tag2"], 1024, DateTime.UtcNow, DateTime.UtcNow))
         );
 
         var result = await _controller.GetFileInfo(filePath, null);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var fileInfo = Assert.IsType<FileDto>(okResult.Value);
+        var fileInfo = Assert.IsType<FileResponse>(okResult.Value);
         Assert.Equal("file.txt", fileInfo.Name);
     }
 
@@ -503,7 +503,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         {
             Id = 123
         };
-        var fileDto = new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
+        var fileDto = new FileResponse("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow);
 
         _publicFileService.GetEncryptedFileAsync(urlHash).Returns(encryptedFile);
         _publicFileService.IsPublicFileActive(urlHash).Returns(true);
@@ -512,7 +512,7 @@ public class FileControllerTests : BaseTests, IClassFixture<ServiceFixture<FileC
         var result = await _controller.GetPublicFileInfo(urlHash);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var fileInfo = Assert.IsType<FileDto>(okResult.Value);
+        var fileInfo = Assert.IsType<FileResponse>(okResult.Value);
         Assert.Equal("test.txt", fileInfo.Name);
     }
 
