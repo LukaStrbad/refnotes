@@ -8,7 +8,7 @@ namespace Api.Extensions;
 
 public static class EncryptedDirectoryExtensions
 {
-    public static async Task<DirectoryDto> Decrypt(
+    public static async Task<DirectoryResponse> ToResponse(
         this EncryptedDirectory encryptedDirectory,
         IEncryptionService encryptionService,
         IFileStorageService fileStorageService)
@@ -21,15 +21,15 @@ public static class EncryptedDirectoryExtensions
             var filePath = FileUtils.NormalizePath($"{dirPath}/{fileName}");
             var tags = file.Tags.Select(tag => tag.DecryptedName(encryptionService));
             var size = await fileStorageService.GetFileSize(file.FilesystemName);
-            return new FileDto(fileName, filePath, tags, size, file.Created, file.Modified);
+            return new FileResponse(fileName, filePath, tags, size, file.Created, file.Modified);
         });
         var files = await Task.WhenAll(filesTasks);
 
         var directoriesTasks = encryptedDirectory.Directories.Select(async directory =>
-            (await directory.Decrypt(encryptionService, fileStorageService)).Name);
+            (await directory.ToResponse(encryptionService, fileStorageService)).Name);
         var directories = await Task.WhenAll(directoriesTasks);
 
-        return new DirectoryDto(name, files, directories);
+        return new DirectoryResponse(name, files, directories);
     }
 
     public static string DecryptedPath(this EncryptedDirectory directory, IEncryptionService encryptionService)

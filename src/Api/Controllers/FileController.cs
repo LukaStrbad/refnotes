@@ -240,7 +240,7 @@ public class FileController : GroupPermissionControllerBase
     }
 
     [HttpGet("getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -252,7 +252,7 @@ public class FileController : GroupPermissionControllerBase
 
     [AllowAnonymous]
     [HttpGet("public/getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetPublicFileInfo(string urlHash)
     {

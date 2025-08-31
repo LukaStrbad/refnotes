@@ -97,7 +97,7 @@ public class FavoriteServiceTests
         var fileInfos = favorites.Select(f =>
         {
             var encryptedFile = f.EncryptedFile!;
-            return new FileDto(encryptedFile.Name, $"/{encryptedFile.Name}", [], 1024, DateTime.UtcNow,
+            return new FileResponse(encryptedFile.Name, $"/{encryptedFile.Name}", [], 1024, DateTime.UtcNow,
                 DateTime.UtcNow);
         }).ToArray();
         _fileService.GetFileInfoAsync(Arg.Any<int>()).Returns(fileInfos[0], fileInfos[1..]);

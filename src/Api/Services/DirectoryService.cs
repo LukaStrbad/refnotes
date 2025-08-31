@@ -17,7 +17,7 @@ public interface IDirectoryService
     /// <param name="path">Path of the directory</param>
     /// <param name="groupId">ID of the group where the directory belongs to</param>
     /// <returns>Name of the requested directory, together with its contents</returns>
-    Task<DirectoryDto?> List(int? groupId, string path = "/");
+    Task<DirectoryResponse?> List(int? groupId, string path = "/");
 
     /// <summary>
     /// Add a new directory at the specified path.
@@ -44,7 +44,7 @@ public sealed class DirectoryService(
     IUserService userService,
     IUserGroupService userGroupService) : IDirectoryService
 {
-    public async Task<DirectoryDto?> List(int? groupId, string path = "/")
+    public async Task<DirectoryResponse?> List(int? groupId, string path = "/")
     {
         // Ensure that the root directory exists
         if (path is "/")
@@ -63,7 +63,7 @@ public sealed class DirectoryService(
             return null;
         }
 
-        return await directory.Decrypt(encryptionService, fileStorageService);
+        return await directory.ToResponse(encryptionService, fileStorageService);
     }
 
     public async Task AddDirectory(string path, int? groupId)
