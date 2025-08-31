@@ -25,6 +25,7 @@ public static class FakerCollection
         services.AddTransient<Faker<PublicFileImage>>(_ => GetPublicFileImageFaker(context));
         services.AddTransient<Faker<FileTag>>(_ => GetFileTagFaker(context));
         services.AddTransient<Faker<SharedFileHash>>(_ => GetSharedFileHashFaker(context));
+        services.AddTransient<Faker<SharedFile>>(_ => GetSharedFileFaker(context));
 
         return services;
     }
@@ -56,6 +57,7 @@ public static class FakerCollection
             .RuleFor(g => g.Path, f => f.System.DirectoryPath() + Guid.CreateVersion7()) // Ensure unique directory path
             .RuleFor(g => g.PathHash, (_, dir) => dir.Path)
             .RuleFor(g => g.Files, _ => [])
+            .RuleFor(g => g.SharedFiles, _ => [])
             .RuleFor(g => g.Directories, _ => [])
             .RuleFor(g => g.Parent, _ => null)
             .RuleFor(g => g.Owner, _ => userFaker.Generate())
@@ -160,11 +162,11 @@ public static class FakerCollection
             .RuleFor(t => t.CreatedAt, _ => DateTime.UtcNow)
             .RuleFor(t => t.ExpiresAt, _ => DateTime.UtcNow.AddHours(1));
     }
-    
+
     private static Faker<PublicFile> GetPublicFileFaker(RefNotesContext? context)
     {
         var fileFaker = GetFileFaker(context);
-        
+
         return CreateBaseFaker<PublicFile>(context)
             .CustomInstantiator(_ => new PublicFile("", 0))
             .StrictMode(true)
@@ -175,7 +177,7 @@ public static class FakerCollection
             .RuleFor(f => f.State, _ => PublicFileState.Active)
             .RuleFor(f => f.Created, _ => DateTime.UtcNow);
     }
-    
+
     private static Faker<PublicFileImage> GetPublicFileImageFaker(RefNotesContext? context)
     {
         var publicFileFaker = GetPublicFileFaker(context);
@@ -190,7 +192,7 @@ public static class FakerCollection
             .RuleFor(i => i.EncryptedFile, _ => encryptedFileFaker.Generate())
             .RuleFor(i => i.EncryptedFileId, (_, image) => image.EncryptedFile?.Id);
     }
-    
+
     private static Faker<FileTag> GetFileTagFaker(RefNotesContext? context)
     {
         var userFaker = GetUserFaker(context);
@@ -208,10 +210,10 @@ public static class FakerCollection
             .RuleFor(t => t.GroupOwnerId, (_, tag) => tag.GroupOwner?.Id);
     }
 
-    public static Faker<SharedFileHash> GetSharedFileHashFaker(RefNotesContext? context)
+    private static Faker<SharedFileHash> GetSharedFileHashFaker(RefNotesContext? context)
     {
         var fileFaker = GetFileFaker(context);
-        
+
         return CreateBaseFaker<SharedFileHash>(context)
             .StrictMode(true)
             .RuleFor(sf => sf.Id, 0)
@@ -219,5 +221,20 @@ public static class FakerCollection
             .RuleFor(sf => sf.EncryptedFile, _ => fileFaker.Generate())
             .RuleFor(sf => sf.CreatedAt, _ => DateTime.UtcNow)
             .RuleFor(sf => sf.IsDeleted, _ => false);
+    }
+
+    private static Faker<SharedFile> GetSharedFileFaker(RefNotesContext? context)
+    {
+        var fileFaker = GetFileFaker(context);
+        var dirFaker = GetDirectoryFaker(context);
+
+        return CreateBaseFaker<SharedFile>(context)
+            .StrictMode(true)
+            .RuleFor(sf => sf.Id, 0)
+            .RuleFor(sf => sf.SharedEncryptedFile, _ => fileFaker.Generate())
+            .RuleFor(sf => sf.SharedEncryptedFileId, (_, sharedFile) => sharedFile.SharedEncryptedFile?.Id)
+            .RuleFor(sf => sf.SharedToDirectory, _ => dirFaker.Generate())
+            .RuleFor(sf => sf.SharedToDirectoryId, (_, sharedFile) => sharedFile.SharedToDirectory?.Id)
+            .RuleFor(sf => sf.Created, _ => DateTime.UtcNow);
     }
 }

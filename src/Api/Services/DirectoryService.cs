@@ -56,14 +56,60 @@ public sealed class DirectoryService(
             }
         }
 
-        var directory = await utils.GetDirectory(path, true, groupId);
+        var directory = await utils.GetDirectory(path, false, groupId);
 
         if (directory is null)
         {
             return null;
         }
 
-        return await directory.ToResponse(encryptionService, fileStorageService);
+        var dirName = directory.DecryptedName(encryptionService);
+        var dirPath = directory.DecryptedPath(encryptionService);
+
+        // Get files
+        var files = await context.Entry(directory).Collection(f => f.Files)
+            .Query().ToListAsync();
+        var fileResponses = new List<FileResponse>();
+        foreach (var file in files)
+            fileResponses.Add(await GetFileResponse(file, dirPath));
+
+        // Get shared files
+        var sharedFiles = await context.Entry(directory).Collection(f => f.SharedFiles)
+            .Query().ToListAsync();
+        var sharedFileResponses = new List<SharedFileResponse>();
+        foreach (var sharedFile in sharedFiles)
+            sharedFileResponses.Add(await GetSharedFileResponse(sharedFile, dirPath));
+
+        // Get directories
+        var subdirectories = await context.Entry(directory).Collection(f => f.Directories)
+            .Query().Select(dir => dir).ToListAsync();
+        var dirNames = subdirectories.Select(dir => dir.DecryptedName(encryptionService));
+
+        return new DirectoryResponse(dirName, fileResponses, sharedFileResponses, dirNames);
+    }
+
+    private async Task<FileResponse> GetFileResponse(EncryptedFile file, string dirPath)
+    {
+        var encryptedTagNames = await context.Entry(file).Collection(f => f.Tags)
+            .Query().Select(f => f.Name).ToListAsync();
+        var tags = encryptedTagNames.Select(encryptionService.DecryptAesStringBase64);
+
+        var fileName = file.DecryptedName(encryptionService);
+        var filePath = FileUtils.NormalizePath($"{dirPath}/{fileName}");
+        var size = await fileStorageService.GetFileSize(file.FilesystemName);
+        return new FileResponse(fileName, filePath, tags, size, file.Created, file.Modified);
+    }
+
+    private async Task<SharedFileResponse> GetSharedFileResponse(SharedFile sharedFile, string dirPath)
+    {
+        await context.Entry(sharedFile).Reference(sf => sf.SharedEncryptedFile).LoadAsync();
+        var encryptedFile = sharedFile.SharedEncryptedFile;
+        if (encryptedFile is null)
+            throw new Exception("Encrypted file not found");
+
+        var fileResponse = await GetFileResponse(encryptedFile, dirPath);
+        return new SharedFileResponse(sharedFile.Id, fileResponse.Name, fileResponse.Path, fileResponse.Tags,
+            fileResponse.Size, fileResponse.Created, fileResponse.Modified);
     }
 
     public async Task AddDirectory(string path, int? groupId)
@@ -142,9 +188,9 @@ public sealed class DirectoryService(
         else
         {
             directoryQuery = from dir in directoryQuery
-                             join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
-                             where groupRole.UserId == user.Id && dir.GroupId == groupId
-                             select dir;
+                join groupRole in context.UserGroupRoles on dir.GroupId equals groupRole.UserGroupId
+                where groupRole.UserId == user.Id && dir.GroupId == groupId
+                select dir;
         }
 
         var pathHash = encryptionService.HashString(path);
@@ -174,10 +220,9 @@ public sealed class DirectoryService(
 
     public async Task<User?> GetOwner(int directoryId)
     {
-        var directory = await context.Directories.
-            Include(dir => dir.Owner).
-            FirstOrDefaultAsync(dir => dir.Id == directoryId);
-        
+        var directory = await context.Directories.Include(dir => dir.Owner)
+            .FirstOrDefaultAsync(dir => dir.Id == directoryId);
+
         return directory?.Owner;
     }
 }

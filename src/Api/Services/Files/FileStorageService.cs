@@ -123,7 +123,6 @@ public class FileStorageService(
         if (handle is null)
             throw new TimeoutException("File lock timeout.");
 
-
         // No "using" as the file stream will be disposed by the stream returned by DecryptAesToStream
         var fileStream = File.OpenRead(filePath);
         sizeLong = 0;

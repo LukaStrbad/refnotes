@@ -189,7 +189,7 @@ public class DirectoryServiceTests : BaseTests
         // Arrange
         var group = withGroup ? _defaultGroup : null;
         var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
-        _fileServiceUtils.GetDirectory("/", true, group?.Id).Returns(rootDir);
+        _fileServiceUtils.GetDirectory("/", false, group?.Id).Returns(rootDir);
 
         // Act
         var responseDirectory = await _directoryService.List(group?.Id);
@@ -210,8 +210,8 @@ public class DirectoryServiceTests : BaseTests
         var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithPath("/").Generate();
         var dir = _fakerResolver.Get<EncryptedDirectory>().ForUserOrGroup(_defaultUser, group).WithParent(rootDir).Generate();
         var expectedDirName = Path.GetFileName(dir.Path);
-        _fileServiceUtils.GetDirectory("/", true, group?.Id).Returns(rootDir);
-        _fileServiceUtils.GetDirectory(dir.Path, true, group?.Id).Returns(dir);
+        _fileServiceUtils.GetDirectory("/", false, group?.Id).Returns(rootDir);
+        _fileServiceUtils.GetDirectory(dir.Path, false, group?.Id).Returns(dir);
 
         // Act
         var rootDirectory = await _directoryService.List(group?.Id);
@@ -241,5 +241,21 @@ public class DirectoryServiceTests : BaseTests
 
         // Assert
         Assert.Null(responseDirectory);
+    }
+
+    [Fact]
+    public async Task List_ReturnsSharedFiles()
+    {
+        var rootDir = _fakerResolver.Get<EncryptedDirectory>().ForUser(_defaultUser).WithPath("/").Generate();
+        var fileToShare = _fakerResolver.Get<EncryptedFile>().Generate();
+        var sharedFile = _fakerResolver.Get<SharedFile>().ForFile(fileToShare).SharedToDir(rootDir).Generate();
+        _fileServiceUtils.GetDirectory("/", false, null).Returns(rootDir);
+        
+        var rootDirectory = await _directoryService.List(null);
+        
+        Assert.NotNull(rootDirectory);
+        Assert.NotEmpty(rootDirectory.SharedFiles);
+        var firstSharedFile = rootDirectory.SharedFiles.First();
+        Assert.Equal(sharedFile.SharedEncryptedFile!.Name, firstSharedFile.Name);
     }
 }

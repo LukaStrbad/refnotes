@@ -27,7 +27,7 @@ public class BrowserControllerTests : BaseTests, IClassFixture<ServiceFixture<Br
     public async Task List_ReturnsOk_WhenDirectoryExists()
     {
         const string path = "test_path";
-        var responseDirectory = new DirectoryResponse("test_dir", [], []);
+        var responseDirectory = new DirectoryResponse("test_dir", [], [], []);
 
         _directoryService.List(null, path).Returns(responseDirectory);
 
