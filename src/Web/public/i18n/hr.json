@@ -70,7 +70,8 @@
       "files": "Datoteke",
       "buttonEditTags": "oznake",
       "file-size": "Veličina datoteke",
-      "modified": "Zadnja izmjena"
+      "modified": "Zadnja izmjena",
+      "shared-files": "Dijeljene datoteke"
     },
     "delete": "Izbriši",
     "edit": "Uredi",

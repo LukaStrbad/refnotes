@@ -36,6 +36,7 @@ import { ShareModalComponent } from '../components/modals/share/share.component'
 import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
 import { FileFavoriteDetails } from '../../model/file-favorite-details';
 import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
+import { SharedFileWithTime } from '../../model/shared-file';
 
 @Component({
   selector: 'app-browser',
@@ -68,6 +69,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const fileFavorites = this.favorite.fileFavorites();
     return folder === null ? [] : this.mapDirectoryFiles(folder, fileFavorites);
   });
+  readonly sharedFiles = computed(() => {
+    const folder = this.currentFolder();
+    return folder === null ? [] : this.mapDirectorySharedFiles(folder);
+  })
   readonly directories = computed(() => {
     const folder = this.currentFolder();
     const folderFavorites = this.favorite.directoryFavorites();
@@ -514,6 +519,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     for (const file of this.files()) {
       await updateFileTime(file, this.translateService, this.dateLang)
     }
+    for (const file of this.sharedFiles()) {
+      await updateFileTime(file, this.translateService, this.dateLang)
+    }
   }
 
   downloadFile(file: File) {
@@ -530,6 +538,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
     return directory.files.map((file: BrowserComponentFile) => {
       const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.group?.id === this.groupId);
       file.isFavorite = isFavorite;
+      return file;
+    });
+  }
+
+  private mapDirectorySharedFiles(directory: Directory): BrowserComponentSharedFile[] {
+    return directory.sharedFiles.map((file: BrowserComponentSharedFile) => {
       return file;
     });
   }
@@ -577,6 +591,8 @@ interface BreadcrumbItem {
 interface BrowserComponentFile extends FileWithTime {
   isFavorite?: boolean;
 }
+
+type BrowserComponentSharedFile = SharedFileWithTime;
 
 interface BrowserComponentDirectory {
   name: string;

@@ -53,7 +53,7 @@ function setupTestBed(groupId?: string) {
   );
 
   browserService.listCached.and.returnValue(
-    of({ name: '/', files: [], directories: [] }),
+    of({ name: '/', files: [], sharedFiles: [], directories: [] }),
   );
 
   const imports = [
@@ -131,11 +131,13 @@ describe('BrowserComponent', () => {
     const cachedDirectory: Directory = {
       name: '/',
       files: [createFile('test.txt')],
+      sharedFiles: [],
       directories: [],
     };
     const networkDirectory: Directory = {
       name: '/',
       files: [createFile('test.txt'), createFile('test2.txt')],
+      sharedFiles: [],
       directories: ['dir'],
     };
 
@@ -163,6 +165,7 @@ describe('BrowserComponent', () => {
     const mockDirectory: Directory = {
       name: '/',
       files: [createFile('test.txt')],
+      sharedFiles: [],
       directories: ['dir'],
     };
     browserService.listCached.and.returnValue(of(mockDirectory));
@@ -184,7 +187,7 @@ describe('BrowserComponent', () => {
   it('should create a new file', async () => {
     fixture.detectChanges();
     browserService.listCached.and.returnValue(
-      of({ name: '/', files: [createFile('test.txt')], directories: [] }),
+      of({ name: '/', files: [createFile('test.txt')], sharedFiles: [], directories: [] }),
     );
     await component.createNewFile('test.txt');
     fixture.detectChanges();
@@ -201,7 +204,7 @@ describe('BrowserComponent', () => {
   it('should create a new folder', async () => {
     fixture.detectChanges();
     browserService.listCached.and.returnValue(
-      of({ name: '/', files: [], directories: ['newFolder'] }),
+      of({ name: '/', files: [], sharedFiles: [], directories: ['newFolder'] }),
     );
     await component.createNewFolder('newFolder');
     fixture.detectChanges();
@@ -217,7 +220,7 @@ describe('BrowserComponent', () => {
 
   it('should delete a file', async () => {
     browserService.listCached.and.returnValue(
-      of({ name: '/', files: [createFile('test.txt')], directories: [] }),
+      of({ name: '/', files: [createFile('test.txt')], sharedFiles: [], directories: [] }),
     );
     component.ngOnInit();
     await component.loadingPromise;
@@ -225,7 +228,7 @@ describe('BrowserComponent', () => {
 
     fileService.deleteFile.and.callFake(() => {
       browserService.listCached.and.returnValue(
-        of({ name: '/', files: [], directories: [] }),
+        of({ name: '/', files: [], sharedFiles: [], directories: [] }),
       );
       return Promise.resolve(Object);
     });
@@ -244,7 +247,7 @@ describe('BrowserComponent', () => {
 
   it('should delete a folder', async () => {
     browserService.listCached.and.returnValue(
-      of({ name: '/', files: [], directories: ['testFolder'] }),
+      of({ name: '/', files: [], sharedFiles: [], directories: ['testFolder'] }),
     );
     component.ngOnInit();
     await component.loadingPromise;
@@ -252,7 +255,7 @@ describe('BrowserComponent', () => {
 
     browserService.deleteDirectory.and.callFake(() => {
       browserService.listCached.and.returnValue(
-        of({ name: '/', files: [], directories: [] }),
+        of({ name: '/', files: [], sharedFiles: [], directories: [] }),
       );
       return Promise.resolve(Object);
     });
@@ -271,7 +274,7 @@ describe('BrowserComponent', () => {
 
   it('should navigate to folder', async () => {
     browserService.listCached.and.returnValue(
-      of({ name: '/newFolder', files: [], directories: [] }),
+      of({ name: '/newFolder', files: [], sharedFiles: [], directories: [] }),
     );
     await component.navigateToFolder('/newFolder');
     await component.loadingPromise;
@@ -304,6 +307,7 @@ describe('BrowserComponent', () => {
     component.currentFolder.set({
       name: '/',
       files: [createFile('test.txt')],
+      sharedFiles: [],
       directories: [],
     });
     fixture.detectChanges();
@@ -369,6 +373,7 @@ describe('BrowserComponent with groupId', () => {
     const mockDirectory: Directory = {
       name: '/',
       files: [],
+      sharedFiles: [],
       directories: []
     };
     browserService.listCached.and.returnValue(of(mockDirectory));
@@ -382,6 +387,7 @@ describe('BrowserComponent with groupId', () => {
     component.currentFolder.set({
       name: '/',
       files: [],
+      sharedFiles: [],
       directories: []
     });
 
@@ -404,6 +410,7 @@ describe('BrowserComponent with groupId', () => {
     const mockDirectory: Directory = {
       name: '/parent/child',
       files: [],
+      sharedFiles: [],
       directories: []
     };
     browserService.listCached.and.returnValue(of(mockDirectory));
@@ -417,6 +424,7 @@ describe('BrowserComponent with groupId', () => {
     component.currentFolder.set({
       name: '/parent',
       files: [],
+      sharedFiles: [],
       directories: []
     });
     component.currentPath = '/parent';
