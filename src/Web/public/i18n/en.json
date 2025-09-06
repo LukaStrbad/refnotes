@@ -70,7 +70,8 @@
       "files": "Files",
       "buttonEditTags": "tags",
       "file-size": "File size",
-      "modified": "Last modified"
+      "modified": "Last modified",
+      "shared-files": "Shared files"
     },
     "delete": "Delete",
     "edit": "Edit",
