@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IWebSocketFileSyncService
 {

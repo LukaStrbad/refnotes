@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, input, output, ViewChild } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoggerService } from '../../../../services/logger.service';
 import { NotificationService } from '../../../../services/notification.service';
@@ -17,8 +17,13 @@ export class ShareModalComponent {
   readonly publicLink = input.required<string | null>();
   readonly fileName = input.required<string>();
 
-  @Output()
-  changePublicState = new EventEmitter<boolean>();
+  readonly userShareLink = input.required<string | null>();
+
+  shareType = ShareType.PublicFile;
+  readonly ShareType = ShareType;
+
+  readonly changePublicState = output<boolean>();
+  readonly generateUserShareLink = output();
 
   @ViewChild('modal')
   modal!: ElementRef<HTMLDialogElement>;
@@ -61,4 +66,29 @@ export class ShareModalComponent {
       this.notificationService.error(await getTranslation(this.translate, 'share.public-link.copy-failed'));
     }
   }
+
+  onGenerateUserShareLink() {
+    this.generateUserShareLink.emit();
+  }
+
+  async copyShareUrlToClipboard() {
+    const link = this.userShareLink();
+    if (!link) {
+      this.log.warn('No user share link available to copy');
+      return;
+    }
+
+    try {
+      await this.clipboard.copyText(link);
+      this.notificationService.info(await getTranslation(this.translate, 'share.user-link.copied-to-clipboard'))
+    } catch (err) {
+      this.log.error('Failed to copy link to clipboard:', err);
+      this.notificationService.error(await getTranslation(this.translate, 'share.user-link.copy-failed'));
+    }
+  }
+}
+
+enum ShareType {
+  PublicFile,
+  OtherUser,
 }

@@ -1,6 +1,6 @@
 ﻿using Data.Model;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IPublicFileService
 {

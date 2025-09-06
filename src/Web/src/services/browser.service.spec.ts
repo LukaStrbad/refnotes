@@ -46,6 +46,7 @@ describe('BrowserService', () => {
     const mockDirectory: Directory = {
       name: '/',
       files: [createFile('test.txt')],
+      sharedFiles: [],
       directories: [],
     };
 
@@ -65,6 +66,7 @@ describe('BrowserService', () => {
     const newDirectory: Directory = {
       name: '/',
       files: [createFile('test.txt'), createFile('test2.txt')],
+      sharedFiles: [],
       directories: ['dir'],
     };
 

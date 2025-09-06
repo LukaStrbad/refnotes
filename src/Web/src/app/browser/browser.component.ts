@@ -36,6 +36,7 @@ import { ShareModalComponent } from '../components/modals/share/share.component'
 import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
 import { FileFavoriteDetails } from '../../model/file-favorite-details';
 import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
+import { SharedFileWithTime } from '../../model/shared-file';
 
 @Component({
   selector: 'app-browser',
@@ -50,7 +51,7 @@ import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details
     EditTagsModalComponent,
     RenameFileModalComponent,
     ByteSizePipe,
-    ShareModalComponent
+    ShareModalComponent,
   ],
   templateUrl: './browser.component.html',
   styleUrl: './browser.component.css',
@@ -68,11 +69,16 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const fileFavorites = this.favorite.fileFavorites();
     return folder === null ? [] : this.mapDirectoryFiles(folder, fileFavorites);
   });
+  readonly sharedFiles = computed(() => {
+    const folder = this.currentFolder();
+    return folder === null ? [] : this.mapDirectorySharedFiles(folder);
+  })
   readonly directories = computed(() => {
     const folder = this.currentFolder();
     const folderFavorites = this.favorite.directoryFavorites();
     return folder === null ? [] : this.mapDirectorySubdirectories(folder, folderFavorites);
   });
+  readonly routeQueryParams: Record<string, string> = {};
 
   // Public
   pathStack: string[] = [];
@@ -82,6 +88,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   areAllFilesSelected = false;
   updateFileTimesInterval?: number;
   fileUtils = fileUtils;
+  shareHash?: string;
 
   // Private
   private _dateLang = 'en-UK';
@@ -140,6 +147,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.linkBasePath = `/groups/${this.groupId}`;
       this.favorite.setGroupId(this.groupId);
     }
+
+    const shareHash = this.route.snapshot.queryParams['shareHash'];
+    if (shareHash) {
+      this.shareHash = shareHash;
+      this.routeQueryParams['shareHash'] = shareHash;
+    }
   }
 
   ngOnInit(): void {
@@ -159,7 +172,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async refreshRoute() {
     this.currentFolder.set(null);
     // Get the current path from the URL (removes the leading /browser)
-    const urlSplit = this.router.url.split('/');
+    const urlSplit = this.router.url.split('?')[0].split('/');
     const browserIndex = urlSplit.indexOf('browser');
     this.pathStack = urlSplit.slice(browserIndex + 1);
 
@@ -306,7 +319,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const basePath = this.groupId ? `/groups/${this.groupId}/browser` : '/browser';
     const navigatePath = joinPaths(basePath, path);
 
-    await this.router.navigateByUrl(navigatePath);
+    await this.router.navigate([navigatePath], { queryParams: this.routeQueryParams });
   }
 
   async onFilesUpload(files: FileList) {
@@ -506,6 +519,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
     for (const file of this.files()) {
       await updateFileTime(file, this.translateService, this.dateLang)
     }
+    for (const file of this.sharedFiles()) {
+      await updateFileTime(file, this.translateService, this.dateLang)
+    }
   }
 
   downloadFile(file: File) {
@@ -526,6 +542,12 @@ export class BrowserComponent implements OnInit, OnDestroy {
     });
   }
 
+  private mapDirectorySharedFiles(directory: Directory): BrowserComponentSharedFile[] {
+    return directory.sharedFiles.map((file: BrowserComponentSharedFile) => {
+      return file;
+    });
+  }
+
   private mapDirectorySubdirectories(directory: Directory, folderFavorites: DirectoryFavoriteDetails[]): BrowserComponentDirectory[] {
     return directory.directories.map((name) => {
       const path = joinPaths(this.currentPath, name);
@@ -536,6 +558,27 @@ export class BrowserComponent implements OnInit, OnDestroy {
         isFavorite,
       };
     });
+  }
+
+  async placeSharedFile() {
+    if (!this.shareHash) {
+      return;
+    }
+
+    await this.notificationService.awaitAndNotifyError(this.fileService.generateSharedFile(this.shareHash, this.currentPath), {
+      default: await getTranslation(this.translateService, 'error.place-shared-file'),
+    });
+    // Delete shareHash from variables
+    delete this.routeQueryParams['shareHash'];
+    this.shareHash = undefined;
+    // Remove shareHash from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('shareHash');
+    window.history.replaceState({}, '', url.pathname + url.search);
+
+    // Refresh and show info
+    await this.refreshRoute();
+    this.notificationService.info(await getTranslation(this.translateService, 'browser.shared-file-placed'));
   }
 }
 
@@ -548,6 +591,8 @@ interface BreadcrumbItem {
 interface BrowserComponentFile extends FileWithTime {
   isFavorite?: boolean;
 }
+
+type BrowserComponentSharedFile = SharedFileWithTime;
 
 interface BrowserComponentDirectory {
   name: string;

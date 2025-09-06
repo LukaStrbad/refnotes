@@ -20,6 +20,8 @@ public class RefNotesContext(DbContextOptions<RefNotesContext> options) : DbCont
     public DbSet<DirectoryFavorite> DirectoryFavorites { get; set; }
     public DbSet<EmailConfirmToken> EmailConfirmTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<SharedFile> SharedFiles { get; set; }
+    public DbSet<SharedFileHash> SharedFileHashes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

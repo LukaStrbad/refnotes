@@ -3,13 +3,13 @@ using System.Text;
 using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Services.Schedulers;
 using Api.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Scalar.AspNetCore;
 
 namespace Api.Controllers;
 
@@ -25,6 +25,9 @@ public class FileController : GroupPermissionControllerBase
     private readonly ILogger<FileController> _logger;
     private readonly IFileSyncService _fileSyncService;
     private readonly IWebSocketFileSyncService _webSocketFileSyncService;
+    private readonly IFileShareService _fileShareService;
+    private readonly IFileServiceUtils _fileServiceUtils;
+    private readonly IDirectoryService _directoryService;
 
     public FileController(
         IFileService fileService,
@@ -35,7 +38,10 @@ public class FileController : GroupPermissionControllerBase
         IPublicFileScheduler publicFileScheduler,
         ILogger<FileController> logger,
         IFileSyncService fileSyncService,
-        IWebSocketFileSyncService webSocketFileSyncService) : base(groupPermissionService, userService)
+        IWebSocketFileSyncService webSocketFileSyncService,
+        IFileShareService fileShareService,
+        IFileServiceUtils fileServiceUtils,
+        IDirectoryService directoryService) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
         _fileStorageService = fileStorageService;
@@ -44,6 +50,9 @@ public class FileController : GroupPermissionControllerBase
         _logger = logger;
         _fileSyncService = fileSyncService;
         _webSocketFileSyncService = webSocketFileSyncService;
+        _fileShareService = fileShareService;
+        _fileServiceUtils = fileServiceUtils;
+        _directoryService = directoryService;
     }
 
     [HttpPost("addFile")]
@@ -191,7 +200,7 @@ public class FileController : GroupPermissionControllerBase
         {
             return NotFound("File not found.");
         }
-        
+
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
         var modified = await _fileService.UpdateTimestamp(directoryPath, name, groupId);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
@@ -231,7 +240,7 @@ public class FileController : GroupPermissionControllerBase
     }
 
     [HttpGet("getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -243,7 +252,7 @@ public class FileController : GroupPermissionControllerBase
 
     [AllowAnonymous]
     [HttpGet("public/getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetPublicFileInfo(string urlHash)
     {
@@ -385,5 +394,40 @@ public class FileController : GroupPermissionControllerBase
                     throw;
             }
         }
+    }
+
+    [HttpPost("shareFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    // This API doesn't support groups as group files are already "shared"
+    public async Task<ActionResult> ShareFile(string filePath)
+    {
+        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, null);
+        if (encryptedFile is null)
+            return NotFound("File not found.");
+        
+        var hash = await _fileShareService.GenerateShareHash(encryptedFile.Id);
+        return Ok(hash);
+    }
+
+    [HttpPost("generateSharedFile")]
+    public async Task<ActionResult> GenerateSharedFile(string hash, string directoryPath)
+    {
+        var directory = await _fileServiceUtils.GetDirectory(directoryPath, false, null);
+        if (directory is null)
+            return NotFound("Directory not found.");
+        var directoryOwner = await _directoryService.GetOwner(directory.Id);
+        // This should never happen
+        if (directoryOwner is null)
+            throw new Exception("Directory owner not found.");
+
+        var ownerFromHash = await _fileShareService.GetOwnerFromHash(hash);
+        if (ownerFromHash?.Id == directoryOwner.Id)
+        {
+            return BadRequest("You cannot share a file with yourself.");
+        }
+
+        await _fileShareService.GenerateSharedFileFromHash(hash, directory.Id);
+        return Ok();
     }
 }

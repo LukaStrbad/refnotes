@@ -1,6 +1,7 @@
 ﻿using Api.Controllers;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Tests.Fixtures;
 using Api.Utils;
 using Data.Model;
@@ -108,9 +109,9 @@ public sealed class FavoriteControllerTests : BaseTests, IClassFixture<ServiceFi
     {
         var favorites = new List<FileFavoriteDetails>
         {
-            new(new FileDto("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
+            new(new FileResponse("test.txt", "/test.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
                 null, DateTime.UtcNow),
-            new(new FileDto("test2.txt", "/test2.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
+            new(new FileResponse("test2.txt", "/test2.txt", [], 1024, DateTime.UtcNow, DateTime.UtcNow),
                 null, DateTime.UtcNow)
         };
         _favoriteService.GetFavoriteFiles().Returns(favorites);

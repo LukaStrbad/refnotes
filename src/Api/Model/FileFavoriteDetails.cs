@@ -3,7 +3,7 @@
 namespace Api.Model;
 
 public record FileFavoriteDetails(
-    FileDto FileInfo,
+    FileResponse FileInfo,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     GroupDetails? Group,
     DateTime FavoriteDate

@@ -117,5 +117,7 @@
   [fileName]="share.fileName()"
   [isPublic]="share.isPublic()"
   [publicLink]="share.publicLink()"
+  [userShareLink]="share.userShareLink()"
   (changePublicState)="share.setPublicState($event)"
+  (generateUserShareLink)="share.loadUserShareLink()"
 ></app-share-modal>

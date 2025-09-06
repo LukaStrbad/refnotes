@@ -4,52 +4,110 @@
       {{ "modals.share.title" | translate: { fileName: fileName() } }}
     </h3>
 
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text" translate>modals.share.makePublic</span>
-        <input
-          type="checkbox"
-          class="toggle toggle-primary"
-          [checked]="isPublic()"
-          (change)="togglePublicState()"
-          testTag="share.toggle.public"
-        />
-      </label>
+    <div class="tabs tabs-box">
+      <input
+        type="radio"
+        name="share_type"
+        class="tab"
+        [attr.aria-label]="'share.type.public' | translate"
+        [checked]="shareType === ShareType.PublicFile"
+        (change)="shareType = ShareType.PublicFile"
+      />
+      <input
+        type="radio"
+        name="share_type"
+        class="tab"
+        [attr.aria-label]="'share.type.user' | translate"
+        [checked]="shareType === ShareType.OtherUser"
+        (change)="shareType = ShareType.OtherUser"
+      />
     </div>
 
-    <!-- Explanation text -->
-    <div class="alert alert-info">
-      <span translate>modals.share.explanation</span>
-    </div>
-
-    @if (isPublic() && publicLink()) {
-      <div class="form-control w-full">
-        <label class="label" for="publicLink">
-          <span class="label-text" translate>modals.share.publicLink</span>
-        </label>
-        <div class="join w-full">
-          <input
-            type="text"
-            id="publicLink"
-            class="input input-bordered join-item flex-1"
-            [value]="publicLink()"
-            readonly
-            testTag="share.input.public-link"
-          />
-
-          @if (canCopyToClipboard) {
-            <button
-              class="btn btn-primary join-item"
-              (click)="copyToClipboard()"
-              testTag="share.button.copy"
-              translate
-            >
-              <i class="bi bi-clipboard"></i>
-              modals.share.copy
-            </button>
-          }
+    @switch (shareType) {
+      @case (ShareType.PublicFile) {
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text" translate>modals.share.makePublic</span>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary"
+              [checked]="isPublic()"
+              (change)="togglePublicState()"
+              testTag="share.toggle.public"
+            />
+          </label>
         </div>
-      </div>
+
+        <!-- Explanation text -->
+        <div class="alert alert-info">
+          <span translate>modals.share.explanation</span>
+        </div>
+
+        @if (isPublic() && publicLink()) {
+          <div class="form-control w-full">
+            <label class="label" for="publicLink">
+              <span class="label-text" translate>modals.share.publicLink</span>
+            </label>
+            <div class="join w-full">
+              <input
+                type="text"
+                id="publicLink"
+                class="input input-bordered join-item flex-1"
+                [value]="publicLink()"
+                readonly
+                testTag="share.input.public-link"
+              />
+
+              @if (canCopyToClipboard) {
+                <button
+                  class="btn btn-primary join-item"
+                  (click)="copyToClipboard()"
+                  testTag="share.button.copy"
+                  translate
+                >
+                  <i class="bi bi-clipboard"></i>
+                  modals.share.copy
+                </button>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @case (ShareType.OtherUser) {
+        <button class="btn btn-primary" testTag="share.button.generate-url" (click)="onGenerateUserShareLink()">
+          <i class="bi bi-globe"></i>
+          {{ "modals.share.generate-url" | translate }}
+        </button>
+
+        <div class="form-control w-full mt-4">
+          <label class="label" for="shareUrl">
+            <span class="label-text" translate>modals.share.shareUrl</span>
+          </label>
+          <div class="join w-full">
+            <input
+              type="text"
+              id="shareUrl"
+              class="input input-bordered join-item flex-1"
+              [value]="userShareLink()"
+              readonly
+              testTag="share.input.share-url"
+            />
+
+            @if (canCopyToClipboard) {
+              <button
+                class="btn btn-primary join-item"
+                (click)="copyShareUrlToClipboard()"
+                testTag="share.button.copy-share-url"
+                translate
+              >
+                <i class="bi bi-clipboard"></i>
+                modals.share.copy
+              </button>
+            }
+          </div>
+        </div>
+      }
     }
 
     <div class="flex justify-end gap-2">

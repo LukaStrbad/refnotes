@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;

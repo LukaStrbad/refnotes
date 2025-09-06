@@ -22,7 +22,7 @@ public class BrowserController : GroupPermissionControllerBase
     }
 
     [HttpGet("list")]
-    [ProducesResponseType<DirectoryDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<DirectoryResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> List(string path, int? groupId)

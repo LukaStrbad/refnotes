@@ -11,6 +11,7 @@ using Data;
 using NSubstitute;
 using StackExchange.Redis;
 using System.Security.Cryptography;
+using Api.Services.Files;
 using Quartz;
 
 namespace Api.Tests.Fixtures;
@@ -65,6 +66,7 @@ public sealed class ServiceFixture<T> : IDisposable where T : class
         services.AddScopedSubstitute<IHttpContextAccessor>();
         services.AddScopedSubstitute<IWebSocketMessageHandler>();
         services.AddScopedSubstitute<ISchedulerFactory>();
+        services.AddScopedSubstitute<IFileShareService>();
         services.AddScopedSubstitute<HttpContext>();
         services.AddSingleton<IEncryptionKeyProvider>(new MockEncryptionKeyProvider());
         services.AddLogging();

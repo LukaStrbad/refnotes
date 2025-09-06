@@ -13,4 +13,7 @@ public static class UserFakerExtensions
 
     public static Faker<User> WithRoles(this Faker<User> faker, params string[] roles)
         => faker.RuleFor(u => u.Roles, _ => roles);
+    
+    public static Faker<User> WithId(this Faker<User> faker, int id)
+        => faker.RuleFor(u => u.Id, _ => id);
 }

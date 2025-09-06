@@ -1,6 +1,6 @@
 ﻿namespace Api.Model;
 
-public record FileDto(
+public record FileResponse(
     string Name,
     string Path,
     IEnumerable<string> Tags,
