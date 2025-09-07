@@ -81,6 +81,16 @@ export class FileService {
     );
   }
 
+  async deleteSharedFile(path: string) {
+    const params = generateHttpParams({ path });
+    return await firstValueFrom(
+      this.http.delete(
+        `${apiUrl}/shared/deleteFile`,
+        { params },
+      ),
+    );
+  }
+
   async getFile(directoryPath: string, name: string, groupId?: number): Promise<ArrayBuffer> {
     const params = generateHttpParams({
       directoryPath: directoryPath,
@@ -91,6 +101,17 @@ export class FileService {
     return await firstValueFrom(
       this.http.get(
         `${apiUrl}/getFile`,
+        { params, responseType: 'arraybuffer' },
+      ),
+    );
+  }
+
+  async getSharedFile(path: string): Promise<ArrayBuffer> {
+    const params = generateHttpParams({ path });
+
+    return await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/shared/getFile`,
         { params, responseType: 'arraybuffer' },
       ),
     );
@@ -117,6 +138,23 @@ export class FileService {
       this.http.get(
         url,
         { responseType: 'arraybuffer' },
+      ),
+    );
+
+    if (result.byteLength === 0) {
+      return null;
+    }
+
+    return result;
+  }
+
+  async getSharedImage(path: string): Promise<ArrayBuffer | null> {
+    const params = generateHttpParams({ path });
+
+    const result = await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/shared/getImage`,
+        { params, responseType: 'arraybuffer' },
       ),
     );
 
@@ -164,6 +202,18 @@ export class FileService {
     );
   }
 
+  async saveSharedTextFile(path: string, content: string, clientId?: string) {
+    const params = generateHttpParams({ path, clientId });
+
+    await firstValueFrom(
+      this.http.post(
+        `${apiUrl}/shared/saveTextFile`,
+        content,
+        { params },
+      ),
+    );
+  }
+
   async getFileInfo(path: string, groupId?: number): Promise<FileInfo> {
     const params = generateHttpParams({
       filePath: path,
@@ -176,11 +226,32 @@ export class FileService {
     return mapFileDates(fileInfo);
   }
 
+  async getSharedFileInfo(path: string): Promise<FileInfo> {
+    const params = generateHttpParams({ path });
+
+    const fileInfo = await firstValueFrom(
+      this.http.get<FileInfo>(`${apiUrl}/shared/getFileInfo`, { params }),
+    );
+    return mapFileDates(fileInfo);
+  }
+
   downloadFile(path: string, groupId?: number) {
     let requestUrl = `${apiUrl}/downloadFile?path=${encodeURIComponent(path)}`;
     if (groupId) {
       requestUrl += `&groupId=${groupId}`;
     }
+
+    const a = document.createElement('a');
+    a.href = requestUrl;
+    a.setAttribute('download', '');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  downloadSharedFile(path: string) {
+    const params = generateHttpParams({ path });
+    const requestUrl = `${apiUrl}/shared/downloadFile?${params.toString()}`;
 
     const a = document.createElement('a');
     a.href = requestUrl;
@@ -217,6 +288,13 @@ export class FileService {
     });
 
     const socketUrl = `${environment.wsApiUrl}/ws/fileSync?${params.toString()}`;
+    return new WebSocket(socketUrl);
+  }
+
+  createSharedFileSyncSocket(path: string): WebSocket {
+    const params = generateHttpParams({ path: path });
+
+    const socketUrl = `${environment.wsApiUrl}/ws/sharedFileSync?${params.toString()}`;
     return new WebSocket(socketUrl);
   }
 
