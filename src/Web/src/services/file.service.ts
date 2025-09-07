@@ -227,7 +227,7 @@ export class FileService {
   }
 
   async getSharedFileInfo(path: string): Promise<FileInfo> {
-    const params = generateHttpParams({ path });
+    const params = generateHttpParams({ filePath: path });
 
     const fileInfo = await firstValueFrom(
       this.http.get<FileInfo>(`${apiUrl}/shared/getFileInfo`, { params }),
@@ -292,7 +292,7 @@ export class FileService {
   }
 
   createSharedFileSyncSocket(path: string): WebSocket {
-    const params = generateHttpParams({ path: path });
+    const params = generateHttpParams({ filePath: path });
 
     const socketUrl = `${environment.wsApiUrl}/ws/sharedFileSync?${params.toString()}`;
     return new WebSocket(socketUrl);

@@ -92,7 +92,7 @@ public sealed class FileShareService : IFileShareService
         var dirPathHash = _encryptionService.HashString(dirPath);
         var encryptedDir = await _context.Directories
             .Where(dir => dir.OwnerId == user.Id)
-            .FirstOrDefaultAsync(dir => dir.Path == dirPathHash);
+            .FirstOrDefaultAsync(dir => dir.PathHash == dirPathHash);
         if (encryptedDir is null)
             return null;
 
