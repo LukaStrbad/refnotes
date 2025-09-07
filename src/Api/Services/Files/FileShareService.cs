@@ -1,4 +1,5 @@
 ﻿using Api.Exceptions;
+using Api.Utils;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +10,14 @@ public sealed class FileShareService : IFileShareService
 {
     private readonly RefNotesContext _context;
     private readonly ILogger<FileShareService> _logger;
+    private readonly IEncryptionService _encryptionService;
 
-    public FileShareService(RefNotesContext context, ILogger<FileShareService> logger)
+    public FileShareService(RefNotesContext context, ILogger<FileShareService> logger,
+        IEncryptionService encryptionService)
     {
         _context = context;
         _logger = logger;
+        _encryptionService = encryptionService;
     }
 
     public async Task<string> GenerateShareHash(int encryptedFileId)
@@ -80,5 +84,36 @@ public sealed class FileShareService : IFileShareService
             .FirstOrDefaultAsync(d => d.Id == sharedFileHash.EncryptedFile.EncryptedDirectoryId);
 
         return directory?.Owner;
+    }
+
+    public async Task<SharedFile?> GetUserSharedFile(string path, User user)
+    {
+        var (dirPath, filename) = FileUtils.SplitDirAndFile(path);
+        var dirPathHash = _encryptionService.HashString(dirPath);
+        var encryptedDir = await _context.Directories
+            .Where(dir => dir.OwnerId == user.Id)
+            .FirstOrDefaultAsync(dir => dir.Path == dirPathHash);
+        if (encryptedDir is null)
+            return null;
+
+        var filenameHash = _encryptionService.HashString(filename);
+
+        var sharedFiles = from sharedFile in _context.SharedFiles
+            join encryptedFile in _context.Files on sharedFile.SharedEncryptedFileId equals encryptedFile.Id
+            where encryptedFile.NameHash == filenameHash
+            select sharedFile;
+        return await sharedFiles.FirstOrDefaultAsync();
+    }
+
+    public async Task<EncryptedFile> GetEncryptedFileFromSharedFile(SharedFile sharedFile)
+    {
+        await _context.Entry(sharedFile).Reference(sf => sf.SharedEncryptedFile).LoadAsync();
+        return sharedFile.SharedEncryptedFile ?? throw new Exception("Shared file not found.");
+    }
+
+    public async Task Delete(SharedFile sharedFile)
+    {
+        _context.Entry(sharedFile).State = EntityState.Deleted;
+        await _context.SaveChangesAsync();
     }
 }

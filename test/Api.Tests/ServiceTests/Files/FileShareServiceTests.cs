@@ -20,6 +20,7 @@ public sealed class FileShareServiceTests
         var serviceProvider = new ServiceFixture<FileShareService>()
             .WithDb(dbFixture)
             .WithFakers()
+            .WithFakeEncryption()
             .CreateServiceProvider();
 
         _service = serviceProvider.GetRequiredService<FileShareService>();
@@ -74,5 +75,43 @@ public sealed class FileShareServiceTests
         var ownerFromHash = await _service.GetOwnerFromHash(sharedFileHash.Hash);
 
         Assert.Equal(owner, ownerFromHash);
+    }
+
+    [Fact]
+    public async Task GetUserSharedFile_ReturnsSharedFile()
+    {
+        var user = _fakerResolver.Get<User>().Generate();
+        var dir = _fakerResolver.Get<EncryptedDirectory>().ForUser(user).Generate();
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().Generate();
+        var sharedFile = _fakerResolver.Get<SharedFile>().SharedToDir(dir).ForFile(encryptedFile).Generate();
+        var filePath = $"{dir.Path}/{encryptedFile.Name}";
+
+        var returnedSharedFile = await _service.GetUserSharedFile(filePath, user);
+
+        Assert.NotNull(returnedSharedFile);
+        Assert.Equal(sharedFile.Id, returnedSharedFile.Id);
+    }
+
+    [Fact]
+    public async Task GetEncryptedFileFromSharedFile_ReturnsEncryptedFile()
+    {
+        var encryptedFile = _fakerResolver.Get<EncryptedFile>().Generate();
+        var sharedFile = _fakerResolver.Get<SharedFile>().ForFile(encryptedFile).Generate();
+
+        var returnedEncryptedFile = await _service.GetEncryptedFileFromSharedFile(sharedFile);
+
+        Assert.Equal(encryptedFile.Id, returnedEncryptedFile.Id);
+    }
+
+    [Fact]
+    public async Task Delete_DeletesSharedFile()
+    {
+        var sharedFile = _fakerResolver.Get<SharedFile>().Generate();
+        var sharedFileId = sharedFile.Id;
+
+        await _service.Delete(sharedFile);
+
+        var dbSharedFile = await _context.SharedFiles.FindAsync([sharedFileId], TestContext.Current.CancellationToken);
+        Assert.Null(dbSharedFile);
     }
 }

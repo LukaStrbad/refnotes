@@ -7,4 +7,7 @@ public interface IFileShareService
     Task<string> GenerateShareHash(int encryptedFileId);
     Task<SharedFile> GenerateSharedFileFromHash(string hash, int attachedDirectoryId);
     Task<User?> GetOwnerFromHash(string hash);
+    Task<SharedFile?> GetUserSharedFile(string path, User user);
+    Task<EncryptedFile> GetEncryptedFileFromSharedFile(SharedFile sharedFile);
+    Task Delete(SharedFile sharedFile);
 }
