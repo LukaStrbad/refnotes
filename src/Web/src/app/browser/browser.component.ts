@@ -539,7 +539,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   downloadSharedFile(file: SharedFile) {
-
+    this.fileService.downloadSharedFile(file.path);
   }
 
   async openShareModal(file: File) {

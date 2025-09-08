@@ -382,7 +382,7 @@ public class FileController : GroupPermissionControllerBase
 
     [HttpGet("shared/downloadFile")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> DownloadSharedFile(string path, int? groupId)
+    public async Task<ActionResult> DownloadSharedFile(string path)
     {
         var user = await _userService.GetCurrentUser();
         var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
