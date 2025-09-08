@@ -311,7 +311,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
 
             const [dirPath, fileName] = splitDirAndName(resolvedImageUrl.url);
             const imageUrl = this.fileOwnership === FileOwnership.Shared
-              ? this.fileService.getSharedImageUrl(joinPaths(dirPath, fileName))
+              ? this.fileService.getSharedImageUrl()
               : this.fileService.getImageUrl(dirPath, fileName, this.groupId);
             return imageUrl;
           },

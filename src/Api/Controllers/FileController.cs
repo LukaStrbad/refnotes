@@ -183,26 +183,6 @@ public class FileController : GroupPermissionControllerBase
         }
     }
 
-    [HttpGet("shared/getImage")]
-    [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
-    public async Task<ActionResult> GetSharedImage(string path)
-    {
-        var user = await _userService.GetCurrentUser();
-        var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
-        if (sharedFile is null)
-            return NotFound("File not found.");
-
-        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
-
-        var stream = _fileStorageService.GetFile(encryptedFile.FilesystemName);
-        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
-        if (fileInfo is null)
-            return NotFound("File not found.");
-
-        const string contentType = "application/octet-stream";
-        return File(stream, contentType, fileInfo.Name);
-    }
-
     [HttpGet("public/getImage")]
     [AllowAnonymous]
     public async Task<ActionResult> GetPublicImage(string urlHash, string imagePath)

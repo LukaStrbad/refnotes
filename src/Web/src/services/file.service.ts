@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { FileInfo } from '../model/file';
 import { mapFileDates } from '../utils/date-utils';
 import { generateHttpParams } from '../utils/http-utils';
+import { TranslateService } from '@ngx-translate/core';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -12,7 +13,8 @@ const apiUrl = environment.apiUrl + '/file';
   providedIn: 'root',
 })
 export class FileService {
-  constructor(private http: HttpClient) { }
+  private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
 
   addFile(directoryPath: string, file: File, groupId?: number): Observable<HttpEvent<object>> {
     const formData = new FormData();
@@ -127,9 +129,9 @@ export class FileService {
     return `${apiUrl}/getImage?${params.toString()}`;
   }
 
-  getSharedImageUrl(path: string): string {
-    const params = generateHttpParams({ path });
-    return `${apiUrl}/shared/getImage?${params.toString()}`;
+  getSharedImageUrl(): string {
+    const language = this.translate.currentLang;
+    return `/img/unsupported-feature-${language}.svg`;
   }
 
   async getImage(
@@ -143,23 +145,6 @@ export class FileService {
       this.http.get(
         url,
         { responseType: 'arraybuffer' },
-      ),
-    );
-
-    if (result.byteLength === 0) {
-      return null;
-    }
-
-    return result;
-  }
-
-  async getSharedImage(path: string): Promise<ArrayBuffer | null> {
-    const params = generateHttpParams({ path });
-
-    const result = await firstValueFrom(
-      this.http.get(
-        `${apiUrl}/shared/getImage`,
-        { params, responseType: 'arraybuffer' },
       ),
     );
 

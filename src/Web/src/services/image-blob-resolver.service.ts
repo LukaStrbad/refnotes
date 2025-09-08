@@ -10,7 +10,6 @@ export class ImageBlobResolverService {
   private readonly fileService = inject(FileService);
 
   private readonly privateImageBlobs: PrivateImageBlob[] = [];
-  private readonly sharedImageBlobs: PrivateImageBlob[] = [];
   private readonly publicImageBlobs: PublicImageBlob[] = [];
 
   loadImage(src: string, groupId: number | undefined): ImageBlob {
@@ -44,34 +43,17 @@ export class ImageBlobResolverService {
     return imageBlob;
   }
 
+  /**
+   * For shared files, images are not loaded to improve security.
+   */
   loadSharedImage(src: string): ImageBlob {
-    // Return existing blob if it exists.
-    // By this point, the getImage method may or may not have finished which will be determined by the blobStatus.
-    const existingBlob = this.sharedImageBlobs.find(blob => blob.src === src);
-    if (existingBlob) {
-      return existingBlob;
-    }
-
-    const [, name] = splitDirAndName(src);
-
-    // Start loading the image blob
-    const blobPromise = this.fileService.getSharedImage(src)
-      .then(data => data ? getImageBlobUrl(name, data) : null)
-      .catch(() => null);
-
-    const imageBlob: SharedImageBlob = {
+    const nullImageblob: ImageBlob = {
       src,
-      blobStatus: BlobStatus.Pending,
+      blobStatus: BlobStatus.Resolved,
       blob: null,
-      blobPromise: blobPromise,
+      blobPromise: Promise.resolve(null),
     }
-
-    this.sharedImageBlobs.push(imageBlob);
-    blobPromise.then(promiseResult => {
-      imageBlob.blobStatus = BlobStatus.Resolved;
-      imageBlob.blob = promiseResult;
-    });
-    return imageBlob;
+    return nullImageblob;
   }
 
   loadPublicImage(src: string, publicFileHash: string): ImageBlob {
@@ -125,8 +107,6 @@ export interface ImageBlob {
 interface PrivateImageBlob extends ImageBlob {
   groupId?: number;
 }
-
-type SharedImageBlob = ImageBlob;
 
 interface PublicImageBlob extends ImageBlob {
   publicFileHash: string;

@@ -9,6 +9,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { File } from '../model/file';
+import { TranslateFakeLoader, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -18,7 +19,14 @@ describe('FileService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [],
+      imports: [
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useClass: TranslateFakeLoader,
+          },
+        }),
+      ],
       providers: [provideHttpClient(), provideHttpClientTesting(), FileService],
     });
     service = TestBed.inject(FileService);
