@@ -269,6 +269,18 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.favorite.removeLocalFileFavorite(file);
   }
 
+  async deleteSharedFile(file: SharedFile) {
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.deleteSharedFile(file.path),
+      {
+        404: await getTranslation(this.translateService, 'error.file-not-found'),
+      }
+    );
+    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
+    await this.refreshRoute();
+    this.favorite.removeLocalFileFavorite(file);
+  }
+
   async deleteSelectedFiles() {
     const files = [...this.selectedFiles].join(', ');
     const accepted = await this.askModal.confirm('browser.title.modal.delete-files', 'browser.message.modal.delete-files', { translate: true, body: files });

@@ -46,6 +46,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   readonly groupId?: number;
   readonly linkBasePath: string = '';
   readonly fileOwnership: FileOwnership;
+  readonly FileOwnership = FileOwnership; // Expose enum to template
   // It's fine if this changes in for each file editor instance,
   // as the clientId is used to identify the client for file sync.
   // It does not need to be persistent across sessions.
