@@ -264,8 +264,7 @@ public class FileController : GroupPermissionControllerBase
         var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
 
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
-        var (directoryPath, name) = FileUtils.SplitDirAndFile(path);
-        var modified = await _fileService.UpdateTimestamp(directoryPath, name, null);
+        var modified = await _fileService.UpdateTimestamp(encryptedFile);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
 
         var syncMessage = new FileSyncChannelMessage(modified, clientId ?? Guid.NewGuid().ToString());

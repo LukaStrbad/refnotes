@@ -22,6 +22,7 @@ import "@milkdown/crepe/theme/common/style.css";
 import { replaceAll } from '@milkdown/utils'
 import { resolveImageUrl } from '../../utils/image-utils';
 import { SettingsService } from '../../services/settings.service';
+import { getStatusCode } from '../../utils/errorHandler';
 
 
 @Component({
@@ -44,6 +45,7 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   readonly directoryPath: string;
   readonly groupId?: number;
   readonly linkBasePath: string = '';
+  readonly fileOwnership: FileOwnership;
   // It's fine if this changes in for each file editor instance,
   // as the clientId is used to identify the client for file sync.
   // It does not need to be persistent across sessions.
@@ -82,27 +84,43 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
     public settings: SettingsService,
   ) {
     const path = route.snapshot.paramMap.get('path') as string;
+    const isSharedFile = route.snapshot.url.some(segment => segment.path === 'shared-file');
+
     [this.directoryPath, this.fileName] = splitDirAndName(path);
     this.fileType = getFileType(this.fileName);
-    const groupId = route.snapshot.paramMap.get('groupId');
-    if (groupId) {
-      this.groupId = Number(groupId);
-      this.linkBasePath = `/groups/${this.groupId}`;
+
+    if (isSharedFile) {
+      this.fileOwnership = FileOwnership.Shared;
+      // linkBasePath is not used for shared files as rename is disabled.
+    } else {
+      this.fileOwnership = FileOwnership.User;
+      const groupId = route.snapshot.paramMap.get('groupId');
+      if (groupId) {
+        this.groupId = Number(groupId);
+        this.linkBasePath = `/groups/${this.groupId}`;
+      }
     }
 
     this.loadFile();
 
-    tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
-      .then((tags) => {
-        this.tags = tags;
-      }, async () => {
-        this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
-      });
+    if (this.fileOwnership === FileOwnership.User) {
+      tagService.listFileTags(this.directoryPath, this.fileName, this.groupId)
+        .then((tags) => {
+          this.tags = tags;
+        }, async () => {
+          this.notificationService.error(await getTranslation(this.translate, 'error.load-file-tags'));
+        });
+    } else {
+      // Shared files do not have tags
+      this.tags = [];
+    }
   }
 
   ngAfterViewInit(): void {
     const filePath = joinPaths(this.directoryPath, this.fileName);
-    const socket = this.fileService.createFileSyncSocket(filePath, this.groupId);
+    const socket = this.fileOwnership === FileOwnership.Shared
+      ? this.fileService.createSharedFileSyncSocket(filePath)
+      : this.fileService.createFileSyncSocket(filePath, this.groupId);
     this.socket = socket;
 
     socket.addEventListener('open', () => {
@@ -141,7 +159,10 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
 
   async loadFile() {
     try {
-      const content = await this.fileService.getFile(this.directoryPath, this.fileName, this.groupId)
+      const filePath = joinPaths(this.directoryPath, this.fileName);
+      const content = this.fileOwnership === FileOwnership.Shared
+        ? await this.fileService.getSharedFile(filePath)
+        : await this.fileService.getFile(this.directoryPath, this.fileName, this.groupId);
       this.content = new TextDecoder().decode(content);
       this.loading = false;
 
@@ -161,6 +182,11 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
         });
       }
     } catch (e) {
+      const statusCode = getStatusCode(e);
+      if (statusCode === 404) {
+        // Keep loading false to avoid spinners getting stuck
+        this.loading = false;
+      }
       this.notificationService.error(await getTranslation(this.translate, 'error.load-file'));
       this.log.error('Error loading file:', e);
     }
@@ -171,19 +197,29 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
       this.content = this.crepe.getMarkdown();
     }
 
-    await this.notificationService.awaitAndNotifyError(this.fileService.saveTextFile(
-      this.directoryPath,
-      this.fileName,
-      this.content,
-      this.groupId,
-      this.clientId,
-    ), {
+    const filePath = joinPaths(this.directoryPath, this.fileName);
+    const savePromise = this.fileOwnership === FileOwnership.Shared
+      ? this.fileService.saveSharedTextFile(filePath, this.content, this.clientId)
+      : this.fileService.saveTextFile(
+        this.directoryPath,
+        this.fileName,
+        this.content,
+        this.groupId,
+        this.clientId,
+      );
+
+    await this.notificationService.awaitAndNotifyError(savePromise, {
       default: await getTranslation(this.translate, 'error.save-file'),
     });
   }
 
   async addTag([fileName, tag]: [string, string]) {
     if (this.tags.includes(tag)) {
+      return;
+    }
+
+    if (this.fileOwnership === FileOwnership.Shared) {
+      this.notificationService.info('Tags are not supported for shared files.');
       return;
     }
 
@@ -194,6 +230,11 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   async removeTag([fileName, tag]: [string, string]) {
+    if (this.fileOwnership === FileOwnership.Shared) {
+      this.notificationService.info('Tags are not supported for shared files.');
+      return;
+    }
+
     await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.directoryPath, fileName, tag, this.groupId), {
       default: await getTranslation(this.translate, 'error.remove-file-tag'),
     });
@@ -201,6 +242,11 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   async renameFile([, newFileName]: [string, string]) {
+    if (this.fileOwnership === FileOwnership.Shared) {
+      this.notificationService.info('Renaming is not supported for shared files.');
+      return;
+    }
+
     const oldFilePath = joinPaths(this.directoryPath, this.fileName);
     const newFilePath = joinPaths(this.directoryPath, newFileName);
     await this.notificationService.awaitAndNotifyError(this.fileService.moveFile(oldFilePath, newFilePath, this.groupId), {
@@ -225,6 +271,11 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   async openShareModal() {
+    if (this.fileOwnership === FileOwnership.Shared) {
+      this.notificationService.info('Sharing is not available for shared files.');
+      return;
+    }
+
     this.share.setFilePath(joinPaths(this.directoryPath, this.fileName));
     await this.share.loadPublicLink();
     this.shareModal.show();
@@ -258,7 +309,9 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
             }
 
             const [dirPath, fileName] = splitDirAndName(resolvedImageUrl.url);
-            const imageUrl = this.fileService.getImageUrl(dirPath, fileName, this.groupId);
+            const imageUrl = this.fileOwnership === FileOwnership.Shared
+              ? this.fileService.getSharedImageUrl(joinPaths(dirPath, fileName))
+              : this.fileService.getImageUrl(dirPath, fileName, this.groupId);
             return imageUrl;
           },
         }
@@ -295,4 +348,9 @@ export class FileEditorComponent implements AfterViewInit, OnDestroy {
       });
     }
   }
+}
+
+enum FileOwnership {
+  User,
+  Shared,
 }

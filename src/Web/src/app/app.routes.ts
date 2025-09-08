@@ -47,6 +47,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: "shared-file/:path/edit",
+    component: FileEditorComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: "browser",
     component: BrowserComponent,
     canActivate: [authGuard],

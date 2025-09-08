@@ -52,6 +52,12 @@ public interface IFileService
     /// <param name="name">Name of the file to update</param>
     /// <param name="groupId">ID of the group where the file belongs to</param>
     Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId);
+    
+    /// <summary>
+    /// Update the timestamp of a file in the specified directory.
+    /// </summary>
+    /// <param name="file">The encrypted file to update</param>
+    Task<DateTime> UpdateTimestamp(EncryptedFile file);
 
     /// <summary>
     /// Get information about a file at the specified path.
@@ -211,6 +217,12 @@ public class FileService(
     public async Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId)
     {
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
+        await UpdateTimestamp(file);
+        return file.Modified;
+    }
+
+    public async Task<DateTime> UpdateTimestamp(EncryptedFile file)
+    {
         var modified = DateTime.UtcNow;
         file.Modified = modified;
         context.Entry(file).State = EntityState.Modified;

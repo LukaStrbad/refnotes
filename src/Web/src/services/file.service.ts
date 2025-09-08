@@ -127,6 +127,11 @@ export class FileService {
     return `${apiUrl}/getImage?${params.toString()}`;
   }
 
+  getSharedImageUrl(path: string): string {
+    const params = generateHttpParams({ path });
+    return `${apiUrl}/shared/getImage?${params.toString()}`;
+  }
+
   async getImage(
     directoryPath: string,
     name: string,

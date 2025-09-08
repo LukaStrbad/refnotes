@@ -223,7 +223,8 @@
     "fileNotFound-description": "Datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana.",
     "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno.",
     "unknownFileType": "Nepoznata vrsta datoteke",
-    "unknownFileType-description": "Ova datoteka nema poznatu vrstu datoteke i ne može se prikazati"
+    "unknownFileType-description": "Ova datoteka nema poznatu vrstu datoteke i ne može se prikazati",
+    "sharedFileNotFound-description": "Zajednička datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana."
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",
