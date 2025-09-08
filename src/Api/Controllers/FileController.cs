@@ -3,13 +3,13 @@ using System.Text;
 using Api.Controllers.Base;
 using Api.Model;
 using Api.Services;
+using Api.Services.Files;
 using Api.Services.Schedulers;
 using Api.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Scalar.AspNetCore;
 
 namespace Api.Controllers;
 
@@ -25,6 +25,10 @@ public class FileController : GroupPermissionControllerBase
     private readonly ILogger<FileController> _logger;
     private readonly IFileSyncService _fileSyncService;
     private readonly IWebSocketFileSyncService _webSocketFileSyncService;
+    private readonly IFileShareService _fileShareService;
+    private readonly IFileServiceUtils _fileServiceUtils;
+    private readonly IDirectoryService _directoryService;
+    private readonly IUserService _userService;
 
     public FileController(
         IFileService fileService,
@@ -35,15 +39,22 @@ public class FileController : GroupPermissionControllerBase
         IPublicFileScheduler publicFileScheduler,
         ILogger<FileController> logger,
         IFileSyncService fileSyncService,
-        IWebSocketFileSyncService webSocketFileSyncService) : base(groupPermissionService, userService)
+        IWebSocketFileSyncService webSocketFileSyncService,
+        IFileShareService fileShareService,
+        IFileServiceUtils fileServiceUtils,
+        IDirectoryService directoryService) : base(groupPermissionService, userService)
     {
         _fileService = fileService;
         _fileStorageService = fileStorageService;
+        _userService = userService;
         _publicFileService = publicFileService;
         _publicFileScheduler = publicFileScheduler;
         _logger = logger;
         _fileSyncService = fileSyncService;
         _webSocketFileSyncService = webSocketFileSyncService;
+        _fileShareService = fileShareService;
+        _fileServiceUtils = fileServiceUtils;
+        _directoryService = directoryService;
     }
 
     [HttpPost("addFile")]
@@ -106,6 +117,25 @@ public class FileController : GroupPermissionControllerBase
 
         var stream = _fileStorageService.GetFile(fileName);
         return File(stream, FileUtils.GetContentType(name), name);
+    }
+
+    [HttpGet("shared/getFile")]
+    [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetSharedFile(string path)
+    {
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
+        if (sharedFile is null)
+            return NotFound("File not found.");
+
+        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
+        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
+        if (fileInfo is null)
+            return NotFound("File not found.");
+
+        var stream = _fileStorageService.GetFile(encryptedFile.FilesystemName);
+        return File(stream, FileUtils.GetContentType(fileInfo.Name), fileInfo.Name);
     }
 
     [AllowAnonymous]
@@ -191,9 +221,30 @@ public class FileController : GroupPermissionControllerBase
         {
             return NotFound("File not found.");
         }
-        
+
         await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
         var modified = await _fileService.UpdateTimestamp(directoryPath, name, groupId);
+        await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
+
+        var syncMessage = new FileSyncChannelMessage(modified, clientId ?? Guid.NewGuid().ToString());
+        await _fileSyncService.SendSyncSignalAsync(encryptedFile.Id, syncMessage, HttpContext.RequestAborted);
+        return Ok();
+    }
+
+    [HttpPost("shared/saveTextFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SaveSharedTextFile(string path, string? clientId)
+    {
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
+        if (sharedFile is null)
+            return NotFound("File not found.");
+
+        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
+
+        await _fileStorageService.SaveFileAsync(encryptedFile.FilesystemName, Request.Body);
+        var modified = await _fileService.UpdateTimestamp(encryptedFile);
         await _publicFileScheduler.ScheduleImageRefreshForEncryptedFile(encryptedFile.Id);
 
         var syncMessage = new FileSyncChannelMessage(modified, clientId ?? Guid.NewGuid().ToString());
@@ -230,8 +281,22 @@ public class FileController : GroupPermissionControllerBase
         return Ok();
     }
 
+    [HttpDelete("shared/deleteFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteSharedFile(string path)
+    {
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
+        if (sharedFile is null)
+            return NotFound("File not found.");
+
+        await _fileShareService.Delete(sharedFile);
+        return Ok();
+    }
+
     [HttpGet("getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetFileInfo(string filePath, int? groupId)
     {
         if (await GetGroupAccess(groupId) == GroupAccessStatus.AccessDenied)
@@ -241,9 +306,27 @@ public class FileController : GroupPermissionControllerBase
         return Ok(fileInfo);
     }
 
+    [HttpGet("shared/getFileInfo")]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetSharedFileInfo(string filePath)
+    {
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(filePath, user);
+        if (sharedFile is null)
+            return NotFound("File not found.");
+
+        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
+
+        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
+        if (fileInfo is null)
+            return NotFound("File not found.");
+
+        return Ok(fileInfo);
+    }
+
     [AllowAnonymous]
     [HttpGet("public/getFileInfo")]
-    [ProducesResponseType<FileDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<FileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> GetPublicFileInfo(string urlHash)
     {
@@ -277,32 +360,32 @@ public class FileController : GroupPermissionControllerBase
         return File(stream, contentType ?? "application/octet-stream", name);
     }
 
-    [Route("/ws/fileSync")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task FileSync(string filePath, int? groupId)
+    [HttpGet("shared/downloadFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> DownloadSharedFile(string path)
     {
-        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
-        if (encryptedFile is null)
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            HttpContext.Response.ContentType = "text/plain";
-            await HttpContext.Response.WriteAsync("File not found");
-            return;
-        }
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(path, user);
+        if (sharedFile is null)
+            return NotFound("File not found.");
 
-        if (!HttpContext.WebSockets.IsWebSocketRequest)
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            HttpContext.Response.ContentType = "text/plain";
-            await HttpContext.Response.WriteAsync("Only WebSocket requests are supported on this endpoint");
-            return;
-        }
+        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
+        var fileInfo = await _fileService.GetFileInfoAsync(encryptedFile.Id);
+        if (fileInfo is null)
+            return NotFound("File not found.");
 
+        new FileExtensionContentTypeProvider().TryGetContentType(path, out var contentType);
+        var stream = _fileStorageService.GetFile(encryptedFile.FilesystemName);
+        return File(stream, contentType ?? "application/octet-stream", fileInfo.Name);
+    }
+
+    private async Task HandleFileSync(int encryptedFileId)
+    {
         using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
         try
         {
-            _logger.LogInformation("File sync connection opened for file with ID {fileId}", encryptedFile.Id);
-            await _webSocketFileSyncService.HandleFileSync(webSocket, encryptedFile.Id, HttpContext.RequestAborted);
+            _logger.LogInformation("File sync connection opened for file with ID {fileId}", encryptedFileId);
+            await _webSocketFileSyncService.HandleFileSync(webSocket, encryptedFileId, HttpContext.RequestAborted);
         }
         // Some common exceptions that happen when a connection is closed prematurely
         catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
@@ -331,6 +414,57 @@ public class FileController : GroupPermissionControllerBase
         }
     }
 
+    [Route("/ws/fileSync")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task FileSync(string filePath, int? groupId)
+    {
+        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, groupId);
+        if (encryptedFile is null)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("File not found");
+            return;
+        }
+
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("Only WebSocket requests are supported on this endpoint");
+            return;
+        }
+
+        await HandleFileSync(encryptedFile.Id);
+    }
+
+    [Route("/ws/sharedFileSync")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task SharedFileSync(string filePath)
+    {
+        var user = await _userService.GetCurrentUser();
+        var sharedFile = await _fileShareService.GetUserSharedFile(filePath, user);
+        if (sharedFile is null)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("File not found");
+            return;
+        }
+
+        var encryptedFile = await _fileShareService.GetEncryptedFileFromSharedFile(sharedFile);
+
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            HttpContext.Response.ContentType = "text/plain";
+            await HttpContext.Response.WriteAsync("Only WebSocket requests are supported on this endpoint");
+            return;
+        }
+
+        await HandleFileSync(encryptedFile.Id);
+    }
+
     [Route("/ws/publicFileSync")]
     [AllowAnonymous]
     [ApiExplorerSettings(IgnoreApi = true)]
@@ -354,36 +488,41 @@ public class FileController : GroupPermissionControllerBase
             return;
         }
 
-        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        try
+        await HandleFileSync(encryptedFile.Id);
+    }
+
+    [HttpPost("shareFile")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    // This API doesn't support groups as group files are already "shared"
+    public async Task<ActionResult> ShareFile(string filePath)
+    {
+        var encryptedFile = await _fileService.GetEncryptedFileAsync(filePath, null);
+        if (encryptedFile is null)
+            return NotFound("File not found.");
+
+        var hash = await _fileShareService.GenerateShareHash(encryptedFile.Id);
+        return Ok(hash);
+    }
+
+    [HttpPost("generateSharedFile")]
+    public async Task<ActionResult> GenerateSharedFile(string hash, string directoryPath)
+    {
+        var directory = await _fileServiceUtils.GetDirectory(directoryPath, false, null);
+        if (directory is null)
+            return NotFound("Directory not found.");
+        var directoryOwner = await _directoryService.GetOwner(directory.Id);
+        // This should never happen
+        if (directoryOwner is null)
+            throw new Exception("Directory owner not found.");
+
+        var ownerFromHash = await _fileShareService.GetOwnerFromHash(hash);
+        if (ownerFromHash?.Id == directoryOwner.Id)
         {
-            _logger.LogInformation("File sync connection opened for file with ID {fileId}", encryptedFile.Id);
-            await _webSocketFileSyncService.HandleFileSync(webSocket, encryptedFile.Id, HttpContext.RequestAborted);
+            return BadRequest("You cannot share a file with yourself.");
         }
-        // Some common exceptions that happen when a connection is closed prematurely
-        catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-        {
-            // No need to log the error as we know the reason for this exception
-            _logger.LogWarning("WebSocket connection closed prematurely");
-        }
-        catch (ConnectionAbortedException e)
-        {
-            _logger.LogWarning(e, "WebSocket connection aborted");
-        }
-        catch (OperationCanceledException e)
-        {
-            switch (e.InnerException)
-            {
-                case WebSocketException { WebSocketErrorCode: WebSocketError.ConnectionClosedPrematurely }:
-                    // No need to log the error as we know the reason for this exception
-                    _logger.LogWarning("WebSocket connection closed prematurely");
-                    return;
-                case ObjectDisposedException objectDisposedException:
-                    _logger.LogWarning(objectDisposedException, "WebSocket connection closed due to a disposed object");
-                    return;
-                default:
-                    throw;
-            }
-        }
+
+        await _fileShareService.GenerateSharedFileFromHash(hash, directory.Id);
+        return Ok();
     }
 }

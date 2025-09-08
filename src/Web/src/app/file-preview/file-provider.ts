@@ -56,6 +56,32 @@ export class FileProvider {
     );
   }
 
+  static createSharedFileProvider(
+    fileService: FileService,
+    imageBlobResolver: ImageBlobResolverService,
+    filePath: string,
+  ): FileProvider {
+    const [directoryPath] = splitDirAndName(filePath);
+
+    const listTags = () => Promise.resolve([]); // Shared files do not have tags.
+    const getFileInfo = () => fileService.getSharedFileInfo(filePath);
+    const getFile = () => fileService.getSharedFile(filePath);
+    const createSyncSocket = () => fileService.createSharedFileSyncSocket(filePath);
+    const loadImage = (src: string) => {
+      const imagePath = resolveRelativeFolderPath(directoryPath, src);
+      return imageBlobResolver.loadSharedImage(imagePath);
+    }
+
+    return new FileProvider(
+      Promise.resolve(filePath),
+      listTags,
+      getFileInfo,
+      getFile,
+      createSyncSocket,
+      loadImage,
+    );
+  }
+
   static createPublicFileProvider(
     fileService: FileService,
     imageBlobResolver: ImageBlobResolverService,

@@ -3,7 +3,7 @@ using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public sealed class PublicFileImageService : IPublicFileImageService
 {

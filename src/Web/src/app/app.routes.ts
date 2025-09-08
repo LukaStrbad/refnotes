@@ -42,6 +42,16 @@ export const routes: Routes = [
     component: FilePreviewComponent,
   },
   {
+    path: "shared-file/:path/preview",
+    component: FilePreviewComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: "shared-file/:path/edit",
+    component: FileEditorComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: "browser",
     component: BrowserComponent,
     canActivate: [authGuard],

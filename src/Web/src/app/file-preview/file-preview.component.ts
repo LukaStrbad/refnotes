@@ -35,7 +35,8 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
   fileName?: string;
   readonly groupId?: number;
   readonly fileProvider: FileProvider;
-  readonly isPublicFile: boolean;
+  readonly fileOwnership: FileOwnership;
+  readonly FileOwnership = FileOwnership;
 
   private socket?: WebSocket;
 
@@ -63,13 +64,23 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
     private imageBlobResolver: ImageBlobResolverService,
   ) {
     const publicFileHash = route.snapshot.paramMap.get('publicHash');
+    const isSharedFile = route.snapshot.url.some(segment => segment.path === 'shared-file');
     if (publicFileHash) {
       this.fileProvider = FileProvider.createPublicFileProvider(
         fileService,
         imageBlobResolver,
         publicFileHash,
       );
-      this.isPublicFile = true;
+      this.fileOwnership = FileOwnership.Public;
+    } else if (isSharedFile) {
+      const path = route.snapshot.paramMap.get('path') as string;
+
+      this.fileProvider = FileProvider.createSharedFileProvider(
+        fileService,
+        imageBlobResolver,
+        path,
+      );
+      this.fileOwnership = FileOwnership.Shared;
     } else {
       const path = route.snapshot.paramMap.get('path') as string;
       const groupId = route.snapshot.paramMap.get('groupId');
@@ -84,7 +95,7 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
         path,
         this.groupId,
       );
-      this.isPublicFile = false;
+      this.fileOwnership = FileOwnership.User;
     }
 
     effect(() => {
@@ -225,4 +236,10 @@ export class FilePreviewComponent implements OnDestroy, OnInit, AfterViewInit {
   private updateImages() {
     this.markdownHighlighter?.updateImages(this.previewContentElement);
   }
+}
+
+enum FileOwnership {
+  User,
+  Shared,
+  Public,
 }

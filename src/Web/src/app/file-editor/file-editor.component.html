@@ -3,12 +3,14 @@
     <h1 class="font-bold text-2xl">
       {{ "editor.editingFile" | translate: { fileName } }}
     </h1>
-    <button
-      (click)="renameFileModal.show(fileName)"
-      class="btn btn-xs btn-secondary"
-    >
-      <i class="bi bi-pencil"></i>
-    </button>
+    @if (fileOwnership === FileOwnership.User) {
+      <button
+        (click)="renameFileModal.show(fileName)"
+        class="btn btn-xs btn-secondary"
+      >
+        <i class="bi bi-pencil"></i>
+      </button>
+    }
   </div>
 
   <div
@@ -25,7 +27,7 @@
 
     <div class="flex gap-2 self-end">
       <!-- WYSIWYG Toggle - only show for markdown files -->
-      @if (fileType === 'markdown') {
+      @if (fileType === "markdown") {
         <!-- Visual editor is only supported on desktop for now -->
         <label class="items-center gap-2 cursor-pointer hidden sm:flex">
           <input
@@ -38,25 +40,27 @@
         </label>
       }
 
-      <!-- Share button -->
-      <button
-        class="btn btn-accent"
-        (click)="openShareModal()"
-        [disabled]="loading"
-        testTag="share-button"
-      >
-        <i class="bi bi-share"></i>
-        <span translate>editor.buttonShare</span>
-      </button>
+      @if (fileOwnership === FileOwnership.User) {
+        <!-- Share button -->
+        <button
+          class="btn btn-accent"
+          (click)="openShareModal()"
+          [disabled]="loading"
+          testTag="share-button"
+        >
+          <i class="bi bi-share"></i>
+          <span translate>editor.buttonShare</span>
+        </button>
 
-      <!-- Edit tags button -->
-      <button
-        class="btn btn-secondary"
-        (click)="editTagsModal.show(fileName, tags)"
-      >
-        <i class="bi bi-pencil"></i>
-        <span translate>editor.buttonEditTags</span>
-      </button>
+        <!-- Edit tags button -->
+        <button
+          class="btn btn-secondary"
+          (click)="editTagsModal.show(fileName, tags)"
+        >
+          <i class="bi bi-pencil"></i>
+          <span translate>editor.buttonEditTags</span>
+        </button>
+      }
 
       <!-- Save button -->
       <button
@@ -117,5 +121,7 @@
   [fileName]="share.fileName()"
   [isPublic]="share.isPublic()"
   [publicLink]="share.publicLink()"
+  [userShareLink]="share.userShareLink()"
   (changePublicState)="share.setPublicState($event)"
+  (generateUserShareLink)="share.loadUserShareLink()"
 ></app-share-modal>

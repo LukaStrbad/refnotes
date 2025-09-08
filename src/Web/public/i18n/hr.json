@@ -70,7 +70,8 @@
       "files": "Datoteke",
       "buttonEditTags": "oznake",
       "file-size": "Veličina datoteke",
-      "modified": "Zadnja izmjena"
+      "modified": "Zadnja izmjena",
+      "shared-files": "Dijeljene datoteke"
     },
     "delete": "Izbriši",
     "edit": "Uredi",
@@ -103,7 +104,9 @@
     "download": "Preuzmi",
     "share": "Podijeli",
     "favorite": "Dodaj u favorite",
-    "unfavorite": "Ukloni iz favorita"
+    "unfavorite": "Ukloni iz favorita",
+    "placeSharedFile": "Postavite dijeljenu datoteku ovdje",
+    "shared-file-placed": "Zajednička datoteka smještena u trenutni direktorij"
   },
   "editor": {
     "viewType": {
@@ -178,7 +181,9 @@
       "makePublic": "Javno",
       "publicLink": "Javna veza",
       "title": "Podijeliti datoteku {{fileName}}?",
-      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike."
+      "explanation": "Javnu datoteku može vidjeti svatko tko ima poveznicu. To uključuje sav sadržaj datoteke, uključujući slike.",
+      "generate-url": "Generiraj URL za djeljenje",
+      "shareUrl": "Dijelite URL"
     }
   },
   "auth": {
@@ -218,7 +223,8 @@
     "fileNotFound-description": "Datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana.",
     "publicFileNotFound-description": "Datoteka koju tražite nije dostupna. Možda je izbrisana, poveznica je nevažeća ili je dijeljenje onemogućeno.",
     "unknownFileType": "Nepoznata vrsta datoteke",
-    "unknownFileType-description": "Ova datoteka nema poznatu vrstu datoteke i ne može se prikazati"
+    "unknownFileType-description": "Ova datoteka nema poznatu vrstu datoteke i ne može se prikazati",
+    "sharedFileNotFound-description": "Zajednička datoteka koju tražite nije pronađena. Možda je premještena ili izbrisana."
   },
   "error": {
     "file-already-exists": "Datoteka s istim imenom već postoji",
@@ -245,7 +251,8 @@
       "INVALID_OR_EXPIRED_TOKEN": "Nevažeći ili istekli token",
       "USER_NOT_FOUND": "Korisnik nije pronađen",
       "USER_ALREADY_EXISTS": "Korisnik s istim korisničkim imenom već postoji"
-    }
+    },
+    "place-shared-file": "Došlo je do pogreške postavljanja zajedničke datoteke"
   },
   "time": {
     "minutes-ago": "Prije jedne minute | Prije {{n}} minute | Prije {{n}} minuta",
@@ -326,6 +333,10 @@
     "public-link": {
       "copied-to-clipboard": "Veza kopirana u međuspremnik",
       "copy-failed": "Greška prilikom kopiranja veze"
+    },
+    "type": {
+      "public": "Dijeli javno",
+      "user": "Dijeli s drugim korisnikom"
     }
   },
   "home-button-go-to-login": "Idite na stranicu za prijavu",

@@ -334,6 +334,63 @@ namespace MigrationService.Migrations
                     b.ToTable("public_file_images");
                 });
 
+            modelBuilder.Entity("Data.Model.SharedFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("SharedEncryptedFileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SharedToDirectoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SharedEncryptedFileId");
+
+                    b.HasIndex("SharedToDirectoryId");
+
+                    b.ToTable("shared_files");
+                });
+
+            modelBuilder.Entity("Data.Model.SharedFileHash", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("EncryptedFileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EncryptedFileId");
+
+                    b.HasIndex("Hash");
+
+                    b.ToTable("shared_file_hashes");
+                });
+
             modelBuilder.Entity("Data.Model.User", b =>
                 {
                     b.Property<int>("Id")
@@ -615,6 +672,36 @@ namespace MigrationService.Migrations
                     b.Navigation("EncryptedFile");
 
                     b.Navigation("PublicFile");
+                });
+
+            modelBuilder.Entity("Data.Model.SharedFile", b =>
+                {
+                    b.HasOne("Data.Model.EncryptedFile", "SharedEncryptedFile")
+                        .WithMany()
+                        .HasForeignKey("SharedEncryptedFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data.Model.EncryptedDirectory", "SharedToDirectory")
+                        .WithMany()
+                        .HasForeignKey("SharedToDirectoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SharedEncryptedFile");
+
+                    b.Navigation("SharedToDirectory");
+                });
+
+            modelBuilder.Entity("Data.Model.SharedFileHash", b =>
+                {
+                    b.HasOne("Data.Model.EncryptedFile", "EncryptedFile")
+                        .WithMany()
+                        .HasForeignKey("EncryptedFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EncryptedFile");
                 });
 
             modelBuilder.Entity("Data.Model.UserGroupRole", b =>

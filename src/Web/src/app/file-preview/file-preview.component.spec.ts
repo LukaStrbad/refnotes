@@ -28,7 +28,7 @@ function setupTestBed() {
     TranslateService,
     {
       provide: ActivatedRoute,
-      useValue: { snapshot: { paramMap: { get: (key: string) => key === 'path' ? '/test' : undefined } } },
+      useValue: { snapshot: { paramMap: { get: (key: string) => key === 'path' ? '/test' : undefined }, url: [] } },
     },
     { provide: FileService, useValue: fileService },
     { provide: TagService, useValue: tagService },

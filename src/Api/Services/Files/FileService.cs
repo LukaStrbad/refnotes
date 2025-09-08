@@ -1,12 +1,12 @@
 ﻿using Api.Exceptions;
+using Api.Extensions;
 using Api.Model;
 using Api.Utils;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
-using Api.Extensions;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IFileService
 {
@@ -52,19 +52,25 @@ public interface IFileService
     /// <param name="name">Name of the file to update</param>
     /// <param name="groupId">ID of the group where the file belongs to</param>
     Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId);
+    
+    /// <summary>
+    /// Update the timestamp of a file in the specified directory.
+    /// </summary>
+    /// <param name="file">The encrypted file to update</param>
+    Task<DateTime> UpdateTimestamp(EncryptedFile file);
 
     /// <summary>
     /// Get information about a file at the specified path.
     /// </summary>
     /// <param name="filePath">Path to the file</param>
     /// <param name="groupId">ID of the group where the file belongs to</param>
-    Task<FileDto> GetFileInfo(string filePath, int? groupId);
+    Task<FileResponse> GetFileInfo(string filePath, int? groupId);
 
     /// <summary>
     /// Get information about a file from its ID.
     /// </summary>
     /// <param name="fileId">File ID</param>
-    Task<FileDto?> GetFileInfoAsync(int fileId);
+    Task<FileResponse?> GetFileInfoAsync(int fileId);
 
     /// <summary>
     /// Get the ID of a file at the specified path.
@@ -211,6 +217,12 @@ public class FileService(
     public async Task<DateTime> UpdateTimestamp(string directoryPath, string name, int? groupId)
     {
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId);
+        await UpdateTimestamp(file);
+        return file.Modified;
+    }
+
+    public async Task<DateTime> UpdateTimestamp(EncryptedFile file)
+    {
         var modified = DateTime.UtcNow;
         file.Modified = modified;
         context.Entry(file).State = EntityState.Modified;
@@ -218,13 +230,13 @@ public class FileService(
         return modified;
     }
 
-    public async Task<FileDto> GetFileInfo(string filePath, int? groupId)
+    public async Task<FileResponse> GetFileInfo(string filePath, int? groupId)
     {
         var (directoryPath, name) = FileUtils.SplitDirAndFile(filePath);
         var (_, file) = await utils.GetDirAndFile(directoryPath, name, groupId, includeTags: true);
         var fileSize = await fileStorageService.GetFileSize(file.FilesystemName);
 
-        return new FileDto(name,
+        return new FileResponse(name,
             filePath,
             file.Tags.Select(tag => tag.DecryptedName(encryptionService)),
             fileSize,
@@ -232,7 +244,7 @@ public class FileService(
             file.Modified);
     }
 
-    public async Task<FileDto?> GetFileInfoAsync(int fileId)
+    public async Task<FileResponse?> GetFileInfoAsync(int fileId)
     {
         var file = await context.Files.FindAsync(fileId);
 
@@ -252,7 +264,7 @@ public class FileService(
             .Select(t => t.Name)
             .ToListAsync();
 
-        return new FileDto(fileName,
+        return new FileResponse(fileName,
             fullPath,
             fileTags.Select(encryptionService.DecryptAesStringBase64),
             fileSize,

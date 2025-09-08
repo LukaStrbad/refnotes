@@ -70,7 +70,8 @@
       "files": "Files",
       "buttonEditTags": "tags",
       "file-size": "File size",
-      "modified": "Last modified"
+      "modified": "Last modified",
+      "shared-files": "Shared files"
     },
     "delete": "Delete",
     "edit": "Edit",
@@ -103,7 +104,9 @@
     "download": "Download",
     "share": "Share",
     "favorite": "Add to favorites",
-    "unfavorite": "Remove from favorites"
+    "unfavorite": "Remove from favorites",
+    "placeSharedFile": "Place shared file here",
+    "shared-file-placed": "Shared file placed in the current directory"
   },
   "editor": {
     "viewType": {
@@ -178,7 +181,9 @@
       "publicLink": "Public link",
       "copy": "Copy",
       "close": "Close",
-      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images."
+      "explanation": "A public file can be viewed by anyone with the link. This includes all of the file's contents, such as images.",
+      "generate-url": "Generate share url",
+      "shareUrl": "Share URL"
     }
   },
   "auth": {
@@ -216,6 +221,7 @@
     },
     "fileNotFound": "File not found",
     "publicFileNotFound-description": "The file you are looking for is not available. It may have been deleted, the link is invalid, or sharing has been disabled.",
+    "sharedFileNotFound-description": "The file you are looking for could not be found. It may have been moved, deleted, or sharing has been disabled.",
     "fileNotFound-description": "The file you are looking for could not be found. It may have been moved or deleted.",
     "unknownFileType": "Unknown file type",
     "unknownFileType-description": "This file doesn't have a known file type and cannot be displayed"
@@ -245,7 +251,8 @@
       "INVALID_OR_EXPIRED_TOKEN": "Invalid or expired token",
       "USER_NOT_FOUND": "User not found",
       "USER_ALREADY_EXISTS": "User with the same username already exists"
-    }
+    },
+    "place-shared-file": "There was an error placing a shared file"
   },
   "time": {
     "just-now": "Just now",
@@ -326,6 +333,10 @@
     "public-link": {
       "copied-to-clipboard": "Link copied to clipboard",
       "copy-failed": "Failed to copy link to clipboard"
+    },
+    "type": {
+      "public": "Share to public",
+      "user": "Share to another user"
     }
   },
   "home-button": {

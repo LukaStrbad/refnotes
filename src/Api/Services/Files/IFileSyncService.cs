@@ -1,6 +1,6 @@
 ﻿using Api.Model;
 
-namespace Api.Services;
+namespace Api.Services.Files;
 
 public interface IFileSyncService
 {

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Api.Middlewares;
+using Api.Services.Files;
 using Api.Services.Redis;
 using Api.Services.Schedulers;
 using MailKit.Net.Smtp;
@@ -53,6 +54,7 @@ public static class Configuration
         builder.Services.AddScoped<IEmailConfirmService, EmailConfirmService>();
         builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
         builder.Services.AddScoped<IRedisLockProvider, RedisLockProvider>();
+        builder.Services.AddScoped<IFileShareService, FileShareService>();
 
         builder.Services.AddTransient<IWebSocketMessageHandler, WebSocketMessageHandler>();
         builder.Services.AddTransient<IFileSyncService, FileSyncService>();

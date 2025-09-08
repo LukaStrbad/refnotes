@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { FileInfo } from '../model/file';
 import { mapFileDates } from '../utils/date-utils';
 import { generateHttpParams } from '../utils/http-utils';
+import { TranslateService } from '@ngx-translate/core';
 
 const apiUrl = environment.apiUrl + '/file';
 
@@ -12,7 +13,8 @@ const apiUrl = environment.apiUrl + '/file';
   providedIn: 'root',
 })
 export class FileService {
-  constructor(private http: HttpClient) { }
+  private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
 
   addFile(directoryPath: string, file: File, groupId?: number): Observable<HttpEvent<object>> {
     const formData = new FormData();
@@ -81,6 +83,16 @@ export class FileService {
     );
   }
 
+  async deleteSharedFile(path: string) {
+    const params = generateHttpParams({ path });
+    return await firstValueFrom(
+      this.http.delete(
+        `${apiUrl}/shared/deleteFile`,
+        { params },
+      ),
+    );
+  }
+
   async getFile(directoryPath: string, name: string, groupId?: number): Promise<ArrayBuffer> {
     const params = generateHttpParams({
       directoryPath: directoryPath,
@@ -96,6 +108,17 @@ export class FileService {
     );
   }
 
+  async getSharedFile(path: string): Promise<ArrayBuffer> {
+    const params = generateHttpParams({ path });
+
+    return await firstValueFrom(
+      this.http.get(
+        `${apiUrl}/shared/getFile`,
+        { params, responseType: 'arraybuffer' },
+      ),
+    );
+  }
+
   getImageUrl(directoryPath: string, name: string, groupId?: number): string {
     const params = generateHttpParams({
       directoryPath: directoryPath,
@@ -104,6 +127,11 @@ export class FileService {
     });
 
     return `${apiUrl}/getImage?${params.toString()}`;
+  }
+
+  getSharedImageUrl(): string {
+    const language = this.translate.currentLang;
+    return `/img/unsupported-feature-${language}.svg`;
   }
 
   async getImage(
@@ -164,6 +192,18 @@ export class FileService {
     );
   }
 
+  async saveSharedTextFile(path: string, content: string, clientId?: string) {
+    const params = generateHttpParams({ path, clientId });
+
+    await firstValueFrom(
+      this.http.post(
+        `${apiUrl}/shared/saveTextFile`,
+        content,
+        { params },
+      ),
+    );
+  }
+
   async getFileInfo(path: string, groupId?: number): Promise<FileInfo> {
     const params = generateHttpParams({
       filePath: path,
@@ -176,11 +216,32 @@ export class FileService {
     return mapFileDates(fileInfo);
   }
 
+  async getSharedFileInfo(path: string): Promise<FileInfo> {
+    const params = generateHttpParams({ filePath: path });
+
+    const fileInfo = await firstValueFrom(
+      this.http.get<FileInfo>(`${apiUrl}/shared/getFileInfo`, { params }),
+    );
+    return mapFileDates(fileInfo);
+  }
+
   downloadFile(path: string, groupId?: number) {
     let requestUrl = `${apiUrl}/downloadFile?path=${encodeURIComponent(path)}`;
     if (groupId) {
       requestUrl += `&groupId=${groupId}`;
     }
+
+    const a = document.createElement('a');
+    a.href = requestUrl;
+    a.setAttribute('download', '');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  downloadSharedFile(path: string) {
+    const params = generateHttpParams({ path });
+    const requestUrl = `${apiUrl}/shared/downloadFile?${params.toString()}`;
 
     const a = document.createElement('a');
     a.href = requestUrl;
@@ -220,10 +281,44 @@ export class FileService {
     return new WebSocket(socketUrl);
   }
 
+  createSharedFileSyncSocket(path: string): WebSocket {
+    const params = generateHttpParams({ filePath: path });
+
+    const socketUrl = `${environment.wsApiUrl}/ws/sharedFileSync?${params.toString()}`;
+    return new WebSocket(socketUrl);
+  }
+
   createPublicFileSyncSocket(urlHash: string): WebSocket {
     const params = generateHttpParams({ urlHash: urlHash });
 
     const socketUrl = `${environment.wsApiUrl}/ws/publicFileSync?${params.toString()}`;
     return new WebSocket(socketUrl);
+  }
+
+  async shareFile(filePath: string): Promise<string | null> {
+    const params = generateHttpParams({ filePath: filePath });
+
+    const hash = await firstValueFrom(
+      this.http.post(`${apiUrl}/shareFile`, {}, { params, responseType: 'text' }),
+    );
+
+    if (!hash) {
+      return null;
+    }
+
+    return this.createUrlFromHash(hash);
+  }
+
+  async generateSharedFile(hash: string, directoryPath: string) {
+    const params = generateHttpParams({ hash: hash, directoryPath: directoryPath });
+
+    return await firstValueFrom(
+      this.http.post(`${apiUrl}/generateSharedFile`, {}, { params, responseType: 'text' }),
+    );
+  }
+
+  private createUrlFromHash(hash: string): string {
+    const origin = window.location.origin;
+    return `${origin}/browser?shareHash=${hash}`;
   }
 }

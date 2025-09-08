@@ -43,6 +43,19 @@ export class ImageBlobResolverService {
     return imageBlob;
   }
 
+  /**
+   * For shared files, images are not loaded to improve security.
+   */
+  loadSharedImage(src: string): ImageBlob {
+    const nullImageblob: ImageBlob = {
+      src,
+      blobStatus: BlobStatus.Resolved,
+      blob: null,
+      blobPromise: Promise.resolve(null),
+    }
+    return nullImageblob;
+  }
+
   loadPublicImage(src: string, publicFileHash: string): ImageBlob {
     const existingBlob = this.publicImageBlobs.find(blob => blob.src === src && blob.publicFileHash === publicFileHash);
     if (existingBlob) {

@@ -40,6 +40,7 @@ function setupTestBed() {
     fileName: signal(''),
     isPublic: signal(false),
     publicLink: signal<string | null>(null),
+    userShareLink: signal<string | null>(null),
   });
 
   const imports = [
@@ -57,7 +58,7 @@ function setupTestBed() {
     TranslateService,
     {
       provide: ActivatedRoute,
-      useValue: { snapshot: { paramMap: {} } },
+      useValue: { snapshot: { paramMap: {}, url: [] } },
     },
     { provide: FileService, useValue: fileService },
     { provide: TagService, useValue: tagService },
