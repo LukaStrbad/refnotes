@@ -61,7 +61,7 @@ export class FileProvider {
     imageBlobResolver: ImageBlobResolverService,
     filePath: string,
   ): FileProvider {
-    const [directoryPath, fileName] = splitDirAndName(filePath);
+    const [directoryPath] = splitDirAndName(filePath);
 
     const listTags = () => Promise.resolve([]); // Shared files do not have tags.
     const getFileInfo = () => fileService.getSharedFileInfo(filePath);

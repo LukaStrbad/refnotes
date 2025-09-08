@@ -52,7 +52,7 @@ export class ImageBlobResolverService {
       return existingBlob;
     }
 
-    const [dir, name] = splitDirAndName(src);
+    const [, name] = splitDirAndName(src);
 
     // Start loading the image blob
     const blobPromise = this.fileService.getSharedImage(src)
