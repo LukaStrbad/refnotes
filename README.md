@@ -32,10 +32,10 @@ RefNotes is a note-taking application built with .NET and Angular.
     - When a file is saved, the changes will be synced across tabs/browsers
     - This works even for public notes
 - A WYSIWYG editor for markdown to simplify editing
+- File sharing with other users
 
 ## Planned Features
 
-- File sharing
 - Autocomplete for image paths
 
 ## Getting Started
