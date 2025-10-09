@@ -4,10 +4,10 @@ permissions:
   packages: write
   pull-requests: write
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+#on:
+#  push:
+#    branches: [ "main" ]
+#  workflow_dispatch:
     
 env:
   API_IMAGE: ghcr.io/${{ secrets.GHCR_REPOSITORY }}/refnotes-api
