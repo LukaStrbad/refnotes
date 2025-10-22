@@ -1,4 +1,4 @@
-﻿using Api.Services.Schedulers;
+using Api.Services.Schedulers;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;

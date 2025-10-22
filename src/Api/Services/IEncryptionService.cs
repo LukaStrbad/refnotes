@@ -1,4 +1,4 @@
-﻿namespace Api.Services;
+namespace Api.Services;
 
 /// <summary>
 /// Interface for encryption services.

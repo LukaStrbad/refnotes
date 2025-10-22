@@ -11,7 +11,7 @@ namespace AppHost;
 /// This is necessary because, typically, the path is specified by AppConfiguration, which is not available at design time.
 /// </summary>
 // ReSharper disable once UnusedType.Global
-public class RefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContext>
+public class PgRefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContext>
 {
     public RefNotesContext CreateDbContext(string[] args)
     {
@@ -29,7 +29,7 @@ public class RefNotesContextFactory : IDesignTimeDbContextFactory<RefNotesContex
             throw new Exception("Connection string is not set");
 
         var optionsBuilder = new DbContextOptionsBuilder<RefNotesContext>();
-        optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+        optionsBuilder.UseNpgsql(connectionString, o => o.SetPostgresVersion(18, 0));
         return new RefNotesContext(optionsBuilder.Options);
     }
 }

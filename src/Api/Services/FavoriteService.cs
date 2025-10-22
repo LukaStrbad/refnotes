@@ -1,4 +1,4 @@
-﻿using Api.Model;
+using Api.Model;
 using Api.Services.Files;
 using Data;
 using Data.Model;

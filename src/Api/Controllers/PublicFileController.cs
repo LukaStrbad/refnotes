@@ -1,4 +1,4 @@
-﻿using Api.Controllers.Base;
+using Api.Controllers.Base;
 using Api.Services;
 using Api.Services.Files;
 using Api.Utils;

@@ -12,14 +12,14 @@ public class MigrationWorker : BackgroundService
     private readonly ILogger<MigrationWorker> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
-    private readonly SchedulerMigrations _schedulerMigrations;
+    private readonly ISchedulerMigrations _schedulerMigrations;
     private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     public MigrationWorker(
         ILogger<MigrationWorker> logger,
         IServiceProvider serviceProvider,
         IHostApplicationLifetime hostApplicationLifetime,
-        SchedulerMigrations schedulerMigrations)
+        ISchedulerMigrations schedulerMigrations)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;

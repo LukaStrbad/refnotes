@@ -1,4 +1,4 @@
-﻿namespace Api.Services.Files;
+namespace Api.Services.Files;
 
 public interface IPublicFileImageService
 {

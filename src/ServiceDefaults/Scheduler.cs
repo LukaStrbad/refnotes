@@ -9,14 +9,19 @@ public static class Scheduler
 {
     public static void AddSchedulerServiceDefaults(this IHostApplicationBuilder builder)
     {
-        builder.AddKeyedMySqlDataSource("scheduler");
+        // builder.AddKeyedMySqlDataSource("scheduler");
+        builder.AddKeyedNpgsqlDataSource("scheduler");
         builder.Services.Configure<QuartzOptions>(builder.Configuration.GetSection("Quartz"));
         builder.Services.AddQuartz(configure: quartzBuilder =>
         {
             quartzBuilder.UsePersistentStore(x =>
             {
                 x.UseClustering();
-                x.UseMySql(options =>
+                // x.UseMySql(options =>
+                // {
+                //     options.ConnectionStringName = "scheduler";
+                // });
+                x.UsePostgres(options =>
                 {
                     options.ConnectionStringName = "scheduler";
                 });

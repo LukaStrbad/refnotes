@@ -1,3 +1,3 @@
-﻿namespace Api.Model;
+namespace Api.Model;
 
 public record UpdateGroupDto(string? Name);

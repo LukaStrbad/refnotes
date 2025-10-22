@@ -1,4 +1,4 @@
-﻿using Api.Services;
+using Api.Services;
 using Data.Model;
 
 namespace Api.Extensions;

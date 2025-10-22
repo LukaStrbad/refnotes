@@ -1,4 +1,4 @@
-﻿using Api.Exceptions;
+using Api.Exceptions;
 
 namespace Api.Middlewares;
 

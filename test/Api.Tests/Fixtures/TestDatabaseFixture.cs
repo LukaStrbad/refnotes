@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Api.Tests.Fixtures;
 using Testcontainers.MySql;
+using Testcontainers.PostgreSql;
 
 [assembly: AssemblyFixture(typeof(TestDatabaseFixture))]
 
@@ -12,6 +13,7 @@ namespace Api.Tests.Fixtures;
 public class TestDatabaseFixture : IAsyncLifetime
 {
     private MySqlContainer? _mysqlContainer;
+    private PostgreSqlContainer? _postgresContainer;
 
     private string? _connectionString;
     private DbContextOptions<RefNotesContext>? _dbOptions;
@@ -32,9 +34,9 @@ public class TestDatabaseFixture : IAsyncLifetime
             if (_dbOptions is not null)
                 return new RefNotesContext(_dbOptions);
 
-            var serverVersion = ServerVersion.AutoDetect(_connectionString);
             _dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
-                .UseMySql(_connectionString, serverVersion).Options;
+                // .UseMySql(_connectionString, serverVersion).Options;
+                .UseNpgsql(_connectionString, o => o.SetPostgresVersion(18, 0)).Options;
             var context = new RefNotesContext(_dbOptions);
 
             context.Database.EnsureDeleted();
@@ -52,14 +54,23 @@ public class TestDatabaseFixture : IAsyncLifetime
             .Build();
 
         _reuseTestContainer = config.GetValue<bool>("Testcontainers:Reuse");
-        _mysqlContainer = new MySqlBuilder()
-            .WithImage("mysql:8.4")
-            .WithTmpfsMount("/var/lib/mysql")
+        // _mysqlContainer = new MySqlBuilder()
+        //     .WithImage("mysql:8.4")
+        //     .WithTmpfsMount("/var/lib/mysql")
+        //     .WithReuse(_reuseTestContainer)
+        //     .Build();
+        
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgres:18")
             .WithReuse(_reuseTestContainer)
+            .WithDatabase("test")
             .Build();
 
-        await _mysqlContainer.StartAsync();
-        _connectionString = _mysqlContainer.GetConnectionString();
+        await _postgresContainer.StartAsync();
+        _connectionString = _postgresContainer.GetConnectionString();
+        
+        // await _mysqlContainer.StartAsync();
+        // _connectionString = _mysqlContainer.GetConnectionString();
     }
 
     public async ValueTask DisposeAsync()

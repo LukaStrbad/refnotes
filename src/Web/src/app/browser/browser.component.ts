@@ -1,11 +1,18 @@
-import { Component, computed, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
-import { BrowserService } from '../../services/browser.service';
-import { FormsModule } from '@angular/forms';
-import { Directory } from '../../model/directory';
-import { NgClass } from '@angular/common';
-import { CreateNewModalComponent } from '../components/create-new-modal/create-new-modal.component';
-import { HttpEventType } from '@angular/common/http';
-import { LoggerService } from '../../services/logger.service';
+import {
+  Component,
+  computed,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from "@angular/core";
+import { BrowserService } from "../../services/browser.service";
+import { FormsModule } from "@angular/forms";
+import { Directory } from "../../model/directory";
+import { NgClass } from "@angular/common";
+import { CreateNewModalComponent } from "../components/create-new-modal/create-new-modal.component";
+import { HttpEventType } from "@angular/common/http";
+import { LoggerService } from "../../services/logger.service";
 import {
   filter,
   firstValueFrom,
@@ -13,33 +20,42 @@ import {
   lastValueFrom,
   Subscription,
   tap,
-} from 'rxjs';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../services/auth.service';
-import { TestTagDirective } from '../../directives/test-tag.directive';
-import { FileService } from '../../services/file.service';
-import { createFromJsFile, File, FileWithTime } from '../../model/file';
-import { EditTagsModalComponent } from '../components/modals/edit-tags-modal/edit-tags-modal.component';
-import { TagService } from '../../services/tag.service';
-import * as fileUtils from '../../utils/file-utils';
+} from "rxjs";
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterLink,
+} from "@angular/router";
+import {
+  TranslateDirective,
+  TranslatePipe,
+  TranslateService,
+} from "@ngx-translate/core";
+import { AuthService } from "../../services/auth.service";
+import { TestTagDirective } from "../../directives/test-tag.directive";
+import { FileService } from "../../services/file.service";
+import { createFromJsFile, File, FileWithTime } from "../../model/file";
+import { EditTagsModalComponent } from "../components/modals/edit-tags-modal/edit-tags-modal.component";
+import { TagService } from "../../services/tag.service";
+import * as fileUtils from "../../utils/file-utils";
 import { RenameFileModalComponent } from "../components/modals/rename-file-modal/rename-file-modal.component";
-import { joinPaths, splitDirAndName } from '../../utils/path-utils';
-import { SelectFileService } from '../../services/select-file.service';
-import { NotificationService } from '../../services/notification.service';
-import { getTranslation } from '../../utils/translation-utils';
-import { AskModalService } from '../../services/ask-modal.service';
-import { ByteSizePipe } from '../../pipes/byte-size.pipe';
-import { convertDateLocale, updateFileTime } from '../../utils/date-utils';
-import { ShareService } from '../../services/components/modals/share.service';
-import { ShareModalComponent } from '../components/modals/share/share.component';
-import { BrowserFavoriteService } from '../../services/components/browser-favorite.service';
-import { FileFavoriteDetails } from '../../model/file-favorite-details';
-import { DirectoryFavoriteDetails } from '../../model/directory-favorite-details';
-import { SharedFile, SharedFileWithTime } from '../../model/shared-file';
+import { joinPaths, splitDirAndName } from "../../utils/path-utils";
+import { SelectFileService } from "../../services/select-file.service";
+import { NotificationService } from "../../services/notification.service";
+import { getTranslation } from "../../utils/translation-utils";
+import { AskModalService } from "../../services/ask-modal.service";
+import { ByteSizePipe } from "../../pipes/byte-size.pipe";
+import { convertDateLocale, updateFileTime } from "../../utils/date-utils";
+import { ShareService } from "../../services/components/modals/share.service";
+import { ShareModalComponent } from "../components/modals/share/share.component";
+import { BrowserFavoriteService } from "../../services/components/browser-favorite.service";
+import { FileFavoriteDetails } from "../../model/file-favorite-details";
+import { DirectoryFavoriteDetails } from "../../model/directory-favorite-details";
+import { SharedFile, SharedFileWithTime } from "../../model/shared-file";
 
 @Component({
-  selector: 'app-browser',
+  selector: "app-browser",
   imports: [
     FormsModule,
     NgClass,
@@ -53,15 +69,15 @@ import { SharedFile, SharedFileWithTime } from '../../model/shared-file';
     ByteSizePipe,
     ShareModalComponent,
   ],
-  templateUrl: './browser.component.html',
-  styleUrl: './browser.component.css',
+  templateUrl: "./browser.component.html",
+  styleUrl: "./browser.component.css",
 })
 export class BrowserComponent implements OnInit, OnDestroy {
   // Readonly
   protected readonly tagLimit = 3;
   readonly selectedFiles: ReadonlySet<string>;
   readonly groupId?: number;
-  readonly linkBasePath: string = '';
+  readonly linkBasePath: string = "";
   readonly breadcrumbs: BreadcrumbItem[] = [];
   readonly currentFolder = signal<Directory | null>(null);
   readonly files = computed(() => {
@@ -72,17 +88,19 @@ export class BrowserComponent implements OnInit, OnDestroy {
   readonly sharedFiles = computed(() => {
     const folder = this.currentFolder();
     return folder === null ? [] : this.mapDirectorySharedFiles(folder);
-  })
+  });
   readonly directories = computed(() => {
     const folder = this.currentFolder();
     const folderFavorites = this.favorite.directoryFavorites();
-    return folder === null ? [] : this.mapDirectorySubdirectories(folder, folderFavorites);
+    return folder === null
+      ? []
+      : this.mapDirectorySubdirectories(folder, folderFavorites);
   });
   readonly routeQueryParams: Record<string, string> = {};
 
   // Public
   pathStack: string[] = [];
-  currentPath = '/';
+  currentPath = "/";
   uploadProgress: Record<string, number | null> = {};
   lastCheckedFile: File | null = null;
   areAllFilesSelected = false;
@@ -91,15 +109,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
   shareHash?: string;
 
   // Private
-  private _dateLang = 'en-UK';
+  private _dateLang = "en-UK";
   private navSubscription?: Subscription;
 
   // Views
-  @ViewChild('fileModal')
+  @ViewChild("fileModal")
   fileModal!: CreateNewModalComponent;
-  @ViewChild('folderModal')
+  @ViewChild("folderModal")
   folderModal!: CreateNewModalComponent;
-  @ViewChild('shareModal')
+  @ViewChild("shareModal")
   shareModal!: ShareModalComponent;
 
   /**
@@ -141,17 +159,17 @@ export class BrowserComponent implements OnInit, OnDestroy {
       this.dateLang = event.lang;
     });
 
-    const groupId = this.route.snapshot.params['groupId'];
+    const groupId = this.route.snapshot.params["groupId"];
     if (groupId) {
       this.groupId = Number(groupId);
       this.linkBasePath = `/groups/${this.groupId}`;
       this.favorite.setGroupId(this.groupId);
     }
 
-    const shareHash = this.route.snapshot.queryParams['shareHash'];
+    const shareHash = this.route.snapshot.queryParams["shareHash"];
     if (shareHash) {
       this.shareHash = shareHash;
-      this.routeQueryParams['shareHash'] = shareHash;
+      this.routeQueryParams["shareHash"] = shareHash;
     }
   }
 
@@ -159,10 +177,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.navSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs.bind(this));
+        this.loadingPromise = this.refreshRoute().then(
+          this.resetBreadcrumbs.bind(this),
+        );
       });
 
-    this.loadingPromise = this.refreshRoute().then(this.resetBreadcrumbs.bind(this));
+    this.loadingPromise = this.refreshRoute().then(
+      this.resetBreadcrumbs.bind(this),
+    );
   }
 
   ngOnDestroy(): void {
@@ -172,11 +194,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
   async refreshRoute() {
     this.currentFolder.set(null);
     // Get the current path from the URL (removes the leading /browser)
-    const urlSplit = this.router.url.split('?')[0].split('/');
-    const browserIndex = urlSplit.indexOf('browser');
+    const urlSplit = this.router.url.split("?")[0].split("/");
+    const browserIndex = urlSplit.indexOf("browser");
     this.pathStack = urlSplit.slice(browserIndex + 1);
 
-    this.currentPath = joinPaths('/', ...this.pathStack);
+    this.currentPath = joinPaths("/", ...this.pathStack);
 
     const observable = this.browser.listCached(this.currentPath, this.groupId);
     // Cached
@@ -204,14 +226,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
   private getBreadcrumbs(): BreadcrumbItem[] {
     const breadcrumbs: BreadcrumbItem[] = [];
 
-    const path: string[] = [this.linkBasePath + '/browser'];
+    const path: string[] = [this.linkBasePath + "/browser"];
 
     for (const stackPart of this.pathStack) {
       path.push(stackPart);
       breadcrumbs.push({
         name: stackPart,
         path: [...path],
-        icon: 'folder',
+        icon: "folder",
       });
     }
     return breadcrumbs;
@@ -223,13 +245,23 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     await this.notificationService.awaitAndNotifyError(
-      this.fileService.addTextFile(this.currentPath, filename, '', this.groupId),
+      this.fileService.addTextFile(
+        this.currentPath,
+        filename,
+        "",
+        this.groupId,
+      ),
       {
-        409: await getTranslation(this.translateService, 'error.file-already-exists')
-      }
+        409: await getTranslation(
+          this.translateService,
+          "error.file-already-exists",
+        ),
+      },
     );
 
-    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-created'));
+    this.notificationService.success(
+      await getTranslation(this.translateService, "browser.file-created"),
+    );
     this.fileModal.close();
     await this.refreshRoute();
   }
@@ -240,18 +272,23 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     const path =
-      this.currentPath == '/'
+      this.currentPath == "/"
         ? `/${folderName}`
         : `${this.currentPath}/${folderName}`;
 
     await this.notificationService.awaitAndNotifyError(
       this.browser.addDirectory(path, this.groupId),
       {
-        409: await getTranslation(this.translateService, 'error.folder-already-exists'),
-      }
+        409: await getTranslation(
+          this.translateService,
+          "error.folder-already-exists",
+        ),
+      },
     );
 
-    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-created'));
+    this.notificationService.success(
+      await getTranslation(this.translateService, "browser.folder-created"),
+    );
     this.folderModal.close();
     await this.refreshRoute();
   }
@@ -260,11 +297,16 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.notificationService.awaitAndNotifyError(
       this.fileService.deleteFile(this.currentPath, file.name, this.groupId),
       {
-        404: await getTranslation(this.translateService, 'error.file-not-found'),
-      }
+        404: await getTranslation(
+          this.translateService,
+          "error.file-not-found",
+        ),
+      },
     );
 
-    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
+    this.notificationService.success(
+      await getTranslation(this.translateService, "browser.file-deleted"),
+    );
     await this.refreshRoute();
     this.favorite.removeLocalFileFavorite(file);
   }
@@ -273,17 +315,26 @@ export class BrowserComponent implements OnInit, OnDestroy {
     await this.notificationService.awaitAndNotifyError(
       this.fileService.deleteSharedFile(file.path),
       {
-        404: await getTranslation(this.translateService, 'error.file-not-found'),
-      }
+        404: await getTranslation(
+          this.translateService,
+          "error.file-not-found",
+        ),
+      },
     );
-    this.notificationService.success(await getTranslation(this.translateService, 'browser.file-deleted'));
+    this.notificationService.success(
+      await getTranslation(this.translateService, "browser.file-deleted"),
+    );
     await this.refreshRoute();
     this.favorite.removeLocalFileFavorite(file);
   }
 
   async deleteSelectedFiles() {
-    const files = [...this.selectedFiles].join(', ');
-    const accepted = await this.askModal.confirm('browser.title.modal.delete-files', 'browser.message.modal.delete-files', { translate: true, body: files });
+    const files = [...this.selectedFiles].join(", ");
+    const accepted = await this.askModal.confirm(
+      "browser.title.modal.delete-files",
+      "browser.message.modal.delete-files",
+      { translate: true, body: files },
+    );
 
     if (!accepted) {
       return;
@@ -292,14 +343,22 @@ export class BrowserComponent implements OnInit, OnDestroy {
     const promises = [...this.selectedFiles].map((file) => {
       const [dir, name] = splitDirAndName(file);
       return this.fileService.deleteFile(dir, name, this.groupId);
-    })
+    });
 
     try {
-      await this.notificationService.awaitAndNotifyError(Promise.all(promises), {
-        default: await getTranslation(this.translateService, 'error.deleting-files'),
-      });
+      await this.notificationService.awaitAndNotifyError(
+        Promise.all(promises),
+        {
+          default: await getTranslation(
+            this.translateService,
+            "error.deleting-files",
+          ),
+        },
+      );
 
-      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-deleted'));
+      this.notificationService.success(
+        await getTranslation(this.translateService, "browser.files-deleted"),
+      );
     } finally {
       this.selectFileService.clearSelectedFiles();
       // Refresh the route to update the file list as some file might have been deleted
@@ -309,29 +368,39 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   async openFolder(name: string) {
     const newPath =
-      this.currentPath === '/' ? `/${name}` : `${this.currentPath}/${name}`;
+      this.currentPath === "/" ? `/${name}` : `${this.currentPath}/${name}`;
     await this.navigateToFolder(newPath);
   }
 
   async deleteFolder(name: string) {
     const path = joinPaths(this.currentPath, name);
 
-    await this.notificationService.awaitAndNotifyError(this.browser.deleteDirectory(path, this.groupId),
+    await this.notificationService.awaitAndNotifyError(
+      this.browser.deleteDirectory(path, this.groupId),
       {
-        404: await getTranslation(this.translateService, 'error.folder-not-found'),
-      }
+        404: await getTranslation(
+          this.translateService,
+          "error.folder-not-found",
+        ),
+      },
     );
 
-    this.notificationService.success(await getTranslation(this.translateService, 'browser.folder-deleted'));
+    this.notificationService.success(
+      await getTranslation(this.translateService, "browser.folder-deleted"),
+    );
     await this.refreshRoute();
     this.favorite.removeLocalDirectoryFavorite(path);
   }
 
   async navigateToFolder(path: string) {
-    const basePath = this.groupId ? `/groups/${this.groupId}/browser` : '/browser';
+    const basePath = this.groupId
+      ? `/groups/${this.groupId}/browser`
+      : "/browser";
     const navigatePath = joinPaths(basePath, path);
 
-    await this.router.navigate([navigatePath], { queryParams: this.routeQueryParams });
+    await this.router.navigate([navigatePath], {
+      queryParams: this.routeQueryParams,
+    });
   }
 
   async onFilesUpload(files: FileList) {
@@ -357,10 +426,11 @@ export class BrowserComponent implements OnInit, OnDestroy {
                   return { ...folder };
                 });
               } else {
-                getTranslation(this.translateService, 'error.uploading-file', { name: file.name })
-                  .then((translation) => {
-                    this.notificationService.error(translation);
-                  });
+                getTranslation(this.translateService, "error.uploading-file", {
+                  name: file.name,
+                }).then((translation) => {
+                  this.notificationService.error(translation);
+                });
               }
             }
           }),
@@ -371,9 +441,14 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
     try {
       await lastValueFrom(forkJoin(observables));
-      this.notificationService.success(await getTranslation(this.translateService, 'browser.files-uploaded-successfully'));
+      this.notificationService.success(
+        await getTranslation(
+          this.translateService,
+          "browser.files-uploaded-successfully",
+        ),
+      );
     } catch (error) {
-      this.logger.error('Error uploading files', error);
+      this.logger.error("Error uploading files", error);
     }
 
     this.fileModal.close();
@@ -385,21 +460,26 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   async openPreview(file: File) {
     const fileType = fileUtils.getFileType(file.path);
-    if (fileType === 'unknown') {
+    if (fileType === "unknown") {
       return;
     }
     const navigationRoute = [];
-    navigationRoute.push(this.linkBasePath, 'file', file.path, 'preview');
+    navigationRoute.push(this.linkBasePath, "file", file.path, "preview");
     await this.router.navigate(navigationRoute);
   }
 
   async openSharedFilePreview(file: SharedFile) {
     const fileType = fileUtils.getFileType(file.path);
-    if (fileType === 'unknown') {
+    if (fileType === "unknown") {
       return;
     }
     const navigationRoute = [];
-    navigationRoute.push(this.linkBasePath, 'shared-file', file.path, 'preview');
+    navigationRoute.push(
+      this.linkBasePath,
+      "shared-file",
+      file.path,
+      "preview",
+    );
     await this.router.navigate(navigationRoute);
   }
 
@@ -412,9 +492,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async addTag([fileName, tag]: [string, string]) {
-    await this.notificationService.awaitAndNotifyError(this.tagService.addFileTag(this.currentPath, fileName, tag, this.groupId), {
-      default: await getTranslation(this.translateService, 'error.add-file-tag'),
-    });
+    await this.notificationService.awaitAndNotifyError(
+      this.tagService.addFileTag(this.currentPath, fileName, tag, this.groupId),
+      {
+        default: await getTranslation(
+          this.translateService,
+          "error.add-file-tag",
+        ),
+      },
+    );
 
     const file = this.files().find((f) => f.name === fileName);
     if (file && !file.tags.includes(tag)) {
@@ -423,9 +509,20 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async removeTag([fileName, tag]: [string, string]) {
-    await this.notificationService.awaitAndNotifyError(this.tagService.removeFileTag(this.currentPath, fileName, tag, this.groupId), {
-      default: await getTranslation(this.translateService, 'error.remove-file-tag'),
-    });
+    await this.notificationService.awaitAndNotifyError(
+      this.tagService.removeFileTag(
+        this.currentPath,
+        fileName,
+        tag,
+        this.groupId,
+      ),
+      {
+        default: await getTranslation(
+          this.translateService,
+          "error.remove-file-tag",
+        ),
+      },
+    );
 
     const file = this.files().find((f) => f.name === fileName);
     if (file) {
@@ -461,8 +558,9 @@ export class BrowserComponent implements OnInit, OnDestroy {
         this.lastCheckedFile = file;
       }
       const currentFiles = this.files();
-      const lastCheckedIndex = currentFiles.findIndex(f => f === this.lastCheckedFile) ?? -1;
-      const currentIndex = currentFiles.findIndex(f => f === file) ?? -1;
+      const lastCheckedIndex =
+        currentFiles.findIndex((f) => f === this.lastCheckedFile) ?? -1;
+      const currentIndex = currentFiles.findIndex((f) => f === file) ?? -1;
       if (lastCheckedIndex !== -1 && currentIndex !== -1) {
         const start = Math.min(lastCheckedIndex, currentIndex);
         const end = Math.max(lastCheckedIndex, currentIndex);
@@ -511,8 +609,8 @@ export class BrowserComponent implements OnInit, OnDestroy {
     if (this.currentFolder === null) {
       return false;
     }
-    const allFiles = this.files().map(f => f.path);
-    return allFiles.every(file => this.selectedFiles.has(file));
+    const allFiles = this.files().map((f) => f.path);
+    return allFiles.every((file) => this.selectedFiles.has(file));
   }
 
   cancelSelect() {
@@ -520,7 +618,7 @@ export class BrowserComponent implements OnInit, OnDestroy {
   }
 
   async moveFiles() {
-    const filesFromCurrentFolder = new Set(this.files().map(f => f.path));
+    const filesFromCurrentFolder = new Set(this.files().map((f) => f.path));
 
     // Find only the files that are not in the current folder
     const filesToMove = this.selectedFiles.difference(filesFromCurrentFolder);
@@ -529,9 +627,15 @@ export class BrowserComponent implements OnInit, OnDestroy {
     }
 
     try {
-      await this.notificationService.awaitAndNotifyError(this.selectFileService.moveFiles(this.currentPath, this.groupId), {
-        default: await getTranslation(this.translateService, 'error.move-files'),
-      });
+      await this.notificationService.awaitAndNotifyError(
+        this.selectFileService.moveFiles(this.currentPath, this.groupId),
+        {
+          default: await getTranslation(
+            this.translateService,
+            "error.move-files",
+          ),
+        },
+      );
     } finally {
       await this.refreshRoute();
     }
@@ -539,10 +643,10 @@ export class BrowserComponent implements OnInit, OnDestroy {
 
   private async updateFileTimes() {
     for (const file of this.files()) {
-      await updateFileTime(file, this.translateService, this.dateLang)
+      await updateFileTime(file, this.translateService, this.dateLang);
     }
     for (const file of this.sharedFiles()) {
-      await updateFileTime(file, this.translateService, this.dateLang)
+      await updateFileTime(file, this.translateService, this.dateLang);
     }
   }
 
@@ -560,24 +664,37 @@ export class BrowserComponent implements OnInit, OnDestroy {
     this.shareModal.show();
   }
 
-  private mapDirectoryFiles(directory: Directory, fileFavorites: FileFavoriteDetails[]): BrowserComponentFile[] {
+  private mapDirectoryFiles(
+    directory: Directory,
+    fileFavorites: FileFavoriteDetails[],
+  ): BrowserComponentFile[] {
     return directory.files.map((file: BrowserComponentFile) => {
-      const isFavorite = fileFavorites.some(fav => fav.fileInfo.path === file.path && fav.group?.id === this.groupId);
+      const isFavorite = fileFavorites.some(
+        (fav) =>
+          fav.fileInfo.path === file.path && fav.group?.id === this.groupId,
+      );
       file.isFavorite = isFavorite;
       return file;
     });
   }
 
-  private mapDirectorySharedFiles(directory: Directory): BrowserComponentSharedFile[] {
+  private mapDirectorySharedFiles(
+    directory: Directory,
+  ): BrowserComponentSharedFile[] {
     return directory.sharedFiles.map((file: BrowserComponentSharedFile) => {
       return file;
     });
   }
 
-  private mapDirectorySubdirectories(directory: Directory, folderFavorites: DirectoryFavoriteDetails[]): BrowserComponentDirectory[] {
+  private mapDirectorySubdirectories(
+    directory: Directory,
+    folderFavorites: DirectoryFavoriteDetails[],
+  ): BrowserComponentDirectory[] {
     return directory.directories.map((name) => {
       const path = joinPaths(this.currentPath, name);
-      const isFavorite = folderFavorites.some(fav => fav.path === path && fav.group?.id === this.groupId);
+      const isFavorite = folderFavorites.some(
+        (fav) => fav.path === path && fav.group?.id === this.groupId,
+      );
       return {
         name,
         path,
@@ -591,20 +708,28 @@ export class BrowserComponent implements OnInit, OnDestroy {
       return;
     }
 
-    await this.notificationService.awaitAndNotifyError(this.fileService.generateSharedFile(this.shareHash, this.currentPath), {
-      default: await getTranslation(this.translateService, 'error.place-shared-file'),
-    });
+    await this.notificationService.awaitAndNotifyError(
+      this.fileService.generateSharedFile(this.shareHash, this.currentPath),
+      {
+        default: await getTranslation(
+          this.translateService,
+          "error.place-shared-file",
+        ),
+      },
+    );
     // Delete shareHash from variables
-    delete this.routeQueryParams['shareHash'];
+    delete this.routeQueryParams["shareHash"];
     this.shareHash = undefined;
     // Remove shareHash from URL
     const url = new URL(window.location.href);
-    url.searchParams.delete('shareHash');
-    window.history.replaceState({}, '', url.pathname + url.search);
+    url.searchParams.delete("shareHash");
+    window.history.replaceState({}, "", url.pathname + url.search);
 
     // Refresh and show info
     await this.refreshRoute();
-    this.notificationService.info(await getTranslation(this.translateService, 'browser.shared-file-placed'));
+    this.notificationService.info(
+      await getTranslation(this.translateService, "browser.shared-file-placed"),
+    );
   }
 }
 

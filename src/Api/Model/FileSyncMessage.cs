@@ -1,4 +1,4 @@
-﻿namespace Api.Model;
+namespace Api.Model;
 
 public abstract class FileSyncMessage
 {

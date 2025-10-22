@@ -1,4 +1,4 @@
-﻿using Api.Services;
+using Api.Services;
 using Data;
 using Data.Model;
 using Microsoft.EntityFrameworkCore;
