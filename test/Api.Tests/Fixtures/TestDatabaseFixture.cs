@@ -2,7 +2,6 @@ using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Api.Tests.Fixtures;
-using Testcontainers.MySql;
 using Testcontainers.PostgreSql;
 
 [assembly: AssemblyFixture(typeof(TestDatabaseFixture))]
@@ -12,7 +11,6 @@ namespace Api.Tests.Fixtures;
 // ReSharper disable once ClassNeverInstantiated.Global
 public class TestDatabaseFixture : IAsyncLifetime
 {
-    private MySqlContainer? _mysqlContainer;
     private PostgreSqlContainer? _postgresContainer;
 
     private string? _connectionString;
@@ -35,7 +33,6 @@ public class TestDatabaseFixture : IAsyncLifetime
                 return new RefNotesContext(_dbOptions);
 
             _dbOptions = new DbContextOptionsBuilder<RefNotesContext>()
-                // .UseMySql(_connectionString, serverVersion).Options;
                 .UseNpgsql(_connectionString, o => o.SetPostgresVersion(18, 0)).Options;
             var context = new RefNotesContext(_dbOptions);
 
@@ -54,11 +51,6 @@ public class TestDatabaseFixture : IAsyncLifetime
             .Build();
 
         _reuseTestContainer = config.GetValue<bool>("Testcontainers:Reuse");
-        // _mysqlContainer = new MySqlBuilder()
-        //     .WithImage("mysql:8.4")
-        //     .WithTmpfsMount("/var/lib/mysql")
-        //     .WithReuse(_reuseTestContainer)
-        //     .Build();
         
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgres:18")
@@ -68,17 +60,14 @@ public class TestDatabaseFixture : IAsyncLifetime
 
         await _postgresContainer.StartAsync();
         _connectionString = _postgresContainer.GetConnectionString();
-        
-        // await _mysqlContainer.StartAsync();
-        // _connectionString = _mysqlContainer.GetConnectionString();
     }
 
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
-        if (_mysqlContainer is not null && !_reuseTestContainer)
+        if (_postgresContainer is not null && !_reuseTestContainer)
         {
-            await _mysqlContainer.StopAsync();
+            await _postgresContainer.StopAsync();
         }
     }
 }
