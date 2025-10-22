@@ -18,7 +18,6 @@
       <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
     </ItemGroup>
 
     <ItemGroup>

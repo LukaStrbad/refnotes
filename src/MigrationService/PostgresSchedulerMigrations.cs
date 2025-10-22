@@ -1,5 +1,4 @@
-﻿using MySqlConnector;
-using Npgsql;
+﻿using Npgsql;
 
 namespace MigrationService;
 

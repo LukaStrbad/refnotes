@@ -8,10 +8,8 @@
 
     <ItemGroup>
         <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-        <PackageReference Include="Aspire.MySqlConnector" />
         <PackageReference Include="Aspire.Npgsql" />
         <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
-        <PackageReference Include="Aspire.Pomelo.EntityFrameworkCore.MySql" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />

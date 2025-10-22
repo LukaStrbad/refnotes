@@ -25,7 +25,6 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Quartz.OpenTracing" />
-        <PackageReference Include="Testcontainers.MySql" />
         <PackageReference Include="Testcontainers.PostgreSql" />
         <PackageReference Include="xunit.runner.visualstudio">
           <PrivateAssets>all</PrivateAssets>
