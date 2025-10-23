@@ -1,3 +1,4 @@
+using MailDev.Hosting;
 using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -24,6 +25,8 @@ var cache = builder.AddRedis("cache")
     .WithDataVolume()
     .WithPersistence(interval: TimeSpan.FromMinutes(1));
 
+var maildev = builder.AddMailDev("maildev");
+
 var migrationsProject = builder.AddProject<Projects.MigrationService>("migrations")
     .WithReference(mainDb)
     .WithReference(schedulerDb)
@@ -35,7 +38,8 @@ var api = builder.AddProject<Projects.Api>("api")
     .WithReference(schedulerDb)
     .WaitFor(migrationsProject)
     .WithReference(cache)
-    .WaitFor(cache);
+    .WaitFor(cache)
+    .WithReference(maildev);
 
 var webPort = builder.Configuration.GetValue<int?>("Ports:Web");
 builder.AddPnpmApp("web", "../Web", scriptName: "start:aspire")

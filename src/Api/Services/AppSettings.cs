@@ -38,13 +38,13 @@ public sealed class AppSettings
             }
 
             JwtPrivateKeyBytes = Encoding.UTF8.GetBytes(jwtPrivateKey);
-            
+
             var dataDir = _configuration.GetValue<string>("DataDir");
             if (!string.IsNullOrWhiteSpace(dataDir))
             {
                 DataDir = dataDir;
             }
-                
+
             CookieSecure = _configuration.GetValue("CookieSecure", false);
 
             var expirySetting = _configuration.GetValue<string>("AccessTokenExpiry");
@@ -54,7 +54,7 @@ public sealed class AppSettings
                 _logger.LogError("AccessTokenExpiry is set to zero or is less than zero, which is invalid");
                 throw new InvalidConfigurationException("AccessTokenExpiry is set to zero, which is invalid");
             }
-            
+
             EmailConfirmationBaseUrl = _configuration.GetValue<string>("EmailConfirmationBaseUrl") ?? "/";
             PasswordResetBaseUrl = _configuration.GetValue<string>("PasswordResetBaseUrl") ?? "/";
 
@@ -104,14 +104,35 @@ public sealed class AppSettings
 
     private EmailSettings? GetEmailSettings()
     {
-        var host = _configuration.GetValue<string>("Email:Host");
-        var username = _configuration.GetValue<string>("Email:Username");
-        var password = _configuration.GetValue<string>("Email:Password");
+        string? host;
+        bool useTls;
+        var port = 587;
+        if (_configuration.GetConnectionString("maildev") is { } maildevConnectionString)
+        {
+            var smtpUri = new Uri(maildevConnectionString);
+            host = smtpUri.Host;
+            port = smtpUri.Port;
+            useTls = false;
+        }
+        else
+        {
+            host = _configuration.GetValue<string>("Email:Host");
+            useTls = _configuration.GetValue("Email:UseTls", true);
+        }
+        
+        var username = _configuration.GetValue<string?>("Email:Username", null);
+        var password = _configuration.GetValue<string?>("Email:Password", null);
+
         var from = _configuration.GetValue<string>("Email:From");
-        if (host is null || username is null || password is null || from is null)
+        
+        if (host is null || from is null)
             return null;
 
-        return new EmailSettings(host, username, password, from);
+        if (useTls && string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            throw new InvalidConfigurationException(
+                "Email:Username and Email:Password must be set if Email:UseTls is true");
+
+        return new EmailSettings(host, port, username, password, from, useTls);
     }
 
     public static AppSettings Initialize(IServiceProvider serviceProvider)
@@ -125,4 +146,4 @@ public sealed class AppSettings
     }
 }
 
-public record EmailSettings(string Host, string Username, string Password, string From);
+public record EmailSettings(string Host, int Port, string? Username, string? Password, string From, bool UseTls);

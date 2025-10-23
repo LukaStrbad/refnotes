@@ -25,6 +25,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Data\Data.csproj" IsAspireProjectResource="false" />
+      <ProjectReference Include="..\MailDev.Hosting\MailDev.Hosting.csproj" IsAspireProjectResource="false" />
       <ProjectReference Include="..\MigrationService\MigrationService.csproj" />
       <ProjectReference Include="..\Api\Api.csproj" />
     </ItemGroup>
