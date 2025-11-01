@@ -31,7 +31,7 @@ services:
     expose:
       - "5000"
     depends_on:
-      mysql-db:
+      postgres-db:
         condition: service_healthy
       scheduler-db:
         condition: service_healthy
@@ -60,25 +60,26 @@ services:
     volumes:
       - ${APPSETTINGS_PATH}:/app/appsettings.Production.json:ro
     depends_on:
-      mysql-db:
+      postgres-db:
         condition: service_healthy
       scheduler-db:
         condition: service_healthy
     networks:
       - internal
 
-  mysql-db:
-    image: mysql:8.4
+  postgres-db:
+    image: postgres:18-alpine
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-refnotes}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      POSTGRES_DB: ${DB_DATABASE:-refnotes}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
+      POSTGRES_USER: ${DB_USER:-postgres}
     ports:
-      - "${DB_EXPOSE_PORT:-0}:3306"
+      - "${DB_EXPOSE_PORT:-0}:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
     restart: always
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -86,17 +87,18 @@ services:
       - internal
 
   scheduler-db:
-    image: mysql:8.4
+    image: postgres:18-alpine
     environment:
-      MYSQL_DATABASE: scheduler
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_SCHEDULER:-root}
+      POSTGRES_DB: ${DB_DATABASE_SCHEDULER:-scheduler}
+      POSTGRES_PASSWORD: ${DB_PASSWORD_SCHEDULER:-root}
+      POSTGRES_USER: ${DB_USER_SCHEDULER:-postgres}
     ports:
-      - "${DB_EXPOSE_PORT_SCHEDULER:-0}:3306"
+      - "${DB_EXPOSE_PORT_SCHEDULER:-0}:5432"
     volumes:
-      - scheduler-mysql-data:/var/lib/mysql
+      - scheduler-postgres-data:/var/lib/postgresql/data
     restart: always
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_SCHEDULER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -106,7 +108,7 @@ services:
   redis:
     image: redis:8.0.3-alpine
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -114,8 +116,8 @@ services:
       - internal
 
 volumes:
-  mysql-data:
-  scheduler-mysql-data:
+  postgres-data:
+  scheduler-postgres-data:
   caddy-data:
   caddy-config:
   refnotes-data:

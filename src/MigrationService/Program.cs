@@ -6,7 +6,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.AddSchedulerServiceDefaults();
 builder.Services.AddHostedService<MigrationWorker>();
-builder.Services.AddSingleton<SchedulerMigrations>();
+builder.Services.AddSingleton<ISchedulerMigrations, PostgresSchedulerMigrations>();
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing.AddSource(MigrationWorker.ActivitySourceName));

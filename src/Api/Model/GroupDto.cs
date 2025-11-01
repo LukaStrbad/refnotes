@@ -1,4 +1,4 @@
-﻿using Data.Model;
+using Data.Model;
 
 namespace Api.Model;
 

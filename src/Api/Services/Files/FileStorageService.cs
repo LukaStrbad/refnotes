@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using Api.Services.Redis;
 using Api.Streams;
 using StackExchange.Redis;

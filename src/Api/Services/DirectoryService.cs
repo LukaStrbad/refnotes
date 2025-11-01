@@ -1,4 +1,4 @@
-﻿using Api.Exceptions;
+using Api.Exceptions;
 using Api.Model;
 using Api.Utils;
 using Data;

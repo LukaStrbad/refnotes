@@ -1,18 +1,18 @@
-﻿using MySqlConnector;
+﻿using Npgsql;
 
 namespace MigrationService;
 
-public class SchedulerMigrations
+public class PostgresSchedulerMigrations : ISchedulerMigrations
 {
-    private const string MigrationsDir = "Sql/Migrations";
-    private const string MigrationsTableSql = "Sql/migrations_table.sql";
+    private const string MigrationsDir = "Sql/Postgres/Migrations";
+    private const string MigrationsTableSql = "Sql/Postgres/migrations_table.sql";
 
-    private readonly MySqlDataSource _dataSource;
-    private readonly ILogger<SchedulerMigrations> _logger;
+    private readonly NpgsqlDataSource _dataSource;
+    private readonly ILogger<PostgresSchedulerMigrations> _logger;
 
-    public SchedulerMigrations(
-        [FromKeyedServices("scheduler")] MySqlDataSource dataSource,
-        ILogger<SchedulerMigrations> logger)
+    public PostgresSchedulerMigrations(
+        [FromKeyedServices("scheduler")] NpgsqlDataSource dataSource,
+        ILogger<PostgresSchedulerMigrations> logger)
     {
         _dataSource = dataSource;
         _logger = logger;
@@ -48,18 +48,26 @@ public class SchedulerMigrations
     private async Task<List<string>> GetMigratedFiles(CancellationToken cancellationToken)
     {
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(_dataSource.ConnectionString);
+        var searchPath = connectionStringBuilder.SearchPath ?? "public";
         try
         {
-            await using var cmd = new MySqlCommand("SHOW TABLES LIKE 'migrations'", connection);
+            await using var cmd = new NpgsqlCommand("""
+                                                    SELECT EXISTS (SELECT 1 FROM information_schema.tables
+                                                        WHERE table_name = 'migrations'
+                                                        and table_schema = @searchPath
+                                                    ) AS table_existence;
+                                                    """, connection);
+            cmd.Parameters.AddWithValue("@searchPath", searchPath);
             var result = await cmd.ExecuteScalarAsync(cancellationToken);
-            var tableExists = result != null;
+            var tableExists = result is true;
 
             // If the table doesn't exist, create it
             if (!tableExists)
             {
                 _logger.LogInformation("Creating migrations table");
                 var sqlContent = await File.ReadAllTextAsync(MigrationsTableSql, cancellationToken);
-                await using var createTableCmd = new MySqlCommand(sqlContent, connection);
+                await using var createTableCmd = new NpgsqlCommand(sqlContent, connection);
                 await createTableCmd.ExecuteNonQueryAsync(cancellationToken);
 
                 // Return early as there are no migrations
@@ -69,7 +77,7 @@ public class SchedulerMigrations
             // Get all migrations
             _logger.LogInformation("Reading migrations from database");
             var migrations = new List<string>();
-            await using var migrationsCmd = new MySqlCommand("SELECT name FROM migrations ORDER BY id", connection);
+            await using var migrationsCmd = new NpgsqlCommand("SELECT name FROM migrations ORDER BY id", connection);
             await using var reader = await migrationsCmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -90,16 +98,16 @@ public class SchedulerMigrations
         }
     }
 
-    private async Task ApplyMigration(string migrationName, MySqlConnection connection,
+    private async Task ApplyMigration(string migrationName, NpgsqlConnection connection,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Applying migration {MigrationName}", migrationName);
         var migrationSql = await GetMigrationSql(migrationName);
-        await using var cmd = new MySqlCommand(migrationSql, connection);
+        await using var cmd = new NpgsqlCommand(migrationSql, connection);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
 
         // Add migration to the database
-        await using var insertMigrationCmd = new MySqlCommand(
+        await using var insertMigrationCmd = new NpgsqlCommand(
             "INSERT INTO migrations (name) VALUES (@name)", connection);
         insertMigrationCmd.Parameters.AddWithValue("@name", migrationName);
         await insertMigrationCmd.ExecuteNonQueryAsync(cancellationToken);

@@ -1,4 +1,4 @@
-﻿namespace Api.Services;
+namespace Api.Services;
 
 public sealed class AppDomainService : IAppDomainService
 {

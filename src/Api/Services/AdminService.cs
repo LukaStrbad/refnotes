@@ -1,4 +1,4 @@
-﻿using Api.Exceptions;
+using Api.Exceptions;
 using Api.Model;
 using Data;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using Api.Exceptions;
 using Api.Model;
 using Data.Model;

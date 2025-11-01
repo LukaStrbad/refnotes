@@ -17,8 +17,8 @@ public sealed class EmailServiceTests
     private EmailService CreateSut()
     {
         var appSettings =
-            AppSettingsExtensions.WithEmailSettings(new EmailSettings("smtp.example.com", "username", "password",
-                "Sender"), EmailConfirmationBaseUrl, PasswordResetBaseUrl);
+            AppSettingsExtensions.WithEmailSettings(new EmailSettings("smtp.example.com", 587, "username", "password",
+                "Sender", true), EmailConfirmationBaseUrl, PasswordResetBaseUrl);
         return new EmailService(appSettings, _smtpClient, _emailTemplateService);
     }
 

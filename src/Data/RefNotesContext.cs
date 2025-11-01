@@ -1,4 +1,4 @@
-﻿using Data.Model;
+using Data.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 

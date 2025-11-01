@@ -32,8 +32,12 @@ public sealed class EmailService : IEmailService
             Text = body
         };
 
-        await _smtpClient.ConnectAsync(emailSettings.Host, 587, MailKit.Security.SecureSocketOptions.StartTls);
-        await _smtpClient.AuthenticateAsync(emailSettings.Username, emailSettings.Password);
+        var secureSocketOptions = emailSettings.UseTls ? MailKit.Security.SecureSocketOptions.StartTls : MailKit.Security.SecureSocketOptions.None;
+        await _smtpClient.ConnectAsync(emailSettings.Host, emailSettings.Port, secureSocketOptions);
+        if (emailSettings.UseTls)
+        {
+            await _smtpClient.AuthenticateAsync(emailSettings.Username, emailSettings.Password);
+        }
         await _smtpClient.SendAsync(message);
         await _smtpClient.DisconnectAsync(true);
     }
